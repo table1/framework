@@ -1,0 +1,35 @@
+default:
+  data:
+    raw:
+      - path: data/raw/file.csv
+        type: csv
+        delimiter: comma
+    processed:
+    output:
+  libraries:
+   - dplyr
+   - ggplot2
+   - stringr
+  packages:
+    - dplyr
+    - readr
+    - tidyr
+    - tidymodels
+    - stringr
+    - forcats
+    - purrr
+    - lubridate
+    - ggplot2
+    - here
+    - DBI
+    - RPostgres
+    - dotenv
+  connections:
+    shoes:
+      driver: "postgresql"
+      host: !expr Sys.getenv("DB_HOST")
+      port: !expr as.numeric(Sys.getenv("DB_PORT"))
+      database: !expr Sys.getenv("DB_DATABASE")
+      user: !expr Sys.getenv("DB_USERNAME")
+      password: !expr Sys.getenv("DB_PASSWORD")
+      sslmode: "disable"

@@ -1,0 +1,31 @@
+# R workspace
+.Rhistory
+.Rapp.history 
+.RData
+.RDataTmp
+.Ruserdata
+.Renviron
+.Rprofile
+
+# Credentials
+.env
+.httr-oauth
+
+# RStudio specific files
+.Rproj.user/
+
+# Vignette outputs
+vignettes/*.html
+vignettes/*.pdf
+
+# Cache directories
+*_cache/
+/cache/
+/*_files/
+
+# IDE specific files
+.idea
+.vscode
+
+# macOS specific files
+.DS_Store
