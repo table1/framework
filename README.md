@@ -340,10 +340,10 @@ Save data using dot notation paths.  Specify `csv` or `rds` as types.
 
 ```r
 # Save data frame as CSV
-framework::save_data(mtcars, "processed.mtcars", type = "csv")
+framework::save_data(mtcars, "in_progress.post_merge", type = "csv")
 
 # Save as RDS
-framework::save_data(iris, "output.public.iris", type = "rds")
+framework::save_data(iris, "final.public.data", type = "rds")
 ```
 
 The function:
