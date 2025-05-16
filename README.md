@@ -28,7 +28,7 @@ Framework is designed to reduce friction around non-analytical tasks and make it
   - [Default Structure](#default-structure)
   - [Minimal Structure](#minimal-structure)
 - [Project Initialization](#project-initialization)
-  - [framework::scaffold()](#frameworkscaffold)
+  - [scaffold()](#frameworkscaffold)
   - [scaffold.R](#scaffoldr)
 - [Configuration](#configuration)
   - [Config File](#config-file)
@@ -145,7 +145,8 @@ The `scaffold()` function initializes your project environment. You can place th
 #### Example Usage
 
 ```r
-framework::scaffold()
+library(framework)
+scaffold()
 
 # Your functions are now available
 my_function()
@@ -165,7 +166,7 @@ data <- load_data("source.private.my_data")
 
 ### scaffold.R
 
-The `scaffold.R` file in your project root is a special file that gets sourced every time you run `framework::scaffold()`.
+The `scaffold.R` file in your project root is a special file that gets sourced every time you run `scaffold()`.
 
 This is where you should put any code that needs to run at the start of every analysis session.
 
@@ -238,10 +239,10 @@ The framework provides several functions for managing configuration:
 
 ```r
 # Read the entire config
-config <- framework::read_config()
+config <- read_config()
 
 # Write updated config
-framework::write_config(config)
+write_config(config)
 ```
 
 ## Package Management
@@ -325,7 +326,7 @@ Load data using dot notation paths:
 
 ```r
 # Load data from source.private.example
-data <- framework::load_data("source.private.example")
+data <- load_data("source.private.example")
 ```
 
 The path is resolved through `config.yml`, which specifies:
@@ -340,10 +341,10 @@ Save data using dot notation paths.  Specify `csv` or `rds` as types.
 
 ```r
 # Save data frame as CSV
-framework::save_data(mtcars, "in_progress.post_merge", type = "csv")
+save_data(mtcars, "in_progress.post_merge", type = "csv")
 
 # Save as RDS
-framework::save_data(iris, "final.public.data", type = "rds")
+save_data(iris, "final.public.data", type = "rds")
 ```
 
 The function:
