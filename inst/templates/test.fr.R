@@ -33,6 +33,18 @@ execute_query("SELECT 1", "db")
 save_result("test", 1 + 1, "test")
 get_result("test")
 
+save_result("report.html", file = "Example-Notebook.html", type = "report", blind = FALSE, public = TRUE)
+get_result("report.html")
+
+save_result(
+  name = "report.html",
+  file = "test-notebook.html",
+  type = "report",
+  blind = FALSE,
+  public = TRUE,
+  comment = "Final results."
+)
+list_results() |> kable()
 
 # Caching
 get_or_cache("test", {
