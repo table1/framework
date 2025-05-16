@@ -3,7 +3,7 @@ Type: Package
 Title: A Framework for Data Management
 Version: 0.1.0
 Authors@R: 
-    person("Your", "Name", , "your.email@example.com", role = c("aut", "cre"))
+    person("Erik", "Westlund", , "ewestlund@jhu.edu", role = c("aut", "cre"))
 Maintainer: Erik Westlund <ewestlund@jhu.edu>
 Description: A framework for managing data files, configurations, and database connections.
 License: MIT + file LICENSE
