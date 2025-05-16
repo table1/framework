@@ -1,0 +1,24 @@
+linters: all_linters(
+    line_length_linter = lintr::line_length_linter(120),
+    object_name_linter = NULL,
+    commented_code_linter = NULL,
+    implicit_integer_linter = NULL,
+    fixed_regex_linter = NULL,
+    string_boundary_linter = NULL,
+    strings_as_factors_linter = NULL,
+    undesirable_function_linter = NULL,
+    undesirable_operator_linter = NULL,
+    condition_call_linter = NULL,
+    non_portable_path_linter = NULL,
+    non_visible_binding_linter = NULL,
+    library_call_linter = NULL,
+    object_usage_linter = NULL,
+    nonportable_path_linter = NULL,
+    library_call_linter = NULL,
+    paste_linter = NULL,
+    one_call_pipe_linter = NULL
+  )
+exclusions: list(
+    "man",
+    "vignettes"
+  )

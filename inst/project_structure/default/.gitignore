@@ -1,0 +1,45 @@
+# Framework
+
+# Data directories
+data/*
+!data/*/.gitkeep
+!data/source/public/
+!data/source/public/**
+!data/in_progress/public/
+!data/in_progress/public/**
+!data/output/public/
+!data/output/public/**
+data/cached*
+
+# R specific
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# R workspace
+.Renviron
+.Rprofile
+
+# Credentials
+.env
+.httr-oauth
+
+# Cache directories
+*_cache/
+/cache/
+/*_files/
+
+# IDE specific files
+.idea
+.vscode
+
+# Config directories
+.history
+.aws
+.config

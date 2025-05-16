@@ -1,0 +1,17 @@
+framework:
+  driver: "sqlite"
+  database: "framework.db"
+db:
+  driver: "postgres"
+  host: env("DB_HOST")
+  port: env("DB_PORT")
+  database: env("DB_DATABASE")
+  schema: env("DB_SCHEMA", "public")
+  user: env("DB_USERNAME")
+  password: env("DB_PASSWORD")
+nas:
+  driver: "cifs"
+  host: env("NAS_HOST")
+  username: env("NAS_USERNAME")
+  password: env("NAS_PASSWORD")
+  path: env("NAS_PATH")

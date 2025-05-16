@@ -1,0 +1,61 @@
+---
+title: "Test Notebook"
+author: "Erik Westlund"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(framework)
+scaffold()
+
+```
+
+## Inspect config
+
+```{r}
+config
+```
+
+## Load Data
+
+```{r}
+data <- load_data("source.private.example")
+data |> head()
+```
+
+## Save Data
+
+```{r}
+save_data(data, "final.public.example")
+list.files("data/final/public")
+```
+
+## Read from databases
+
+"db" is configured in connections
+
+Kable will fail; we'll fix it.
+
+```{r}
+
+db_data <- get_query("SELECT id, name, created_at from users", "db")
+db_data |> head() |> kable()
+
+```
+
+## Cache expensive operations
+
+```{r}
+
+# cache_forget("test")
+results <- get_or_cache("test", {
+  Sys.sleep(5)
+  1 + 1
+})
+
+results
+
+```

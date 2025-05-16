@@ -1,0 +1,6 @@
+default:
+  data: settings/data.yml
+  packages: settings/packages.yml
+  connections: settings/connections.yml
+  git: settings/git.yml
+  security: settings/security.yml

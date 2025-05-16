@@ -1,0 +1,3 @@
+url: env("GIT_REPO_URL")
+author: env("GIT_REPO_AUTHOR")
+email: env("GIT_REPO_EMAIL")

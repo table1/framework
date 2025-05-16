@@ -1,0 +1,11 @@
+linters: lintr::linters_with_defaults(
+  line_length_linter = lintr::line_length_linter(120),
+  object_name_linter = NULL,
+  commented_code_linter = NULL,
+  implicit_integer_linter = NULL,
+  object_usage_linter = NULL,
+  paste_linter = NULL,
+  one_call_pipe_linter = NULL
+)
+exclusions: list()
+encoding: "UTF-8"

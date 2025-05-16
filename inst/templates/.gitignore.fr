@@ -1,3 +1,14 @@
+# Framework
+
+# Data directories
+data/*
+!data/*/.gitkeep
+!data/source/public/
+!data/source/public/**
+!data/output/public/
+!data/output/public/**
+data/cached*
+
 # R specific
 .Rproj.user
 .Rhistory
@@ -5,17 +16,9 @@
 .Ruserdata
 .Rapp.history
 
-# Development
-framework*.tar.gz
-framework*.Rcheck/
-
 # OS specific
 .DS_Store
 Thumbs.db
-
-# IDE specific
-.vscode/
-.idea/
 
 # R workspace
 .Renviron
@@ -30,11 +33,11 @@ Thumbs.db
 /cache/
 /*_files/
 
+# IDE specific files
+.idea
+.vscode
+
 # Config directories
 .history
 .aws
 .config
-
-# Vignette outputs
-vignettes/*.html
-vignettes/*.pdf

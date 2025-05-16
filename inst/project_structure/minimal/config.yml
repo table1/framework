@@ -1,0 +1,6 @@
+default:
+  data: 
+    - example: data/example.csv
+  packages: 
+    - dplyr
+    - ggplot2
