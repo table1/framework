@@ -3,9 +3,9 @@
 #' Reads the project configuration from config.yml, evaluating any expressions.
 #' @return The configuration as a list
 #' @export
-read_config <- function() {
+read_config <- function(config_file = "config.yml") {
   # Load config with config::get() to handle !expr
-  config <- config::get()
+  config <- config::get(config = config_file)
 
   # Function to evaluate env() calls
   eval_env <- function(x) {

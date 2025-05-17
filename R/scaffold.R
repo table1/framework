@@ -7,7 +7,7 @@
 #' 4. Loading all functions from the functions directory
 #'
 #' @export
-scaffold <- function() {
+scaffold <- function(config_file = "config.yml") {
   message("Scaffolding your project...")
 
   # Only load package if not already loaded
@@ -17,28 +17,43 @@ scaffold <- function() {
   }
 
   .load_environment()
-  config <<- .load_configuration()
+  config <<- .load_configuration(config_file)
   .install_required_packages(config)
   .load_libraries(config)
   .load_functions()
 
   # Source scaffold.R if it exists
-  if (file.exists("scaffold")) {
-    message("Sourcing scaffold...")
-    source("scaffold")
+  if (file.exists("scaffold.R")) {
+    source("scaffold.R")
   }
 }
 
 #' Load environment variables from .env file
 #' @keywords internal
 .load_environment <- function() {
-  dotenv::load_dot_env()
+  config <- read_config()
+
+  if (!is.null(config$dotenv_location)) {
+    dotenv_path <- config$dotenv_location
+
+    if (dir.exists(dotenv_path)) {
+      dotenv_path <- file.path(dotenv_path, ".env")
+    }
+
+    if (!file.exists(dotenv_path)) {
+      stop(sprintf("Dotenv file not found at '%s'", dotenv_path))
+    }
+
+    dotenv::load_dot_env(dotenv_path)
+  } else {
+    dotenv::load_dot_env()
+  }
 }
 
 #' Load configuration from config.yml
 #' @keywords internal
-.load_configuration <- function() {
-  read_config()
+.load_configuration <- function(config_file = "config.yml") {
+  read_config(config_file)
 }
 
 #' Get package requirements from config
