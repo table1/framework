@@ -479,17 +479,27 @@ The `.styler.R` file is used by the `styler` package to enforce code style and c
 
 The `.editorconfig` file is used by text editors to enforce code style and consistency.
 
-## Development
+## Roadmap
 
-The framework is designed to be easy to extend and customize. If you need to add new functionality or modify existing functionality, you can do so by:
+The following features will be implemented soon:
 
-- Adding new functions to the `functions/` directory
-- Modifying existing functions
-- Adding new files to the project
+* Improved helper functions for data files:
+  - Automatic reports on variables documented in the data yaml files
+  - Automatic validation on variables documented in the data yaml files
+  - Documentation scaffolding in Quarto
+  - Codebook scaffolding using data from the variables yaml and Quarto
+* Improved security features
+  - A private flag on data files that checks the gitignore to ensure 
+  - A private flag for publishing results that checks the gitignore
+* Configurable directories for cached data and results using config.yml
+* Improved connections support
+  * Supporting network attached storage on connections with helpers to map them
+  * MySQL, SQLServer, Spark, Snowflake support
+  * ODBC/JDBC support for arbitrary database drivers
 
 ## Contributing
 
-If you're interested in contributing to the framework, please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
+If you're interested in contributing to the framework, make a pull request or email me below.
 
 ## License
 
@@ -497,4 +507,4 @@ The framework is licensed under the MIT License. See the [LICENSE](LICENSE) file
 
 ## Author
 
-The framework was created by [Your Name](https://github.com/yourusername).
+The framework was created by [Erik Westlund](https://github.com/erikwestlund).
