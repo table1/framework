@@ -181,29 +181,88 @@ get_data_spec <- function(path) {
   config <- read_config()
   parts <- strsplit(path, "\\.")[[1]]
 
-  # Navigate through config to find data specification
-  current <- config$data
+  # Check if we should start under "files"
+  if ("files" %in% names(config$data)) {
+    current <- config$data$files
+  } else {
+    current <- config$data
+  }
+
+  # First try to find in config
+  config_spec <- current
   for (part in parts) {
-    if (is.null(current[[part]])) {
-      return(NULL)
+    if (is.null(config_spec[[part]])) {
+      config_spec <- NULL
+      break
     }
-    current <- current[[part]]
+    config_spec <- config_spec[[part]]
   }
 
-  # If current is just a string, create a simple spec
-  if (is.character(current) && length(current) == 1) {
-    return(list(
-      path = current,
-      type = if (grepl("\\.csv$", current)) "csv" else "rds",
-      delimiter = if (grepl("\\.csv$", current)) "comma" else NULL,
-      locked = FALSE,
-      encrypted = FALSE
-    ))
+  # If found in config, return it
+  if (!is.null(config_spec)) {
+    # If current is just a string, create a simple spec
+    if (is.character(config_spec) && length(config_spec) == 1) {
+      return(list(
+        path = config_spec,
+        type = if (grepl("\\.csv$", config_spec)) "csv" else "rds",
+        delimiter = if (grepl("\\.csv$", config_spec)) "comma" else NULL,
+        locked = FALSE,
+        encrypted = FALSE
+      ))
+    }
+    return(config_spec)
   }
 
-  current
+  # If not in config, look for physical file
+  # Convert dot notation to directory structure
+  file_name <- parts[length(parts)]
+  dir_parts <- parts[-length(parts)]
+  search_dir <- file.path("data", paste(dir_parts, collapse = "/"))
+
+  if (!dir.exists(search_dir)) {
+    return(NULL)
+  }
+
+  # Find all matching files
+  matching_files <- list.files(
+    search_dir,
+    pattern = paste0("^", file_name, "\\."),
+    full.names = TRUE
+  )
+
+  if (length(matching_files) == 0) {
+    return(NULL)
+  }
+
+  # If multiple files exist, prefer CSV
+  if (length(matching_files) > 1) {
+    csv_file <- matching_files[grepl("\\.csv$", matching_files, ignore.case = TRUE)][1]
+    if (!is.na(csv_file)) {
+      message(sprintf(
+        "Multiple files found for %s, using CSV: %s",
+        file_name,
+        basename(csv_file)
+      ))
+      matching_files <- csv_file
+    } else {
+      matching_files <- sort(matching_files)
+      message(sprintf(
+        "Multiple files found for %s, using: %s",
+        file_name,
+        basename(matching_files[1])
+      ))
+    }
+  }
+
+  file_path <- matching_files[1]
+  return(list(
+    path = file_path,
+    type = if (grepl("\\.csv$", file_path, ignore.case = TRUE)) "csv" else "rds",
+    delimiter = if (grepl("\\.csv$", file_path, ignore.case = TRUE)) "comma" else NULL,
+    locked = FALSE,
+    encrypted = FALSE
+  ))
 }
-
 
 #' Get a data value
 #' @param name The data name

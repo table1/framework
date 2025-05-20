@@ -19,6 +19,10 @@ Framework includes functionality for:
 
 Framework is designed to reduce friction around non-analytical tasks and make it easier for analysts to follow best practices in data science.
 
+## Warning
+
+This package is in active development. The APIs may change.  We will announce a version 1 with a stable API.
+
 ## Table of Contents
 
 - [Getting Started](#getting-started)
@@ -58,7 +62,7 @@ Framework is designed to reduce friction around non-analytical tasks and make it
   - [.lintr](#lintr)
   - [.styler.R](#stylerr)
   - [.editorconfig](#editorconfig)
-- [Development](#development)
+- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Author](#author)
@@ -483,6 +487,10 @@ The `.editorconfig` file is used by text editors to enforce code style and consi
 
 The following features will be implemented soon:
 
+* More file types support:
+  - Excel
+  - Stata
+  - SAS
 * Improved helper functions for data files:
   - Automatic reports on variables documented in the data yaml files
   - Automatic validation on variables documented in the data yaml files
