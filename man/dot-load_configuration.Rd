@@ -4,7 +4,7 @@
 \alias{.load_configuration}
 \title{Load configuration from config.yml}
 \usage{
-.load_configuration()
+.load_configuration(config_file = "config.yml")
 }
 \description{
 Load configuration from config.yml

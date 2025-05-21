@@ -4,7 +4,7 @@
 \alias{read_config}
 \title{Read project configuration}
 \usage{
-read_config()
+read_config(config_file = "config.yml")
 }
 \value{
 The configuration as a list

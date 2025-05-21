@@ -4,7 +4,7 @@
 \alias{scaffold}
 \title{Initialize and load the project environment}
 \usage{
-scaffold()
+scaffold(config_file = "config.yml")
 }
 \description{
 This function initializes the project environment by:

@@ -199,6 +199,7 @@ The `config.yml` file is the central configuration file for your project. It use
 There are two ways to structure your configuration:
 
 1. **Default Structure** - Uses separate YAML files in `/settings`:
+
 ```yaml
 default:
   data: settings/data.yml
@@ -211,13 +212,17 @@ default:
 Example `settings/data.yml`:
 
 ```yaml
-source:
-  private:
-    example:
-      path: "data/source/private/example.csv"
-      type: "csv"
-      delimiter: "comma"
-      locked: true
+options:
+  cache_dir: data/cached
+  scratch_dir: data/scratch
+data:
+  source:
+    private:
+      example:
+        path: "data/source/private/example.csv"
+        type: "csv"
+        delimiter: "comma"
+        locked: true
 ```
 
 2. **Minimal Structure** - All configuration in a single file:
@@ -230,10 +235,40 @@ default:
     - ggplot2
 ```
 
-The configuration system:
-- Always loads the `default` configuration first
-- Can override settings for different environments (development, production, etc.)
+Whether you use the default or a minimal set up, Framework compiles your settings down into a config R `list` object that looks like something like this:
 
+```yaml
+options:
+  dotenv_location: "."
+  connections:
+    default_connection: db
+  data:
+    cache_dir: data/cached
+    scratch_dir: data/scratch
+  packages:
+    auto_install: true
+    auto_update: false
+
+connections:
+  
+data:
+
+git:
+  url: null
+  author: null
+  email: null
+
+packages:
+
+security:
+  data_key: null
+  results_key: null
+
+```
+
+Options are stored under `options`, structured using each component's respective name as a parent. The configuration itself is stored at the top level of the config list under its respective name.
+
+This is designed to allow users to expect the config object to have certain data always present. For example, `config$options$data$cache_dir` will always be available, as a default or as whatever the user defines it as in their configuration settings.
 
 ### Config Functions
 

@@ -29,9 +29,6 @@ save_result(
 
 \item{file}{Optional path to a file to save (e.g. a QMD notebook)}
 }
-\value{
-The saved result
-}
 \description{
 Save a result
 }

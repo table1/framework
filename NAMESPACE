@@ -3,6 +3,7 @@
 export(cache)
 export(cache_forget)
 export(cache_get)
+export(capture)
 export(clear_cache)
 export(execute_query)
 export(forget_cache)
