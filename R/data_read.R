@@ -14,150 +14,61 @@ load_data <- function(path) {
     stop(sprintf("File not found: %s", spec$path))
   }
 
-  # Whether file is encrypted
-  is_encrypted <- ifelse(is.null(spec$encrypted), FALSE, spec$encrypted)
-
   # Calculate current file hash
   current_hash <- .calculate_file_hash(spec$path)
 
   # Get existing data record
   data_record <- .get_data_record(path)
 
-  # Handle hash checking and data loading
+  # Handle hash checking
   if (is.null(data_record)) {
     # No record exists, create one with current hash
-    .set_data(path, encrypted = is_encrypted, hash = current_hash)
-
-    # Load unencrypted data
-    switch(spec$type,
-      csv = {
-        # Convert delimiter name to actual character
-        delim <- switch(spec$delimiter,
-          comma = ",",
-          "," = ",",
-          tab = "\t",
-          "\t" = "\t",
-          semicolon = ";",
-          ";" = ";",
-          space = " ",
-          " " = " "
-        )
-        readr::read_csv(spec$path, show_col_types = FALSE)
-      },
-      rds = readRDS(spec$path),
-      stop(sprintf("Unsupported file type: %s", spec$type))
-    )
-  } else if (spec$locked) {
-    # Record exists and data is locked, verify hash
-    if (data_record$hash != current_hash) {
-      stop(sprintf("Hash mismatch for locked data: %s", path))
-    }
-
-    # Load data based on encryption
-    if (data_record$encrypted) {
-      config <- read_config()
-      if (is.null(config$security$data_key)) {
-        stop("Data encryption key not found in config")
-      }
-      # Read and decrypt the file
-      encrypted_data <- readBin(spec$path, "raw", n = file.size(spec$path))
-      decrypted_data <- .decrypt_data(encrypted_data, config$security$data_key)
-
-      # Parse decrypted data based on type
-      switch(spec$type,
-        csv = {
-          # Convert delimiter name to actual character
-          delim <- switch(spec$delimiter,
-            comma = ",",
-            "," = ",",
-            tab = "\t",
-            "\t" = "\t",
-            semicolon = ";",
-            ";" = ";",
-            space = " ",
-            " " = " "
-          )
-          readr::read_csv(rawToChar(decrypted_data), show_col_types = FALSE)
-        },
-        rds = unserialize(decrypted_data),
-        stop(sprintf("Unsupported file type: %s", spec$type))
-      )
-    } else {
-      # Load unencrypted data
-      switch(spec$type,
-        csv = {
-          # Convert delimiter name to actual character
-          delim <- switch(spec$delimiter,
-            comma = ",",
-            "," = ",",
-            tab = "\t",
-            "\t" = "\t",
-            semicolon = ";",
-            ";" = ";",
-            space = " ",
-            " " = " "
-          )
-          readr::read_csv(spec$path, show_col_types = FALSE)
-        },
-        rds = readRDS(spec$path),
-        stop(sprintf("Unsupported file type: %s", spec$type))
-      )
-    }
+    .set_data(path, encrypted = spec$encrypted, hash = current_hash)
   } else {
-    # Record exists but not locked, update hash
-    .set_data(path, encrypted = data_record$encrypted, hash = current_hash)
-
-    # Load data based on encryption
-    if (data_record$encrypted) {
-      config <- read_config()
-      if (is.null(config$security$data_key)) {
-        stop("Data encryption key not found in config")
+    # Check if file has changed
+    if (data_record$hash != current_hash) {
+      if (spec$locked) {
+        stop(sprintf("Hash mismatch for locked data: %s", path))
+      } else {
+        warning(sprintf("File has changed since last read: %s", path))
       }
-      # Read and decrypt the file
-      encrypted_data <- readBin(spec$path, "raw", n = file.size(spec$path))
-      decrypted_data <- .decrypt_data(encrypted_data, config$security$data_key)
-
-      # Parse decrypted data based on type
-      switch(spec$type,
-        csv = {
-          # Convert delimiter name to actual character
-          delim <- switch(spec$delimiter,
-            comma = ",",
-            "," = ",",
-            tab = "\t",
-            "\t" = "\t",
-            semicolon = ";",
-            ";" = ";",
-            space = " ",
-            " " = " "
-          )
-          readr::read_csv(rawToChar(decrypted_data), show_col_types = FALSE)
-        },
-        rds = unserialize(decrypted_data),
-        stop(sprintf("Unsupported file type: %s", spec$type))
-      )
-    } else {
-      # Load unencrypted data
-      switch(spec$type,
-        csv = {
-          # Convert delimiter name to actual character
-          delim <- switch(spec$delimiter,
-            comma = ",",
-            "," = ",",
-            tab = "\t",
-            "\t" = "\t",
-            semicolon = ";",
-            ";" = ";",
-            space = " ",
-            " " = " "
-          )
-          readr::read_csv(spec$path, show_col_types = FALSE)
-        },
-        rds = readRDS(spec$path),
-        stop(sprintf("Unsupported file type: %s", spec$type))
-      )
     }
+    # Update hash
+    .set_data(path, encrypted = data_record$encrypted, hash = current_hash)
   }
+
+  # Load data based on encryption
+  if (spec$encrypted) {
+    config <- read_config()
+    if (is.null(config$security$data_key)) {
+      stop("Data encryption key not found in config")
+    }
+    # Read and decrypt the file
+    encrypted_data <- readBin(spec$path, "raw", n = file.size(spec$path))
+    data <- .decrypt_data(encrypted_data, config$security$data_key)
+  } else {
+    data <- readBin(spec$path, "raw", n = file.size(spec$path))
+  }
+
+  # Parse data based on type
+  switch(spec$type,
+    csv = {
+      # Convert delimiter name to actual character
+      delim <- switch(spec$delimiter,
+        comma = ",",
+        "," = ",",
+        tab = "\t",
+        "\t" = "\t",
+        semicolon = ";",
+        ";" = ";",
+        space = " ",
+        " " = " "
+      )
+      readr::read_csv(rawToChar(data), show_col_types = FALSE)
+    },
+    rds = unserialize(data),
+    stop(sprintf("Unsupported file type: %s", spec$type))
+  )
 }
 
 #' Calculate hash of a file
@@ -181,12 +92,8 @@ get_data_spec <- function(path) {
   config <- read_config()
   parts <- strsplit(path, "\\.")[[1]]
 
-  # Check if we should start under "files"
-  if ("files" %in% names(config$data)) {
-    current <- config$data$files
-  } else {
-    current <- config$data
-  }
+  # Get data from config$data directly (no more files check)
+  current <- config$data
 
   # First try to find in config
   config_spec <- current
@@ -198,19 +105,45 @@ get_data_spec <- function(path) {
     config_spec <- config_spec[[part]]
   }
 
+  # Create base spec with defaults from config$options$data
+  create_spec <- function(path, existing_spec = NULL) {
+    # Start with defaults from options
+    spec <- list(
+      path = path,
+      type = if (grepl("\\.csv$", path, ignore.case = TRUE)) "csv" else "rds",
+      delimiter = if (grepl("\\.csv$", path, ignore.case = TRUE)) "comma" else NULL,
+      locked = FALSE,
+      private = basename(dirname(path)) == "private",
+      encrypted = FALSE
+    )
+
+    # Merge with any options from config$options$data
+    if (!is.null(config$options$data)) {
+      spec <- modifyList(spec, config$options$data)
+    }
+
+    # If we have an existing spec, merge it with our defaults
+    if (!is.null(existing_spec)) {
+      # Preserve any explicitly set values
+      for (key in names(existing_spec)) {
+        if (!is.null(existing_spec[[key]])) {
+          spec[[key]] <- existing_spec[[key]]
+        }
+      }
+    }
+
+    spec
+  }
+
   # If found in config, return it
   if (!is.null(config_spec)) {
     # If current is just a string, create a simple spec
     if (is.character(config_spec) && length(config_spec) == 1) {
-      return(list(
-        path = config_spec,
-        type = if (grepl("\\.csv$", config_spec)) "csv" else "rds",
-        delimiter = if (grepl("\\.csv$", config_spec)) "comma" else NULL,
-        locked = FALSE,
-        encrypted = FALSE
-      ))
+      create_spec(config_spec)
+    } else {
+      # Merge with defaults, preserving any explicit settings
+      create_spec(config_spec$path, config_spec)
     }
-    return(config_spec)
   }
 
   # If not in config, look for physical file
@@ -220,7 +153,7 @@ get_data_spec <- function(path) {
   search_dir <- file.path("data", paste(dir_parts, collapse = "/"))
 
   if (!dir.exists(search_dir)) {
-    return(NULL)
+    NULL
   }
 
   # Find all matching files
@@ -231,7 +164,7 @@ get_data_spec <- function(path) {
   )
 
   if (length(matching_files) == 0) {
-    return(NULL)
+    NULL
   }
 
   # If multiple files exist, prefer CSV
@@ -254,14 +187,8 @@ get_data_spec <- function(path) {
     }
   }
 
-  file_path <- matching_files[1]
-  return(list(
-    path = file_path,
-    type = if (grepl("\\.csv$", file_path, ignore.case = TRUE)) "csv" else "rds",
-    delimiter = if (grepl("\\.csv$", file_path, ignore.case = TRUE)) "comma" else NULL,
-    locked = FALSE,
-    encrypted = FALSE
-  ))
+  # Create spec for found file
+  create_spec(matching_files[1])
 }
 
 #' Get a data value

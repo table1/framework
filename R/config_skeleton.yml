@@ -1,0 +1,25 @@
+options:
+  dotenv_location: "."
+  connections:
+    default_connection: db
+  data:
+    cache_dir: data/cached
+    scratch_dir: data/scratch
+  packages:
+    auto_install: true
+    auto_update: false
+
+connections:
+
+data:
+
+git:
+  url: null
+  author: null
+  email: null
+
+packages:
+
+security:
+  data_key: null
+  results_key: null

@@ -1,3 +1,5 @@
+options:
+packages:
 - name: dplyr
   attached: true
 - name: readr

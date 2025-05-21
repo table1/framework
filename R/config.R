@@ -4,8 +4,12 @@
 #' @return The configuration as a list
 #' @export
 read_config <- function(config_file = "config.yml") {
-  # Load config with config::get() to handle !expr
-  config <- config::get(config = config_file)
+  # Load skeleton config first
+  skeleton_path <- system.file("R", "config_skeleton.yml", package = "framework")
+  skeleton <- yaml::read_yaml(skeleton_path)
+
+  # Load user config with config::get() to handle !expr
+  user_config <- config::get(config = config_file)
 
   # Function to evaluate env() calls
   eval_env <- function(x) {
@@ -58,8 +62,57 @@ read_config <- function(config_file = "config.yml") {
     }
   }
 
-  # Process settings files and evaluate env() calls
-  config <- process_settings(config)
+  # Function to merge config with skeleton
+  merge_with_skeleton <- function(config, skeleton) {
+    # Start with skeleton as base
+    result <- skeleton
+
+    # Initialize options if not present
+    if (is.null(result$options)) {
+      result$options <- list()
+    }
+
+    # For each section in config
+    for (section in names(config)) {
+      if (section == "options") {
+        # Handle options specially - merge with user options
+        result$options <- modifyList(result$options, config$options)
+      } else if (section %in% names(skeleton)) {
+        # This is a top-level skeleton section
+        if (is.character(config[[section]]) && grepl("^settings/", config[[section]])) {
+          # This is a settings file reference
+          settings_file <- config[[section]]
+          if (file.exists(settings_file)) {
+            # Load settings and merge with skeleton
+            settings <- yaml::read_yaml(settings_file)
+            result[[section]] <- modifyList(skeleton[[section]], settings)
+          }
+        } else if (!is.null(config[[section]])) {
+          # Direct config, merge with skeleton
+          if (is.list(skeleton[[section]]) && is.list(config[[section]])) {
+            result[[section]] <- modifyList(skeleton[[section]], config[[section]])
+          } else {
+            # If either is not a list, use the user's value
+            result[[section]] <- config[[section]]
+          }
+        }
+      } else {
+        # This is not a top-level skeleton section, move to options
+        result$options[[section]] <- config[[section]]
+      }
+    }
+
+    result
+  }
+
+  # Process settings files first
+  user_config <- process_settings(user_config)
+  skeleton <- process_settings(skeleton)
+
+  # Merge user config with skeleton
+  config <- merge_with_skeleton(user_config, skeleton)
+
+  # Evaluate env() calls
   eval_env(config)
 }
 

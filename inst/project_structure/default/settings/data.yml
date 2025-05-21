@@ -1,7 +1,7 @@
 options:
   cache_dir: data/cached
   scratch_dir: data/scratch
-files:
+data:
   source:
     private:
       example:
