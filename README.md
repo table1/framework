@@ -339,7 +339,6 @@ The framework provides a structured way to manage data files and their metadata:
   - `data/final/` - Final processed data
   - Each level can have `public/` and `private/` subdirectories
 
-
 ### Data Configuration
 
 Data paths must be configured in either:
@@ -373,10 +372,17 @@ The path is resolved through `config.yml`, which specifies:
 - File type (CSV, RDS)
 - Delimiter (for CSV files)
 - Lock status
+- Encryption status
+
+The function includes comprehensive error handling for:
+- File operations
+- Database operations
+- Data parsing
+- Encryption/decryption
 
 ### Saving Data
 
-Save data using dot notation paths.  Specify `csv` or `rds` as types.
+Save data using dot notation paths. Specify `csv` or `rds` as types.
 
 ```r
 # Save data frame as CSV
@@ -384,16 +390,37 @@ save_data(df_post_merge, "in_progress.post_merge", type = "csv")
 
 # Save as RDS
 save_data(df, "final.public.data", type = "rds")
+
+# Save encrypted data
+save_data(df, "final.private.sensitive", type = "csv", encrypted = TRUE)
 ```
 
 The function:
 - Creates necessary directories
 - Saves the data file
+- Handles encryption if specified (properly serializing data before encryption)
 - Updates the data integrity digest
 - Provides feedback messages
 
-When using `save_data()`, you'll get a message showing where to add the configuration in your YAML file.  This is left up to the analyst.
+When using `save_data()`, you'll get a message showing where to add the configuration in your YAML file. This is left up to the analyst.
 
+### Data Deletion
+
+The framework provides functions for removing data:
+
+```r
+# Remove a single data value
+remove_data("source.private.example", delete_file = TRUE)
+
+# Remove all data values
+remove_all_data(delete_files = TRUE)
+```
+
+These functions:
+- Remove database records
+- Optionally delete the actual files
+- Include comprehensive error handling
+- Maintain data integrity tracking
 
 ### Results Management
 

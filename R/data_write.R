@@ -20,34 +20,55 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   file_name <- paste0(parts[length(parts)], ".", type)
   file_path <- file.path(dir_path, file_name)
 
-  # Save data
-  switch(type,
-    csv = {
-      # Convert delimiter name to actual character
-      delim <- switch(delimiter,
-        comma = ",",
-        tab = "\t",
-        semicolon = ";",
-        space = " "
-      )
-      readr::write_csv(data, file_path)
-    },
-    rds = saveRDS(data, file_path),
-    stop(sprintf("Unsupported file type: %s", type))
-  )
-
-  # Encrypt if needed
+  # Prepare data for saving
   if (encrypted) {
     config <- read_config()
     if (is.null(config$security$data_key)) {
       stop("Data encryption key not found in config")
     }
-    # Read the file
-    content <- readBin(file_path, "raw", n = file.size(file_path))
-    # Encrypt
-    encrypted_content <- .encrypt_data(content, config$security$data_key)
-    # Write back
-    writeBin(encrypted_content, file_path)
+
+    # Serialize data based on type
+    serialized_data <- switch(type,
+      csv = {
+        # Convert delimiter name to actual character
+        delim <- switch(delimiter,
+          comma = ",",
+          tab = "\t",
+          semicolon = ";",
+          space = " "
+        )
+        # Write to temp file first
+        temp_file <- tempfile(fileext = ".csv")
+        readr::write_csv(data, temp_file)
+        # Read raw bytes
+        content <- readBin(temp_file, "raw", n = file.size(temp_file))
+        unlink(temp_file)
+        content
+      },
+      rds = serialize(data, NULL),
+      stop(sprintf("Unsupported file type: %s", type))
+    )
+
+    # Encrypt the serialized data
+    encrypted_data <- .encrypt_data(serialized_data, config$security$data_key)
+    # Write encrypted data
+    writeBin(encrypted_data, file_path)
+  } else {
+    # Save data normally
+    switch(type,
+      csv = {
+        # Convert delimiter name to actual character
+        delim <- switch(delimiter,
+          comma = ",",
+          tab = "\t",
+          semicolon = ";",
+          space = " "
+        )
+        readr::write_csv(data, file_path)
+      },
+      rds = saveRDS(data, file_path),
+      stop(sprintf("Unsupported file type: %s", type))
+    )
   }
 
   message(sprintf("Data saved to: %s", file_path))
@@ -185,41 +206,6 @@ update_data_spec <- function(path, spec) {
     raw_config$default$data <- current
     yaml::write_yaml(raw_config, "config.yml")
   }
-}
-
-#' Update data hash and timestamp
-#' @param name The data name
-#' @param hash The new hash
-#' @param type The data type
-#' @keywords internal
-.update_data <- function(name, hash, type) {
-  con <- .get_db_connection()
-  now <- lubridate::now()
-
-  # Check if entry exists
-  entry_exists <- DBI::dbGetQuery(
-    con,
-    "SELECT 1 FROM data WHERE name = ?",
-    list(name)
-  )
-
-  if (nrow(entry_exists) > 0) {
-    # Update existing entry
-    DBI::dbExecute(
-      con,
-      "UPDATE data SET hash = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
-      list(hash, now, now, name)
-    )
-  } else {
-    # Insert new entry
-    DBI::dbExecute(
-      con,
-      "INSERT INTO data (name, hash, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-      list(name, hash, now, now, now)
-    )
-  }
-
-  DBI::dbDisconnect(con)
 }
 
 #' Update data with hash in the data table

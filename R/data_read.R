@@ -4,7 +4,13 @@
 #' @export
 load_data <- function(path) {
   # Get data specification from config
-  spec <- get_data_spec(path)
+  spec <- tryCatch(
+    get_data_spec(path),
+    error = function(e) {
+      stop(sprintf("Failed to get data specification: %s", e$message))
+    }
+  )
+
   if (is.null(spec)) {
     stop(sprintf("No data specification found for path: %s", path))
   }
@@ -15,15 +21,31 @@ load_data <- function(path) {
   }
 
   # Calculate current file hash
-  current_hash <- .calculate_file_hash(spec$path)
+  current_hash <- tryCatch(
+    .calculate_file_hash(spec$path),
+    error = function(e) {
+      stop(sprintf("Failed to calculate file hash: %s", e$message))
+    }
+  )
 
   # Get existing data record
-  data_record <- .get_data_record(path)
+  data_record <- tryCatch(
+    .get_data_record(path),
+    error = function(e) {
+      warning(sprintf("Failed to get data record: %s", e$message))
+      NULL
+    }
+  )
 
   # Handle hash checking
   if (is.null(data_record)) {
     # No record exists, create one with current hash
-    .set_data(path, encrypted = spec$encrypted, hash = current_hash)
+    tryCatch(
+      .set_data(path, encrypted = spec$encrypted, hash = current_hash),
+      error = function(e) {
+        warning(sprintf("Failed to set data record: %s", e$message))
+      }
+    )
   } else {
     # Check if file has changed
     if (data_record$hash != current_hash) {
@@ -34,41 +56,82 @@ load_data <- function(path) {
       }
     }
     # Update hash
-    .set_data(path, encrypted = data_record$encrypted, hash = current_hash)
+    tryCatch(
+      .set_data(path, encrypted = data_record$encrypted, hash = current_hash),
+      error = function(e) {
+        warning(sprintf("Failed to update data record: %s", e$message))
+      }
+    )
   }
 
   # Load data based on encryption
   if (spec$encrypted) {
-    config <- read_config()
+    config <- tryCatch(
+      read_config(),
+      error = function(e) {
+        stop(sprintf("Failed to read config: %s", e$message))
+      }
+    )
+
     if (is.null(config$security$data_key)) {
       stop("Data encryption key not found in config")
     }
-    # Read and decrypt the file
-    encrypted_data <- readBin(spec$path, "raw", n = file.size(spec$path))
-    data <- .decrypt_data(encrypted_data, config$security$data_key)
-  } else {
-    data <- readBin(spec$path, "raw", n = file.size(spec$path))
-  }
 
-  # Parse data based on type
-  switch(spec$type,
-    csv = {
-      # Convert delimiter name to actual character
-      delim <- switch(spec$delimiter,
-        comma = ",",
-        "," = ",",
-        tab = "\t",
-        "\t" = "\t",
-        semicolon = ";",
-        ";" = ";",
-        space = " ",
-        " " = " "
-      )
-      readr::read_csv(rawToChar(data), show_col_types = FALSE)
-    },
-    rds = unserialize(data),
-    stop(sprintf("Unsupported file type: %s", spec$type))
-  )
+    # Read and decrypt the file
+    encrypted_data <- tryCatch(
+      readBin(spec$path, "raw", n = file.size(spec$path)),
+      error = function(e) {
+        stop(sprintf("Failed to read encrypted file: %s", e$message))
+      }
+    )
+
+    decrypted_data <- tryCatch(
+      .decrypt_data(encrypted_data, config$security$data_key),
+      error = function(e) {
+        stop(sprintf("Failed to decrypt data: %s", e$message))
+      }
+    )
+
+    # Parse decrypted data based on type
+    tryCatch(
+      switch(spec$type,
+        csv = {
+          # Convert raw bytes to string and parse as CSV
+          readr::read_csv(rawToChar(decrypted_data), show_col_types = FALSE)
+        },
+        rds = unserialize(decrypted_data),
+        stop(sprintf("Unsupported file type: %s", spec$type))
+      ),
+      error = function(e) {
+        stop(sprintf("Failed to parse decrypted data: %s", e$message))
+      }
+    )
+  } else {
+    # Load data normally
+    tryCatch(
+      switch(spec$type,
+        csv = {
+          # Convert delimiter name to actual character
+          delim <- switch(spec$delimiter,
+            comma = ",",
+            "," = ",",
+            tab = "\t",
+            "\t" = "\t",
+            semicolon = ";",
+            ";" = ";",
+            space = " ",
+            " " = " "
+          )
+          readr::read_csv(spec$path, show_col_types = FALSE)
+        },
+        rds = readRDS(spec$path),
+        stop(sprintf("Unsupported file type: %s", spec$type))
+      ),
+      error = function(e) {
+        stop(sprintf("Failed to load data: %s", e$message))
+      }
+    )
+  }
 }
 
 #' Load data with caching
