@@ -90,105 +90,70 @@ load_data <- function(path) {
 #' @export
 get_data_spec <- function(path) {
   config <- read_config()
-  parts <- strsplit(path, "\\.")[[1]]
 
-  # Get data from config$data directly (no more files check)
-  current <- config$data
-
-  # First try to find in config
-  config_spec <- current
-  for (part in parts) {
-    if (is.null(config_spec[[part]])) {
-      config_spec <- NULL
-      break
-    }
-    config_spec <- config_spec[[part]]
+  # Get file type info
+  get_file_type_info <- function(path) {
+    is_csv <- grepl("\\.csv$", path, ignore.case = TRUE)
+    list(
+      type = if (is_csv) "csv" else "rds",
+      delimiter = if (is_csv) "comma" else NULL
+    )
   }
 
-  # Create base spec with defaults from config$options$data
-  create_spec <- function(path, existing_spec = NULL) {
-    # Start with defaults from options
-    spec <- list(
+  # Create base spec with defaults
+  create_base_spec <- function(path) {
+    type_info <- get_file_type_info(path)
+    list(
       path = path,
-      type = if (grepl("\\.csv$", path, ignore.case = TRUE)) "csv" else "rds",
-      delimiter = if (grepl("\\.csv$", path, ignore.case = TRUE)) "comma" else NULL,
+      type = type_info$type,
+      delimiter = type_info$delimiter,
       locked = FALSE,
       private = basename(dirname(path)) == "private",
       encrypted = FALSE
     )
+  }
 
-    # Merge with any options from config$options$data
-    if (!is.null(config$options$data)) {
-      spec <- modifyList(spec, config$options$data)
-    }
-
-    # If we have an existing spec, merge it with our defaults
+  # Create spec with optional existing spec
+  create_spec <- function(path, existing_spec = NULL) {
+    spec <- create_base_spec(path)
     if (!is.null(existing_spec)) {
-      # Preserve any explicitly set values
       for (key in names(existing_spec)) {
         if (!is.null(existing_spec[[key]])) {
           spec[[key]] <- existing_spec[[key]]
         }
       }
     }
-
     spec
   }
 
-  # If found in config, return it
-  if (!is.null(config_spec)) {
-    # If current is just a string, create a simple spec
+  # Handle dot notation lookup
+  get_dot_notation_spec <- function(parts, config) {
+    current <- config$data
+    config_spec <- current
+    for (part in parts) {
+      if (is.null(config_spec[[part]])) {
+        return(NULL)
+      }
+      config_spec <- config_spec[[part]]
+    }
+
     if (is.character(config_spec) && length(config_spec) == 1) {
       create_spec(config_spec)
     } else {
-      # Merge with defaults, preserving any explicit settings
       create_spec(config_spec$path, config_spec)
     }
   }
 
-  # If not in config, look for physical file
-  # Convert dot notation to directory structure
-  file_name <- parts[length(parts)]
-  dir_parts <- parts[-length(parts)]
-  search_dir <- file.path("data", paste(dir_parts, collapse = "/"))
-
-  if (!dir.exists(search_dir)) {
-    NULL
-  }
-
-  # Find all matching files
-  matching_files <- list.files(
-    search_dir,
-    pattern = paste0("^", file_name, "\\."),
-    full.names = TRUE
-  )
-
-  if (length(matching_files) == 0) {
-    NULL
-  }
-
-  # If multiple files exist, prefer CSV
-  if (length(matching_files) > 1) {
-    csv_file <- matching_files[grepl("\\.csv$", matching_files, ignore.case = TRUE)][1]
-    if (!is.na(csv_file)) {
-      message(sprintf(
-        "Multiple files found for %s, using CSV: %s",
-        file_name,
-        basename(csv_file)
-      ))
-      matching_files <- csv_file
+  # Get spec based on path type
+  get_spec_by_path_type <- function(path, config) {
+    if (grepl("[/\\\\]", path)) {
+      create_spec(file.path(getwd(), path))
     } else {
-      matching_files <- sort(matching_files)
-      message(sprintf(
-        "Multiple files found for %s, using: %s",
-        file_name,
-        basename(matching_files[1])
-      ))
+      get_dot_notation_spec(strsplit(path, "\\.")[[1]], config)
     }
   }
 
-  # Create spec for found file
-  create_spec(matching_files[1])
+  get_spec_by_path_type(path, config)
 }
 
 #' Get a data value

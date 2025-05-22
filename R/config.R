@@ -4,11 +4,23 @@
 #' @return The configuration as a list
 #' @export
 read_config <- function(config_file = "config.yml") {
-  # Load skeleton config first
+  # 1. Load skeleton config first and set as our base config
   skeleton_path <- system.file("R", "config_skeleton.yml", package = "framework")
-  skeleton <- yaml::read_yaml(skeleton_path)
+  config <- .safe_read_yaml(skeleton_path)
 
-  # Load user config with config::get() to handle !expr
+  # Initialize all standard sections
+  for (section in c("data", "connections", "git", "security", "packages")) {
+    if (is.null(config[[section]])) {
+      config[[section]] <- list()
+    }
+  }
+
+  # Initialize options if not present
+  if (is.null(config$options)) {
+    config$options <- list()
+  }
+
+  # 2. Load user config with config::get() to handle !expr
   user_config <- config::get(config = config_file)
 
   # Function to evaluate env() calls
@@ -39,81 +51,129 @@ read_config <- function(config_file = "config.yml") {
     }
   }
 
-  # Function to process settings files
-  process_settings <- function(x) {
-    if (is.list(x)) {
-      lapply(x, process_settings)
-    } else if (is.character(x)) {
-      # Handle vectors of character strings
-      if (length(x) > 1) {
-        lapply(x, process_settings)
-      } else if (grepl("^settings/", x)) {
-        if (file.exists(x)) {
-          suppressWarnings(yaml::read_yaml(x, eval.expr = TRUE))
-        } else {
-          warning(sprintf("Settings file not found: %s", x))
-          x
+  # 3. Handle non-standard sections as options
+  for (section in names(user_config)) {
+    if (!section %in% c("data", "connections", "git", "security", "packages")) {
+      config$options[[section]] <- user_config[[section]]
+    }
+  }
+
+  # Helper function to merge section data
+  .merge_section <- function(config_section, new_data, section_name) {
+    if (is.null(new_data)) {
+      return(config_section)
+    }
+
+    if (section_name == "packages") {
+      # Packages are handled specially
+      return(new_data)
+    } else if (is.list(new_data)) {
+      if (length(new_data) > 0 && is.null(names(new_data))) {
+        # If it's an unnamed list, convert to named list
+        # e.g. [{example: file.csv}] -> {example: file.csv}
+        if (length(new_data) == 1 && is.list(new_data[[1]])) {
+          return(new_data[[1]])
         }
+        return(new_data)
       } else {
-        x
+        # Otherwise merge with existing config
+        return(modifyList(config_section, new_data))
       }
     } else {
-      x
+      return(new_data)
     }
   }
 
-  # Function to merge config with skeleton
-  merge_with_skeleton <- function(config, skeleton) {
-    # Start with skeleton as base
-    result <- skeleton
+  # Process each standard section (data, connections, git, security, packages)
+  # by either loading from settings file or merging direct YAML
+  for (section in c("data", "connections", "git", "packages", "security")) {
+    if (!is.null(user_config[[section]])) {
+      # Check if this is a settings file reference
+      is_settings_file <- is.character(user_config[[section]]) &&
+        length(user_config[[section]]) == 1 &&
+        grepl("^settings/", user_config[[section]])
 
-    # Initialize options if not present
-    if (is.null(result$options)) {
-      result$options <- list()
-    }
+      if (is_settings_file) {
+        # This is a settings file reference
+        settings_file <- user_config[[section]]
+        if (file.exists(settings_file)) {
+          # Read settings file
+          settings <- .safe_read_yaml(settings_file)
 
-    # For each section in config
-    for (section in names(config)) {
-      if (section == "options") {
-        # Handle options specially - merge with user options
-        result$options <- modifyList(result$options, config$options)
-      } else if (section %in% names(skeleton)) {
-        # This is a top-level skeleton section
-        if (is.character(config[[section]]) && grepl("^settings/", config[[section]])) {
-          # This is a settings file reference
-          settings_file <- config[[section]]
-          if (file.exists(settings_file)) {
-            # Load settings and merge with skeleton
-            settings <- yaml::read_yaml(settings_file)
-            result[[section]] <- modifyList(skeleton[[section]], settings)
+          # If the section is not already in the config, create an empty list for it
+          if (is.null(config$options[[section]])) {
+            config$options[[section]] <- list()
           }
-        } else if (!is.null(config[[section]])) {
-          # Direct config, merge with skeleton
-          if (is.list(skeleton[[section]]) && is.list(config[[section]])) {
-            result[[section]] <- modifyList(skeleton[[section]], config[[section]])
+
+          # If there's an options key, add to the corresponding section in options
+          if (!is.null(settings$options)) {
+            config$options[[section]] <- modifyList(config$options[[section]], settings$options)
+          }
+
+          # If there's a key matching the section name, use that
+          if (!is.null(settings[[section]])) {
+            config[[section]] <- .merge_section(config[[section]], settings[[section]], section)
           } else {
-            # If either is not a list, use the user's value
-            result[[section]] <- config[[section]]
+            # Otherwise use the whole settings file
+            config[[section]] <- .merge_section(config[[section]], settings, section)
           }
+        } else {
+          warning(sprintf("Settings file not found: %s", settings_file))
         }
       } else {
-        # This is not a top-level skeleton section, move to options
-        result$options[[section]] <- config[[section]]
+        # Direct YAML, patch into config
+        config[[section]] <- .merge_section(config[[section]], user_config[[section]], section)
       }
     }
-
-    result
   }
 
-  # Process settings files first
-  user_config <- process_settings(user_config)
-  skeleton <- process_settings(skeleton)
-
-  # Merge user config with skeleton
-  config <- merge_with_skeleton(user_config, skeleton)
+  # Process packages to ensure consistent format
+  config$packages <- .process_packages(config$packages)
 
   # Evaluate env() calls
   eval_env(config)
+}
+
+# Helper function to process package configurations
+#
+# Ensures consistent format for package configurations by converting simple strings
+# to named lists with default values. For example:
+#
+# Input:  list("dplyr", list(name = "readr", attached = FALSE))
+# Output: list(list(name = "dplyr", attached = FALSE),
+#             list(name = "readr", attached = FALSE))
+#
+# @param packages List of package configurations, where each item is either:
+#   - A character string (package name)
+#   - A list with 'name' and optional 'attached' fields
+# @return List of package configurations, all in list format with 'name' and 'attached' fields
+.process_packages <- function(packages) {
+  if (is.null(packages)) {
+    return(NULL)
+  }
+
+  # Convert simple strings to named lists
+  lapply(packages, function(pkg) {
+    if (is.character(pkg) && !is.list(pkg)) {
+      list(name = pkg, attached = FALSE)
+    } else {
+      pkg
+    }
+  })
+}
+
+# Helper function to safely read YAML files
+#
+# Reads a YAML file while suppressing the "incomplete final line" warning
+# as long as the YAML is valid.
+#
+# @param file Path to YAML file
+# @return Parsed YAML content
+.safe_read_yaml <- function(file) {
+  # Read file content with warnings suppressed
+  content <- readLines(file, warn = FALSE)
+  # Parse YAML
+  yaml::yaml.load(paste(content, collapse = "\n"))
 }
 
 #' Write project configuration
