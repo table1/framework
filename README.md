@@ -53,6 +53,7 @@ This package is in active development. The APIs may change.  We will announce a 
     - [Results Storage](#results-storage)
     - [Results Functions](#results-functions)
     - [Blinded Results](#blinded-results)
+  - [Scratch](#scratch)
 - [Framework Database](#framework-database)
   - [Database Structure](#database-structure)
   - [Data Integrity Tracking](#data-integrity-tracking)
@@ -418,6 +419,44 @@ These functions:
 - Optionally delete the actual files
 - Include comprehensive error handling
 - Maintain data integrity tracking
+
+### Scratch
+
+The framework provides a scratch system for temporary data storage, debugging, and providing an easy text-based way to share context with LLM code assistants.
+
+#### Basic Usage
+
+```r
+# Save any R object to scratch directory
+capture(my_data)  # Uses object name as filename
+capture(my_data, "custom_name")  # Specify custom filename
+
+my_data |> capture()
+my_data |> capture("custom_name")
+
+# Save with specific format
+capture(my_data, to = "rds")  # Save as RDS
+capture(my_data, to = "csv")  # Save as CSV
+capture(my_data, to = "tsv")  # Save as TSV
+capture(my_data, to = "text") # Save as text
+
+# Limit rows for data frames
+capture(large_df, n = 100)  # Save only first 100 rows
+
+# Clean up scratch directory
+clean_scratch()
+```
+
+The scratch system:
+- Intelligently determines file format based on object type
+- Supports multiple output formats (RDS, CSV, TSV, text)
+- Handles data frames, vectors, lists, and other R objects
+- Provides row limiting for data frames
+- Includes cleanup functionality
+- Works seamlessly withz   pipes
+- Automatically generates filenames from expressions when used with pipes
+
+The scratch directory is configured in `config.yml` under `options.data.scratch_dir` and is gitignored by default.
 
 ### Results Management
 
