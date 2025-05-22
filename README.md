@@ -525,6 +525,79 @@ execute_query("INSERT INTO users (name) VALUES ('John')", "postgres")
 data <- get_query("SELECT * FROM my_schema.users", "postgres")
 ```
 
+### Caching
+
+The framework provides a robust caching system to improve performance and reduce redundant computations:
+
+#### Basic Caching
+
+```r
+# Cache a value
+cache(name, value, file = NULL, expire_after = NULL)
+
+# Get a cached value
+cache_get(name, file = NULL, expire_after = NULL)
+
+# Remove a cached value
+cache_forget(name, file = NULL)
+
+# Clear all cached values
+cache_flush()
+```
+
+#### Smart Caching with Computation
+
+```r
+# Get a value, caching the result if not found
+get_or_cache(name, expr, file = NULL, expire_after = NULL, refresh = FALSE)
+```
+
+The caching system:
+- Stores values as RDS files in the configured cache directory
+- Tracks cache metadata in the database (hash, expiration, last read)
+- Supports custom file paths for cache storage
+- Handles cache expiration with configurable time periods
+- Provides hash verification for cache integrity
+- Includes comprehensive error handling
+- Supports forced refresh via boolean or function
+
+Example usage:
+```r
+# Basic caching
+cache("my_data", data.frame(x = 1:10))
+
+# Get cached value
+data <- cache_get("my_data")
+
+# Cache with expiration (60 minutes = 1 hour)
+cache("hourly_data", data, expire_after = 60)
+
+# Cache with custom file path
+cache("large_data", data, file = "data/cached/large.rds")
+
+# Smart caching with computation
+result <- get_or_cache("expensive_computation",
+  {
+    # Your expensive computation here
+    Sys.sleep(5)  # Simulated expensive operation
+    runif(1000)
+  },
+  expire_after = 1440,  # 24 hours = 1440 minutes
+  refresh = function() {
+    # Refresh if source data has changed
+    source_file <- "data/source/raw_data.csv"
+    if (!file.exists(source_file)) return(FALSE)
+    file_mtime(source_file) > get_last_update_time()
+  }
+)
+
+# Remove specific cache
+cache_forget("my_data")
+
+# Clear all caches
+cache_flush()
+```
+
 ## Functions Directory
 
 The `functions/` directory contains custom functions that are used throughout the project.
