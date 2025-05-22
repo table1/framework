@@ -108,10 +108,9 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 #' Set a data value
 #' @param name The data name
 #' @param encrypted Whether the data is encrypted
-#' @param key The encryption key
 #' @param hash The hash of the data
 #' @keywords internal
-.set_data <- function(name, encrypted = FALSE, key = NULL, hash = NULL) {
+.set_data <- function(name, encrypted = FALSE, hash = NULL) {
   con <- .get_db_connection()
   now <- lubridate::now()
 

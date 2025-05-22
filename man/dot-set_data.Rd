@@ -4,14 +4,12 @@
 \alias{.set_data}
 \title{Set a data value}
 \usage{
-.set_data(name, encrypted = FALSE, key = NULL, hash = NULL)
+.set_data(name, encrypted = FALSE, hash = NULL)
 }
 \arguments{
 \item{name}{The data name}
 
 \item{encrypted}{Whether the data is encrypted}
-
-\item{key}{The encryption key}
 
 \item{hash}{The hash of the data}
 }

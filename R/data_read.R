@@ -156,6 +156,26 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
   )
 }
 
+#' Get a data value
+#' @param name The data name
+#' @return The data metadata (encrypted flag and hash), or NULL if not found
+#' @keywords internal
+.get_data_record <- function(name) {
+  con <- .get_db_connection()
+  result <- DBI::dbGetQuery(
+    con,
+    "SELECT encrypted, hash FROM data WHERE name = ?",
+    list(name)
+  )
+  DBI::dbDisconnect(con)
+
+  if (nrow(result) == 0) {
+    return(NULL)
+  }
+
+  result
+}
+
 #' Calculate hash of a file
 #' @param file_path Path to the file
 #' @return The hash of the file as a character string
@@ -239,26 +259,6 @@ get_data_spec <- function(path) {
   }
 
   get_spec_by_path_type(path, config)
-}
-
-#' Get a data value
-#' @param name The data name
-#' @return The data metadata (encrypted flag and hash), or NULL if not found
-#' @keywords internal
-.get_data_record <- function(name) {
-  con <- .get_db_connection()
-  result <- DBI::dbGetQuery(
-    con,
-    "SELECT encrypted, hash FROM data WHERE name = ?",
-    list(name)
-  )
-  DBI::dbDisconnect(con)
-
-  if (nrow(result) == 0) {
-    return(NULL)
-  }
-
-  result
 }
 
 #' Update data with hash in the data table
