@@ -4,13 +4,17 @@
 \alias{cache_get}
 \title{Get a cached value}
 \usage{
-cache_get(name)
+cache_get(name, file = NULL, expire_after = NULL)
 }
 \arguments{
 \item{name}{The cache name}
+
+\item{file}{Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)}
+
+\item{expire_after}{Optional expiration time in hours (default: from config$options$data$cache_default_expire)}
 }
 \value{
-The cached value, or NULL if not found or hash mismatch
+The cached value, or NULL if not found, expired, or hash mismatch
 }
 \description{
 Get a cached value

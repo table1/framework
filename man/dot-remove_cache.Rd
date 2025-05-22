@@ -4,10 +4,12 @@
 \alias{.remove_cache}
 \title{Remove a cache value}
 \usage{
-.remove_cache(name)
+.remove_cache(name, file = NULL)
 }
 \arguments{
 \item{name}{The cache name to remove}
+
+\item{file}{Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)}
 }
 \description{
 Remove a cache value

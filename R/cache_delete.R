@@ -1,60 +1,96 @@
 #' Remove a cache value
 #' @param name The cache name to remove
+#' @param file Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)
 #' @keywords internal
-.remove_cache <- function(name) {
-  # Remove RDS file
-  cache_file <- file.path("data/cached", paste0(name, ".rds"))
+.remove_cache <- function(name, file = NULL) {
+  # Get config
+  config <- read_config()
+  cache_dir <- config$options$data$cache_dir
+
+  # Determine cache file path
+  cache_file <- if (is.null(file)) {
+    file.path(cache_dir, paste0(name, ".rds"))
+  } else {
+    file
+  }
+
   if (file.exists(cache_file)) {
-    unlink(cache_file)
+    tryCatch(
+      unlink(cache_file),
+      error = function(e) {
+        warning(sprintf("Failed to remove cache file: %s", e$message))
+      }
+    )
   }
 
   # Remove database record
-  con <- .get_db_connection()
-  DBI::dbExecute(con, "DELETE FROM cache WHERE name = ?", list(name))
-  DBI::dbDisconnect(con)
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      warning(sprintf("Failed to connect to database: %s", e$message))
+      return(NULL)
+    }
+  )
+
+  if (!is.null(con)) {
+    on.exit(DBI::dbDisconnect(con))
+    tryCatch(
+      DBI::dbExecute(con, "DELETE FROM cache WHERE name = ?", list(name)),
+      error = function(e) {
+        warning(sprintf("Failed to remove cache record: %s", e$message))
+      }
+    )
+  }
 }
 
 #' Remove a cached value
 #' @param name The cache name to remove
+#' @param file Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)
 #' @export
-cache_forget <- function(name) {
-  .remove_cache(name)
+cache_forget <- function(name, file = NULL) {
+  if (!is.character(name) || length(name) != 1) {
+    stop("Cache name must be a single string")
+  }
+
+  .remove_cache(name, file)
   invisible(NULL)
 }
 
 #' Clear all cached values
 #' @export
-clear_cache <- function() {
+cache_flush <- function() {
+  # Get config
+  config <- read_config()
+  cache_dir <- config$options$data$cache_dir
+
   # Remove all RDS files
-  cache_dir <- "data/cached"
   if (dir.exists(cache_dir)) {
-    unlink(file.path(cache_dir, "*.rds"))
+    tryCatch(
+      unlink(list.files(cache_dir, pattern = "\\.rds$", full.names = TRUE)),
+      error = function(e) {
+        warning(sprintf("Failed to remove cache files: %s", e$message))
+      }
+    )
   }
 
   # Clear database records
-  con <- .get_db_connection()
-  DBI::dbExecute(con, "DELETE FROM cache")
-  DBI::dbDisconnect(con)
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      warning(sprintf("Failed to connect to database: %s", e$message))
+      return(NULL)
+    }
+  )
+
+  if (!is.null(con)) {
+    on.exit(DBI::dbDisconnect(con))
+    tryCatch(
+      DBI::dbExecute(con, "DELETE FROM cache"),
+      error = function(e) {
+        warning(sprintf("Failed to clear cache records: %s", e$message))
+      }
+    )
+  }
+
   invisible(NULL)
-}
-
-#' Remove a cached value
-#' @param name The cache name to remove
-#' @export
-forget_cache <- function(name) {
-  cache_forget(name)
-}
-
-#' Remove a cached value
-#' @param name The cache name to remove
-#' @export
-remove_cache <- function(name) {
-  cache_forget(name)
-}
-
-#' Remove a cached value
-#' @param name The cache name to remove
-#' @export
-uncache <- function(name) {
-  cache_forget(name)
 }

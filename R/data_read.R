@@ -71,6 +71,28 @@ load_data <- function(path) {
   )
 }
 
+#' Load data with caching
+#' @param path Dot notation path to load data (e.g. "source.private.example")
+#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
+#' @param refresh Optional boolean or function that returns boolean to force refresh
+#' @return The loaded data, either from cache or file
+#' @export
+load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
+  if (!is.character(path) || length(path) != 1) {
+    stop("Path must be a single string")
+  }
+
+  cache_key <- sprintf("data.%s", path)
+  get_or_cache(cache_key,
+    {
+      message(sprintf("Loading data from file: %s (cached as %s)", path, cache_key))
+      load_data(path)
+    },
+    expire_after = expire_after,
+    refresh = refresh
+  )
+}
+
 #' Calculate hash of a file
 #' @param file_path Path to the file
 #' @return The hash of the file as a character string

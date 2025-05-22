@@ -5,7 +5,7 @@
 #' If no name is provided, uses the name of the object passed in.
 #' If no location is provided, uses the scratch directory from the configuration.
 #'
-#' @param x The object to save
+#' @param x The objeıct to save
 #' @param name Optional character string specifying the name of the file (without extension).
 #'   If not provided, will use the name of the object passed in.
 #' @param to Optional character string indicating the output format. One of: "text", "rds", "csv", "tsv".

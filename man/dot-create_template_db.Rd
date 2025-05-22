@@ -4,7 +4,7 @@
 \alias{.create_template_db}
 \title{Create the template SQLite database}
 \usage{
-.create_template_db()
+.create_template_db(delete_existing = FALSE)
 }
 \description{
 Create the template SQLite database

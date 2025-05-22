@@ -1,9 +1,13 @@
 #' Create the template SQLite database
 #' @keywords internal
-.create_template_db <- function() {
+.create_template_db <- function(delete_existing = FALSE) {
+  db_path <- "inst/templates/framework.fr.db"
+  if (delete_existing && file.exists(db_path)) {
+    file.remove(db_path)
+  }
+
   # Create new database
-  con <- DBI::dbConnect(RSQLite::SQLite(), "inst/templates/framework.fr.db")
-  
+  con <- DBI::dbConnect(RSQLite::SQLite(), db_path)
 
   # Create data table
   DBI::dbExecute(con, "
@@ -24,8 +28,9 @@
     CREATE TABLE cache (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE,
-      result TEXT,
+      file_path TEXT,
       hash TEXT,
+      expire_at DATETIME NULL,
       last_read_at DATETIME,
       created_at DATETIME,
       updated_at DATETIME,
@@ -85,6 +90,7 @@
 #' @keywords internal
 .set_metadata <- function(key, value) {
   con <- .get_db_connection()
+  on.exit(DBI::dbDisconnect(con))
   now <- lubridate::now()
 
   # Check if key exists
@@ -105,8 +111,6 @@
       list(key, value, now, now)
     )
   }
-
-  DBI::dbDisconnect(con)
 }
 
 #' Get a metadata value
@@ -115,12 +119,12 @@
 #' @keywords internal
 .get_metadata <- function(key) {
   con <- .get_db_connection()
+  on.exit(DBI::dbDisconnect(con))
   result <- DBI::dbGetQuery(
     con,
     "SELECT value FROM meta WHERE key = ?",
     list(key)
   )
-  DBI::dbDisconnect(con)
 
   if (nrow(result) == 0) {
     return(NULL)
@@ -133,8 +137,8 @@
 #' @export
 list_metadata <- function() {
   con <- .get_db_connection()
+  on.exit(DBI::dbDisconnect(con))
   result <- DBI::dbGetQuery(con, "SELECT key FROM meta")
-  DBI::dbDisconnect(con)
   result$key
 }
 
@@ -143,6 +147,6 @@ list_metadata <- function() {
 #' @keywords internal
 .remove_metadata <- function(key) {
   con <- .get_db_connection()
+  on.exit(DBI::dbDisconnect(con))
   DBI::dbExecute(con, "DELETE FROM meta WHERE key = ?", list(key))
-  DBI::dbDisconnect(con)
 }

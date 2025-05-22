@@ -2,18 +2,24 @@
 % Please edit documentation in R/cache_read.R
 \name{get_or_cache}
 \alias{get_or_cache}
-\title{Get a value, caching the result}
+\title{Get a value, caching the result if not found}
 \usage{
-get_or_cache(name, expr)
+get_or_cache(name, expr, file = NULL, expire_after = NULL, refresh = FALSE)
 }
 \arguments{
 \item{name}{The cache name}
 
 \item{expr}{The expression to evaluate and cache}
+
+\item{file}{Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)}
+
+\item{expire_after}{Optional expiration time in hours (default: from config$options$data$cache_default_expire)}
+
+\item{refresh}{Optional boolean or function that returns boolean to force refresh}
 }
 \value{
 The result of expr
 }
 \description{
-Get a value, caching the result
+Get a value, caching the result if not found
 }

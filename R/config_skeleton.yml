@@ -1,8 +1,10 @@
 options:
   dotenv_location: "."
+  framework_db: framework.db
   connections:
     default_connection: db
   data:
+    cache_default_expire: NULL
     cache_dir: data/cached
     scratch_dir: data/scratch
   packages:

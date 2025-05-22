@@ -4,12 +4,16 @@
 \alias{cache}
 \title{Cache a value}
 \usage{
-cache(name, value)
+cache(name, value, file = NULL, expire_after = NULL)
 }
 \arguments{
 \item{name}{The cache name}
 
-\item{value}{The value to cache (will be evaluated if it's an expression)}
+\item{value}{The value to cache}
+
+\item{file}{Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)}
+
+\item{expire_after}{Optional expiration time in hours (default: from config$options$data$cache_default_expire)}
 }
 \value{
 The cached value
