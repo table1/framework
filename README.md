@@ -274,14 +274,11 @@ This is designed to allow users to expect the config object to have certain data
 
 The framework provides several functions for managing configuration:
 
-#### Reading and Writing Config
+#### Reading Config
 
 ```r
 # Read the entire config
 config <- read_config()
-
-# Write updated config
-write_config(config)
 ```
 
 ## Package Management
