@@ -378,6 +378,20 @@ The function includes comprehensive error handling for:
 - Data parsing
 - Encryption/decryption
 
+The `load_data` function supports passing additional parameters to the underlying data loading functions. These parameters will be passed through to the appropriate function based on the file type:
+
+- For CSV/TSV files: Parameters are passed to `readr::read_delim`
+- For RDS files: Parameters are passed to `readRDS`
+
+For example:
+```r
+# Pass parameters to read_delim
+data <- load_data("path/to/data.csv", na = c("", "NA"), col_types = cols())
+
+# Pass parameters to readRDS
+data <- load_data("path/to/data.rds", refhook = NULL)
+```
+
 ### Saving Data
 
 Save data using dot notation paths. Specify `csv` or `rds` as types.

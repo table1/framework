@@ -33,8 +33,8 @@ scaffold <- function(config_file = "config.yml") {
 .load_environment <- function() {
   config <- read_config()
 
-  if (!is.null(config$dotenv_location)) {
-    dotenv_path <- config$dotenv_location
+  if (!is.null(config$options$dotenv_location)) {
+    dotenv_path <- config$option$dotenv_location
 
     if (dir.exists(dotenv_path)) {
       dotenv_path <- file.path(dotenv_path, ".env")

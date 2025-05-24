@@ -2,7 +2,7 @@
 #'
 #' @param path Dot notation path to load data (e.g. "source.private.example")
 #' @export
-load_data <- function(path) {
+load_data <- function(path, ...) {
   # Get data specification from config
   spec <- tryCatch(
     get_data_spec(path),
@@ -64,6 +64,20 @@ load_data <- function(path) {
     )
   }
 
+  # Helper function to get delimiter character
+  get_delimiter <- function(delimiter_name) {
+    switch(delimiter_name,
+      comma = ",",
+      "," = ",",
+      tab = "\t",
+      "\t" = "\t",
+      semicolon = ";",
+      ";" = ";",
+      space = " ",
+      " " = " "
+    )
+  }
+
   # Load data based on encryption
   if (spec$encrypted) {
     config <- tryCatch(
@@ -97,7 +111,11 @@ load_data <- function(path) {
       switch(spec$type,
         csv = {
           # Convert raw bytes to string and parse as CSV
-          readr::read_csv(rawToChar(decrypted_data), show_col_types = FALSE)
+          readr::read_csv(rawToChar(decrypted_data), show_col_types = FALSE, ...)
+        },
+        tsv = {
+          # Convert raw bytes to string and parse as CSV
+          readr::read_tsv(rawToChar(decrypted_data), show_col_types = FALSE, ...)
         },
         rds = unserialize(decrypted_data),
         stop(sprintf("Unsupported file type: %s", spec$type))
@@ -111,18 +129,10 @@ load_data <- function(path) {
     tryCatch(
       switch(spec$type,
         csv = {
-          # Convert delimiter name to actual character
-          delim <- switch(spec$delimiter,
-            comma = ",",
-            "," = ",",
-            tab = "\t",
-            "\t" = "\t",
-            semicolon = ";",
-            ";" = ";",
-            space = " ",
-            " " = " "
-          )
-          readr::read_csv(spec$path, show_col_types = FALSE)
+          readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(spec$delimiter), ...)
+        },
+        tsv = {
+          readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(spec$delimiter), ...)
         },
         rds = readRDS(spec$path),
         stop(sprintf("Unsupported file type: %s", spec$type))

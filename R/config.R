@@ -31,12 +31,12 @@ read_config <- function(config_file = "config.yml") {
         lapply(x, eval_env)
       } else if (grepl("^env\\(.*\\)$", x)) {
         # Extract arguments from env() call
-        env_args <- gsub("^env\\(\"(.*)\"(?:,\\s*\"(.*)\")?\\)$", "\\1,\\2", x)
+        env_args <- gsub("^env\\(\"(.*?)\"(?:,\\s*\"(.*?)\")?\\)$", "\\1,\\2", x)
         env_args <- strsplit(env_args, ",")[[1]]
         env_args <- trimws(env_args)
 
         # Get environment variable with optional default
-        if (length(env_args) == 2 && env_args[2] != "") {
+        if (length(env_args) == 2) {
           Sys.getenv(env_args[1], env_args[2])
         } else {
           Sys.getenv(env_args[1])

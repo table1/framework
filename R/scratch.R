@@ -5,7 +5,7 @@
 #' If no name is provided, uses the name of the object passed in.
 #' If no location is provided, uses the scratch directory from the configuration.
 #'
-#' @param x The objeıct to save
+#' @param x The object to save
 #' @param name Optional character string specifying the name of the file (without extension).
 #'   If not provided, will use the name of the object passed in.
 #' @param to Optional character string indicating the output format. One of: "text", "rds", "csv", "tsv".
@@ -43,9 +43,36 @@ capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
   if (is.null(name)) {
     # Try to get the name of the object passed in
     name <- deparse(substitute(x))
-    # If it's a complex expression, use a timestamp
-    if (grepl("\\(", name) || grepl("\\{", name)) {
+
+    # If it's a pipe expression, try to get the name from the pipe chain
+    if (grepl("\\|>", name)) {
+      # Get all expressions in the pipe chain
+      pipe_expr <- strsplit(name, "\\|>")[[1]]
+      pipe_expr <- trimws(pipe_expr)
+
+      # Look through the chain from right to left for a valid variable name
+      for (expr in rev(pipe_expr)) {
+        # Skip the capture() call itself
+        if (grepl("^capture\\(\\)$", expr)) next
+
+        # If we find a valid variable name, use it
+        if (grepl("^[a-zA-Z][a-zA-Z0-9_.]*$", expr)) {
+          name <- expr
+          break
+        }
+      }
+
+      # If we didn't find a valid name, use timestamp
+      if (grepl("^capture_", name)) {
+        name <- paste0("capture_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+      }
+    } else if (grepl("\\(", name) || grepl("\\{", name)) {
+      # For other complex expressions, use timestamp
       name <- paste0("capture_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+    } else {
+      # Clean up the name by removing any quotes and whitespace
+      name <- gsub("[\"']", "", name)
+      name <- trimws(name)
     }
   }
 
