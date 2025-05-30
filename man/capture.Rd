@@ -7,7 +7,7 @@
 capture(x, name = NULL, to = NULL, location = NULL, n = Inf)
 }
 \arguments{
-\item{x}{The objeıct to save}
+\item{x}{The object to save}
 
 \item{name}{Optional character string specifying the name of the file (without extension).
 If not provided, will use the name of the object passed in.}

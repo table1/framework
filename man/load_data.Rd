@@ -4,7 +4,7 @@
 \alias{load_data}
 \title{Load data using dot notation path}
 \usage{
-load_data(path)
+load_data(path, ...)
 }
 \arguments{
 \item{path}{Dot notation path to load data (e.g. "source.private.example")}

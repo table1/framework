@@ -91,6 +91,24 @@ capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
     stop("'to' must be one of: 'text', 'rds', 'csv', 'tsv'")
   }
 
+  # Check if name already has an extension
+  has_extension <- grepl("\\.(txt|tsv|csv|rds)$", name)
+  if (has_extension) {
+    # Extract base name and extension
+    name_parts <- strsplit(name, "\\.")[[1]]
+    base_name <- paste(name_parts[-length(name_parts)], collapse = ".")
+    ext <- name_parts[length(name_parts)]
+
+    # Override 'to' parameter with the extension from the filename
+    to <- switch(ext,
+      "txt" = "text",
+      "tsv" = "tsv",
+      "csv" = "csv",
+      "rds" = "rds"
+    )
+    name <- base_name
+  }
+
   # Handle data frames
   if (is.data.frame(x) || inherits(x, "tbl")) {
     # Limit rows if n is finite
