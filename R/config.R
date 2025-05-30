@@ -5,7 +5,7 @@
 #' @export
 read_config <- function(config_file = "config.yml") {
   # 1. Load skeleton config first and set as our base config
-  skeleton_path <- system.file("R", "config_skeleton.yml", package = "framework")
+  skeleton_path <- system.file("config_skeleton.yml", package = "framework")
   config <- .safe_read_yaml(skeleton_path)
 
   # Initialize all standard sections

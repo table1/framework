@@ -34,7 +34,7 @@ scaffold <- function(config_file = "config.yml") {
   config <- read_config()
 
   if (!is.null(config$options$dotenv_location)) {
-    dotenv_path <- config$option$dotenv_location
+    dotenv_path <- config$options$dotenv_location
 
     if (dir.exists(dotenv_path)) {
       dotenv_path <- file.path(dotenv_path, ".env")
@@ -125,7 +125,7 @@ scaffold <- function(config_file = "config.yml") {
   if (dir.exists(func_dir)) {
     func_files <- list.files(func_dir, pattern = "\\.R$", full.names = TRUE)
     for (file in func_files) {
-      source(file)
+      source(file, local = FALSE)
     }
   } else {
     warning(sprintf("Functions directory '%s' not found", func_dir))

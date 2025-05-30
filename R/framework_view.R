@@ -239,6 +239,226 @@ framework_view <- function(x, title = NULL) {
       ),
       dt
     )
+  } else if (inherits(x, c("ggplot", "plotly", "trellis", "recordedplot")) ||
+    any(class(x) %in% c("histogram", "density", "boxplot", "barplot", "plot", "tsplot"))) {
+    # For plots, save and display as image
+    if (!requireNamespace("ggplot2", quietly = TRUE)) {
+      install.packages("ggplot2", repos = "https://cloud.r-project.org")
+    }
+
+    # Create temporary file for the plot
+    temp_file <- tempfile(fileext = ".png")
+
+    # Save plot based on type
+    if (inherits(x, "ggplot")) {
+      ggplot2::ggsave(temp_file, x, width = 10, height = 8, dpi = 100)
+    } else if (inherits(x, "plotly")) {
+      # For plotly, save as HTML
+      temp_file <- tempfile(fileext = ".html")
+      htmlwidgets::saveWidget(x, temp_file)
+    } else {
+      # For other plot types (including native R plots)
+      png(temp_file, width = 1000, height = 800, res = 100)
+      if (inherits(x, "histogram")) {
+        # For histograms, we need to replot
+        plot(x,
+          main = attr(x, "main") %||% "Histogram",
+          xlab = attr(x, "xlab") %||% "",
+          ylab = attr(x, "ylab") %||% "Frequency",
+          col = attr(x, "col") %||% "steelblue"
+        )
+      } else if (inherits(x, "density")) {
+        # For density plots
+        plot(x,
+          main = attr(x, "main") %||% "Density Plot",
+          xlab = attr(x, "xlab") %||% "",
+          ylab = attr(x, "ylab") %||% "Density"
+        )
+      } else {
+        # For all other plot types
+        print(x)
+      }
+      dev.off()
+    }
+
+    # Create HTML content for the plot
+    html_content <- htmltools::tagList(
+      htmltools::tags$head(
+        htmltools::tags$link(
+          rel = "stylesheet",
+          href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css"
+        ),
+        htmltools::tags$script(
+          src = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"
+        ),
+        htmltools::tags$script(
+          src = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-r.min.js"
+        ),
+        htmltools::tags$style("
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+          }
+          .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #212529;
+          }
+          .header .type {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+          }
+          .tabs {
+            margin-top: 20px;
+          }
+          .tab-buttons {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+          }
+          .tab-button {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            margin-right: 5px;
+          }
+          .tab-button:hover {
+            color: #007bff;
+          }
+          .tab-button.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+          }
+          .tab-content {
+            display: none;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+          }
+          .tab-content.active {
+            display: block;
+          }
+          .plot-container {
+            text-align: center;
+            margin-top: 20px;
+          }
+          .plot-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          pre {
+            margin: 0;
+            padding: 0;
+            background: none;
+          }
+          code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+          }
+        "),
+        htmltools::HTML("
+          <script>
+            function switchTab(evt, tabId) {
+              // Hide all tab content
+              var tabContents = document.getElementsByClassName('tab-content');
+              for (var i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+              }
+
+              // Remove active class from all buttons
+              var tabButtons = document.getElementsByClassName('tab-button');
+              for (var i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+              }
+
+              // Show the selected tab and mark its button as active
+              document.getElementById(tabId).classList.add('active');
+              evt.currentTarget.classList.add('active');
+
+              // Trigger Prism to highlight the code
+              if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+              }
+            }
+          </script>
+        ")
+      ),
+      htmltools::tags$div(
+        class = "container",
+        htmltools::tags$div(
+          class = "header",
+          htmltools::tags$h1(title %||% paste("Plot:", obj_name)),
+          htmltools::tags$div(
+            class = "type",
+            paste("Type:", obj_type)
+          )
+        ),
+        htmltools::tags$div(
+          class = "tabs",
+          htmltools::tags$div(
+            class = "tab-buttons",
+            htmltools::tags$button(
+              class = "tab-button active",
+              onclick = "switchTab(event, 'plot-tab')",
+              "Plot"
+            ),
+            htmltools::tags$button(
+              class = "tab-button",
+              onclick = "switchTab(event, 'struct-tab')",
+              "Structure"
+            )
+          ),
+          htmltools::tags$div(
+            id = "plot-tab",
+            class = "tab-content active",
+            htmltools::tags$div(
+              class = "plot-container",
+              if (inherits(x, "plotly")) {
+                htmltools::tags$iframe(
+                  src = temp_file,
+                  width = "100%",
+                  height = "600px",
+                  style = "border: none;"
+                )
+              } else {
+                htmltools::tags$img(src = temp_file)
+              }
+            )
+          ),
+          htmltools::tags$div(
+            id = "struct-tab",
+            class = "tab-content",
+            htmltools::tags$pre(
+              class = "language-r",
+              htmltools::HTML(
+                paste(capture.output(str(x)), collapse = "\n")
+              )
+            )
+          )
+        )
+      )
+    )
   } else {
     # For other objects, use Prism.js for syntax highlighting
     if (is.list(x) || is.environment(x)) {

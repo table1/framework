@@ -29,3 +29,25 @@ execute_query <- function(query, connection_name, ...) {
       DBI::dbExecute(con, query, ...)
     })()
 }
+
+#' Find a record by ID
+#'
+#' Finds a single record in a table by its ID.
+#' @param conn Database connection
+#' @param table_name Name of the table to query
+#' @param id The ID to look up
+#' @param with_trashed Whether to include soft-deleted records (default: FALSE)
+#' @return A data frame with the record, or empty if not found
+#' @export
+db_find <- function(conn, table_name, id, with_trashed = FALSE) {
+  query <- paste0("SELECT * FROM ", table_name, " WHERE id = $1")
+
+  if (!with_trashed) {
+    query <- paste0(query, " AND deleted_at IS NULL")
+  }
+
+  query <- paste0(query, " LIMIT 1")
+
+  DBI::dbGetQuery(conn, query, params = list(id))
+  0
+}
