@@ -2,9 +2,10 @@
 #'
 #' @param x The data to view
 #' @param title Optional title for the view
+#' @param max_rows Maximum number of rows to display for data frames (default: 1000)
 #' @return Opens a browser window with the data in a DataTable
 #' @export
-framework_view <- function(x, title = NULL) {
+framework_view <- function(x, title = NULL, max_rows = 5000) {
   # Check if x is provided
   if (missing(x)) {
     stop("No data provided to view. Please provide a data frame or other viewable object as the first argument.")
@@ -37,10 +38,20 @@ framework_view <- function(x, title = NULL) {
         mutate(across(where(lubridate::is.POSIXct), ~ format(., "%Y-%m-%d %H:%M")))
     }
 
+    # Check if data frame is large and limit rows if necessary
+    total_rows <- nrow(x)
+    if (total_rows > max_rows) {
+      warning(sprintf(
+        "Data frame has %d rows. Only showing first %d rows. Use max_rows parameter to adjust this limit.",
+        total_rows, max_rows
+      ))
+      x <- head(x, max_rows)
+    }
+
     # Create the DataTable
     dt <- DT::datatable(
       x,
-      caption = title %||% paste("Data:", obj_name),
+      caption = title %||% paste("Data:", obj_name, if (total_rows > max_rows) sprintf(" (showing %d of %d rows)", max_rows, total_rows) else ""),
       options = list(
         pageLength = 25,
         lengthMenu = list(c(10, 25, 50, 100, -1), c("10", "25", "50", "100", "All")),

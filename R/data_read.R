@@ -1,8 +1,10 @@
 #' Load data using dot notation path
 #'
 #' @param path Dot notation path to load data (e.g. "source.private.example")
+#' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
+#' @param ... Additional arguments passed to readr::read_delim
 #' @export
-load_data <- function(path, ...) {
+load_data <- function(path, delim = NULL, ...) {
   # Get data specification from config
   spec <- tryCatch(
     get_data_spec(path),
@@ -74,8 +76,30 @@ load_data <- function(path, ...) {
       semicolon = ";",
       ";" = ";",
       space = " ",
-      " " = " "
+      " " = " ",
+      stop(sprintf("Unknown delimiter: %s. Must be one of: comma, tab, semicolon, space", delimiter_name))
     )
+  }
+
+  # Helper function to guess delimiter from extension
+  guess_delimiter_from_ext <- function(path) {
+    ext <- tolower(sub(".*\\.", "", path))
+    switch(ext,
+      csv = "comma",
+      tsv = "tab",
+      txt = "tab", # Common for tab-delimited
+      dat = "tab", # Common for tab-delimited
+      NULL
+    )
+  }
+
+  # Determine delimiter
+  if (is.null(delim)) {
+    delim <- guess_delimiter_from_ext(spec$path)
+    if (is.null(delim)) {
+      warning(sprintf("Could not determine delimiter from extension for %s, defaulting to comma", spec$path))
+      delim <- "comma"
+    }
   }
 
   # Load data based on encryption
@@ -111,11 +135,7 @@ load_data <- function(path, ...) {
       switch(spec$type,
         csv = {
           # Convert raw bytes to string and parse as CSV
-          readr::read_csv(rawToChar(decrypted_data), show_col_types = FALSE, ...)
-        },
-        tsv = {
-          # Convert raw bytes to string and parse as CSV
-          readr::read_tsv(rawToChar(decrypted_data), show_col_types = FALSE, ...)
+          readr::read_delim(rawToChar(decrypted_data), show_col_types = FALSE, delim = get_delimiter(delim), ...)
         },
         rds = unserialize(decrypted_data),
         stop(sprintf("Unsupported file type: %s", spec$type))
@@ -129,10 +149,7 @@ load_data <- function(path, ...) {
     tryCatch(
       switch(spec$type,
         csv = {
-          readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(spec$delimiter), ...)
-        },
-        tsv = {
-          readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(spec$delimiter), ...)
+          readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(delim), ...)
         },
         rds = readRDS(spec$path),
         stop(sprintf("Unsupported file type: %s", spec$type))
@@ -208,11 +225,14 @@ get_data_spec <- function(path) {
 
   # Get file type info
   get_file_type_info <- function(path) {
-    is_csv <- grepl("\\.csv$", path, ignore.case = TRUE)
-    list(
-      type = if (is_csv) "csv" else "rds",
-      delimiter = if (is_csv) "comma" else NULL
-    )
+    # For RDS files, we can be explicit
+    if (grepl("\\.rds$", path, ignore.case = TRUE)) {
+      return(list(type = "rds", delimiter = NULL))
+    }
+
+    # For everything else, let readr figure it out
+    # It will auto-detect delimiters and handle common formats
+    return(list(type = "csv", delimiter = "auto"))
   }
 
   # Create base spec with defaults
@@ -261,8 +281,13 @@ get_data_spec <- function(path) {
 
   # Get spec based on path type
   get_spec_by_path_type <- function(path, config) {
-    if (grepl("[/\\\\]", path)) {
-      create_spec(file.path(getwd(), path))
+    if (grepl("^/", path)) {
+      # Handle absolute paths directly
+      create_spec(path)
+    } else if (grepl("[/\\\\]", path)) {
+      # Handle relative paths by normalizing them against the working directory
+      full_path <- normalizePath(file.path(getwd(), path), mustWork = FALSE)
+      create_spec(full_path)
     } else {
       get_dot_notation_spec(strsplit(path, "\\.")[[1]], config)
     }
