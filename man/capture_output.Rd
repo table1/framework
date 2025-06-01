@@ -10,7 +10,7 @@ capture_output(expr)
 \item{expr}{Expression to evaluate}
 }
 \value{
-List containing result (NULL if successful, error if failed) and output
+List containing status (boolean), console_output (character vector), and result (return value or error)
 }
 \description{
 Capture console output and errors from an expression

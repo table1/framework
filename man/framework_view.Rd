@@ -4,12 +4,14 @@
 \alias{framework_view}
 \title{Framework View function that opens a DataTable in the browser using DT package}
 \usage{
-framework_view(x, title = NULL)
+framework_view(x, title = NULL, max_rows = 5000)
 }
 \arguments{
 \item{x}{The data to view}
 
 \item{title}{Optional title for the view}
+
+\item{max_rows}{Maximum number of rows to display for data frames (default: 1000)}
 }
 \value{
 Opens a browser window with the data in a DataTable
