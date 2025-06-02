@@ -95,7 +95,8 @@ load_data <- function(path, delim = NULL, ...) {
 
   # Determine delimiter
   if (is.null(delim)) {
-    delim <- guess_delimiter_from_ext(spec$path)
+    # Use delimiter from spec if available, otherwise guess from extension
+    delim <- ifelse(is.null(spec$delimiter), guess_delimiter_from_ext(spec$path), spec$delimiter)
     if (is.null(delim)) {
       warning(sprintf("Could not determine delimiter from extension for %s, defaulting to comma", spec$path))
       delim <- "comma"
@@ -137,6 +138,10 @@ load_data <- function(path, delim = NULL, ...) {
           # Convert raw bytes to string and parse as CSV
           readr::read_delim(rawToChar(decrypted_data), show_col_types = FALSE, delim = get_delimiter(delim), ...)
         },
+        tsv = {
+          # Convert raw bytes to string and parse as TSV
+          readr::read_delim(rawToChar(decrypted_data), show_col_types = FALSE, delim = "\t", ...)
+        },
         rds = unserialize(decrypted_data),
         stop(sprintf("Unsupported file type: %s", spec$type))
       ),
@@ -150,6 +155,9 @@ load_data <- function(path, delim = NULL, ...) {
       switch(spec$type,
         csv = {
           readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(delim), ...)
+        },
+        tsv = {
+          readr::read_delim(spec$path, show_col_types = FALSE, delim = "\t", ...)
         },
         rds = readRDS(spec$path),
         stop(sprintf("Unsupported file type: %s", spec$type))
@@ -230,9 +238,18 @@ get_data_spec <- function(path) {
       return(list(type = "rds", delimiter = NULL))
     }
 
+    # For TSV files
+    if (grepl("\\.tsv$", path, ignore.case = TRUE)) {
+      return(list(type = "csv", delimiter = "tab"))
+    }
+
+    # For CSV files
+    if (grepl("\\.csv$", path, ignore.case = TRUE)) {
+      return(list(type = "csv", delimiter = "comma"))
+    }
+
     # For everything else, let readr figure it out
-    # It will auto-detect delimiters and handle common formats
-    return(list(type = "csv", delimiter = "auto"))
+    return(list(type = "csv", delimiter = NULL))
   }
 
   # Create base spec with defaults
