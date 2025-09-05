@@ -1,20 +1,40 @@
-#' Load data using dot notation path
+#' Load data using dot notation path or direct file path
 #'
-#' @param path Dot notation path to load data (e.g. "source.private.example")
+#' @param path Dot notation path (e.g. "source.private.example") or direct file path
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param ... Additional arguments passed to readr::read_delim
 #' @export
 load_data <- function(path, delim = NULL, ...) {
-  # Get data specification from config
-  spec <- tryCatch(
-    get_data_spec(path),
-    error = function(e) {
-      stop(sprintf("Failed to get data specification: %s", e$message))
+  # Check if path is a direct file path
+  if (file.exists(path)) {
+    # Direct file path - create a minimal spec
+    file_ext <- tolower(sub(".*\\.", "", path))
+    spec <- list(
+      path = path,
+      type = switch(file_ext,
+        csv = "csv",
+        tsv = "tsv", 
+        txt = "tsv",  # Assume .txt files are tab-delimited
+        dat = "tsv",  # Assume .dat files are tab-delimited
+        rds = "rds",
+        stop(sprintf("Unsupported file extension: %s", file_ext))
+      ),
+      encrypted = FALSE,
+      locked = FALSE,
+      delimiter = NULL
+    )
+  } else {
+    # Try to get data specification from config
+    spec <- tryCatch(
+      get_data_spec(path),
+      error = function(e) {
+        stop(sprintf("Path '%s' is not a valid file and failed to get data specification: %s", path, e$message))
+      }
+    )
+    
+    if (is.null(spec)) {
+      stop(sprintf("No data specification found for path: %s", path))
     }
-  )
-
-  if (is.null(spec)) {
-    stop(sprintf("No data specification found for path: %s", path))
   }
 
   # Check if file exists
@@ -22,48 +42,51 @@ load_data <- function(path, delim = NULL, ...) {
     stop(sprintf("File not found: %s", spec$path))
   }
 
-  # Calculate current file hash
-  current_hash <- tryCatch(
-    .calculate_file_hash(spec$path),
-    error = function(e) {
-      stop(sprintf("Failed to calculate file hash: %s", e$message))
-    }
-  )
-
-  # Get existing data record
-  data_record <- tryCatch(
-    .get_data_record(path),
-    error = function(e) {
-      warning(sprintf("Failed to get data record: %s", e$message))
-      NULL
-    }
-  )
-
-  # Handle hash checking
-  if (is.null(data_record)) {
-    # No record exists, create one with current hash
-    tryCatch(
-      .set_data(path, encrypted = spec$encrypted, hash = current_hash),
+  # Only do hash checking for config-based paths (not direct file paths)
+  if (!file.exists(path)) {
+    # Calculate current file hash
+    current_hash <- tryCatch(
+      .calculate_file_hash(spec$path),
       error = function(e) {
-        warning(sprintf("Failed to set data record: %s", e$message))
+        stop(sprintf("Failed to calculate file hash: %s", e$message))
       }
     )
-  } else {
-    # Check if file has changed
-    if (data_record$hash != current_hash) {
-      if (spec$locked) {
-        stop(sprintf("Hash mismatch for locked data: %s", path))
-      } else {
-        warning(sprintf("File has changed since last read: %s", path))
-      }
-    }
-    # Update hash
-    tryCatch(
-      .set_data(path, encrypted = data_record$encrypted, hash = current_hash),
+
+    # Get existing data record
+    data_record <- tryCatch(
+      .get_data_record(path),
       error = function(e) {
-        warning(sprintf("Failed to update data record: %s", e$message))
+        warning(sprintf("Failed to get data record: %s", e$message))
+        NULL
       }
     )
+
+    # Handle hash checking
+    if (is.null(data_record)) {
+      # No record exists, create one with current hash
+      tryCatch(
+        .set_data(path, encrypted = spec$encrypted, hash = current_hash),
+        error = function(e) {
+          warning(sprintf("Failed to set data record: %s", e$message))
+        }
+      )
+    } else {
+      # Check if file has changed
+      if (data_record$hash != current_hash) {
+        if (spec$locked) {
+          stop(sprintf("Hash mismatch for locked data: %s", path))
+        } else {
+          warning(sprintf("File has changed since last read: %s", path))
+        }
+      }
+      # Update hash
+      tryCatch(
+        .set_data(path, encrypted = data_record$encrypted, hash = current_hash),
+        error = function(e) {
+          warning(sprintf("Failed to update data record: %s", e$message))
+        }
+      )
+    }
   }
 
   # Helper function to get delimiter character
