@@ -7,7 +7,7 @@
 #' @param comment Optional description
 #' @param file Optional path to a file to save (e.g. a QMD notebook)
 #' @export
-save_result <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL) {
+result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL) {
   # Validate inputs
   if (!is.character(name) || length(name) != 1) {
     stop("name must be a single string")
@@ -103,7 +103,7 @@ save_result <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
 #' @param name Result name
 #' @return The result value, or NULL if not found or hash mismatch
 #' @export
-get_result <- function(name) {
+result_get <- function(name) {
   # Get result record
   con <- .get_db_connection()
   result <- DBI::dbGetQuery(
@@ -151,7 +151,7 @@ get_result <- function(name) {
 #' List all results
 #' @return A data frame of results with their metadata
 #' @export
-list_results <- function() {
+result_list <- function() {
   con <- .get_db_connection()
   results <- DBI::dbGetQuery(
     con,
@@ -165,4 +165,32 @@ list_results <- function() {
   results$updated_at <- lubridate::as_datetime(results$updated_at)
 
   results
+}
+
+#' Aliases for backward compatibility
+#' @param name Result name
+#' @return The result value, or NULL if not found or hash mismatch
+#' @export
+get_result <- function(name) {
+  result_get(name)
+}
+
+#' Alias for backward compatibility
+#' @return A data frame of results with their metadata
+#' @export
+list_results <- function() {
+  result_list()
+}
+
+#' Alias for backward compatibility
+#' @param name Result name
+#' @param value The result value to save (will be evaluated if it's an expression)
+#' @param type Type of result (e.g. "model", "notebook")
+#' @param blind Whether the result should be blinded (encrypted)
+#' @param public Whether the result should be public (default: FALSE)
+#' @param comment Optional description
+#' @param file Optional path to a file to save (e.g. a QMD notebook)
+#' @export
+save_result <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL) {
+  result_save(name, value, type, blind, public, comment, file)
 }

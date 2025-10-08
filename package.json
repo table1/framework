@@ -1,0 +1,19 @@
+{
+  "name": "framework-r-package",
+  "version": "0.1.0",
+  "description": "A Framework for Data Management",
+  "scripts": {
+    "build": "R CMD build .",
+    "install": "R CMD INSTALL .",
+    "install:quick": "R CMD INSTALL .",
+    "check": "R CMD check . --no-manual",
+    "test": "R -e \"testthat::test_dir('tests')\"",
+    "clean": "rm -f *.tar.gz && rm -rf *.Rcheck",
+    "docs": "R -e \"devtools::document()\"",
+    "release": "npm run clean && npm run docs && npm run test && npm run check"
+  },
+  "devDependencies": {},
+  "keywords": ["r", "package", "data-management"],
+  "author": "Erik Westlund",
+  "license": "MIT"
+}

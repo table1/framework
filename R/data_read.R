@@ -4,7 +4,7 @@
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param ... Additional arguments passed to readr::read_delim
 #' @export
-load_data <- function(path, delim = NULL, ...) {
+data_load <- function(path, delim = NULL, ...) {
   # Check if path is a direct file path
   if (file.exists(path)) {
     # Direct file path - create a minimal spec
@@ -190,6 +190,15 @@ load_data <- function(path, delim = NULL, ...) {
       }
     )
   }
+}
+
+#' Alias for backward compatibility
+#' @param path Dot notation path (e.g. "source.private.example") or direct file path
+#' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
+#' @param ... Additional arguments passed to readr::read_delim
+#' @export
+load_data <- function(path, delim = NULL, ...) {
+  data_load(path, delim, ...)
 }
 
 #' Load data with caching

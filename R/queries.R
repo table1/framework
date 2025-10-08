@@ -6,7 +6,7 @@
 #' @param ... Additional arguments passed to DBI::dbGetQuery
 #' @return A data frame with the query results
 #' @export
-get_query <- function(query, connection_name, ...) {
+query_get <- function(query, connection_name, ...) {
   get_connection(connection_name) |>
     (\(con) {
       on.exit(DBI::dbDisconnect(con))
@@ -22,7 +22,7 @@ get_query <- function(query, connection_name, ...) {
 #' @param ... Additional arguments passed to DBI::dbExecute
 #' @return Number of rows affected
 #' @export
-execute_query <- function(query, connection_name, ...) {
+query_execute <- function(query, connection_name, ...) {
   get_connection(connection_name) |>
     (\(con) {
       on.exit(DBI::dbDisconnect(con))
@@ -50,4 +50,24 @@ db_find <- function(conn, table_name, id, with_trashed = FALSE) {
 
   DBI::dbGetQuery(conn, query, params = list(id))
   0
+}
+
+#' Alias for backward compatibility
+#' @param query SQL query to execute
+#' @param connection_name Name of the connection in config.yml
+#' @param ... Additional arguments passed to DBI::dbGetQuery
+#' @return A data frame with the query results
+#' @export
+get_query <- function(query, connection_name, ...) {
+  query_get(query, connection_name, ...)
+}
+
+#' Alias for backward compatibility
+#' @param query SQL query to execute
+#' @param connection_name Name of the connection in config.yml
+#' @param ... Additional arguments passed to DBI::dbExecute
+#' @return Number of rows affected
+#' @export
+execute_query <- function(query, connection_name, ...) {
+  query_execute(query, connection_name, ...)
 }

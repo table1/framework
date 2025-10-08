@@ -1,13 +1,9 @@
 # R specific
-^.*\\.Rproj$
+^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.Rhistory$
 ^\.RData$
 ^\.Ruserdata$
-
-# IDE specific
-^\.vscode$
-^\.idea$
 
 # Build artifacts
 ^.*\.tar\.gz$
@@ -25,30 +21,35 @@
 ^\.env$
 ^\.env\.example$
 
-# Documentation
-^LICENSE\.md$
-^\.github$
-^\.git$
-^\.gitignore$
-^\.Rproj\.user$
-^\.Rhistory$
-^\.RData$
-^\.Ruserdata$
+# Build tools and project files
+^Makefile$
+^package\.json$
+^build\.sh$
 ^\.vscode$
 ^\.idea$
+
+# Documentation (keep LICENSE, ignore docs dir)
+^docs$
+^CLAUDE\.md$
+^api\.md$
+^MIGRATION_PLAN\.md$
+^LICENSE\.md$
+
+# macOS
 ^\.DS_Store$
 ^\.DS_Store?$
 ^\._*
 ^\.Spotlight-V100$
 ^\.Trashes$
+
+# Windows
 ^ehthumbs\.db$
 ^Thumbs\.db$
 
 # Tests
 ^tests$
 ^tests/$
-^framework/tests$
-^framework/tests/$
 
-# Cursor ignore
+# Other
 ^\.cursorignore$
+^\.Rbuildignore\.bak$

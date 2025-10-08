@@ -18,16 +18,16 @@
 #'
 #' @examples
 #' # Save a character vector as text
-#' capture(c("hello", "world"))
+#' scratch_capture(c("hello", "world"))
 #'
 #' # Save a data frame as TSV
-#' capture(mtcars)
+#' scratch_capture(mtcars)
 #'
 #' # Save an R object as RDS
-#' capture(list(a = 1, b = 2), to = "rds")
+#' scratch_capture(list(a = 1, b = 2), to = "rds")
 #'
 #' @export
-capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
+scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
   # Get default location from config if not provided
   if (is.null(location)) {
     config <- read_config()
@@ -166,7 +166,7 @@ capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
 
 #' Clean up the scratch directory by deleting all files
 #' @export
-clean_scratch <- function() {
+scratch_clean <- function() {
   config <- read_config()
   scratch_dir <- config$options$data$scratch_dir
 
@@ -177,4 +177,22 @@ clean_scratch <- function() {
   } else {
     message("Scratch directory does not exist: ", scratch_dir)
   }
+}
+
+#' Alias for backward compatibility
+#' @param x The object to save
+#' @param name Optional character string specifying the name of the file (without extension)
+#' @param to Optional character string indicating the output format. One of: "text", "rds", "csv", "tsv"
+#' @param location Optional character string specifying the directory where the file should be saved
+#' @param n Optional number of rows to capture for data frames (default: all rows)
+#' @return The input object `x` invisibly
+#' @export
+capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
+  scratch_capture(x, name, to, location, n)
+}
+
+#' Alias for backward compatibility
+#' @export
+clean_scratch <- function() {
+  scratch_clean()
 }

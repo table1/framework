@@ -7,7 +7,7 @@
 #' @param locked Whether the file should be locked after saving
 #' @param encrypted Whether the file should be encrypted
 #' @export
-save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE) {
+data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE) {
   # Split path into components
   parts <- strsplit(path, "\\.")[[1]]
 
@@ -102,6 +102,18 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   message(sprintf("Data record updated for: %s", path))
 
   invisible(data)
+}
+
+#' Alias for backward compatibility
+#' @param data Data frame to save
+#' @param path Dot notation path to save data (e.g. "source.private.example")
+#' @param type Type of data file ("csv" or "rds")
+#' @param delimiter Delimiter for CSV files ("comma", "tab", "semicolon", "space")
+#' @param locked Whether the file should be locked after saving
+#' @param encrypted Whether the file should be encrypted
+#' @export
+save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE) {
+  data_save(data, path, type, delimiter, locked, encrypted)
 }
 
 
