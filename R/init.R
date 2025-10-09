@@ -319,8 +319,13 @@ init <- function(
     # Skip files already handled explicitly
     if (fname == "project.fr.Rproj") next
     if (fname == "init.fr.R") next  # Skip init.R template (handled separately in empty dir case)
-    if (fname == "config.fr.yml") next  # Skip config.yml template (handled separately in empty dir case)
     if (fname == ".env.fr") next  # Skip .env template (handled separately in empty dir case)
+
+    # Skip type-specific config and README files (these are handled separately)
+    if (grepl("^config\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
+    if (grepl("^README\\.(project|course|presentation)\\.fr\\.md$", fname)) next
+    if (fname == "config.fr.yml") next  # Skip generic config (handled separately)
+
     if (!grepl("\\.fr($|\\.)", fname)) next
 
     # Replace `.fr.` with `.` or `.fr` suffix with nothing
