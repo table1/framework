@@ -6,17 +6,18 @@
 \usage{
 init(
   project_name = NULL,
-  project_structure = "default",
-  lintr = "default",
-  styler = "default",
+  project_structure = NULL,
+  lintr = NULL,
+  styler = NULL,
   subdir = NULL,
+  interactive = TRUE,
   force = FALSE
 )
 }
 \arguments{
-\item{project_name}{The name of the project (used for .Rproj file).}
+\item{project_name}{The name of the project (used for .Rproj file). If NULL, uses current directory name.}
 
-\item{project_structure}{The project structure to use.}
+\item{project_structure}{The project structure to use ("default" or "minimal").}
 
 \item{lintr}{The lintr style to use.}
 
@@ -24,9 +25,28 @@ init(
 
 \item{subdir}{Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.}
 
+\item{interactive}{If TRUE and parameters are NULL, will prompt interactively. Set FALSE for scripted initialization.}
+
 \item{force}{If TRUE, will reinitialize even if project is already initialized.}
 }
 \description{
 This function initializes the framework for a new project.
-It sets up the necessary files in the current directory.
+Can be run from the framework-project template OR from any empty directory.
+When run from an empty directory, prompts for configuration interactively.
+}
+\examples{
+\dontrun{
+# Interactive initialization from empty directory
+init()
+
+# Non-interactive with explicit parameters
+init(
+  project_name = "MyAnalysis",
+  project_structure = "minimal",
+  lintr = "default",
+  styler = "default",
+  interactive = FALSE
+)
+}
+
 }

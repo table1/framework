@@ -13,7 +13,7 @@ db_find(conn, table_name, id, with_trashed = FALSE)
 
 \item{id}{The ID to look up}
 
-\item{with_trashed}{Whether to include soft-deleted records (default: FALSE)}
+\item{with_trashed}{Whether to include soft-deleted records (default: FALSE). Only applies if deleted_at column exists.}
 }
 \value{
 A data frame with the record, or empty if not found

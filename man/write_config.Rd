@@ -4,10 +4,12 @@
 \alias{write_config}
 \title{Write project configuration}
 \usage{
-write_config(config, section = NULL)
+write_config(config, config_file = "config.yml", section = NULL)
 }
 \arguments{
 \item{config}{The configuration list to write}
+
+\item{config_file}{The configuration file path (default: "config.yml")}
 
 \item{section}{Optional section to update (e.g. "data")}
 }

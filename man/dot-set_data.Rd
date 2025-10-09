@@ -4,10 +4,26 @@
 \alias{.set_data}
 \title{Set a data value}
 \usage{
-.set_data(name, encrypted = FALSE, hash = NULL)
+.set_data(
+  name,
+  path = NULL,
+  type = NULL,
+  delimiter = NULL,
+  locked = FALSE,
+  encrypted = FALSE,
+  hash = NULL
+)
 }
 \arguments{
 \item{name}{The data name}
+
+\item{path}{The file path}
+
+\item{type}{The data type (csv, rds, etc.)}
+
+\item{delimiter}{The delimiter for CSV files}
+
+\item{locked}{Whether the data is locked}
 
 \item{encrypted}{Whether the data is encrypted}
 

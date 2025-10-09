@@ -7,7 +7,7 @@
 now()
 }
 \value{
-Current datetime as a lubridate datetime object
+Current datetime as an ISO 8601 formatted character string
 }
 \description{
 Get current datetime

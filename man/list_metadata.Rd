@@ -2,13 +2,13 @@
 % Please edit documentation in R/framework_db.R
 \name{list_metadata}
 \alias{list_metadata}
-\title{List all metadata keys}
+\title{List all metadata}
 \usage{
 list_metadata()
 }
 \value{
-A character vector of metadata keys
+A data frame of metadata with keys, values, and timestamps
 }
 \description{
-List all metadata keys
+List all metadata
 }

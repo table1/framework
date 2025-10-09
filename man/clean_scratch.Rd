@@ -2,10 +2,13 @@
 % Please edit documentation in R/scratch.R
 \name{clean_scratch}
 \alias{clean_scratch}
-\title{Clean up the scratch directory by deleting all files}
+\title{Alias for backward compatibility}
 \usage{
-clean_scratch()
+clean_scratch(all = TRUE)
+}
+\arguments{
+\item{all}{Ignored parameter for backward compatibility (always cleans all files)}
 }
 \description{
-Clean up the scratch directory by deleting all files
+Alias for backward compatibility
 }

@@ -9,7 +9,7 @@ Description: A framework for managing data files, configurations, and database c
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("rd", "namespace", "collate"))
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports:
     checkmate,
     DBI,
