@@ -40,4 +40,5 @@ vignettes/*.html
 vignettes/*.pdf
 
 # Claude
-.claude
+.claude.claude/
+.readme-shared/
