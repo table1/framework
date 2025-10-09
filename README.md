@@ -100,10 +100,53 @@ project/
 
 ```r
 library(framework)
-scaffold()  # Loads packages, functions, config
+scaffold()  # Loads packages, functions, config, standardizes working directory
 ```
 
-### 2. Load Data
+### 2. Create Notebooks & Scripts
+
+Framework provides artisan-style commands for creating files from templates:
+
+```r
+# Create a Quarto notebook (default)
+make_notebook("1-exploration")  # → notebooks/1-exploration.qmd
+
+# Create an RMarkdown notebook
+make_notebook("analysis.Rmd")   # → notebooks/analysis.Rmd
+
+# Create an R script
+make_notebook("process-data.R") # → scripts/process-data.R
+
+# Create a reveal.js presentation
+make_notebook("results-presentation", stub = "revealjs")
+
+# List available stubs
+list_stubs()
+```
+
+**Built-in stubs:**
+- `default` - Full-featured notebook with TOC and sections
+- `minimal` - Bare-bones notebook with essential setup only
+- `revealjs` - Quarto presentation using reveal.js (Quarto only)
+
+**Custom stubs:** Create a `stubs/` directory in your project:
+```
+stubs/
+  notebook-analysis.qmd     # Override default or add custom template
+  script-etl.R              # Custom script template
+```
+
+Stub templates support placeholders:
+- `{filename}` - File name without extension
+- `{date}` - Current date (YYYY-MM-DD)
+
+**Configure default directory in config.yml:**
+```yaml
+options:
+  notebook_dir: "notebooks"  # Where make_notebook() creates files
+```
+
+### 3. Load Data
 
 **Via config:**
 ```yaml
@@ -131,7 +174,7 @@ df <- data_load("data/spss_file.sav")     # SPSS
 
 Statistical formats (Stata/SPSS/SAS) strip metadata by default for safety. Use `keep_attributes = TRUE` to preserve labels.
 
-### 3. Cache Expensive Operations
+### 4. Cache Expensive Operations
 
 ```r
 model <- get_or_cache("model_v1", {
@@ -139,7 +182,7 @@ model <- get_or_cache("model_v1", {
 }, expire_after = 1440)  # Cache for 24 hours
 ```
 
-### 4. Save Results
+### 5. Save Results
 
 ```r
 # Save data
@@ -153,7 +196,7 @@ result_save("report", file = "report.html", type = "notebook",
             blind = TRUE, public = FALSE)
 ```
 
-### 5. Query Databases
+### 6. Query Databases
 
 ```yaml
 # config.yml
@@ -169,6 +212,7 @@ connections:
 ```r
 df <- query_get("SELECT * FROM users WHERE active = true", "db")
 ```
+
 
 ## Configuration
 
@@ -259,17 +303,3 @@ See [renv integration docs](docs/features/renv_integration.md) for details.
 
 - Excel file support
 - Quarto codebook generation
-- MySQL, SQL Server, Snowflake connectors
-- Enhanced validation system
-
-## Contributing
-
-Pull requests welcome. Email Erik Westlund for questions.
-
-## License
-
-MIT License - see [LICENSE](LICENSE)
-
-## Author
-
-Created by [Erik Westlund](https://github.com/erikwestlund)

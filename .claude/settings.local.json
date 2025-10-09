@@ -13,7 +13,10 @@
       "Read(//Users/erikwestlund/code/better-shoes/**)",
       "mcp__zen__planner",
       "Bash(git checkout:*)",
-      "mcp__zen__chat"
+      "mcp__zen__chat",
+      "Bash(git add:*)",
+      "Bash(.git/hooks/pre-commit)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

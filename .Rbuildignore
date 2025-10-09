@@ -52,4 +52,6 @@
 
 # Other
 ^\.cursorignore$
-^\.Rbuildignore\.bak$
+^\.Rbuildignore\.bak$^readme-parts$
+
+^readme-parts$
