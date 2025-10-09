@@ -1,5 +1,5 @@
-# R specific
-^.*\.Rproj$
+# R specific (but keep inst/templates/*.Rproj)
+^[^/]*\.Rproj$
 ^\.Rproj\.user$
 ^\.Rhistory$
 ^\.RData$
