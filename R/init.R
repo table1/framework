@@ -1,56 +1,3 @@
-#' Prompt user for project configuration
-#' @param project_name Project name (NULL to prompt)
-#' @param type Project type (NULL to prompt)
-#' @param lintr Lintr style (NULL to prompt)
-#' @param styler Styler style (NULL to prompt)
-#' @return List of configuration parameters
-#' @keywords internal
-.prompt_project_config <- function(project_name, type, lintr, styler) {
-  cat("\n")
-  cat("Framework Project Initialization\n")
-  cat("=================================\n\n")
-
-  # Project name
-  if (is.null(project_name)) {
-    default_name <- basename(getwd())
-    response <- readline(sprintf("Project name [%s]: ", default_name))
-    project_name <- if (nzchar(response)) response else default_name
-  }
-
-  # Project type
-  if (is.null(type)) {
-    cat("\nProject type:\n")
-    cat("  1. Analysis (data work with notebooks/ and scripts/)\n")
-    cat("  2. Course (teaching with presentations/ and notebooks/)\n")
-    cat("  3. Presentation (single talk, minimal structure)\n")
-    response <- readline("Choose type [1]: ")
-    type <- switch(response,
-      "2" = "course",
-      "3" = "presentation",
-      "analysis"  # default
-    )
-  }
-
-  # Lintr style
-  if (is.null(lintr)) {
-    response <- readline("\nLintr style [default]: ")
-    lintr <- if (nzchar(response)) response else "default"
-  }
-
-  # Styler style
-  if (is.null(styler)) {
-    response <- readline("Styler style [default]: ")
-    styler <- if (nzchar(response)) response else "default"
-  }
-
-  list(
-    project_name = project_name,
-    type = type,
-    lintr = lintr,
-    styler = styler
-  )
-}
-
 #' Create init.R from template
 #' @keywords internal
 .create_init_file <- function(project_name, type, lintr, styler, subdir = NULL) {
@@ -199,9 +146,9 @@ message("Framework dev mode active - will load from: %s")
 #'
 #' This function initializes the framework for a new project.
 #' Can be run from the framework-project template OR from any empty directory.
-#' When run from an empty directory, prompts for configuration interactively.
+#' When run from an empty directory, requires project_name and type parameters.
 #'
-#' @param project_name The name of the project (used for .Rproj file). If NULL, uses current directory name.
+#' @param project_name The name of the project (used for .Rproj file). Required when initializing from empty directory.
 #' @param type The project type: "project" (default), "course", or "presentation".
 #'   Replaces deprecated project_structure parameter.
 #' @param project_structure DEPRECATED. Use 'type' parameter instead.
@@ -210,26 +157,23 @@ message("Framework dev mode active - will load from: %s")
 #' @param styler The styler style to use.
 #' @param use_renv If TRUE, enables renv for package management. Default FALSE.
 #' @param subdir Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.
-#' @param interactive If TRUE and parameters are NULL, will prompt interactively. Set FALSE for scripted initialization.
 #' @param force If TRUE, will reinitialize even if project is already initialized.
 #'
 #' @examples
 #' \dontrun{
-#' # Interactive initialization from empty directory
-#' init()
-#'
-#' # Non-interactive with explicit parameters
+#' # Initialize with explicit parameters
 #' init(
 #'   project_name = "MyProject",
 #'   type = "project",
-#'   lintr = "default",
-#'   styler = "default",
-#'   use_renv = FALSE,
-#'   interactive = FALSE
+#'   use_renv = FALSE
 #' )
 #'
 #' # Course project with renv enabled
-#' init(type = "course", use_renv = TRUE)
+#' init(
+#'   project_name = "MyCourse",
+#'   type = "course",
+#'   use_renv = TRUE
+#' )
 #'
 #' # Single presentation
 #' init(type = "presentation")
@@ -244,7 +188,6 @@ init <- function(
     styler = NULL,
     use_renv = FALSE,
     subdir = NULL,
-    interactive = TRUE,
     force = FALSE,
     .dev_mode = FALSE) {
   # Handle deprecated project_structure parameter
@@ -277,7 +220,6 @@ init <- function(
   checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(use_renv)
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_flag(interactive)
   checkmate::assert_flag(force)
 
   # Check if already initialized
@@ -294,18 +236,12 @@ init <- function(
   if (!from_template) {
     message("Initializing from empty directory...")
 
-    # Prompt for configuration if interactive and parameters missing
-    if (interactive && (is.null(type) || is.null(project_name))) {
-      config <- .prompt_project_config(project_name, type, lintr, styler)
-      project_name <- config$project_name
-      type <- config$type
-      lintr <- config$lintr
-      styler <- config$styler
+    # Require project_name and type
+    if (is.null(project_name) || is.null(type)) {
+      stop("project_name and type are required when initializing from an empty directory")
     }
 
-    # Set defaults if still NULL
-    if (is.null(project_name)) project_name <- basename(getwd())
-    if (is.null(type)) type <- "project"
+    # Set defaults for optional parameters
     if (is.null(lintr)) lintr <- "default"
     if (is.null(styler)) styler <- "default"
 

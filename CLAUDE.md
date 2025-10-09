@@ -12,6 +12,24 @@ All development notes, debugging logs, and technical documentation should be pla
 
 Keep the root directory clean - move detailed notes to `docs/`.
 
+### README Editing Policy
+
+**CRITICAL: NEVER edit `README.md` directly!**
+
+The README uses a modular parts system located in `readme-parts/`:
+
+- **To edit README content**: Edit the appropriate numbered part file (e.g., `2_quickstart.md`, `4_usage_notebooks.md`)
+- **To rebuild README**: Run `Rscript readme-parts/build.R`
+- **Parts structure**:
+  - `1_header.md` - Title and description
+  - `2_quickstart.md` - Installation and project types
+  - `3_workflow_intro.md` - Core workflow intro
+  - `4_usage_notebooks.md` - **SHARED CONTENT** - make_notebook() documentation (also used in framework-project)
+  - `5_usage_data.md` - Data loading, caching, results (steps 3-6)
+  - `6_rest.md` - Configuration, functions, security, etc.
+
+See `readme-parts/README.md` and `docs/readme-parts-guide.md` for complete documentation.
+
 ## Project Overview
 
 This is the **Framework** R package - a data management and project scaffolding system for reproducible data analysis workflows. Framework follows "convention over configuration" principles to help analysts quickly structure their projects with best practices.

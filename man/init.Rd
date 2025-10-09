@@ -12,13 +12,12 @@ init(
   styler = NULL,
   use_renv = FALSE,
   subdir = NULL,
-  interactive = TRUE,
   force = FALSE,
   .dev_mode = FALSE
 )
 }
 \arguments{
-\item{project_name}{The name of the project (used for .Rproj file). If NULL, uses current directory name.}
+\item{project_name}{The name of the project (used for .Rproj file). Required when initializing from empty directory.}
 
 \item{type}{The project type: "project" (default), "course", or "presentation".
 Replaces deprecated project_structure parameter.}
@@ -34,32 +33,28 @@ For backward compatibility: "default"/"minimal" map to "project"/"presentation".
 
 \item{subdir}{Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.}
 
-\item{interactive}{If TRUE and parameters are NULL, will prompt interactively. Set FALSE for scripted initialization.}
-
 \item{force}{If TRUE, will reinitialize even if project is already initialized.}
 }
 \description{
 This function initializes the framework for a new project.
 Can be run from the framework-project template OR from any empty directory.
-When run from an empty directory, prompts for configuration interactively.
+When run from an empty directory, requires project_name and type parameters.
 }
 \examples{
 \dontrun{
-# Interactive initialization from empty directory
-init()
-
-# Non-interactive with explicit parameters
+# Initialize with explicit parameters
 init(
   project_name = "MyProject",
   type = "project",
-  lintr = "default",
-  styler = "default",
-  use_renv = FALSE,
-  interactive = FALSE
+  use_renv = FALSE
 )
 
 # Course project with renv enabled
-init(type = "course", use_renv = TRUE)
+init(
+  project_name = "MyCourse",
+  type = "course",
+  use_renv = TRUE
+)
 
 # Single presentation
 init(type = "presentation")
