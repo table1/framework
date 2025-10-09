@@ -6,13 +6,48 @@ A lightweight R package for structured, reproducible data analysis projects. Con
 
 ## Quick Start
 
-**Easiest way:** Clone the [framework-project template](https://github.com/table1/framework-project) (see below)
+### Option 1: Use the Template (Recommended)
 
-**Install package:**
-```r
-# Install from GitHub
-devtools::install_github("table1/framework")
+```bash
+git clone https://github.com/table1/framework-project my-project
+cd my-project
 ```
+
+Edit `init.R` with your settings, then run:
+```r
+devtools::install_github("table1/framework")
+source("init.R")
+```
+
+**Most common setup:**
+```r
+framework::init(
+  project_name = "MyAnalysis",
+  type = "analysis"  # Creates notebooks/, scripts/, data/, results/
+)
+```
+
+### Option 2: Start from Scratch
+
+```r
+# Install package
+devtools::install_github("table1/framework")
+
+# Initialize in current directory
+framework::init(
+  project_name = "MyProject",
+  type = "analysis",      # or "course" or "presentation"
+  interactive = FALSE
+)
+```
+
+### Project Types
+
+- **analysis** (default): Full-featured with `notebooks/`, `scripts/`, `data/` (public/private splits), `results/`, `functions/`, `docs/`
+- **course**: For teaching with `presentations/`, `notebooks/`, `data/`, `functions/`, `docs/`
+- **presentation**: Minimal for single talks with `data/`, `functions/`, `results/`
+
+**Not sure?** Use `type = "analysis"` - it's the most flexible.
 
 ## What It Does
 
@@ -27,40 +62,35 @@ Framework reduces boilerplate and enforces best practices for data analysis:
 - **Results tracking** - Save/retrieve analysis outputs with blinding support
 - **Supported formats** - CSV, TSV, RDS, Stata (.dta), SPSS (.sav), SAS (.xpt, .sas7bdat)
 
-## Framework Project Template
+## What Gets Created
 
-The fastest way to start is using the pre-configured template:
+When you run `init()`, Framework creates:
 
-```bash
-git clone https://github.com/table1/framework-project my-project
-cd my-project
-```
+- **Project structure** - Organized directories (varies by type)
+- **Configuration files** - `config.yml` and optional `settings/` files
+- **Git setup** - `.gitignore` configured to protect private data
+- **Tooling** - `.lintr`, `.styler.R`, `.editorconfig` for code quality
+- **Database** - `framework.db` for metadata tracking
+- **Environment** - `.env` template for secrets
 
-Open in RStudio/VS Code, review `init.R`, then run:
-```r
-framework::init()
-```
-
-This creates a complete project structure with config files, .gitignore, and tooling.
-
-## Project Structure
+### Example: Analysis Type Structure
 
 ```
 project/
+├── notebooks/              # Exploratory analysis
+├── scripts/                # Production pipelines
 ├── data/
-│   ├── source/private/      # Raw data (gitignored)
-│   ├── source/public/       # Public raw data
-│   ├── cached/             # Computation cache (gitignored)
-│   └── final/private/      # Results (gitignored)
-├── work/                   # Scripts and notebooks
-├── functions/              # Custom functions
-├── results/private/        # Analysis outputs (gitignored)
-├── config.yml             # Project configuration
-├── framework.db           # Metadata/tracking database
-└── .env                   # Secrets (gitignored)
+│   ├── source/private/     # Raw data (gitignored)
+│   ├── source/public/      # Public raw data
+│   ├── cached/            # Computation cache (gitignored)
+│   └── final/private/     # Results (gitignored)
+├── functions/             # Custom functions
+├── results/private/       # Analysis outputs (gitignored)
+├── docs/                  # Documentation
+├── config.yml            # Project configuration
+├── framework.db          # Metadata/tracking database
+└── .env                  # Secrets (gitignored)
 ```
-
-Minimal structure also available - see template for options.
 
 ## Core Workflow
 
