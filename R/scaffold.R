@@ -1,14 +1,18 @@
 #' Initialize and load the project environment
 #'
 #' This function initializes the project environment by:
-#' 1. Loading environment variables from .env
-#' 2. Loading configuration from config.yml
-#' 3. Installing required packages
-#' 4. Loading all functions from the functions directory
+#' 1. Standardizing the working directory (for notebooks in subdirectories)
+#' 2. Loading environment variables from .env
+#' 3. Loading configuration from config.yml
+#' 4. Installing required packages
+#' 5. Loading all functions from the functions directory
 #'
 #' @export
 scaffold <- function(config_file = "config.yml") {
   message("Scaffolding your project...")
+
+  # Standardize working directory first (for notebooks in subdirectories)
+  standardize_wd()
 
   # Only load package if not already loaded
   if (!"package:framework" %in% search()) {

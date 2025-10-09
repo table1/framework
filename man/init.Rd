@@ -19,11 +19,11 @@ init(
 \arguments{
 \item{project_name}{The name of the project (used for .Rproj file). If NULL, uses current directory name.}
 
-\item{type}{The project type: "analysis" (default), "course", or "presentation".
+\item{type}{The project type: "project" (default), "course", or "presentation".
 Replaces deprecated project_structure parameter.}
 
 \item{project_structure}{DEPRECATED. Use 'type' parameter instead.
-For backward compatibility: "default"/"minimal" map to "analysis"/"presentation".}
+For backward compatibility: "default"/"minimal" map to "project"/"presentation".}
 
 \item{lintr}{The lintr style to use.}
 
@@ -49,8 +49,8 @@ init()
 
 # Non-interactive with explicit parameters
 init(
-  project_name = "MyAnalysis",
-  type = "analysis",
+  project_name = "MyProject",
+  type = "project",
   lintr = "default",
   styler = "default",
   use_renv = FALSE,

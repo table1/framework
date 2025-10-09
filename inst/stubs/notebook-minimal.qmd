@@ -1,0 +1,14 @@
+---
+title: "{filename}"
+date: "{date}"
+format: html
+---
+
+```{{r}}
+library(framework)
+scaffold()
+```
+
+```{{r}}
+# Your code here
+```

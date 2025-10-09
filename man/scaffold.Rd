@@ -9,6 +9,7 @@ scaffold(config_file = "config.yml")
 \description{
 This function initializes the project environment by:
 \enumerate{
+\item Standardizing the working directory (for notebooks in subdirectories)
 \item Loading environment variables from .env
 \item Loading configuration from config.yml
 \item Installing required packages
