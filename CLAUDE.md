@@ -2,9 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation Standards
+
+All development notes, debugging logs, and technical documentation should be placed in the `docs/` directory:
+
+- **`docs/debug/`** - Bug reports, fix logs, debugging sessions
+- **`docs/CLAUDE.md`** - Documentation standards and conventions for AI assistants
+- **Root `CLAUDE.md`** - Project overview and getting started guide
+
+Keep the root directory clean - move detailed notes to `docs/`.
+
 ## Project Overview
 
 This is the **Framework** R package - a data management and project scaffolding system for reproducible data analysis workflows. Framework follows "convention over configuration" principles to help analysts quickly structure their projects with best practices.
+
+**Framework is Quarto-first**: The package prioritizes Quarto for notebooks and documentation, with RMarkdown provided for backward compatibility.
 
 ## Package Development Commands
 
@@ -42,6 +54,19 @@ R -e "styler::style_pkg()"
 
 # Check code complexity
 R -e "cyclocomp::cyclocomp_package()"
+```
+
+### Make Targets (Makefile)
+```bash
+make help          # Show available targets
+make build         # Build the package tarball
+make install       # Install with tarball
+make install-quick # Install without building tarball
+make check         # Run R CMD check
+make test          # Run tests
+make docs          # Generate roxygen2 documentation
+make clean         # Clean build artifacts
+make release       # Full release workflow (clean, docs, test, check)
 ```
 
 ## Architecture Overview
@@ -85,6 +110,12 @@ R -e "cyclocomp::cyclocomp_package()"
    - Data integrity verification via digests
    - Results and cache management
 
+8. **Working Directory Utilities (`R/framework_util.R`)**
+   - `standardize_wd()` function for normalizing working directory
+   - Useful for Quarto/RMarkdown documents rendered from subdirectories
+   - Auto-detects project root via config.yml, .Rproj, or common subdirectories
+   - Sets both working directory and knitr's root.dir option
+
 ### Key Design Patterns
 
 - **Convention over Configuration**: Standardized directory structures and naming
@@ -96,10 +127,13 @@ R -e "cyclocomp::cyclocomp_package()"
 ### Template System
 
 Templates use `.fr` suffix and are processed during `init()`:
-- `project.fr.Rproj` → `{ProjectName}.Rproj`
-- `.lintr.default.fr` → `.lintr`
-- `.styler.default.fr.R` → `.styler.R`
-- `{subdir}` placeholder substitution in YAML files
+- `.fr` files are processed and renamed (e.g., `project.fr.Rproj` → `{ProjectName}.Rproj`)
+- `.fr.R` files have `.fr` stripped (e.g., `scaffold.fr.R` → `scaffold.R`)
+- `.fr.qmd` files for Quarto notebooks (Quarto-first approach)
+- `.fr.Rmd` files for RMarkdown notebooks (backward compatibility)
+- `.fr.md` files for markdown templates
+- `{subdir}` and `{ProjectName}` placeholders are substituted
+- Template location: `inst/templates/`
 
 ### Project Structures
 
@@ -114,9 +148,16 @@ Templates use `.fr` suffix and are processed during `init()`:
 - Environment: `.env` file for secrets
 - Framework database: `framework.db` for metadata tracking
 
+### Default Connections
+Both project structures include a pre-configured "framework" connection:
+- Points to the local `framework.db` SQLite database
+- Used for internal metadata tracking (data integrity, cache, results)
+- Can be queried directly to inspect framework state
+- Always available for testing database functionality
+
 ### Package Dependencies (from DESCRIPTION)
 **Core Imports**: DBI, RSQLite, RPostgres, yaml, digest, glue, fs, readr, dotenv
-**Development Suggests**: testthat, cyclocomp, usethis, styler, languageserver, devtools
+**Development Suggests**: testthat, cyclocomp, usethis, styler, languageserver, devtools, sodium (encryption), httpgd (graphics device), DT (data tables)
 
 ## Development Notes
 
@@ -125,10 +166,51 @@ Templates use `.fr` suffix and are processed during `init()`:
 - Includes comprehensive error handling and validation throughout
 - Designed to be framework-agnostic - works with user's preferred R environment
 - Git integration with `.gitignore` templates for data directories
+- Package version: 0.1.0 (pre-release, API not yet stable)
+
+### Function Naming Conventions
+
+- Primary data functions use snake_case: `load_data()`, `save_data()`
+- Internal implementation uses both patterns:
+  - `data_load()` (internal) vs `load_data()` (exported alias)
+  - This dual naming exists for backward compatibility
+
+### Documentation Status
+
+- No vignettes currently exist
+- Documentation via:
+  - README.md (user guide)
+  - api.md (API reference)
+  - CLAUDE.md (development context)
+  - Roxygen2 man pages for all exported functions
+- Consider adding vignettes for common workflows before 1.0
 
 ## Testing
 
-The package includes test templates in `inst/templates/`:
-- `test.fr.R` for basic functionality testing
-- `test-notebook.fr.Rmd` for notebook workflow testing
-- Test framework integration via `testthat` (mentioned in Suggests)
+### Testing Status
+
+- `testthat` is configured (edition 3) in DESCRIPTION
+- No tests currently exist in `tests/` directory
+- Test templates provided in `inst/templates/`:
+  - `test.fr.R` for basic functionality testing
+  - `test-notebook.fr.qmd` for Quarto notebook workflow testing (primary)
+  - `test-notebook.fr.Rmd` for RMarkdown notebook workflow testing (backward compatibility)
+  - Both test notebooks query the framework.db SQLite database to demonstrate database functionality
+- **Recommendation**: Implement comprehensive test suite before 1.0 release
+
+## Framework Database Schema
+
+The `framework.db` SQLite database contains:
+- **data** table: Data integrity tracking (name, encrypted, hash, timestamps)
+- **cache** table: Cache management (name, hash, expire_at, last_read_at, timestamps)
+- **results** table: Results tracking (name, type, blind, comment, hash, timestamps)
+- **metadata** table: Generic key-value storage
+- Schema initialization: `inst/templates/init.sql`
+
+## Known Considerations
+
+- API is unstable (pre-1.0) - breaking changes expected
+- No formal test suite yet
+- `renv` support planned but not implemented
+- Function `data_load()` exists internally but `load_data()` is the public API
+- Encryption requires `sodium` package (in Suggests, not required)

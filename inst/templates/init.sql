@@ -30,7 +30,9 @@ CREATE TABLE data (
 CREATE TABLE cache (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE,
+  file_path TEXT,
   hash TEXT,
+  expire_at DATETIME,
   last_read_at DATETIME,
   created_at DATETIME,
   updated_at DATETIME,
@@ -51,4 +53,11 @@ CREATE TABLE connections (
   created_at DATETIME,
   updated_at DATETIME,
   deleted_at DATETIME
-); 
+);
+
+CREATE TABLE meta (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  created_at DATETIME,
+  updated_at DATETIME
+);

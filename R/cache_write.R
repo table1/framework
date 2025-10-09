@@ -5,6 +5,11 @@
 #' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
 #' @keywords internal
 .set_cache <- function(name, value, file = NULL, expire_after = NULL) {
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+
   # Get config
   config <- read_config()
   cache_dir <- config$options$data$cache_dir
@@ -113,9 +118,10 @@
 #' @return The cached value
 #' @export
 cache <- function(name, value, file = NULL, expire_after = NULL) {
-  if (!is.character(name) || length(name) != 1) {
-    stop("Cache name must be a single string")
-  }
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
   .set_cache(name, value, file, expire_after)
 }

@@ -1,6 +1,6 @@
 #' Get current datetime
-#' @return Current datetime as a lubridate datetime object
+#' @return Current datetime as an ISO 8601 formatted character string
 #' @export
 now <- function() {
-  lubridate::now()
+  format(lubridate::now(), "%Y-%m-%dT%H:%M:%S%z")
 }

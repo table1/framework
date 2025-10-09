@@ -16,6 +16,14 @@ init <- function(
     styler = "default",
     subdir = NULL,
     force = FALSE) {
+  # Validate arguments
+  checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(project_structure, min.chars = 1)
+  checkmate::assert_string(lintr, min.chars = 1)
+  checkmate::assert_string(styler, min.chars = 1)
+  checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_flag(force)
+
   # Determine path for .initiated marker
   init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
   if (file.exists(init_file) && !force) {
@@ -130,6 +138,9 @@ init <- function(
 #' @return Logical indicating if project is initialized.
 #' @export
 is_initialized <- function(subdir = NULL) {
+  # Validate arguments
+  checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
+
   init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
   file.exists(init_file)
 }
@@ -140,6 +151,9 @@ is_initialized <- function(subdir = NULL) {
 #' @return Logical indicating if removal was successful.
 #' @export
 remove_init <- function(subdir = NULL) {
+  # Validate arguments
+  checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
+
   init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
   if (file.exists(init_file)) {
     unlink(init_file)

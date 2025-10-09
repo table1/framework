@@ -4,6 +4,9 @@
 #' @return The configuration as a list
 #' @export
 read_config <- function(config_file = "config.yml") {
+  # Validate arguments
+  checkmate::assert_string(config_file, min.chars = 1)
+
   # 1. Load skeleton config first and set as our base config
   skeleton_path <- system.file("config_skeleton.yml", package = "framework")
   config <- .safe_read_yaml(skeleton_path)
@@ -21,7 +24,7 @@ read_config <- function(config_file = "config.yml") {
   }
 
   # 2. Load user config with config::get() to handle !expr
-  user_config <- config::get(config = config_file)
+  user_config <- config::get(file = config_file)
 
   # Function to evaluate env() calls
   eval_env <- function(x) {
@@ -180,15 +183,38 @@ read_config <- function(config_file = "config.yml") {
 #'
 #' Writes the project configuration to config.yml or settings files
 #' @param config The configuration list to write
+#' @param config_file The configuration file path (default: "config.yml")
 #' @param section Optional section to update (e.g. "data")
 #' @export
-write_config <- function(config, section = NULL) {
+write_config <- function(config, config_file = "config.yml", section = NULL) {
+  # Validate arguments
+  checkmate::assert_list(config)
+  checkmate::assert_string(config_file, min.chars = 1)
+  checkmate::assert_string(section, min.chars = 1, null.ok = TRUE)
+
   if (!is.null(section)) {
+
+    # Check if config file exists
+    if (!file.exists(config_file)) {
+      stop(sprintf("Configuration file '%s' does not exist. Use write_config(config) to create it first.", config_file))
+    }
+
     # Read current config
-    current <- yaml::read_yaml("config.yml")
+    current <- tryCatch(
+      yaml::read_yaml(config_file),
+      error = function(e) {
+        stop(sprintf("Failed to read configuration file '%s': %s", config_file, e$message))
+      }
+    )
 
     # Get current environment from config::get()
-    env <- config::get("config")$environment
+    env <- tryCatch(
+      config::get("config")$environment,
+      error = function(e) {
+        # Default to "default" if config package fails
+        "default"
+      }
+    )
 
     # Check if this section uses a settings file
     if (is.character(current[[env]][[section]]) && grepl("^settings/", current[[env]][[section]])) {
@@ -196,19 +222,47 @@ write_config <- function(config, section = NULL) {
       settings_file <- current[[env]][[section]]
       if (file.exists(settings_file)) {
         # Read current settings
-        settings <- yaml::read_yaml(settings_file)
+        settings <- tryCatch(
+          yaml::read_yaml(settings_file),
+          error = function(e) {
+            stop(sprintf("Failed to read settings file '%s': %s", settings_file, e$message))
+          }
+        )
         # Update with new values
         settings <- modifyList(settings, config)
         # Write back to settings file
-        yaml::write_yaml(settings, settings_file)
+        tryCatch(
+          yaml::write_yaml(settings, settings_file),
+          error = function(e) {
+            stop(sprintf("Failed to write settings file '%s': %s", settings_file, e$message))
+          }
+        )
+      } else {
+        stop(sprintf("Settings file '%s' does not exist", settings_file))
       }
     } else {
       # This is a direct section in config.yml
       current[[env]][[section]] <- config
-      yaml::write_yaml(current, "config.yml")
+      tryCatch(
+        yaml::write_yaml(current, config_file),
+        error = function(e) {
+          stop(sprintf("Failed to write configuration file '%s': %s", config_file, e$message))
+        }
+      )
     }
   } else {
-    # Writing entire config
-    yaml::write_yaml(config, "config.yml")
+    # Writing entire config - wrap in "default" section if not already wrapped
+    if (!"default" %in% names(config)) {
+      config <- list(default = config)
+    }
+
+    tryCatch(
+      yaml::write_yaml(config, config_file),
+      error = function(e) {
+        stop(sprintf("Failed to write configuration file '%s': %s", config_file, e$message))
+      }
+    )
   }
+
+  invisible(NULL)
 }

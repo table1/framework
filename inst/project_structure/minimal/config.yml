@@ -1,6 +1,10 @@
 default:
-  data: 
+  data:
     - example: data/example.csv
-  packages: 
+  packages:
     - dplyr
     - ggplot2
+  connections:
+    framework:
+      driver: "sqlite"
+      database: "framework.db"

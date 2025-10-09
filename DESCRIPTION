@@ -10,7 +10,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("rd", "namespace", "collate"))
 RoxygenNote: 7.3.2
-Imports: 
+Imports:
+    checkmate,
     DBI,
     RSQLite,
     RPostgres,

@@ -8,6 +8,14 @@
 #' @param encrypted Whether the file should be encrypted
 #' @export
 data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE) {
+  # Validate arguments
+  checkmate::assert_data_frame(data, min.rows = 1)
+  checkmate::assert_string(path, min.chars = 1)
+  checkmate::assert_choice(type, c("csv", "rds"))
+  checkmate::assert_choice(delimiter, c("comma", "tab", "semicolon", "space"))
+  checkmate::assert_flag(locked)
+  checkmate::assert_flag(encrypted)
+
   # Split path into components
   parts <- strsplit(path, "\\.")[[1]]
 
@@ -97,8 +105,27 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   message("\n", yaml_example, "\n")
 
   # Calculate hash and update data record
-  current_hash <- .calculate_file_hash(file_path)
-  .set_data(path, encrypted = encrypted, hash = current_hash)
+  current_hash <- tryCatch(
+    .calculate_file_hash(file_path),
+    error = function(e) {
+      stop(sprintf("Failed to calculate file hash for '%s': %s", file_path, e$message))
+    }
+  )
+
+  tryCatch(
+    .set_data(
+      name = path,
+      path = file_path,
+      type = type,
+      delimiter = if (type == "csv") delimiter else NA,
+      locked = locked,
+      encrypted = encrypted,
+      hash = current_hash
+    ),
+    error = function(e) {
+      stop(sprintf("Failed to update database record for '%s': %s", path, e$message))
+    }
+  )
   message(sprintf("Data record updated for: %s", path))
 
   invisible(data)
@@ -119,43 +146,83 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 
 #' Set a data value
 #' @param name The data name
+#' @param path The file path
+#' @param type The data type (csv, rds, etc.)
+#' @param delimiter The delimiter for CSV files
+#' @param locked Whether the data is locked
 #' @param encrypted Whether the data is encrypted
 #' @param hash The hash of the data
 #' @keywords internal
-.set_data <- function(name, encrypted = FALSE, hash = NULL) {
-  con <- .get_db_connection()
+.set_data <- function(name, path = NULL, type = NULL, delimiter = NULL, locked = FALSE, encrypted = FALSE, hash = NULL) {
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(path, null.ok = TRUE, na.ok = TRUE)
+  checkmate::assert_string(type, null.ok = TRUE, na.ok = TRUE)
+  checkmate::assert_string(delimiter, null.ok = TRUE, na.ok = TRUE)
+  checkmate::assert_flag(locked)
+  checkmate::assert_flag(encrypted)
+  checkmate::assert_string(hash, null.ok = TRUE, na.ok = TRUE)
+
+  # Get database connection
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      stop(sprintf("Failed to connect to database: %s", e$message))
+    }
+  )
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
   now <- lubridate::now()
 
-  # Convert encrypted to integer (SQLite boolean)
+  # Convert booleans to integers for SQLite
+  locked_int <- as.integer(locked)
   encrypted_int <- as.integer(encrypted)
 
-  # Convert NULL hash to NA (SQLite NULL)
+  # Convert NULL values to NA for SQLite
+  path_value <- if (is.null(path)) NA else path
+  type_value <- if (is.null(type)) NA else type
+  delimiter_value <- if (is.null(delimiter)) NA else delimiter
   hash_value <- if (is.null(hash)) NA else hash
 
   # Check if entry exists
-  entry_exists <- DBI::dbGetQuery(
-    con,
-    "SELECT 1 FROM data WHERE name = ?",
-    list(name)
+  entry_exists <- tryCatch(
+    DBI::dbGetQuery(
+      con,
+      "SELECT 1 FROM data WHERE name = ?",
+      list(name)
+    ),
+    error = function(e) {
+      stop(sprintf("Failed to check for existing data record: %s", e$message))
+    }
   )
 
   if (nrow(entry_exists) > 0) {
     # Update existing entry
-    DBI::dbExecute(
-      con,
-      "UPDATE data SET encrypted = ?, hash = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
-      list(encrypted_int, hash_value, now, now, name)
+    tryCatch(
+      DBI::dbExecute(
+        con,
+        "UPDATE data SET path = ?, type = ?, delimiter = ?, locked = ?, encrypted = ?, hash = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
+        list(path_value, type_value, delimiter_value, locked_int, encrypted_int, hash_value, now, now, name)
+      ),
+      error = function(e) {
+        stop(sprintf("Failed to update data record: %s", e$message))
+      }
     )
   } else {
     # Insert new entry
-    DBI::dbExecute(
-      con,
-      "INSERT INTO data (name, encrypted, hash, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-      list(name, encrypted_int, hash_value, now, now, now)
+    tryCatch(
+      DBI::dbExecute(
+        con,
+        "INSERT INTO data (name, path, type, delimiter, locked, encrypted, hash, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        list(name, path_value, type_value, delimiter_value, locked_int, encrypted_int, hash_value, now, now, now)
+      ),
+      error = function(e) {
+        stop(sprintf("Failed to insert data record: %s", e$message))
+      }
     )
   }
 
-  DBI::dbDisconnect(con)
+  invisible(NULL)
 }
 
 #' Remove a data value
@@ -181,42 +248,82 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 #' @param spec A named list containing the data spec
 #' @export
 update_data_spec <- function(path, spec) {
+  # Validate arguments
+  checkmate::assert_string(path, min.chars = 1)
+  checkmate::assert_list(spec)
+
   parts <- strsplit(path, "\\.")[[1]]
 
+  # Check if config.yml exists
+  if (!file.exists("config.yml")) {
+    stop("Configuration file 'config.yml' not found")
+  }
+
   # Load raw config.yml to determine where `data` is defined
-  raw_config <- yaml::read_yaml("config.yml", eval.expr = TRUE)
+  raw_config <- tryCatch(
+    yaml::read_yaml("config.yml", eval.expr = FALSE),
+    error = function(e) {
+      stop(sprintf("Failed to read config.yml: %s", e$message))
+    }
+  )
+
+  # Check if default section exists
+  if (is.null(raw_config$default)) {
+    stop("Config file missing 'default' section")
+  }
+
   data_source <- raw_config$default$data
 
   # Determine if `data` is a path or inline
-  if (is.character(data_source) && file.exists(data_source)) {
+  if (is.character(data_source) && length(data_source) == 1 && file.exists(data_source)) {
+    # Data is in external file
     data_path <- data_source
-    current <- yaml::read_yaml(data_path, eval.expr = TRUE)
+    current <- tryCatch(
+      yaml::read_yaml(data_path, eval.expr = FALSE),
+      error = function(e) {
+        stop(sprintf("Failed to read data file '%s': %s", data_path, e$message))
+      }
+    )
   } else {
+    # Data is inline in config.yml
     data_path <- "config.yml"
-    current <- config::get()$data
+    current <- if (is.null(data_source)) list() else data_source
   }
 
-  # Traverse and insert the spec
-  ref <- current
-  for (i in seq_along(parts)) {
-    part <- parts[i]
-    if (i == length(parts)) {
-      ref[[part]] <- spec
-    } else {
-      if (is.null(ref[[part]]) || !is.list(ref[[part]])) {
-        ref[[part]] <- list()
-      }
-      ref <- ref[[part]]
+  # Build nested path and insert the spec
+  # We need to use a recursive approach since R lists are not reference types
+  if (length(parts) == 1) {
+    current[[parts[1]]] <- spec
+  } else {
+    # Build the nested structure by evaluating from the deepest level up
+    path_str <- paste0("current", paste0("[[\"", parts, "\"]]", collapse = ""))
+    assign_str <- paste0(path_str, " <- spec")
+
+    # Ensure intermediate paths exist
+    for (i in seq_along(parts)[-length(parts)]) {
+      intermediate_path <- paste0("current", paste0("[[\"", parts[1:i], "\"]]", collapse = ""))
+      eval_str <- paste0("if (is.null(", intermediate_path, ") || !is.list(", intermediate_path, ")) { ",
+                        intermediate_path, " <- list() }")
+      eval(parse(text = eval_str))
     }
+
+    # Assign the spec
+    eval(parse(text = assign_str))
   }
 
   # Write back to the correct location
-  if (data_path != "config.yml") {
-    yaml::write_yaml(current, data_path)
-  } else {
-    raw_config$default$data <- current
-    yaml::write_yaml(raw_config, "config.yml")
-  }
+  tryCatch({
+    if (data_path != "config.yml") {
+      yaml::write_yaml(current, data_path)
+    } else {
+      raw_config$default$data <- current
+      yaml::write_yaml(raw_config, "config.yml")
+    }
+  }, error = function(e) {
+    stop(sprintf("Failed to write configuration: %s", e$message))
+  })
+
+  invisible(NULL)
 }
 
 #' Update data with hash in the data table

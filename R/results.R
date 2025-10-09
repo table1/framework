@@ -9,23 +9,13 @@
 #' @export
 result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL) {
   # Validate inputs
-  if (!is.character(name) || length(name) != 1) {
-    stop("name must be a single string")
-  }
-  if (!is.character(type) || length(type) != 1) {
-    stop("type must be a single string")
-  }
-  if (!is.logical(blind) || length(blind) != 1) {
-    stop("blind must be a single logical value")
-  }
-  if (!is.logical(public) || length(public) != 1) {
-    stop("public must be a single logical value")
-  }
-  if (!is.null(comment) && (!is.character(comment) || length(comment) != 1)) {
-    stop("comment must be a single string or NULL")
-  }
-  if (!is.null(file) && (!is.character(file) || length(file) != 1)) {
-    stop("file must be a single string or NULL")
+  checkmate::assert_string(name)
+  checkmate::assert_string(type)
+  checkmate::assert_flag(blind)
+  checkmate::assert_flag(public)
+  checkmate::assert_string(comment, null.ok = TRUE)
+  if (!is.null(file)) {
+    checkmate::assert_file_exists(file)
   }
 
   # Create results directory if it doesn't exist
@@ -104,17 +94,31 @@ result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
 #' @return The result value, or NULL if not found or hash mismatch
 #' @export
 result_get <- function(name) {
+  # Validate argument
+  checkmate::assert_string(name, min.chars = 1)
+
   # Get result record
-  con <- .get_db_connection()
-  result <- DBI::dbGetQuery(
-    con,
-    "SELECT type, blind, public, hash FROM results WHERE name = ? AND deleted_at IS NULL",
-    list(name)
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      stop(sprintf("Failed to connect to database: %s", e$message))
+    }
   )
-  DBI::dbDisconnect(con)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  result <- tryCatch(
+    DBI::dbGetQuery(
+      con,
+      "SELECT type, blind, public, hash FROM results WHERE name = ? AND deleted_at IS NULL",
+      list(name)
+    ),
+    error = function(e) {
+      stop(sprintf("Failed to query results: %s", e$message))
+    }
+  )
 
   if (nrow(result) == 0) {
-    return(NULL)
+    stop(sprintf("Result '%s' not found", name))
   }
 
   # Get result file
@@ -122,30 +126,40 @@ result_get <- function(name) {
   result_file <- file.path(results_dir, paste0(name, ".rds"))
 
   if (!file.exists(result_file)) {
-    return(NULL)
+    stop(sprintf("Result file not found: %s", result_file))
   }
 
   # Verify hash
-  current_hash <- .calculate_file_hash(result_file)
+  current_hash <- tryCatch(
+    .calculate_file_hash(result_file),
+    error = function(e) {
+      stop(sprintf("Failed to calculate hash for result '%s': %s", name, e$message))
+    }
+  )
+
   if (current_hash != result$hash) {
-    warning(sprintf("Hash mismatch for result '%s' - result may be corrupted", name))
-    return(NULL)
+    stop(sprintf("Hash mismatch for result '%s' - file may be corrupted (expected: %s, got: %s)",
+                 name, result$hash, current_hash))
   }
 
   # Read result
-  if (result$blind) {
-    # Get encryption key
-    config <- read_config()
-    if (is.null(config$security$results_key)) {
-      stop("Results encryption key not found in config")
+  tryCatch({
+    if (result$blind) {
+      # Get encryption key
+      config <- read_config()
+      if (is.null(config$security$results_key)) {
+        stop("Results encryption key not found in config")
+      }
+      # Read and decrypt
+      encrypted_data <- readBin(result_file, "raw", n = file.size(result_file))
+      decrypted_data <- .decrypt_data(encrypted_data, config$security$results_key)
+      unserialize(decrypted_data)
+    } else {
+      readRDS(result_file)
     }
-    # Read and decrypt
-    encrypted_data <- readBin(result_file, "raw", n = file.size(result_file))
-    decrypted_data <- .decrypt_data(encrypted_data, config$security$results_key)
-    unserialize(decrypted_data)
-  } else {
-    readRDS(result_file)
-  }
+  }, error = function(e) {
+    stop(sprintf("Failed to read result '%s': %s", name, e$message))
+  })
 }
 
 #' List all results

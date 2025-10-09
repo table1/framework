@@ -28,15 +28,26 @@
 #'
 #' @export
 scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
+  # Validate arguments
+  checkmate::assert_string(name, null.ok = TRUE)
+  checkmate::assert_choice(to, c("text", "rds", "csv", "tsv"), null.ok = TRUE)
+  checkmate::assert_string(location, null.ok = TRUE)
+  checkmate::assert_number(n, lower = 0)
+
   # Get default location from config if not provided
   if (is.null(location)) {
     config <- read_config()
     location <- config$options$data$scratch_dir
   }
 
-  # Check if directory exists
+  # Create directory if it doesn't exist
   if (!dir.exists(location)) {
-    stop(sprintf("Directory does not exist: %s", location))
+    tryCatch(
+      dir.create(location, recursive = TRUE, showWarnings = FALSE),
+      error = function(e) {
+        stop(sprintf("Failed to create scratch directory '%s': %s", location, e$message))
+      }
+    )
   }
 
   # Get object name if not provided
@@ -119,10 +130,14 @@ scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf)
     if (to == "rds") {
       file_path <- file.path(location, paste0(name, ".rds"))
       saveRDS(x, file_path)
-    } else {
-      # Default to TSV for data frames
+    } else if (to == "csv") {
+      file_path <- file.path(location, paste0(name, ".csv"))
+      write.table(x, file_path, sep = ",", row.names = FALSE, quote = FALSE)
+    } else if (to == "tsv") {
       file_path <- file.path(location, paste0(name, ".tsv"))
       write.table(x, file_path, sep = "\t", row.names = FALSE, quote = FALSE)
+    } else {
+      stop("Data frames can only be saved as 'rds', 'csv', or 'tsv'")
     }
   } else if (is.vector(x) && !is.list(x)) {
     # Handle vectors
@@ -192,7 +207,8 @@ capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
 }
 
 #' Alias for backward compatibility
+#' @param all Ignored parameter for backward compatibility (always cleans all files)
 #' @export
-clean_scratch <- function() {
+clean_scratch <- function(all = TRUE) {
   scratch_clean()
 }

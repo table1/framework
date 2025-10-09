@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Read(//Users/erikwestlund/code/better-shoes/R/**)"
+      "Read(//Users/erikwestlund/code/better-shoes/R/**)",
+      "Bash(R:*)",
+      "Bash(tree:*)",
+      "Bash(Rscript:*)",
+      "Read(//private/tmp/**)"
     ],
     "deny": [],
     "ask": []

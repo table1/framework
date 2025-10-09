@@ -33,6 +33,11 @@
 #' @return The cached result, or NULL if not found, expired, or hash mismatch
 #' @keywords internal
 .get_cache <- function(name, file = NULL, expire_after = NULL) {
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+
   # Get config
   config <- read_config()
   cache_dir <- config$options$data$cache_dir
@@ -143,9 +148,10 @@
 #' @return The cached value, or NULL if not found, expired, or hash mismatch
 #' @export
 cache_get <- function(name, file = NULL, expire_after = NULL) {
-  if (!is.character(name) || length(name) != 1) {
-    stop("Cache name must be a single string")
-  }
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
   result <- .get_cache(name, file, expire_after)
   if (is.null(result)) {
@@ -163,9 +169,14 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #' @return The result of expr
 #' @export
 get_or_cache <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
-  if (!is.character(name) || length(name) != 1) {
-    stop("Cache name must be a single string")
-  }
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+  checkmate::assert(
+    checkmate::check_flag(refresh),
+    checkmate::check_function(refresh)
+  )
 
   # Check if refresh is needed
   if (.validate_refresh(refresh)) {

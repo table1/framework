@@ -5,6 +5,10 @@
 #' @param ... Additional arguments passed to readr::read_delim
 #' @export
 data_load <- function(path, delim = NULL, ...) {
+  # Validate arguments
+  checkmate::assert_string(path, min.chars = 1)
+  checkmate::assert_choice(delim, c("comma", "tab", "semicolon", "space", ",", "\t", ";", " "), null.ok = TRUE)
+
   # Check if path is a direct file path
   if (file.exists(path)) {
     # Direct file path - create a minimal spec
@@ -65,7 +69,15 @@ data_load <- function(path, delim = NULL, ...) {
     if (is.null(data_record)) {
       # No record exists, create one with current hash
       tryCatch(
-        .set_data(path, encrypted = spec$encrypted, hash = current_hash),
+        .set_data(
+          name = path,
+          path = spec$path,
+          type = spec$type,
+          delimiter = if (!is.null(spec$delimiter)) spec$delimiter else NA,
+          locked = if (!is.null(spec$locked)) spec$locked else FALSE,
+          encrypted = spec$encrypted,
+          hash = current_hash
+        ),
         error = function(e) {
           warning(sprintf("Failed to set data record: %s", e$message))
         }
@@ -79,9 +91,17 @@ data_load <- function(path, delim = NULL, ...) {
           warning(sprintf("File has changed since last read: %s", path))
         }
       }
-      # Update hash
+      # Update hash and metadata
       tryCatch(
-        .set_data(path, encrypted = data_record$encrypted, hash = current_hash),
+        .set_data(
+          name = path,
+          path = spec$path,
+          type = spec$type,
+          delimiter = if (!is.null(spec$delimiter)) spec$delimiter else NA,
+          locked = if (!is.null(spec$locked)) spec$locked else FALSE,
+          encrypted = data_record$encrypted,
+          hash = current_hash
+        ),
         error = function(e) {
           warning(sprintf("Failed to update data record: %s", e$message))
         }
@@ -119,7 +139,12 @@ data_load <- function(path, delim = NULL, ...) {
   # Determine delimiter
   if (is.null(delim)) {
     # Use delimiter from spec if available, otherwise guess from extension
-    delim <- ifelse(is.null(spec$delimiter), guess_delimiter_from_ext(spec$path), spec$delimiter)
+    if (is.null(spec$delimiter) || is.na(spec$delimiter)) {
+      delim <- guess_delimiter_from_ext(spec$path)
+    } else {
+      delim <- spec$delimiter
+    }
+
     if (is.null(delim)) {
       warning(sprintf("Could not determine delimiter from extension for %s, defaulting to comma", spec$path))
       delim <- "comma"
@@ -208,9 +233,13 @@ load_data <- function(path, delim = NULL, ...) {
 #' @return The loaded data, either from cache or file
 #' @export
 load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
-  if (!is.character(path) || length(path) != 1) {
-    stop("Path must be a single string")
-  }
+  # Validate arguments
+  checkmate::assert_string(path)
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+  checkmate::assert(
+    checkmate::check_flag(refresh),
+    checkmate::check_function(refresh)
+  )
 
   cache_key <- sprintf("data.%s", path)
   get_or_cache(cache_key,
@@ -261,6 +290,9 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 #' @return The data specification as a list
 #' @export
 get_data_spec <- function(path) {
+  # Validate arguments
+  checkmate::assert_string(path, min.chars = 1)
+
   config <- read_config()
 
   # Get file type info

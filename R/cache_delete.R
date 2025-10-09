@@ -3,6 +3,10 @@
 #' @param file Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)
 #' @keywords internal
 .remove_cache <- function(name, file = NULL) {
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
+
   # Get config
   config <- read_config()
   cache_dir <- config$options$data$cache_dir
@@ -48,9 +52,9 @@
 #' @param file Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)
 #' @export
 cache_forget <- function(name, file = NULL) {
-  if (!is.character(name) || length(name) != 1) {
-    stop("Cache name must be a single string")
-  }
+  # Validate arguments
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
 
   .remove_cache(name, file)
   invisible(NULL)

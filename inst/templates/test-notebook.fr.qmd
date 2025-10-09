@@ -1,8 +1,8 @@
 ---
 title: "Test Notebook"
-author: "Erik Westlund"
-date: "`r Sys.Date()`"
-output: html_document
+author: "Your Name"
+date: today
+format: html
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(framework)
 scaffold()
-
 ```
 
 ## Inspect config
@@ -40,13 +39,12 @@ Query the framework.db to demonstrate database functionality:
 ```{r}
 # Query the framework database itself to show database functionality
 framework_data <- get_query("SELECT name, type FROM sqlite_master WHERE type='table'", "framework")
-framework_data |> head() |> knitr::kable()
+framework_data |> knitr::kable()
 ```
 
 ## Cache expensive operations
 
 ```{r}
-
 # cache_forget("test")
 results <- get_or_cache("test", {
   Sys.sleep(5)
@@ -54,5 +52,4 @@ results <- get_or_cache("test", {
 })
 
 results
-
 ```

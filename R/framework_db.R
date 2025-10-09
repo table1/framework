@@ -2,70 +2,62 @@
 #' @keywords internal
 .create_template_db <- function(delete_existing = FALSE) {
   db_path <- "inst/templates/framework.fr.db"
-  if (delete_existing && file.exists(db_path)) {
-    file.remove(db_path)
+
+  # Validate we're in package root
+  if (!file.exists("inst/templates")) {
+    stop("This function must be run from the package root directory")
   }
 
+  if (delete_existing && file.exists(db_path)) {
+    tryCatch(
+      file.remove(db_path),
+      error = function(e) {
+        stop(sprintf("Failed to remove existing database: %s", e$message))
+      }
+    )
+  }
+
+  # Read SQL from init.sql for consistency
+  sql_file <- "inst/templates/init.sql"
+  if (!file.exists(sql_file)) {
+    stop(sprintf("SQL initialization file not found: %s", sql_file))
+  }
+
+  sql_content <- tryCatch(
+    readLines(sql_file, warn = FALSE),
+    error = function(e) {
+      stop(sprintf("Failed to read SQL file '%s': %s", sql_file, e$message))
+    }
+  )
+
   # Create new database
-  con <- DBI::dbConnect(RSQLite::SQLite(), db_path)
+  con <- tryCatch(
+    DBI::dbConnect(RSQLite::SQLite(), db_path),
+    error = function(e) {
+      stop(sprintf("Failed to create database connection: %s", e$message))
+    }
+  )
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
 
-  # Create data table
-  DBI::dbExecute(con, "
-    CREATE TABLE data (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE,
-      encrypted BOOLEAN,
-      hash TEXT,
-      last_read_at DATETIME,
-      created_at DATETIME,
-      updated_at DATETIME,
-      deleted_at DATETIME
-    )
-  ")
+  # Execute the SQL content
+  # Split by semicolons and execute each statement
+  sql_statements <- paste(sql_content, collapse = "\n")
+  sql_statements <- strsplit(sql_statements, ";")[[1]]
 
-  # Create cache table
-  DBI::dbExecute(con, "
-    CREATE TABLE cache (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE,
-      file_path TEXT,
-      hash TEXT,
-      expire_at DATETIME NULL,
-      last_read_at DATETIME,
-      created_at DATETIME,
-      updated_at DATETIME,
-      deleted_at DATETIME
-    )
-  ")
+  for (stmt in sql_statements) {
+    stmt <- trimws(stmt)
+    if (nchar(stmt) > 0) {
+      tryCatch(
+        DBI::dbExecute(con, stmt),
+        error = function(e) {
+          stop(sprintf("Failed to execute SQL statement: %s\nError: %s", stmt, e$message))
+        }
+      )
+    }
+  }
 
-  # Create meta table
-  DBI::dbExecute(con, "
-    CREATE TABLE meta (
-      key TEXT PRIMARY KEY,
-      value TEXT,
-      created_at DATETIME,
-      updated_at DATETIME
-    )
-  ")
-
-  # Create results table
-  DBI::dbExecute(con, "
-    CREATE TABLE results (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE,
-      type TEXT,
-      public BOOLEAN,
-      blind BOOLEAN,
-      comment TEXT,
-      hash TEXT,
-      last_read_at DATETIME,
-      created_at DATETIME,
-      updated_at DATETIME,
-      deleted_at DATETIME
-    )
-  ")
-
-  DBI::dbDisconnect(con)
+  message(sprintf("Template database created successfully: %s", db_path))
+  invisible(NULL)
 }
 
 #' Initialize the framework database
@@ -132,14 +124,32 @@
   result$value
 }
 
-#' List all metadata keys
-#' @return A character vector of metadata keys
+#' List all metadata
+#' @return A data frame of metadata with keys, values, and timestamps
 #' @export
 list_metadata <- function() {
-  con <- .get_db_connection()
-  on.exit(DBI::dbDisconnect(con))
-  result <- DBI::dbGetQuery(con, "SELECT key FROM meta")
-  result$key
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      stop(sprintf("Failed to connect to database: %s", e$message))
+    }
+  )
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  result <- tryCatch(
+    DBI::dbGetQuery(con, "SELECT key, value, created_at, updated_at FROM meta"),
+    error = function(e) {
+      stop(sprintf("Failed to query metadata: %s", e$message))
+    }
+  )
+
+  # Convert timestamps to POSIXct
+  if (nrow(result) > 0) {
+    result$created_at <- lubridate::as_datetime(result$created_at)
+    result$updated_at <- lubridate::as_datetime(result$updated_at)
+  }
+
+  result
 }
 
 #' Remove a metadata value
