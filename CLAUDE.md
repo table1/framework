@@ -28,7 +28,9 @@ The README uses a modular parts system located in `readme-parts/`:
   - `5_usage_data.md` - Data loading, caching, results (steps 3-6)
   - `6_rest.md` - Configuration, functions, security, etc.
 
-**IMPORTANT**: The `readme-parts/` directory is gitignored (maintainers only). It exists in your local checkout but won't be pushed to GitHub. Users who clone the repo will only see the built `README.md`.
+**IMPORTANT**: This is the source of truth for readme-parts/. The framework-project repo gitignores readme-parts/ and only includes the built README.md.
+
+**Pre-commit hook**: A git pre-commit hook automatically rebuilds README.md when any readme-parts/ files are committed. The hook is located at `.git/hooks/pre-commit`.
 
 See `readme-parts/README.md` and `docs/readme-parts-guide.md` for complete documentation.
 
