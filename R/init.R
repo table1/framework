@@ -283,11 +283,12 @@ init <- function(
 
   # Derive project name
   if (!is.null(project_name)) {
-    project_name <- tools::toTitleCase(tolower(project_name))
+    # Keep original capitalization, just convert spaces to hyphens for filenames
+    rproj_name <- gsub("\\s+", "-", project_name)
   } else {
     project_name <- basename(getwd())
+    rproj_name <- project_name
   }
-  rproj_name <- gsub("\\s+", "", project_name)
 
   # Validate template style files
   lintr_template <- system.file("templates", paste0(".lintr.", lintr, ".fr"), package = "framework")
@@ -320,6 +321,7 @@ init <- function(
     if (fname == "project.fr.Rproj") next
     if (fname == "init.fr.R") next  # Skip init.R template (handled separately in empty dir case)
     if (fname == ".env.fr") next  # Skip .env template (handled separately in empty dir case)
+    if (fname == "test.fr.R") next  # Skip test file template
 
     # Skip type-specific config and README files (these are handled separately)
     if (grepl("^config\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
