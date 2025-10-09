@@ -54,9 +54,13 @@ read_config <- function(config_file = "config.yml") {
     }
   }
 
-  # 3. Handle non-standard sections as options
+  # 3. Handle non-standard sections and options
   for (section in names(user_config)) {
-    if (!section %in% c("data", "connections", "git", "security", "packages")) {
+    if (section == "options") {
+      # Deep merge options to preserve nested defaults
+      config$options <- modifyList(config$options, user_config$options)
+    } else if (!section %in% c("data", "connections", "git", "security", "packages")) {
+      # Other non-standard sections go into options
       config$options[[section]] <- user_config[[section]]
     }
   }

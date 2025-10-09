@@ -1,0 +1,13 @@
+# Exclude Framework data and output directories from renv tracking
+data/
+results/
+scratch/
+work/
+
+# R project files
+*.Rproj
+.Rproj.user
+
+# Framework markers
+.framework_renv_enabled
+.framework_scaffolded

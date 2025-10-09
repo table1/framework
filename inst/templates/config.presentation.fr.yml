@@ -1,0 +1,23 @@
+default:
+  # Package dependencies - presentation focused (minimal)
+  packages:
+    - quarto
+    - knitr
+
+  # Project options
+  options:
+    # Directory paths (defaults shown - customize as needed)
+    functions_dir: functions
+    data:
+      cache_dir: data/cached
+
+    # renv integration
+    renv_nag: true  # Show reproducibility message on first scaffold()
+
+  # Data catalog
+  data:
+    # Example: Uncomment and modify
+    # example:
+    #   path: data/example.csv
+    #   type: csv
+    #   locked: true

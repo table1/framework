@@ -4,10 +4,10 @@
 \alias{.install_package}
 \title{Install a package if not already installed}
 \usage{
-.install_package(pkg)
+.install_package(pkg_spec)
 }
 \arguments{
-\item{pkg}{Package name}
+\item{pkg_spec}{Package specification (may include version pin)}
 }
 \description{
 Install a package if not already installed

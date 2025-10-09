@@ -22,7 +22,7 @@ Imports:
     readr,
     dotenv,
     haven
-Suggests: 
+Suggests:
     testthat (>= 3.0.0),
     cyclocomp,
     usethis,
@@ -31,6 +31,9 @@ Suggests:
     devtools,
     sodium,
     httpgd,
-    DT
+    DT,
+    renv,
+    remotes,
+    cli
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)

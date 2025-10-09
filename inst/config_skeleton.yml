@@ -1,15 +1,29 @@
 options:
+  # Environment and database
   dotenv_location: "."
   framework_db: framework.db
+
+  # Connections
   connections:
     default_connection: db
+
+  # Directory paths (all customizable)
+  functions_dir: functions  # Can be list: [functions, helpers, utils]
+  results:
+    public_dir: results/public
+    private_dir: results/private
   data:
     cache_default_expire: NULL
     cache_dir: data/cached
     scratch_dir: data/scratch
+
+  # Package management
   packages:
     auto_install: true
     auto_update: false
+
+  # renv integration
+  renv_nag: true
 
 connections:
 

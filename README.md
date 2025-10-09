@@ -21,6 +21,7 @@ Framework reduces boilerplate and enforces best practices for data analysis:
 - **Project scaffolding** - Standardized directories, config-driven setup
 - **Data management** - Declarative data catalog, integrity tracking, encryption
 - **Auto-loading** - Packages and custom functions loaded automatically
+- **Optional renv integration** - Reproducible package management (opt-in)
 - **Caching** - Smart caching for expensive computations
 - **Database helpers** - PostgreSQL, SQLite with credential management
 - **Results tracking** - Save/retrieve analysis outputs with blinding support
@@ -184,6 +185,10 @@ security:
 | `result_save()` | Save analysis output |
 | `result_get()` | Retrieve saved result |
 | `scratch_capture()` | Quick debug/temp file save |
+| `renv_enable()` | Enable renv for reproducibility (opt-in) |
+| `renv_disable()` | Disable renv integration |
+| `packages_snapshot()` | Save package versions to renv.lock |
+| `packages_restore()` | Restore packages from renv.lock |
 
 ## Data Integrity & Security
 
@@ -192,10 +197,35 @@ security:
 - **Encryption** - AES encryption for sensitive data/results
 - **Gitignore by default** - Private directories auto-ignored
 
+## Reproducibility with renv
+
+Framework includes **optional** renv integration (OFF by default):
+
+```r
+# Enable renv for this project
+renv_enable()
+
+# Your packages are now managed by renv
+# Use snapshot after installing new packages
+packages_snapshot()
+
+# Disable renv if you prefer
+renv_disable()
+```
+
+**Version pinning in config.yml:**
+```yaml
+packages:
+  - dplyr              # Latest from CRAN
+  - ggplot2@3.4.0     # Specific version
+  - tidyverse/dplyr@main  # GitHub with ref
+```
+
+See [renv integration docs](docs/features/renv_integration.md) for details.
+
 ## Roadmap
 
 - Excel file support
-- renv integration
 - Quarto codebook generation
 - MySQL, SQL Server, Snowflake connectors
 - Enhanced validation system

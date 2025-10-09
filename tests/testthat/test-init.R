@@ -1,4 +1,4 @@
-test_that("init creates minimal project structure", {
+test_that("init creates presentation project structure", {
   test_dir <- create_test_dir()
   old_wd <- getwd()
   on.exit({
@@ -8,7 +8,7 @@ test_that("init creates minimal project structure", {
 
   setwd(test_dir)
 
-  suppressMessages(init(project_name = "TestProject", project_structure = "minimal"))
+  suppressMessages(init(project_name = "TestProject", type = "presentation"))
 
   # Check key files exist
   expect_true(file.exists("config.yml"))
@@ -22,7 +22,7 @@ test_that("init creates minimal project structure", {
   expect_true(dir.exists("results"))
 })
 
-test_that("init creates default project structure", {
+test_that("init creates analysis project structure", {
   test_dir <- create_test_dir()
   old_wd <- getwd()
   on.exit({
@@ -32,21 +32,53 @@ test_that("init creates default project structure", {
 
   setwd(test_dir)
 
-  suppressMessages(init(project_name = "TestProject", project_structure = "default"))
+  suppressMessages(init(project_name = "TestProject", type = "analysis"))
 
   # Check key files
   expect_true(file.exists("config.yml"))
   expect_true(file.exists("framework.db"))
 
-  # Check default structure directories
+  # Check analysis structure directories
   expect_true(dir.exists("data/source/private"))
   expect_true(dir.exists("data/source/public"))
   expect_true(dir.exists("data/in_progress"))
   expect_true(dir.exists("data/final/private"))
   expect_true(dir.exists("data/final/public"))
-  expect_true(dir.exists("work"))
+  expect_true(dir.exists("notebooks"))
+  expect_true(dir.exists("scripts"))
   expect_true(dir.exists("functions"))
   expect_true(dir.exists("settings"))
+  expect_true(dir.exists("docs"))
+})
+
+test_that("init creates course project structure", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  suppressMessages(init(project_name = "TestProject", type = "course"))
+
+  # Check key files
+  expect_true(file.exists("config.yml"))
+  expect_true(file.exists("framework.db"))
+
+  # Check course structure directories
+  expect_true(dir.exists("data/cached"))
+  expect_true(dir.exists("presentations"))
+  expect_true(dir.exists("notebooks"))
+  expect_true(dir.exists("functions"))
+  expect_true(dir.exists("docs"))
+
+  # Course type should NOT have results directory
+  expect_false(dir.exists("results"))
+
+  # Should not have public/private data splits
+  expect_false(dir.exists("data/source/private"))
 })
 
 test_that("init creates framework database with correct tables", {
@@ -59,7 +91,7 @@ test_that("init creates framework database with correct tables", {
 
   setwd(test_dir)
 
-  suppressMessages(init(project_name = "TestProject", project_structure = "minimal"))
+  suppressMessages(init(project_name = "TestProject", type = "presentation"))
 
   expect_true(check_framework_db("framework.db"))
 })
@@ -122,7 +154,7 @@ test_that("init with force=TRUE reinitializes existing project", {
   expect_true(file.exists("test_marker.txt"))
 
   # Reinitialize with force
-  suppressMessages(init(project_name = "NewProject", project_structure = "minimal", force = TRUE))
+  suppressMessages(init(project_name = "NewProject", type = "presentation", force = TRUE))
 
   # Original file should still exist (force doesn't delete user files)
   expect_true(file.exists("test_marker.txt"))
@@ -144,7 +176,7 @@ test_that("init from empty directory creates all necessary files", {
   # Initialize from empty directory (non-interactive)
   suppressMessages(init(
     project_name = "EmptyDirProject",
-    project_structure = "minimal",
+    type = "presentation",
     lintr = "default",
     styler = "default",
     interactive = FALSE
@@ -182,7 +214,7 @@ test_that("init from empty directory creates correct init.R content", {
   # Initialize
   suppressMessages(init(
     project_name = "TestInit",
-    project_structure = "default",
+    type = "analysis",
     lintr = "default",
     styler = "default",
     interactive = FALSE
@@ -193,9 +225,9 @@ test_that("init from empty directory creates correct init.R content", {
 
   # Check placeholders were replaced
   expect_true(any(grepl("TestInit", init_content)))
-  expect_true(any(grepl("default", init_content)))
+  expect_true(any(grepl("analysis", init_content)))
   expect_false(any(grepl("\\{\\{PROJECT_NAME\\}\\}", init_content)))
-  expect_false(any(grepl("\\{\\{PROJECT_STRUCTURE\\}\\}", init_content)))
+  expect_false(any(grepl("\\{\\{PROJECT_TYPE\\}\\}", init_content)))
 })
 
 test_that("init detects template vs empty directory correctly", {
@@ -211,7 +243,7 @@ test_that("init detects template vs empty directory correctly", {
 
   suppressMessages(init(
     project_name = "Empty",
-    project_structure = "minimal",
+    type = "presentation",
     interactive = FALSE
   ))
 
@@ -233,7 +265,7 @@ test_that("init detects template vs empty directory correctly", {
 
   suppressMessages(init(
     project_name = "Template",
-    project_structure = "minimal",
+    type = "presentation",
     interactive = FALSE
   ))
 
@@ -260,7 +292,7 @@ test_that("init with subdir creates files in subdirectory", {
   # Initialize in subdirectory
   suppressMessages(init(
     project_name = "SubProject",
-    project_structure = "minimal",
+    type = "presentation",
     subdir = "subproject",
     interactive = FALSE
   ))
@@ -271,4 +303,46 @@ test_that("init with subdir creates files in subdirectory", {
   expect_true(file.exists("subproject/.env"))
   expect_true(file.exists("subproject/SubProject.Rproj"))
   expect_true(file.exists("subproject/.initiated"))
+})
+
+test_that("deprecated project_structure parameter still works", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Test backward compatibility with deprecated parameter
+  expect_warning(
+    suppressMessages(init(project_name = "TestProject", project_structure = "default")),
+    "Parameter 'project_structure' is deprecated"
+  )
+
+  # Should map to analysis type
+  expect_true(dir.exists("notebooks"))
+  expect_true(dir.exists("scripts"))
+
+  # Clean up for next test
+  setwd(old_wd)
+  cleanup_test_dir(test_dir)
+
+  test_dir2 <- create_test_dir()
+  setwd(test_dir2)
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir2)
+  }, add = TRUE)
+
+  # Test minimal -> presentation mapping
+  expect_warning(
+    suppressMessages(init(project_name = "TestProject", project_structure = "minimal")),
+    "Parameter 'project_structure' is deprecated"
+  )
+
+  # Should map to presentation type
+  expect_true(dir.exists("data"))
+  expect_true(dir.exists("functions"))
 })

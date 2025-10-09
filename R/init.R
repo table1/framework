@@ -1,11 +1,11 @@
 #' Prompt user for project configuration
 #' @param project_name Project name (NULL to prompt)
-#' @param project_structure Project structure (NULL to prompt)
+#' @param type Project type (NULL to prompt)
 #' @param lintr Lintr style (NULL to prompt)
 #' @param styler Styler style (NULL to prompt)
 #' @return List of configuration parameters
 #' @keywords internal
-.prompt_project_config <- function(project_name, project_structure, lintr, styler) {
+.prompt_project_config <- function(project_name, type, lintr, styler) {
   cat("\n")
   cat("Framework Project Initialization\n")
   cat("=================================\n\n")
@@ -17,13 +17,18 @@
     project_name <- if (nzchar(response)) response else default_name
   }
 
-  # Project structure
-  if (is.null(project_structure)) {
-    cat("\nProject structure:\n")
-    cat("  1. Default (full structure with work/, settings/, etc.)\n")
-    cat("  2. Minimal (lightweight with just data/, functions/, results/)\n")
-    response <- readline("Choose structure [1]: ")
-    project_structure <- if (response == "2") "minimal" else "default"
+  # Project type
+  if (is.null(type)) {
+    cat("\nProject type:\n")
+    cat("  1. Analysis (data work with notebooks/ and scripts/)\n")
+    cat("  2. Course (teaching with presentations/ and notebooks/)\n")
+    cat("  3. Presentation (single talk, minimal structure)\n")
+    response <- readline("Choose type [1]: ")
+    type <- switch(response,
+      "2" = "course",
+      "3" = "presentation",
+      "analysis"  # default
+    )
   }
 
   # Lintr style
@@ -40,7 +45,7 @@
 
   list(
     project_name = project_name,
-    project_structure = project_structure,
+    type = type,
     lintr = lintr,
     styler = styler
   )
@@ -48,7 +53,7 @@
 
 #' Create init.R from template
 #' @keywords internal
-.create_init_file <- function(project_name, project_structure, lintr, styler, subdir = NULL) {
+.create_init_file <- function(project_name, type, lintr, styler, subdir = NULL) {
   template_path <- system.file("templates/init.fr.R", package = "framework")
   if (!file.exists(template_path)) {
     stop("Template init.fr.R not found in package")
@@ -58,7 +63,7 @@
 
   # Replace placeholders
   content <- gsub("\\{\\{PROJECT_NAME\\}\\}", project_name, content)
-  content <- gsub("\\{\\{PROJECT_STRUCTURE\\}\\}", project_structure, content)
+  content <- gsub("\\{\\{PROJECT_TYPE\\}\\}", type, content)
   content <- gsub("\\{\\{LINTR\\}\\}", lintr, content)
   content <- gsub("\\{\\{STYLER\\}\\}", styler, content)
 
@@ -71,10 +76,17 @@
 
 #' Create config.yml from template
 #' @keywords internal
-.create_config_file <- function(subdir = NULL) {
-  template_path <- system.file("templates/config.fr.yml", package = "framework")
+.create_config_file <- function(type = "analysis", subdir = NULL) {
+  # Try type-specific template first, fall back to generic
+  template_name <- sprintf("templates/config.%s.fr.yml", type)
+  template_path <- system.file(template_name, package = "framework")
+
   if (!file.exists(template_path)) {
-    stop("Template config.fr.yml not found in package")
+    # Fall back to generic template
+    template_path <- system.file("templates/config.fr.yml", package = "framework")
+    if (!file.exists(template_path)) {
+      stop("Template config.fr.yml not found in package")
+    }
   }
 
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
@@ -120,7 +132,10 @@
 #' When run from an empty directory, prompts for configuration interactively.
 #'
 #' @param project_name The name of the project (used for .Rproj file). If NULL, uses current directory name.
-#' @param project_structure The project structure to use ("default" or "minimal").
+#' @param type The project type: "analysis" (default), "course", or "presentation".
+#'   Replaces deprecated project_structure parameter.
+#' @param project_structure DEPRECATED. Use 'type' parameter instead.
+#'   For backward compatibility: "default"/"minimal" map to "analysis"/"presentation".
 #' @param lintr The lintr style to use.
 #' @param styler The styler style to use.
 #' @param subdir Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.
@@ -135,24 +150,45 @@
 #' # Non-interactive with explicit parameters
 #' init(
 #'   project_name = "MyAnalysis",
-#'   project_structure = "minimal",
+#'   type = "analysis",
 #'   lintr = "default",
 #'   styler = "default",
 #'   interactive = FALSE
 #' )
+#'
+#' # Course project
+#' init(type = "course")
+#'
+#' # Single presentation
+#' init(type = "presentation")
 #' }
 #'
 #' @export
 init <- function(
     project_name = NULL,
+    type = NULL,
     project_structure = NULL,
     lintr = NULL,
     styler = NULL,
     subdir = NULL,
     interactive = TRUE,
     force = FALSE) {
+  # Handle deprecated project_structure parameter
+  if (!is.null(project_structure) && is.null(type)) {
+    warning(
+      "Parameter 'project_structure' is deprecated. Use 'type' instead.\n",
+      "  Mapping: 'default' -> 'analysis', 'minimal' -> 'presentation'"
+    )
+    type <- switch(project_structure,
+      "default" = "analysis",
+      "minimal" = "presentation",
+      "analysis"  # fallback
+    )
+  }
+
   # Validate arguments
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(type, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
@@ -175,33 +211,33 @@ init <- function(
     message("Initializing from empty directory...")
 
     # Prompt for configuration if interactive and parameters missing
-    if (interactive && (is.null(project_structure) || is.null(project_name))) {
-      config <- .prompt_project_config(project_name, project_structure, lintr, styler)
+    if (interactive && (is.null(type) || is.null(project_name))) {
+      config <- .prompt_project_config(project_name, type, lintr, styler)
       project_name <- config$project_name
-      project_structure <- config$project_structure
+      type <- config$type
       lintr <- config$lintr
       styler <- config$styler
     }
 
     # Set defaults if still NULL
     if (is.null(project_name)) project_name <- basename(getwd())
-    if (is.null(project_structure)) project_structure <- "default"
+    if (is.null(type)) type <- "analysis"
     if (is.null(lintr)) lintr <- "default"
     if (is.null(styler)) styler <- "default"
 
     # Create foundational files
-    .create_init_file(project_name, project_structure, lintr, styler, subdir)
-    .create_config_file(subdir)
+    .create_init_file(project_name, type, lintr, styler, subdir)
+    .create_config_file(type, subdir)
     .create_env_file(subdir)
   } else {
     # Set defaults from template behavior
-    if (is.null(project_structure)) project_structure <- "default"
+    if (is.null(type)) type <- "analysis"
     if (is.null(lintr)) lintr <- "default"
     if (is.null(styler)) styler <- "default"
   }
 
   # Continue with standard init process
-  .init_standard(project_name, project_structure, lintr, styler, subdir, force)
+  .init_standard(project_name, type, lintr, styler, subdir, force)
 
   # Display next steps if from empty directory
   if (!from_template) {
@@ -211,10 +247,10 @@ init <- function(
 
 #' Standard initialization process (shared by both paths)
 #' @keywords internal
-.init_standard <- function(project_name, project_structure, lintr, styler, subdir, force) {
+.init_standard <- function(project_name, type, lintr, styler, subdir, force) {
   # Validate arguments (already validated in init, but keep for internal calls)
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_string(project_structure, min.chars = 1)
+  checkmate::assert_string(type, min.chars = 1)
   checkmate::assert_string(lintr, min.chars = 1)
   checkmate::assert_string(styler, min.chars = 1)
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
@@ -293,8 +329,8 @@ init <- function(
   }
 
   # Copy project structure
-  structure_dir <- system.file("project_structure", project_structure, package = "framework")
-  if (!dir.exists(structure_dir)) stop(sprintf("Project structure '%s' not found", project_structure))
+  structure_dir <- system.file("project_structure", type, package = "framework")
+  if (!dir.exists(structure_dir)) stop(sprintf("Project type '%s' not found", type))
 
   all_dirs <- list.dirs(structure_dir, recursive = TRUE, full.names = TRUE)
   all_dirs <- all_dirs[all_dirs != structure_dir]
@@ -319,8 +355,12 @@ init <- function(
     file.copy(env_example, file.path(target_dir, ".env"), overwrite = TRUE)
   }
 
-  # Copy README.fr.md → README.md
-  readme_template <- system.file("templates", "README.fr.md", package = "framework")
+  # Copy type-specific README → README.md
+  readme_template <- system.file("templates", sprintf("README.%s.fr.md", type), package = "framework")
+  if (!file.exists(readme_template)) {
+    # Fall back to generic README if type-specific doesn't exist
+    readme_template <- system.file("templates", "README.fr.md", package = "framework")
+  }
   if (file.exists(readme_template)) {
     readme_path <- file.path(target_dir, "README.md")
     file.copy(readme_template, readme_path, overwrite = TRUE)

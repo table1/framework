@@ -15,14 +15,14 @@ cleanup_test_dir <- function(dir) {
 }
 
 # Create a minimal test project structure
-create_test_project <- function(dir = create_test_dir(), structure = "minimal") {
+create_test_project <- function(dir = create_test_dir(), type = "presentation") {
   old_wd <- getwd()
   on.exit(setwd(old_wd))
 
   setwd(dir)
 
   # Initialize the project
-  suppressMessages(init(project_name = "TestProject", project_structure = structure, force = TRUE))
+  suppressMessages(init(project_name = "TestProject", type = type, force = TRUE))
 
   dir
 }

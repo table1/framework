@@ -1,9 +1,10 @@
 default:
-  # Package dependencies
+  # Package dependencies - analysis focused
   packages:
     - dplyr
     - ggplot2
     - readr
+    - tidyr
 
   # Project options
   options:

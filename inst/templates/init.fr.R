@@ -5,7 +5,7 @@
 
 framework::init(
   project_name = "{{PROJECT_NAME}}",
-  project_structure = "{{PROJECT_STRUCTURE}}",
+  type = "{{PROJECT_TYPE}}",
   lintr = "{{LINTR}}",
   styler = "{{STYLER}}"
 )

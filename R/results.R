@@ -18,8 +18,13 @@ result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
     checkmate::assert_file_exists(file)
   }
 
-  # Create results directory if it doesn't exist
-  results_dir <- if (public) "results/public" else "results/private"
+  # Get results directory from config
+  config <- read_config()
+  results_dir <- if (public) {
+    config$options$results$public_dir %||% "results/public"
+  } else {
+    config$options$results$private_dir %||% "results/private"
+  }
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 
   if (!is.null(file)) {
@@ -121,8 +126,13 @@ result_get <- function(name) {
     stop(sprintf("Result '%s' not found", name))
   }
 
-  # Get result file
-  results_dir <- if (result$public) "results/public" else "results/private"
+  # Get result file from config
+  config <- read_config()
+  results_dir <- if (result$public) {
+    config$options$results$public_dir %||% "results/public"
+  } else {
+    config$options$results$private_dir %||% "results/private"
+  }
   result_file <- file.path(results_dir, paste0(name, ".rds"))
 
   if (!file.exists(result_file)) {

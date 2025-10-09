@@ -116,6 +116,15 @@ make release       # Full release workflow (clean, docs, test, check)
    - Auto-detects project root via config.yml, .Rproj, or common subdirectories
    - Sets both working directory and knitr's root.dir option
 
+9. **renv Integration (`R/renv.R`, `R/packages.R`)** - NEW
+   - **Optional** reproducibility via renv (OFF by default, opt-in)
+   - `renv_enable()` and `renv_disable()` to toggle integration
+   - Version pinning syntax in config.yml: `dplyr@1.1.0`, `user/repo@branch`
+   - Package helpers: `packages_snapshot()`, `packages_restore()`, `packages_status()`, `packages_update()`
+   - Educational messaging on first `scaffold()` (suppressible via `options: renv_nag: false`)
+   - Smart routing: installs use renv when enabled, standard install.packages() otherwise
+   - Abstracts renv complexity behind simple Framework functions
+
 ### Key Design Patterns
 
 - **Convention over Configuration**: Standardized directory structures and naming

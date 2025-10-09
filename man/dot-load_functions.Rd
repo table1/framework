@@ -2,11 +2,11 @@
 % Please edit documentation in R/scaffold.R
 \name{.load_functions}
 \alias{.load_functions}
-\title{Load all R files from functions directory}
+\title{Load all R files from functions directories}
 \usage{
 .load_functions()
 }
 \description{
-Load all R files from functions directory
+Load all R files from functions directories
 }
 \keyword{internal}

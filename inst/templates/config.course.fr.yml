@@ -1,20 +1,17 @@
 default:
-  # Package dependencies
+  # Package dependencies - course/teaching focused
   packages:
+    - quarto
+    - knitr
+    - rmarkdown
     - dplyr
-    - ggplot2
-    - readr
 
   # Project options
   options:
     # Directory paths (defaults shown - customize as needed)
     functions_dir: functions           # Single dir or list: [functions, helpers]
-    results:
-      public_dir: results/public
-      private_dir: results/private
     data:
       cache_dir: data/cached
-      scratch_dir: data/scratch
 
     # renv integration
     renv_nag: true  # Show reproducibility message on first scaffold()
@@ -22,12 +19,10 @@ default:
   # Data catalog
   data:
     # Example: Uncomment and modify
-    # source:
-    #   private:
-    #     example:
-    #       path: data/source/private/example.csv
-    #       type: csv
-    #       locked: true
+    # example:
+    #   path: data/example.csv
+    #   type: csv
+    #   locked: true
 
   # Database connections
   connections:
@@ -42,4 +37,3 @@ default:
   # Security settings
   security:
     data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY", "")
-    results_key: !expr Sys.getenv("RESULTS_ENCRYPTION_KEY", "")
