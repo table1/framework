@@ -1,0 +1,31 @@
+default:
+  # Package dependencies
+  packages:
+    - dplyr
+    - ggplot2
+    - readr
+
+  # Data catalog
+  data:
+    # Example: Uncomment and modify
+    # source:
+    #   private:
+    #     example:
+    #       path: data/source/private/example.csv
+    #       type: csv
+    #       locked: true
+
+  # Database connections
+  connections:
+    # Example: Uncomment and modify
+    # db:
+    #   driver: postgresql
+    #   host: !expr Sys.getenv("DB_HOST")
+    #   database: !expr Sys.getenv("DB_NAME")
+    #   user: !expr Sys.getenv("DB_USER")
+    #   password: !expr Sys.getenv("DB_PASS")
+
+  # Security settings
+  security:
+    data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY", "")
+    results_key: !expr Sys.getenv("RESULTS_ENCRYPTION_KEY", "")

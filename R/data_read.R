@@ -2,12 +2,14 @@
 #'
 #' @param path Dot notation path (e.g. "source.private.example") or direct file path
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
-#' @param ... Additional arguments passed to readr::read_delim
+#' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
+#' @param ... Additional arguments passed to read functions (readr::read_delim, haven::read_*, etc.)
 #' @export
-data_load <- function(path, delim = NULL, ...) {
+data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_choice(delim, c("comma", "tab", "semicolon", "space", ",", "\t", ";", " "), null.ok = TRUE)
+  checkmate::assert_flag(keep_attributes)
 
   # Check if path is a direct file path
   if (file.exists(path)) {
@@ -17,10 +19,17 @@ data_load <- function(path, delim = NULL, ...) {
       path = path,
       type = switch(file_ext,
         csv = "csv",
-        tsv = "tsv", 
+        tsv = "tsv",
         txt = "tsv",  # Assume .txt files are tab-delimited
         dat = "tsv",  # Assume .dat files are tab-delimited
         rds = "rds",
+        dta = "stata",
+        sav = "spss",
+        zsav = "spss",
+        por = "spss_por",
+        sas7bdat = "sas",
+        sas7bcat = "sas",
+        xpt = "sas_xpt",
         stop(sprintf("Unsupported file extension: %s", file_ext))
       ),
       encrypted = FALSE,
@@ -191,6 +200,11 @@ data_load <- function(path, delim = NULL, ...) {
           readr::read_delim(rawToChar(decrypted_data), show_col_types = FALSE, delim = "\t", ...)
         },
         rds = unserialize(decrypted_data),
+        stata = stop("Encrypted Stata files not supported"),
+        spss = stop("Encrypted SPSS files not supported"),
+        spss_por = stop("Encrypted SPSS portable files not supported"),
+        sas = stop("Encrypted SAS files not supported"),
+        sas_xpt = stop("Encrypted SAS transport files not supported"),
         stop(sprintf("Unsupported file type: %s", spec$type))
       ),
       error = function(e) {
@@ -199,7 +213,7 @@ data_load <- function(path, delim = NULL, ...) {
     )
   } else {
     # Load data normally
-    tryCatch(
+    data <- tryCatch(
       switch(spec$type,
         csv = {
           readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(delim), ...)
@@ -208,22 +222,38 @@ data_load <- function(path, delim = NULL, ...) {
           readr::read_delim(spec$path, show_col_types = FALSE, delim = "\t", ...)
         },
         rds = readRDS(spec$path),
+        stata = haven::read_dta(spec$path, ...),
+        spss = haven::read_sav(spec$path, ...),
+        spss_por = haven::read_por(spec$path, ...),
+        sas = haven::read_sas(spec$path, ...),
+        sas_xpt = haven::read_xpt(spec$path, ...),
         stop(sprintf("Unsupported file type: %s", spec$type))
       ),
       error = function(e) {
         stop(sprintf("Failed to load data: %s", e$message))
       }
     )
+
+    # Strip haven attributes if requested (default behavior)
+    if (!keep_attributes && spec$type %in% c("stata", "spss", "spss_por", "sas", "sas_xpt")) {
+      data <- haven::zap_formats(data)
+      data <- haven::zap_labels(data)
+      data <- haven::zap_label(data)
+      data <- as.data.frame(data)
+    }
+
+    data
   }
 }
 
 #' Alias for backward compatibility
 #' @param path Dot notation path (e.g. "source.private.example") or direct file path
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
-#' @param ... Additional arguments passed to readr::read_delim
+#' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
+#' @param ... Additional arguments passed to read functions
 #' @export
-load_data <- function(path, delim = NULL, ...) {
-  data_load(path, delim, ...)
+load_data <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
+  data_load(path, delim, keep_attributes, ...)
 }
 
 #' Load data with caching
@@ -310,6 +340,29 @@ get_data_spec <- function(path) {
     # For CSV files
     if (grepl("\\.csv$", path, ignore.case = TRUE)) {
       return(list(type = "csv", delimiter = "comma"))
+    }
+
+    # Stata files
+    if (grepl("\\.dta$", path, ignore.case = TRUE)) {
+      return(list(type = "stata", delimiter = NULL))
+    }
+
+    # SPSS files
+    if (grepl("\\.(sav|zsav)$", path, ignore.case = TRUE)) {
+      return(list(type = "spss", delimiter = NULL))
+    }
+
+    if (grepl("\\.por$", path, ignore.case = TRUE)) {
+      return(list(type = "spss_por", delimiter = NULL))
+    }
+
+    # SAS files
+    if (grepl("\\.(sas7bdat|sas7bcat)$", path, ignore.case = TRUE)) {
+      return(list(type = "sas", delimiter = NULL))
+    }
+
+    if (grepl("\\.xpt$", path, ignore.case = TRUE)) {
+      return(list(type = "sas_xpt", delimiter = NULL))
     }
 
     # For everything else, let readr figure it out

@@ -8,6 +8,7 @@ This document defines coding standards and conventions for AI assistants working
 ```
 docs/
 ├── CLAUDE.md           # This file - development standards
+├── features/           # Feature proposals and development tracking
 ├── debug/              # Bug reports, fix logs, debugging sessions
 ├── architecture/       # Design documents, architecture decisions
 └── api/                # API documentation and guides
@@ -17,6 +18,94 @@ docs/
 - Use `UPPERCASE.md` for important meta-documents (CLAUDE.md, README.md)
 - Use `lowercase_with_underscores.md` for regular documentation
 - Use descriptive names that indicate content (e.g., `BUG_FIXES.md`, `SECURITY_AUDIT.md`)
+
+## Feature Development Workflow
+
+The `docs/features/` directory contains feature proposals and tracks development progress.
+
+### Creating a Feature Proposal
+
+1. **Create a new markdown file** in `docs/features/` with a descriptive name:
+   ```bash
+   docs/features/feature_name.md
+   ```
+
+2. **Use this template:**
+   ```markdown
+   # Feature: [Feature Name]
+
+   ## Overview
+   Brief description of what this feature does and why it's needed.
+
+   ## Requirements
+   - [ ] Requirement 1
+   - [ ] Requirement 2
+   - [ ] Requirement 3
+
+   ## Implementation Checklist
+   - [ ] Design and planning
+   - [ ] Core implementation
+   - [ ] Tests written
+   - [ ] Documentation updated
+   - [ ] Code review completed
+   - [ ] All tests passing
+
+   ## Technical Details
+   ### Files to Modify
+   - `R/file1.R` - Description of changes
+   - `R/file2.R` - Description of changes
+
+   ### New Dependencies
+   - List any new package dependencies
+
+   ### Breaking Changes
+   - List any breaking changes or migration steps
+
+   ## Testing Strategy
+   Describe how this feature will be tested.
+
+   ## Documentation Updates
+   - [ ] Function documentation (roxygen2)
+   - [ ] CLAUDE.md updates (if workflow/standards change)
+   - [ ] README updates (if user-facing)
+
+   ## Notes
+   Any additional context, decisions, or considerations.
+   ```
+
+3. **Commit the proposal** before starting development:
+   ```bash
+   git add docs/features/feature_name.md
+   git commit -m "docs: add feature proposal for [feature name]"
+   ```
+
+### Development Process
+
+1. **Check off items** as you complete them by changing `- [ ]` to `- [x]`
+2. **Update technical details** as implementation evolves
+3. **Add notes** about decisions, challenges, or deviations from the plan
+4. **Commit the feature file** along with implementation commits
+
+### Completing a Feature
+
+1. **Verify all checklist items are complete** (`- [x]`)
+2. **Move the file** to `docs/features/completed/` or add "✅ COMPLETED" to the filename:
+   ```bash
+   mv docs/features/feature_name.md docs/features/feature_name_COMPLETED.md
+   ```
+3. **Create final commit** with all changes
+
+### Example Feature File
+
+See `docs/features/example_feature.md` for a complete example.
+
+### Benefits
+
+- **Clear requirements** - Know exactly what needs to be built
+- **Progress tracking** - See at a glance what's done and what remains
+- **Documentation** - Feature file serves as implementation documentation
+- **Context preservation** - Decisions and rationale captured for future reference
+- **AI-friendly** - Structured format helps AI assistants understand and implement features
 
 ## Package Conventions
 
@@ -68,6 +157,7 @@ raw$default$data$example  # "data/example.csv"
 3. **Clean up resources** using `on.exit()` with `add = TRUE`
 4. **Provide contextual error messages** that help users fix the problem
 5. **Fail fast** - check preconditions before doing work
+6. **Strip complex attributes by default** - Opt-in to preserve special metadata
 
 **Why This Matters:**
 - **User experience:** Clear, actionable error messages instead of cryptic failures
@@ -75,6 +165,58 @@ raw$default$data$example  # "data/example.csv"
 - **Reliability:** Catches errors early before corrupting state
 - **Debugging:** Errors include context about what failed and why
 - **Resource safety:** Database connections, file handles always cleaned up
+- **Predictability:** Consistent behavior across data sources prevents surprises
+
+### Handling External Data Attributes
+
+**When integrating external packages that attach special attributes (haven labels, spatial metadata, etc.):**
+
+**Default Behavior:** Strip attributes and return plain R objects (data.frame, vector, etc.)
+
+**Rationale:**
+- Consistency with Framework's other data sources (CSV, RDS)
+- Prevents unexpected behavior in downstream operations
+- Reduces memory overhead
+- Aligns with defensive programming principles
+
+**Implementation Pattern:**
+```r
+data_load <- function(path, keep_attributes = FALSE, ...) {
+  # ... load data with external package ...
+  data <- external_package::read_special_format(path, ...)
+
+  # Strip special attributes unless explicitly requested
+  if (!keep_attributes) {
+    # Use package-specific stripping functions if available
+    data <- external_package::strip_metadata(data)
+    # Convert to plain R object
+    data <- as.data.frame(data)
+  }
+
+  data
+}
+```
+
+**Example (haven statistical formats):**
+```r
+# Strip haven attributes by default
+if (!keep_attributes && spec$type %in% c("stata", "spss", "sas")) {
+  data <- haven::zap_formats(data)   # Remove format attributes
+  data <- haven::zap_labels(data)    # Remove value labels
+  data <- haven::zap_label(data)     # Remove variable labels
+  data <- as.data.frame(data)        # Convert to plain data.frame
+}
+```
+
+**When to Use This Pattern:**
+- ✅ Statistical software formats (Stata, SPSS, SAS)
+- ✅ Spatial data with complex metadata
+- ✅ Time series with special attributes
+- ✅ Any format where attributes might cause downstream issues
+
+**When NOT to Use:**
+- ❌ Attributes are essential to data interpretation (e.g., units, coordinate systems)
+- ❌ Stripping would cause data loss (but provide clear documentation)
 
 ### Error Handling
 

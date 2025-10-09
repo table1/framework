@@ -1,22 +1,218 @@
+#' Prompt user for project configuration
+#' @param project_name Project name (NULL to prompt)
+#' @param project_structure Project structure (NULL to prompt)
+#' @param lintr Lintr style (NULL to prompt)
+#' @param styler Styler style (NULL to prompt)
+#' @return List of configuration parameters
+#' @keywords internal
+.prompt_project_config <- function(project_name, project_structure, lintr, styler) {
+  cat("\n")
+  cat("Framework Project Initialization\n")
+  cat("=================================\n\n")
+
+  # Project name
+  if (is.null(project_name)) {
+    default_name <- basename(getwd())
+    response <- readline(sprintf("Project name [%s]: ", default_name))
+    project_name <- if (nzchar(response)) response else default_name
+  }
+
+  # Project structure
+  if (is.null(project_structure)) {
+    cat("\nProject structure:\n")
+    cat("  1. Default (full structure with work/, settings/, etc.)\n")
+    cat("  2. Minimal (lightweight with just data/, functions/, results/)\n")
+    response <- readline("Choose structure [1]: ")
+    project_structure <- if (response == "2") "minimal" else "default"
+  }
+
+  # Lintr style
+  if (is.null(lintr)) {
+    response <- readline("\nLintr style [default]: ")
+    lintr <- if (nzchar(response)) response else "default"
+  }
+
+  # Styler style
+  if (is.null(styler)) {
+    response <- readline("Styler style [default]: ")
+    styler <- if (nzchar(response)) response else "default"
+  }
+
+  list(
+    project_name = project_name,
+    project_structure = project_structure,
+    lintr = lintr,
+    styler = styler
+  )
+}
+
+#' Create init.R from template
+#' @keywords internal
+.create_init_file <- function(project_name, project_structure, lintr, styler, subdir = NULL) {
+  template_path <- system.file("templates/init.fr.R", package = "framework")
+  if (!file.exists(template_path)) {
+    stop("Template init.fr.R not found in package")
+  }
+
+  content <- readLines(template_path, warn = FALSE)
+
+  # Replace placeholders
+  content <- gsub("\\{\\{PROJECT_NAME\\}\\}", project_name, content)
+  content <- gsub("\\{\\{PROJECT_STRUCTURE\\}\\}", project_structure, content)
+  content <- gsub("\\{\\{LINTR\\}\\}", lintr, content)
+  content <- gsub("\\{\\{STYLER\\}\\}", styler, content)
+
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  target_file <- file.path(target_dir, "init.R")
+
+  writeLines(content, target_file)
+  message(sprintf("Created %s", target_file))
+}
+
+#' Create config.yml from template
+#' @keywords internal
+.create_config_file <- function(subdir = NULL) {
+  template_path <- system.file("templates/config.fr.yml", package = "framework")
+  if (!file.exists(template_path)) {
+    stop("Template config.fr.yml not found in package")
+  }
+
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  target_file <- file.path(target_dir, "config.yml")
+
+  file.copy(template_path, target_file, overwrite = TRUE)
+  message(sprintf("Created %s", target_file))
+}
+
+#' Create .env from template
+#' @keywords internal
+.create_env_file <- function(subdir = NULL) {
+  template_path <- system.file("templates/.env.fr", package = "framework")
+  if (!file.exists(template_path)) {
+    stop("Template .env.fr not found in package")
+  }
+
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  target_file <- file.path(target_dir, ".env")
+
+  file.copy(template_path, target_file, overwrite = TRUE)
+  message(sprintf("Created %s", target_file))
+}
+
+#' Display next steps after initialization
+#' @keywords internal
+.display_next_steps <- function() {
+  cat("\n")
+  cat("\u2713 Framework project initialized successfully!\n\n")
+  cat("Next steps:\n")
+  cat("  1. Review and edit config.yml\n")
+  cat("  2. Add secrets to .env (gitignored)\n")
+  cat("  3. Start a new R session:\n")
+  cat("       library(framework)\n")
+  cat("       scaffold()\n")
+  cat("  4. Start analyzing!\n\n")
+}
+
 #' Initialize the framework
 #'
 #' This function initializes the framework for a new project.
-#' It sets up the necessary files in the current directory.
-#' @param project_name The name of the project (used for .Rproj file).
-#' @param project_structure The project structure to use.
+#' Can be run from the framework-project template OR from any empty directory.
+#' When run from an empty directory, prompts for configuration interactively.
+#'
+#' @param project_name The name of the project (used for .Rproj file). If NULL, uses current directory name.
+#' @param project_structure The project structure to use ("default" or "minimal").
 #' @param lintr The lintr style to use.
 #' @param styler The styler style to use.
 #' @param subdir Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.
+#' @param interactive If TRUE and parameters are NULL, will prompt interactively. Set FALSE for scripted initialization.
 #' @param force If TRUE, will reinitialize even if project is already initialized.
+#'
+#' @examples
+#' \dontrun{
+#' # Interactive initialization from empty directory
+#' init()
+#'
+#' # Non-interactive with explicit parameters
+#' init(
+#'   project_name = "MyAnalysis",
+#'   project_structure = "minimal",
+#'   lintr = "default",
+#'   styler = "default",
+#'   interactive = FALSE
+#' )
+#' }
+#'
 #' @export
 init <- function(
     project_name = NULL,
-    project_structure = "default",
-    lintr = "default",
-    styler = "default",
+    project_structure = NULL,
+    lintr = NULL,
+    styler = NULL,
     subdir = NULL,
+    interactive = TRUE,
     force = FALSE) {
   # Validate arguments
+  checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_flag(interactive)
+  checkmate::assert_flag(force)
+
+  # Check if already initialized
+  init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
+  if (file.exists(init_file) && !force) {
+    stop("Project already initialized. Use force = TRUE to reinitialize.")
+  }
+
+  # Detect if running from template (has init.R) or empty directory
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  from_template <- file.exists(file.path(target_dir, "init.R"))
+
+  # If from empty directory, create necessary files first
+  if (!from_template) {
+    message("Initializing from empty directory...")
+
+    # Prompt for configuration if interactive and parameters missing
+    if (interactive && (is.null(project_structure) || is.null(project_name))) {
+      config <- .prompt_project_config(project_name, project_structure, lintr, styler)
+      project_name <- config$project_name
+      project_structure <- config$project_structure
+      lintr <- config$lintr
+      styler <- config$styler
+    }
+
+    # Set defaults if still NULL
+    if (is.null(project_name)) project_name <- basename(getwd())
+    if (is.null(project_structure)) project_structure <- "default"
+    if (is.null(lintr)) lintr <- "default"
+    if (is.null(styler)) styler <- "default"
+
+    # Create foundational files
+    .create_init_file(project_name, project_structure, lintr, styler, subdir)
+    .create_config_file(subdir)
+    .create_env_file(subdir)
+  } else {
+    # Set defaults from template behavior
+    if (is.null(project_structure)) project_structure <- "default"
+    if (is.null(lintr)) lintr <- "default"
+    if (is.null(styler)) styler <- "default"
+  }
+
+  # Continue with standard init process
+  .init_standard(project_name, project_structure, lintr, styler, subdir, force)
+
+  # Display next steps if from empty directory
+  if (!from_template) {
+    .display_next_steps()
+  }
+}
+
+#' Standard initialization process (shared by both paths)
+#' @keywords internal
+.init_standard <- function(project_name, project_structure, lintr, styler, subdir, force) {
+  # Validate arguments (already validated in init, but keep for internal calls)
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(project_structure, min.chars = 1)
   checkmate::assert_string(lintr, min.chars = 1)
@@ -64,6 +260,9 @@ init <- function(
 
     # Skip files already handled explicitly
     if (fname == "project.fr.Rproj") next
+    if (fname == "init.fr.R") next  # Skip init.R template (handled separately in empty dir case)
+    if (fname == "config.fr.yml") next  # Skip config.yml template (handled separately in empty dir case)
+    if (fname == ".env.fr") next  # Skip .env template (handled separately in empty dir case)
     if (!grepl("\\.fr($|\\.)", fname)) next
 
     # Replace `.fr.` with `.` or `.fr` suffix with nothing

@@ -20,7 +20,8 @@ Imports:
     glue,
     fs,
     readr,
-    dotenv
+    dotenv,
+    haven
 Suggests: 
     testthat (>= 3.0.0),
     cyclocomp,
