@@ -42,3 +42,6 @@ vignettes/*.pdf
 # Claude
 .claude.claude/
 .readme-shared/
+
+# README build system (for maintainers only)
+readme-parts/

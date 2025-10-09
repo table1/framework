@@ -28,6 +28,8 @@ The README uses a modular parts system located in `readme-parts/`:
   - `5_usage_data.md` - Data loading, caching, results (steps 3-6)
   - `6_rest.md` - Configuration, functions, security, etc.
 
+**IMPORTANT**: The `readme-parts/` directory is gitignored (maintainers only). It exists in your local checkout but won't be pushed to GitHub. Users who clone the repo will only see the built `README.md`.
+
 See `readme-parts/README.md` and `docs/readme-parts-guide.md` for complete documentation.
 
 ## Project Overview
