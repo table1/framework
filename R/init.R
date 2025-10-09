@@ -132,10 +132,10 @@
 #' When run from an empty directory, prompts for configuration interactively.
 #'
 #' @param project_name The name of the project (used for .Rproj file). If NULL, uses current directory name.
-#' @param type The project type: "analysis" (default), "course", or "presentation".
+#' @param type The project type: "project" (default), "course", or "presentation".
 #'   Replaces deprecated project_structure parameter.
 #' @param project_structure DEPRECATED. Use 'type' parameter instead.
-#'   For backward compatibility: "default"/"minimal" map to "analysis"/"presentation".
+#'   For backward compatibility: "default"/"minimal" map to "project"/"presentation".
 #' @param lintr The lintr style to use.
 #' @param styler The styler style to use.
 #' @param use_renv If TRUE, enables renv for package management. Default FALSE.
@@ -150,8 +150,8 @@
 #'
 #' # Non-interactive with explicit parameters
 #' init(
-#'   project_name = "MyAnalysis",
-#'   type = "analysis",
+#'   project_name = "MyProject",
+#'   type = "project",
 #'   lintr = "default",
 #'   styler = "default",
 #'   use_renv = FALSE,
@@ -180,13 +180,22 @@ init <- function(
   if (!is.null(project_structure) && is.null(type)) {
     warning(
       "Parameter 'project_structure' is deprecated. Use 'type' instead.\n",
-      "  Mapping: 'default' -> 'analysis', 'minimal' -> 'presentation'"
+      "  Mapping: 'default' -> 'project', 'minimal' -> 'presentation'"
     )
     type <- switch(project_structure,
-      "default" = "analysis",
+      "default" = "project",
       "minimal" = "presentation",
-      "analysis"  # fallback
+      "project"  # fallback
     )
+  }
+
+  # Handle deprecated "analysis" type
+  if (!is.null(type) && type == "analysis") {
+    warning(
+      "Type 'analysis' is deprecated. Use 'project' instead.\n",
+      "  The 'analysis' type will be removed in a future version."
+    )
+    type <- "project"
   }
 
   # Validate arguments
@@ -225,7 +234,7 @@ init <- function(
 
     # Set defaults if still NULL
     if (is.null(project_name)) project_name <- basename(getwd())
-    if (is.null(type)) type <- "analysis"
+    if (is.null(type)) type <- "project"
     if (is.null(lintr)) lintr <- "default"
     if (is.null(styler)) styler <- "default"
 
@@ -235,7 +244,7 @@ init <- function(
     .create_env_file(subdir)
   } else {
     # Set defaults from template behavior
-    if (is.null(type)) type <- "analysis"
+    if (is.null(type)) type <- "project"
     if (is.null(lintr)) lintr <- "default"
     if (is.null(styler)) styler <- "default"
   }

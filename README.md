@@ -22,9 +22,9 @@ source("init.R")
 **Most common setup:**
 ```r
 framework::init(
-  project_name = "MyAnalysis",
-  type = "analysis",  # Creates notebooks/, scripts/, data/, results/
-  use_renv = FALSE    # Set TRUE to enable renv for reproducibility
+  project_name = "MyProject",
+  type = "project",  # Creates notebooks/, scripts/, data/, results/
+  use_renv = FALSE   # Set TRUE to enable renv for reproducibility
 )
 ```
 
@@ -37,7 +37,7 @@ devtools::install_github("table1/framework")
 # Initialize in current directory
 framework::init(
   project_name = "MyProject",
-  type = "analysis",      # or "course" or "presentation"
+  type = "project",       # or "course" or "presentation"
   use_renv = FALSE,       # Set TRUE to enable renv
   interactive = FALSE
 )
@@ -45,11 +45,11 @@ framework::init(
 
 ### Project Types
 
-- **analysis** (default): Full-featured with `notebooks/`, `scripts/`, `data/` (public/private splits), `results/`, `functions/`, `docs/`
+- **project** (default): Full-featured with `notebooks/`, `scripts/`, `data/` (public/private splits), `results/`, `functions/`, `docs/`
 - **course**: For teaching with `presentations/`, `notebooks/`, `data/`, `functions/`, `docs/`
 - **presentation**: Minimal for single talks with `data/`, `functions/`, `results/`
 
-**Not sure?** Use `type = "analysis"` - it's the most flexible.
+**Not sure?** Use `type = "project"` - it's the most flexible.
 
 ## What It Does
 
@@ -75,7 +75,7 @@ When you run `init()`, Framework creates:
 - **Database** - `framework.db` for metadata tracking
 - **Environment** - `.env` template for secrets
 
-### Example: Analysis Type Structure
+### Example: Project Type Structure
 
 ```
 project/

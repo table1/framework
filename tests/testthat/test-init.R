@@ -22,7 +22,7 @@ test_that("init creates presentation project structure", {
   expect_true(dir.exists("results"))
 })
 
-test_that("init creates analysis project structure", {
+test_that("init creates project structure", {
   test_dir <- create_test_dir()
   old_wd <- getwd()
   on.exit({
@@ -32,13 +32,13 @@ test_that("init creates analysis project structure", {
 
   setwd(test_dir)
 
-  suppressMessages(init(project_name = "TestProject", type = "analysis"))
+  suppressMessages(init(project_name = "TestProject", type = "project"))
 
   # Check key files
   expect_true(file.exists("config.yml"))
   expect_true(file.exists("framework.db"))
 
-  # Check analysis structure directories
+  # Check project structure directories
   expect_true(dir.exists("data/source/private"))
   expect_true(dir.exists("data/source/public"))
   expect_true(dir.exists("data/in_progress"))
@@ -214,7 +214,7 @@ test_that("init from empty directory creates correct init.R content", {
   # Initialize
   suppressMessages(init(
     project_name = "TestInit",
-    type = "analysis",
+    type = "project",
     lintr = "default",
     styler = "default",
     interactive = FALSE
@@ -225,7 +225,7 @@ test_that("init from empty directory creates correct init.R content", {
 
   # Check placeholders were replaced
   expect_true(any(grepl("TestInit", init_content)))
-  expect_true(any(grepl("analysis", init_content)))
+  expect_true(any(grepl("project", init_content)))
   expect_false(any(grepl("\\{\\{PROJECT_NAME\\}\\}", init_content)))
   expect_false(any(grepl("\\{\\{PROJECT_TYPE\\}\\}", init_content)))
 })
@@ -321,7 +321,7 @@ test_that("deprecated project_structure parameter still works", {
     "Parameter 'project_structure' is deprecated"
   )
 
-  # Should map to analysis type
+  # Should map to project type
   expect_true(dir.exists("notebooks"))
   expect_true(dir.exists("scripts"))
 
@@ -345,4 +345,26 @@ test_that("deprecated project_structure parameter still works", {
   # Should map to presentation type
   expect_true(dir.exists("data"))
   expect_true(dir.exists("functions"))
+})
+
+test_that("deprecated 'analysis' type shows warning and maps to 'project'", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Test that analysis type triggers deprecation warning
+  expect_warning(
+    suppressMessages(init(project_name = "TestProject", type = "analysis")),
+    "Type 'analysis' is deprecated"
+  )
+
+  # Should create project structure (same as type = "project")
+  expect_true(dir.exists("notebooks"))
+  expect_true(dir.exists("scripts"))
+  expect_true(dir.exists("data/source/private"))
 })
