@@ -38,3 +38,6 @@ Thumbs.db
 # Vignette outputs
 vignettes/*.html
 vignettes/*.pdf
+
+# Claude
+.claude

@@ -297,6 +297,9 @@ init <- function(
   rproj_target <- file.path(target_dir, paste0(rproj_name, ".Rproj"))
   file.copy(rproj_template, rproj_target, overwrite = TRUE)
 
+  # Create IDE configuration files (VS Code workspace and settings)
+  .create_ide_configs(rproj_name, target_dir, python = FALSE)
+
   # Copy and rename other template files
   template_dir <- system.file("templates", package = "framework")
   template_files <- list.files(template_dir, full.names = TRUE, all.files = TRUE, no.. = TRUE)
