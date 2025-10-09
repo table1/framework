@@ -6,9 +6,11 @@
 \usage{
 init(
   project_name = NULL,
+  type = NULL,
   project_structure = NULL,
   lintr = NULL,
   styler = NULL,
+  use_renv = FALSE,
   subdir = NULL,
   interactive = TRUE,
   force = FALSE
@@ -17,11 +19,17 @@ init(
 \arguments{
 \item{project_name}{The name of the project (used for .Rproj file). If NULL, uses current directory name.}
 
-\item{project_structure}{The project structure to use ("default" or "minimal").}
+\item{type}{The project type: "analysis" (default), "course", or "presentation".
+Replaces deprecated project_structure parameter.}
+
+\item{project_structure}{DEPRECATED. Use 'type' parameter instead.
+For backward compatibility: "default"/"minimal" map to "analysis"/"presentation".}
 
 \item{lintr}{The lintr style to use.}
 
 \item{styler}{The styler style to use.}
+
+\item{use_renv}{If TRUE, enables renv for package management. Default FALSE.}
 
 \item{subdir}{Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.}
 
@@ -42,11 +50,18 @@ init()
 # Non-interactive with explicit parameters
 init(
   project_name = "MyAnalysis",
-  project_structure = "minimal",
+  type = "analysis",
   lintr = "default",
   styler = "default",
+  use_renv = FALSE,
   interactive = FALSE
 )
+
+# Course project with renv enabled
+init(type = "course", use_renv = TRUE)
+
+# Single presentation
+init(type = "presentation")
 }
 
 }

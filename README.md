@@ -23,7 +23,8 @@ source("init.R")
 ```r
 framework::init(
   project_name = "MyAnalysis",
-  type = "analysis"  # Creates notebooks/, scripts/, data/, results/
+  type = "analysis",  # Creates notebooks/, scripts/, data/, results/
+  use_renv = FALSE    # Set TRUE to enable renv for reproducibility
 )
 ```
 
@@ -37,6 +38,7 @@ devtools::install_github("table1/framework")
 framework::init(
   project_name = "MyProject",
   type = "analysis",      # or "course" or "presentation"
+  use_renv = FALSE,       # Set TRUE to enable renv
   interactive = FALSE
 )
 ```

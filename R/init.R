@@ -138,6 +138,7 @@
 #'   For backward compatibility: "default"/"minimal" map to "analysis"/"presentation".
 #' @param lintr The lintr style to use.
 #' @param styler The styler style to use.
+#' @param use_renv If TRUE, enables renv for package management. Default FALSE.
 #' @param subdir Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.
 #' @param interactive If TRUE and parameters are NULL, will prompt interactively. Set FALSE for scripted initialization.
 #' @param force If TRUE, will reinitialize even if project is already initialized.
@@ -153,11 +154,12 @@
 #'   type = "analysis",
 #'   lintr = "default",
 #'   styler = "default",
+#'   use_renv = FALSE,
 #'   interactive = FALSE
 #' )
 #'
-#' # Course project
-#' init(type = "course")
+#' # Course project with renv enabled
+#' init(type = "course", use_renv = TRUE)
 #'
 #' # Single presentation
 #' init(type = "presentation")
@@ -170,6 +172,7 @@ init <- function(
     project_structure = NULL,
     lintr = NULL,
     styler = NULL,
+    use_renv = FALSE,
     subdir = NULL,
     interactive = TRUE,
     force = FALSE) {
@@ -192,6 +195,7 @@ init <- function(
   checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_flag(use_renv)
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(interactive)
   checkmate::assert_flag(force)
@@ -238,6 +242,12 @@ init <- function(
 
   # Continue with standard init process
   .init_standard(project_name, type, lintr, styler, subdir, force)
+
+  # Enable renv if requested
+  if (use_renv) {
+    message("Enabling renv for this project...")
+    renv_enable()
+  }
 
   # Display next steps if from empty directory
   if (!from_template) {

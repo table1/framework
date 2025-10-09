@@ -4,12 +4,12 @@
 \alias{.prompt_project_config}
 \title{Prompt user for project configuration}
 \usage{
-.prompt_project_config(project_name, project_structure, lintr, styler)
+.prompt_project_config(project_name, type, lintr, styler)
 }
 \arguments{
 \item{project_name}{Project name (NULL to prompt)}
 
-\item{project_structure}{Project structure (NULL to prompt)}
+\item{type}{Project type (NULL to prompt)}
 
 \item{lintr}{Lintr style (NULL to prompt)}
 

@@ -4,7 +4,7 @@
 \alias{.init_standard}
 \title{Standard initialization process (shared by both paths)}
 \usage{
-.init_standard(project_name, project_structure, lintr, styler, subdir, force)
+.init_standard(project_name, type, lintr, styler, subdir, force)
 }
 \description{
 Standard initialization process (shared by both paths)

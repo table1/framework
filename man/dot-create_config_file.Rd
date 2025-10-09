@@ -4,7 +4,7 @@
 \alias{.create_config_file}
 \title{Create config.yml from template}
 \usage{
-.create_config_file(subdir = NULL)
+.create_config_file(type = "analysis", subdir = NULL)
 }
 \description{
 Create config.yml from template

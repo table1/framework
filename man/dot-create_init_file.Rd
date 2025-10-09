@@ -4,13 +4,7 @@
 \alias{.create_init_file}
 \title{Create init.R from template}
 \usage{
-.create_init_file(
-  project_name,
-  project_structure,
-  lintr,
-  styler,
-  subdir = NULL
-)
+.create_init_file(project_name, type, lintr, styler, subdir = NULL)
 }
 \description{
 Create init.R from template
