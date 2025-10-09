@@ -12,7 +12,8 @@
       "Read(//Users/erikwestlund/code/better-shoes/docs/04-project/**)",
       "Read(//Users/erikwestlund/code/better-shoes/**)",
       "mcp__zen__planner",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "mcp__zen__chat"
     ],
     "deny": [],
     "ask": []
