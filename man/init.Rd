@@ -13,7 +13,8 @@ init(
   use_renv = FALSE,
   subdir = NULL,
   interactive = TRUE,
-  force = FALSE
+  force = FALSE,
+  .dev_mode = FALSE
 )
 }
 \arguments{
