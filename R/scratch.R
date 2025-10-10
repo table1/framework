@@ -194,21 +194,3 @@ scratch_clean <- function() {
   }
 }
 
-#' Alias for backward compatibility
-#' @param x The object to save
-#' @param name Optional character string specifying the name of the file (without extension)
-#' @param to Optional character string indicating the output format. One of: "text", "rds", "csv", "tsv"
-#' @param location Optional character string specifying the directory where the file should be saved
-#' @param n Optional number of rows to capture for data frames (default: all rows)
-#' @return The input object `x` invisibly
-#' @export
-capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {
-  scratch_capture(x, name, to, location, n)
-}
-
-#' Alias for backward compatibility
-#' @param all Ignored parameter for backward compatibility (always cleans all files)
-#' @export
-clean_scratch <- function(all = TRUE) {
-  scratch_clean()
-}

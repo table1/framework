@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__zen__chat",
+      "Bash(R:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -A2 \"\"\"\"^#' @export \" {} ')"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

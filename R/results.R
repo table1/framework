@@ -191,30 +191,3 @@ result_list <- function() {
   results
 }
 
-#' Aliases for backward compatibility
-#' @param name Result name
-#' @return The result value, or NULL if not found or hash mismatch
-#' @export
-get_result <- function(name) {
-  result_get(name)
-}
-
-#' Alias for backward compatibility
-#' @return A data frame of results with their metadata
-#' @export
-list_results <- function() {
-  result_list()
-}
-
-#' Alias for backward compatibility
-#' @param name Result name
-#' @param value The result value to save (will be evaluated if it's an expression)
-#' @param type Type of result (e.g. "model", "notebook")
-#' @param blind Whether the result should be blinded (encrypted)
-#' @param public Whether the result should be public (default: FALSE)
-#' @param comment Optional description
-#' @param file Optional path to a file to save (e.g. a QMD notebook)
-#' @export
-save_result <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL) {
-  result_save(name, value, type, blind, public, comment, file)
-}

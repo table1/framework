@@ -9,18 +9,21 @@ Quick reference for the most commonly used Framework functions.
 ### Project Setup
 ```r
 init()                           # Create new Framework project (interactive)
-init("MyProject")                # Create with specific name
-init("MyProject", minimal=TRUE)  # Create minimal structure
+init("MyProject", type="project")  # Create project structure
+init("MyProject", type="course")   # Create course structure
+init("MyProject", type="presentation")  # Create presentation
 scaffold()                       # Load project environment (use in notebooks)
 standardize_wd()                 # Normalize working directory for notebooks
 ```
 
-### Notebook Creation
+### Notebook & Script Creation
 ```r
-make_notebook("1-init")          # Create work/1-init.qmd
+make_notebook("1-init")          # Create notebooks/1-init.qmd
 make_notebook("analysis.Rmd")    # Create RMarkdown notebook
-make_notebook("report", stub="minimal")  # Use minimal stub
-list_stubs()                     # Show available notebook stubs
+make_notebook("slides", stub="revealjs")  # Use reveal.js stub
+make_script("process-data")      # Create scripts/process-data.R
+list_stubs()                     # Show available stubs
+stubs_publish()                  # Publish stubs for customization
 ```
 
 ---
@@ -30,15 +33,15 @@ list_stubs()                     # Show available notebook stubs
 ### Loading Data
 ```r
 load_data("source.public.dataset")      # Load from data catalog
-load_data("source.private.secure", encrypted=TRUE)
+load_data("source.private.secure")      # Load private data
 load_data_or_cache("slow.computation")  # Load or run expensive computation
 ```
 
 ### Saving Data
 ```r
 save_data(df, "source.public.output")   # Save to catalog
-save_data(df, "source.private.secret", encrypted=TRUE)
-update_data_spec(df, "source.public.output")  # Update spec without saving
+save_data(df, "source.private.secret", encrypted=TRUE)  # Encrypted save
+update_data_spec("source.public.output", spec)  # Update spec
 get_data_spec("source.public.output")   # Get data specification
 ```
 
@@ -58,14 +61,13 @@ cache_flush()                    # Clear all cache
 ### Connections
 ```r
 get_connection("db_name")        # Get database connection
-db_find("table_name")            # Find table in any connection
+db_find(conn, "table", id)       # Find record by ID
 ```
 
 ### Queries
 ```r
-query <- get_query("query_name")          # Load query from queries/
-results <- execute_query("query_name")    # Execute query
-results <- query_execute("conn", query)   # Execute on connection
+results <- query_get("SELECT * FROM users", "mydb")  # Run query
+affected <- query_execute("UPDATE ...", "mydb")      # Execute non-query
 ```
 
 ---
@@ -101,19 +103,12 @@ packages_update()                # Update packages
 
 ## Results Management
 
-### Saving Results
+### Saving & Loading Results
 ```r
-save_result(obj, "result_name")              # Save result
-save_result(obj, "blind_result", blind=TRUE) # Save blinded result
-result_save(obj, "result_name", comment="Analysis output")
-```
-
-### Loading Results
-```r
-get_result("result_name")        # Load result
-result_get("result_name")        # Alias for get_result
-list_results()                   # List all results
-result_list()                    # Alias for list_results
+result_save(obj, "my_model", type="model")           # Save result
+result_save(obj, "blind", type="model", blind=TRUE)  # Save blinded
+result_get("my_model")                               # Load result
+result_list()                                        # List all results
 ```
 
 ---
@@ -122,10 +117,9 @@ result_list()                    # Alias for list_results
 
 ### Scratch Space
 ```r
-capture("var_name", expr)        # Capture to scratch space
-scratch_capture("var_name", expr)  # Alias
-scratch_clean()                  # Clean scratch space
-clean_scratch()                  # Alias
+scratch_capture(df)              # Save to scratch/
+scratch_capture(df, "data")      # Save as scratch/data.tsv
+scratch_clean()                  # Clean scratch directory
 ```
 
 ### Date/Time
@@ -166,49 +160,45 @@ capture_output(expr)             # Capture console output
 | `cache_flush()` | Clear all cache |
 | `cache_forget()` | Delete cached item |
 | `cache_get()` | Retrieve from cache |
-| `capture()` | Capture to scratch space |
 | `capture_output()` | Capture console output |
-| `clean_scratch()` | Clean scratch space |
 | `data_load()` | Load data (internal) |
 | `data_save()` | Save data (internal) |
-| `db_find()` | Find table in database |
-| `execute_query()` | Execute named query |
+| `db_find()` | Find record by ID |
 | `framework_view()` | View framework database |
 | `get_connection()` | Get database connection |
 | `get_data_spec()` | Get data specification |
 | `get_or_cache()` | Cache expensive computation |
-| `get_query()` | Load query from file |
-| `get_result()` | Load result |
 | `init()` | Create new project |
 | `is_initialized()` | Check initialization status |
 | `list_metadata()` | List metadata entries |
-| `list_results()` | List all results |
-| `list_stubs()` | List notebook stubs |
+| `list_stubs()` | List available stubs |
 | `load_data()` | Load from data catalog |
 | `load_data_or_cache()` | Load or compute |
 | `make_notebook()` | Create notebook from stub |
+| `make_script()` | Create script from stub |
 | `now()` | Current timestamp |
 | `packages_restore()` | Restore package versions |
 | `packages_snapshot()` | Save package versions |
 | `packages_status()` | Check package status |
 | `packages_update()` | Update packages |
 | `query_execute()` | Execute query on connection |
-| `query_get()` | Load query (alias) |
+| `query_get()` | Get query results |
 | `read_config()` | Read configuration |
 | `remove_init()` | Remove init marker |
 | `renv_disable()` | Disable renv |
 | `renv_enable()` | Enable renv |
 | `renv_enabled()` | Check renv status |
 | `restore_framework_view()` | Restore view preferences |
-| `result_get()` | Load result (alias) |
-| `result_list()` | List results (alias) |
-| `result_save()` | Save result (alternate) |
+| `result_get()` | Load result |
+| `result_list()` | List all results |
+| `result_save()` | Save result |
 | `save_data()` | Save to data catalog |
-| `save_result()` | Save result |
 | `scaffold()` | Load project environment |
-| `scratch_capture()` | Capture to scratch (alias) |
-| `scratch_clean()` | Clean scratch (alias) |
+| `scratch_capture()` | Save to scratch space |
+| `scratch_clean()` | Clean scratch directory |
 | `standardize_wd()` | Normalize working directory |
+| `stubs_path()` | Get stubs directory path |
+| `stubs_publish()` | Publish stubs for customization |
 | `update_data_spec()` | Update data specification |
 | `use_framework_view()` | Enable auto-view |
 | `write_config()` | Write configuration |
@@ -234,8 +224,8 @@ default:
 
   data:
     source.public.raw:
-      file: data/public/raw.csv
-      format: csv
+      path: data/public/raw.csv
+      type: csv
 ```
 
 ### settings/ Directory (Multi-File Approach)
@@ -267,33 +257,55 @@ standardize_wd()
 
 ## Directory Structure
 
-### Default Project Structure
+### Project Type (Default)
 ```
 project/
   ├── config.yml              # Main configuration
   ├── .env                    # Environment variables (secrets)
   ├── framework.db            # Framework metadata database
   ├── data/                   # Data files
-  │   ├── public/            #   Public data
-  │   └── private/           #   Private data (gitignored)
-  ├── work/                   # Notebooks and analysis
+  │   ├── source/            #   Source data
+  │   │   ├── public/        #     Public data
+  │   │   └── private/       #     Private data (gitignored)
+  │   └── results/           #   Result data
+  ├── notebooks/              # Quarto/RMarkdown notebooks
+  ├── scripts/                # R scripts
   ├── functions/              # Custom R functions
-  ├── queries/                # SQL query files
-  ├── results/                # Analysis results
   ├── docs/                   # Documentation
-  ├── stubs/                  # Custom notebook stubs
-  └── scratch/                # Temporary workspace
+  ├── resources/              # Static resources
+  ├── results/                # Analysis output
+  │   ├── public/            #   Shareable results
+  │   └── private/           #   Private results
+  ├── stubs/                  # Custom templates (optional)
+  └── settings/               # Config files (optional)
 ```
 
-### Minimal Project Structure
+### Course Type
 ```
-project/
+course/
   ├── config.yml
   ├── .env
   ├── framework.db
   ├── data/
-  ├── work/
-  └── functions/
+  ├── notebooks/              # Lesson notebooks
+  ├── presentations/          # Slide decks
+  ├── functions/
+  ├── docs/
+  ├── resources/
+  └── settings/
+```
+
+### Presentation Type
+```
+presentation/
+  ├── config.yml
+  ├── .env
+  ├── framework.db
+  ├── presentation.qmd        # Main presentation file
+  ├── build.R                 # Build script
+  ├── data/
+  ├── functions/
+  └── results/
 ```
 
 ---
@@ -304,7 +316,7 @@ project/
 
 2. **Data Paths**: Use dot notation for data catalog: `"category.subcategory.name"`
 
-3. **Custom Stubs**: Create `stubs/notebook-{name}.qmd` to override defaults
+3. **Custom Stubs**: Run `stubs_publish()` then edit `stubs/` directory
 
 4. **Encryption**: Requires `sodium` package. Use `encrypted=TRUE` parameter.
 
@@ -316,6 +328,6 @@ project/
 
 8. **Functions Directory**: All `.R` files in `functions/` are auto-sourced by `scaffold()`
 
-9. **Queries**: Store SQL in `queries/` directory, load with `get_query()`
+9. **Noun-Prefix Pattern**: Functions are grouped by noun (`query_*`, `result_*`, `scratch_*`, `stubs_*`)
 
-10. **Results**: Saved results are tracked in framework.db with integrity hashes
+10. **Project Types**: Choose `project`, `course`, or `presentation` based on your needs

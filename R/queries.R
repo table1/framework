@@ -94,22 +94,3 @@ db_find <- function(conn, table_name, id, with_trashed = FALSE) {
   )
 }
 
-#' Alias for backward compatibility
-#' @param query SQL query to execute
-#' @param connection_name Name of the connection in config.yml
-#' @param ... Additional arguments passed to DBI::dbGetQuery
-#' @return A data frame with the query results
-#' @export
-get_query <- function(query, connection_name, ...) {
-  query_get(query, connection_name, ...)
-}
-
-#' Alias for backward compatibility
-#' @param query SQL query to execute
-#' @param connection_name Name of the connection in config.yml
-#' @param ... Additional arguments passed to DBI::dbExecute
-#' @return Number of rows affected
-#' @export
-execute_query <- function(query, connection_name, ...) {
-  query_execute(query, connection_name, ...)
-}
