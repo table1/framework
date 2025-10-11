@@ -4,7 +4,7 @@
 \alias{.display_next_steps}
 \title{Display next steps after initialization}
 \usage{
-.display_next_steps()
+.display_next_steps(project_name = NULL, type = "project", use_renv = FALSE)
 }
 \description{
 Display next steps after initialization

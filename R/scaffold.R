@@ -68,7 +68,7 @@ scaffold <- function(config_file = "config.yml") {
 }
 
 #' Get package requirements from config
-#' @param config Configuration object from config::get()
+#' @param config Configuration object from read_config()
 #' @keywords internal
 .get_package_requirements <- function(config) {
   if (is.null(config$packages)) {
@@ -130,7 +130,7 @@ scaffold <- function(config_file = "config.yml") {
 }
 
 #' Install required packages from config
-#' @param config Configuration object from config::get()
+#' @param config Configuration object from read_config()
 #' @keywords internal
 .install_required_packages <- function(config) {
   packages <- .get_package_requirements(config)
@@ -140,7 +140,7 @@ scaffold <- function(config_file = "config.yml") {
 }
 
 #' Load all libraries specified in config
-#' @param config Configuration object from config::get()
+#' @param config Configuration object from read_config()
 #' @keywords internal
 .load_libraries <- function(config) {
   packages <- .get_package_requirements(config)

@@ -26,7 +26,13 @@ default:
   options:
     renv_nag: true  # Show reproducibility message on first scaffold()
 
-  # Data catalog
+  # --------------------------------------------------------------------------
+  # Data Catalog
+  # --------------------------------------------------------------------------
+  # Simple inline for most presentations
+  # Large catalogs: use split file (data: settings/data.yml)
+  # ⚠️ Main config ALWAYS wins over split files
+  # --------------------------------------------------------------------------
   data:
     # Example: Uncomment and modify
     # example:

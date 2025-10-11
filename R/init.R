@@ -128,18 +128,87 @@ message("Framework dev mode active - will load from: %s")
 }
 
 
+#' Archive init.R after successful initialization
+#' @keywords internal
+.archive_init_file <- function(subdir = NULL) {
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  init_file <- file.path(target_dir, "init.R")
+  archive_file <- file.path(target_dir, ".init.R.done")
+
+  # Only archive if init.R exists
+  if (!file.exists(init_file)) {
+    return(invisible(NULL))
+  }
+
+  # Read original init.R content
+  init_content <- tryCatch(
+    readLines(init_file, warn = FALSE),
+    error = function(e) {
+      warning(sprintf("Could not read init.R for archiving: %s", e$message))
+      return(NULL)
+    }
+  )
+
+  if (is.null(init_content)) {
+    return(invisible(NULL))
+  }
+
+  # Prepend documentation comment
+  archive_content <- c(
+    "# This file was used to initialize this project and can be safely deleted.",
+    "# It's preserved here for documentation and reproducibility.",
+    "# Original initialization command:",
+    "#",
+    init_content
+  )
+
+  # Write to hidden archive file
+  tryCatch({
+    writeLines(archive_content, archive_file)
+    file.remove(init_file)
+    message(sprintf("\u2713 Archived init.R to %s", basename(archive_file)))
+  }, error = function(e) {
+    warning(sprintf("Could not archive init.R: %s", e$message))
+  })
+
+  invisible(NULL)
+}
+
 #' Display next steps after initialization
 #' @keywords internal
-.display_next_steps <- function() {
+.display_next_steps <- function(project_name = NULL, type = "project", use_renv = FALSE) {
   cat("\n")
   cat("\u2713 Framework project initialized successfully!\n\n")
+
+  # Show summary of settings
+  cat("Project Configuration:\n")
+  if (!is.null(project_name)) {
+    cat(sprintf("  • Name: %s\n", project_name))
+  }
+  cat(sprintf("  • Type: %s\n", type))
+  cat(sprintf("  • renv: %s\n", if (use_renv) "enabled" else "disabled"))
+  cat("\n")
+
   cat("Next steps:\n")
   cat("  1. Review and edit config.yml\n")
   cat("  2. Add secrets to .env (gitignored)\n")
-  cat("  3. Start a new R session:\n")
+  cat("  3. Start a new R session in this directory\n")
+  cat("  4. Run:\n")
   cat("       library(framework)\n")
   cat("       scaffold()\n")
-  cat("  4. Start analyzing!\n\n")
+  cat("  5. Start analyzing!\n\n")
+
+  # Additional context based on project type
+  if (type == "course") {
+    cat("Course-specific features:\n")
+    cat("  • lectures/ - For lecture materials and slides\n")
+    cat("  • assignments/ - For student assignments\n")
+    cat("  • Use make_notebook() to create student notebooks\n\n")
+  } else if (type == "presentation") {
+    cat("Presentation tips:\n")
+    cat("  • Use make_notebook() to create your presentation\n")
+    cat("  • Quarto reveal.js format recommended\n\n")
+  }
 }
 
 #' Initialize the framework
@@ -270,9 +339,12 @@ init <- function(
     .create_dev_rprofile(subdir)
   }
 
+  # Archive init.R after successful initialization
+  .archive_init_file(subdir)
+
   # Display next steps if from empty directory
   if (!from_template) {
-    .display_next_steps()
+    .display_next_steps(project_name, type, use_renv)
   }
 }
 

@@ -7,7 +7,7 @@
 .load_libraries(config)
 }
 \arguments{
-\item{config}{Configuration object from config::get()}
+\item{config}{Configuration object from read_config()}
 }
 \description{
 Load all libraries specified in config

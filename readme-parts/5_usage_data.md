@@ -51,14 +51,14 @@ result_save("report", file = "report.html", type = "notebook",
 ### 6. Query Databases
 
 ```yaml
-# config.yml
+# config.yml (using clean env() syntax)
 connections:
   db:
     driver: postgresql
-    host: !expr Sys.getenv("DB_HOST")
-    database: !expr Sys.getenv("DB_NAME")
-    user: !expr Sys.getenv("DB_USER")
-    password: !expr Sys.getenv("DB_PASS")
+    host: env("DB_HOST")
+    database: env("DB_NAME")
+    user: env("DB_USER")
+    password: env("DB_PASS")
 ```
 
 ```r

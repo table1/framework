@@ -4,11 +4,17 @@
 \alias{read_config}
 \title{Read project configuration}
 \usage{
-read_config(config_file = "config.yml")
+read_config(config_file = "config.yml", environment = NULL)
+}
+\arguments{
+\item{config_file}{Path to configuration file (default: "config.yml")}
+
+\item{environment}{Active environment name (default: R_CONFIG_ACTIVE or "default")}
 }
 \value{
 The configuration as a list
 }
 \description{
-Reads the project configuration from config.yml, evaluating any expressions.
+Reads the project configuration from config.yml with environment-aware merging
+and split file resolution.
 }

@@ -30,7 +30,11 @@ default:
   options:
     renv_nag: true  # Show reproducibility message on first scaffold()
 
-  # Data catalog
+  # --------------------------------------------------------------------------
+  # Data Catalog
+  # --------------------------------------------------------------------------
+  # For complex data catalogs, use split file: data: settings/data.yml
+  # --------------------------------------------------------------------------
   data:
     # Example: Uncomment and modify
     # example:
@@ -38,7 +42,11 @@ default:
     #   type: csv
     #   locked: true
 
-  # Database connections
+  # --------------------------------------------------------------------------
+  # Database Connections
+  # --------------------------------------------------------------------------
+  # ⚠️ PRECEDENCE: Main config ALWAYS wins over split files
+  # --------------------------------------------------------------------------
   connections:
     # Example: Uncomment and modify
     # db:

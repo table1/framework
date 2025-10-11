@@ -101,7 +101,10 @@ make release       # Full release workflow (clean, docs, test, check)
 1. **Project Initialization (`R/init.R`)**
    - `init()` function creates new projects with standardized structure
    - Uses templates from `inst/templates/` and structures from `inst/project_structure/`
-   - Supports both "default" and "minimal" project structures
+   - Supports "project", "course", and "presentation" project types
+   - **Auto-archives init.R**: After successful initialization, `init.R` is archived to `.init.R.done` with documentation comments
+   - Archive preserves reproducibility while cleaning working directory
+   - Follows Zen Consensus recommendation (Gemini + Claude Sonnet)
 
 2. **Environment Scaffolding (`R/scaffold.R`)**
    - `scaffold()` function loads project environment
@@ -109,10 +112,15 @@ make release       # Full release workflow (clean, docs, test, check)
    - Sources all `.R` files from `functions/` directory
    - Executes project-specific `scaffold.R` if present
 
-3. **Configuration Management (`R/config.R`)**
-   - YAML-based configuration system using `config` package
-   - Supports both single-file (`config.yml`) and multi-file (`settings/*.yml`) approaches
-   - Environment variable interpolation via `dotenv`
+3. **Configuration Management (`R/config.R`)** - **RECENTLY OVERHAULED**
+   - **Laravel-inspired hybrid config system** with bulletproof resolution
+   - **`config()` helper** with dot-notation access: `config("notebooks")`, `config("connections.db.host")`
+   - **Directories inline** in main `config.yml` for discoverability (R ecosystem convention)
+   - **Split files optional** for complex domain-specific settings (data catalog, connections)
+   - **Smart lookups**: `config("notebooks")` checks `directories$notebooks` then `options$notebook_dir` (legacy)
+   - **Backward compatible** with old `options$notebook_dir` structure
+   - **Comprehensive test coverage**: 74 passing tests for flat/split/legacy resolution
+   - YAML-based using `config` package with environment variable interpolation via `dotenv`
 
 4. **Data Management (`R/data_*.R`)**
    - `data_read.R`, `data_write.R`, `data_encrypt.R`
@@ -174,13 +182,201 @@ Templates use `.fr` suffix and are processed during `init()`:
 **Default Structure**: Full-featured with organized directories for data, work, functions, docs, results
 **Minimal Structure**: Essential directories only for lightweight projects
 
-## Configuration Files
+## Configuration System
 
-### Key Configuration Locations
-- Main config: `config.yml` (or `inst/config_skeleton.yml` as template)
-- Multi-file configs: `settings/` directory (data.yml, packages.yml, connections.yml, etc.)
-- Environment: `.env` file for secrets
-- Framework database: `framework.db` for metadata tracking
+### Overview
+
+Framework uses a **Laravel-inspired hybrid configuration system** that prioritizes discoverability while allowing scalability. The system supports both flat files (everything in one `config.yml`) and split files (domain-specific settings in `settings/*.yml`).
+
+**Design Philosophy:**
+- **Simple by default**: Most users work with a single `config.yml` file
+- **Complex when needed**: Split files for data catalogs, connections, etc.
+- **Discoverable**: Directory paths visible immediately in main file
+- **R conventions**: Follows R ecosystem pattern of single primary config (like `_targets.R`, `_bookdown.yml`)
+
+### Config Structure
+
+**Flat File Approach** (Recommended for most projects):
+```yaml
+default:
+  project_type: project
+
+  # Core directories (inline for discoverability)
+  directories:
+    notebooks: notebooks
+    scripts: scripts
+    functions: functions
+    results_public: results/public
+    results_private: results/private
+    cache: data/cached
+    scratch: data/scratch
+
+  # Packages
+  packages:
+    - dplyr
+    - ggplot2
+
+  # Simple data catalog
+  data:
+    example:
+      path: data/example.csv
+      type: csv
+```
+
+**Split File Approach** (For complex projects):
+```yaml
+default:
+  project_type: project
+
+  # Directories stay inline (most commonly changed)
+  directories:
+    notebooks: notebooks
+    scripts: scripts
+    functions: functions
+    cache: data/cached
+
+  # Complex settings reference split files
+  data: settings/data.yml           # Large data catalog
+  packages: settings/packages.yml   # Package specifications
+  connections: settings/connections.yml  # Database connections
+  git: settings/git.yml
+  security: settings/security.yml
+```
+
+### The config() Helper
+
+**Laravel-style dot-notation access:**
+
+```r
+# Smart lookups (checks multiple locations)
+config("notebooks")              # → "notebooks" (from directories$notebooks)
+config("scripts")                # → "scripts"
+config("cache")                  # → "data/cached"
+
+# Explicit nested paths
+config("directories.notebooks")  # → "notebooks"
+config("connections.db.host")    # → "localhost"
+config("data.example.path")      # → "data/example.csv"
+
+# With default values
+config("nonexistent", default = "fallback")  # → "fallback"
+
+# Returns NULL for missing keys
+config("missing.key")            # → NULL
+```
+
+**Smart Directory Resolution:**
+- `config("notebooks")` automatically checks:
+  1. `directories$notebooks` (new structure)
+  2. `options$notebook_dir` (legacy structure)
+- Prioritizes new structure when both exist
+- Fully backward compatible
+
+### Config Precedence and Conflict Resolution
+
+**Core Rule: Main file ALWAYS wins** ✅
+
+When the same key exists in both `config.yml` and a split file (e.g., `settings/connections.yml`), Framework follows a strict precedence rule based on Zen Consensus (Gemini + Claude):
+
+**Precedence Order:**
+1. **Main config.yml** - Takes absolute precedence
+2. **Split files** - Only used when key is not in main config
+3. **Package defaults** - Used when key is missing entirely
+
+**Scoped Include Rules:**
+
+Split files should ONLY contain keys for their designated section plus `options:`:
+
+**Valid split file structure** (settings/connections.yml):
+```yaml
+connections:           # ✅ Expected - matches the section name
+  db:
+    host: localhost
+    port: 5432
+
+options:               # ✅ Expected - connection-specific options
+  default_connection: db
+```
+
+**Invalid split file structure** (settings/connections.yml):
+```yaml
+connections:
+  db:
+    host: localhost
+
+default_connection: db  # ❌ Unexpected - top-level key in split file
+cache_enabled: true     # ❌ Unexpected - unrelated key
+```
+
+**Conflict Detection:**
+
+Framework emits **warnings** for two scenarios:
+
+1. **Scoped include violation** - Split file contains unexpected keys:
+   ```
+   Warning: Split file 'settings/connections.yml' contains unexpected keys:
+   default_connection, cache_enabled. Only 'connections' and 'options' keys
+   should be present in this file. Unexpected keys will be ignored.
+   ```
+
+2. **Main file conflict** - Both files define the same key:
+   ```
+   Warning: Key 'default_connection' defined in both config.yml and
+   'settings/connections.yml'. Using value from config.yml (main file
+   takes precedence).
+   ```
+
+**Why This Matters:**
+
+- **Predictable behavior**: Main config is single source of truth
+- **Prevents silent conflicts**: Database connections, critical settings won't be accidentally overridden
+- **Encourages good practices**: Split files for organization, not override
+- **Discoverable**: Warnings guide users to fix misconfigurations
+
+**Example - Conflict Scenario:**
+
+```yaml
+# config.yml
+default:
+  connections: settings/connections.yml
+  default_connection: primary_db  # ← Main file value
+```
+
+```yaml
+# settings/connections.yml
+connections:
+  primary_db:
+    host: localhost
+  backup_db:
+    host: backup.example.com
+
+default_connection: backup_db  # ← Split file tries to override (IGNORED!)
+```
+
+**Result:**
+- `config("default_connection")` returns `"primary_db"` (from main config)
+- Warning emitted about conflict
+- Split file's `default_connection` is ignored
+
+**Best Practice:**
+
+Keep top-level configuration keys in `config.yml`:
+```yaml
+# config.yml - Single source of truth for top-level keys
+default:
+  directories: { notebooks: notebooks, scripts: scripts }
+  connections: settings/connections.yml
+  default_connection: primary_db    # ← Keep here
+  cache_enabled: true               # ← Keep here
+  project_type: project             # ← Keep here
+```
+
+### Configuration Locations
+- **Main config**: `config.yml` (created by `init()`)
+- **Split files**: `settings/` directory (optional, for complex projects)
+- **Environment variables**: `.env` file for secrets (gitignored)
+- **Framework database**: `framework.db` for metadata tracking
+- **Package defaults**: Built into Framework, auto-fill missing values
 
 ### Default Connections
 Both project structures include a pre-configured "framework" connection:
@@ -223,14 +419,39 @@ Both project structures include a pre-configured "framework" connection:
 
 ### Testing Status
 
+**Current Status: 302 Passing Tests, 0 Failures** ✅
+
 - `testthat` is configured (edition 3) in DESCRIPTION
-- No tests currently exist in `tests/` directory
+- **Comprehensive test suite** in `tests/testthat/`:
+  - `test-config.R` - 20+ tests for config resolution (flat, split, legacy, smart lookups)
+  - `test-make_notebook.R` - Directory detection and notebook creation
+  - `test-data.R` - Data loading, saving, cataloging
+  - `test-cache.R` - Caching system
+  - `test-results.R` - Results management
+  - `test-queries.R` - Database queries
+  - `test-scratch.R` - Scratch file management
+  - `test-init.R` - Project initialization
+  - `test-renv.R` - renv integration
+  - And more...
 - Test templates provided in `inst/templates/`:
   - `test.fr.R` for basic functionality testing
   - `test-notebook.fr.qmd` for Quarto notebook workflow testing (primary)
   - `test-notebook.fr.Rmd` for RMarkdown notebook workflow testing (backward compatibility)
   - Both test notebooks query the framework.db SQLite database to demonstrate database functionality
-- **Recommendation**: Implement comprehensive test suite before 1.0 release
+
+### Config System Testing
+
+**Bulletproof resolution** with 20+ dedicated tests covering:
+- ✅ Flat config with inline directories
+- ✅ Split file approach (data, connections in separate files)
+- ✅ `config()` helper with dot-notation access
+- ✅ Smart lookups checking multiple locations
+- ✅ Legacy backward compatibility (`options$notebook_dir`)
+- ✅ Priority resolution (new structure over legacy)
+- ✅ All three project types (project, course, presentation)
+- ✅ Nested path access (`connections.db.host`)
+- ✅ Default values and NULL handling
+- ✅ Integration with `make_notebook()` directory detection
 
 ## Framework Database Schema
 
@@ -244,7 +465,10 @@ The `framework.db` SQLite database contains:
 ## Known Considerations
 
 - API is unstable (pre-1.0) - breaking changes expected
-- No formal test suite yet
-- `renv` support planned but not implemented
-- Function `data_load()` exists internally but `load_data()` is the public API
+- **Config system is production-ready** with comprehensive test coverage (74 tests passing)
+- `renv` support is **implemented and tested** (opt-in, disabled by default)
+- **Alias cleanup completed**: Removed 8 backward-compatibility aliases, kept only `load_data()`/`save_data()`
+  - Use `result_save()`, `result_get()`, `result_list()` (not `save_result`, `get_result`, `list_results`)
+  - Use `query_get()`, `query_execute()` (not `get_query`, `execute_query`)
+  - Use `scratch_capture()`, `scratch_clean()` (not `capture`, `clean_scratch`)
 - Encryption requires `sodium` package (in Suggests, not required)

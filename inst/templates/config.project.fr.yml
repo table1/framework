@@ -44,7 +44,12 @@ default:
     # renv integration - show reproducibility message on first scaffold()
     renv_nag: true
 
-  # Data catalog
+  # --------------------------------------------------------------------------
+  # Data Catalog
+  # --------------------------------------------------------------------------
+  # Simple approach: Define data sources inline
+  # Complex projects: Use split file (data: settings/data.yml)
+  # --------------------------------------------------------------------------
   data:
     # Example: Uncomment and modify
     # source:
@@ -54,7 +59,16 @@ default:
     #       type: csv
     #       locked: true
 
-  # Database connections
+  # --------------------------------------------------------------------------
+  # Database Connections
+  # --------------------------------------------------------------------------
+  # Simple approach: Define connections inline
+  # Complex projects: Use split file (connections: settings/connections.yml)
+  #
+  # ⚠️ PRECEDENCE RULE: Main config ALWAYS wins
+  # If you define 'default_connection' here AND in settings/connections.yml,
+  # the value here takes precedence. Framework will warn about the conflict.
+  # --------------------------------------------------------------------------
   connections:
     # Example: Uncomment and modify
     # db:
@@ -63,6 +77,14 @@ default:
     #   database: !expr Sys.getenv("DB_NAME")
     #   user: !expr Sys.getenv("DB_USER")
     #   password: !expr Sys.getenv("DB_PASS")
+
+  # Split File Example:
+  # To use split files for complex configurations:
+  #   1. Create settings/connections.yml
+  #   2. Replace the connections section above with:
+  #      connections: settings/connections.yml
+  #   3. Keep top-level keys here in main config.yml:
+  #      default_connection: db  # ← Keep in main config, not split file!
 
   # Security settings
   security:

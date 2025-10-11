@@ -3,7 +3,13 @@
     "allow": [
       "Bash(cat:*)",
       "mcp__zen__consensus",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(R -e:*)",
+      "Read(//Users/erikwestlund/code/better-shoes/R/**)",
+      "Read(//Users/erikwestlund/code/better-shoes/**)",
+      "Read(//private/tmp/test_init_archive/**)",
+      "Bash(R CMD INSTALL:*)",
+      "Read(//private/tmp/test_init_archive2/**)"
     ],
     "deny": [],
     "ask": []

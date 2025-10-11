@@ -7,7 +7,7 @@
 .install_required_packages(config)
 }
 \arguments{
-\item{config}{Configuration object from config::get()}
+\item{config}{Configuration object from read_config()}
 }
 \description{
 Install required packages from config

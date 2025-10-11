@@ -376,3 +376,201 @@ test_that("config system handles all three project types", {
   expect_equal(config("cache"), "data/cached")
   unlink("config.yml")
 })
+
+
+# ============================================================================
+# Config Conflict and Scoped Include Tests
+# ============================================================================
+
+test_that("split file with unexpected keys triggers warning", {
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit(setwd(old_wd))
+
+  dir.create("settings", showWarnings = FALSE)
+
+  # Main config referencing split file
+  config_content <- "default:
+  connections: settings/connections.yml
+"
+  writeLines(config_content, "config.yml")
+
+  # Split file with UNEXPECTED keys (should only have connections + options)
+  connections_content <- "connections:
+  db:
+    host: localhost
+
+default_connection: mydb  # UNEXPECTED!
+some_other_key: value     # UNEXPECTED!
+"
+  writeLines(connections_content, "settings/connections.yml")
+
+  # Should warn about unexpected keys
+  expect_warning(
+    cfg <- read_config(),
+    "contains unexpected keys.*default_connection, some_other_key"
+  )
+
+  unlink("config.yml")
+  unlink("settings", recursive = TRUE)
+})
+
+
+test_that("conflict between main config and split file triggers warning", {
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit(setwd(old_wd))
+
+  dir.create("settings", showWarnings = FALSE)
+
+  # Main config with default_connection
+  config_content <- "default:
+  connections: settings/connections.yml
+  default_connection: from_main
+"
+  writeLines(config_content, "config.yml")
+
+  # Split file ALSO has default_connection (conflict!)
+  connections_content <- "connections:
+  db:
+    host: localhost
+
+default_connection: from_split  # CONFLICT!
+"
+  writeLines(connections_content, "settings/connections.yml")
+
+  # Should warn about conflict AND scoped include violation
+  expect_warning(
+    cfg <- read_config(),
+    "default_connection.*defined in both"
+  )
+
+  # Main file should win
+  expect_equal(cfg$default_connection, "from_main")
+
+  unlink("config.yml")
+  unlink("settings", recursive = TRUE)
+})
+
+
+test_that("split file with only expected keys does not warn", {
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit(setwd(old_wd))
+
+  dir.create("settings", showWarnings = FALSE)
+
+  # Main config
+  config_content <- "default:
+  connections: settings/connections.yml
+"
+  writeLines(config_content, "config.yml")
+
+  # Split file with ONLY expected keys (connections + options)
+  connections_content <- "connections:
+  db:
+    host: localhost
+    port: 5432
+
+options:
+  default_connection: db
+"
+  writeLines(connections_content, "settings/connections.yml")
+
+  # Should NOT warn (clean split file)
+  expect_no_warning(
+    cfg <- read_config()
+  )
+
+  # Should properly merge
+  expect_equal(cfg$connections$db$host, "localhost")
+  expect_equal(cfg$options$connections$default_connection, "db")
+
+  unlink("config.yml")
+  unlink("settings", recursive = TRUE)
+})
+
+
+test_that("main file value takes precedence over split file", {
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit(setwd(old_wd))
+
+  dir.create("settings", showWarnings = FALSE)
+
+  # Main config with explicit value
+  config_content <- "default:
+  project_type: project
+  data: settings/data.yml
+  cache_enabled: true
+"
+  writeLines(config_content, "config.yml")
+
+  # Split file trying to override (bad practice, should warn)
+  data_content <- "data:
+  example:
+    path: data/example.csv
+
+cache_enabled: false  # Trying to override!
+"
+  writeLines(data_content, "settings/data.yml")
+
+  # Should warn
+  expect_warning(
+    cfg <- read_config(),
+    "cache_enabled.*defined in both"
+  )
+
+  # Main file wins
+  expect_true(cfg$cache_enabled)
+
+  unlink("config.yml")
+  unlink("settings", recursive = TRUE)
+})
+
+
+test_that("multiple split files can coexist without conflicts", {
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit(setwd(old_wd))
+
+  dir.create("settings", showWarnings = FALSE)
+
+  # Main config with multiple split files
+  config_content <- "default:
+  connections: settings/connections.yml
+  data: settings/data.yml
+"
+  writeLines(config_content, "config.yml")
+
+  # Connections file (clean)
+  connections_content <- "connections:
+  db:
+    host: localhost
+"
+  writeLines(connections_content, "settings/connections.yml")
+
+  # Data file (clean)
+  data_content <- "data:
+  example:
+    path: data/example.csv
+"
+  writeLines(data_content, "settings/data.yml")
+
+  # Should not warn (both files are clean)
+  expect_no_warning(
+    cfg <- read_config()
+  )
+
+  # Both sections should be merged
+  expect_equal(cfg$connections$db$host, "localhost")
+  expect_equal(cfg$data$example$path, "data/example.csv")
+
+  unlink("config.yml")
+  unlink("settings", recursive = TRUE)
+})

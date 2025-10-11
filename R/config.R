@@ -67,18 +67,65 @@ config <- function(key, default = NULL, config_file = "config.yml") {
 
 #' Read project configuration
 #'
-#' Reads the project configuration from config.yml, evaluating any expressions.
+#' Reads the project configuration from config.yml with environment-aware merging
+#' and split file resolution.
+#'
+#' @param config_file Path to configuration file (default: "config.yml")
+#' @param environment Active environment name (default: R_CONFIG_ACTIVE or "default")
+#'
 #' @return The configuration as a list
 #' @export
-read_config <- function(config_file = "config.yml") {
+read_config <- function(config_file = "config.yml", environment = NULL) {
   # Validate arguments
   checkmate::assert_string(config_file, min.chars = 1)
+  checkmate::assert_string(environment, null.ok = TRUE)
 
-  # 1. Load skeleton config first and set as our base config
-  skeleton_path <- system.file("config_skeleton.yml", package = "framework")
-  config <- .safe_read_yaml(skeleton_path)
+  # Check file exists
+  if (!file.exists(config_file)) {
+    stop(sprintf("Config file not found: %s", config_file))
+  }
 
-  # Initialize all standard sections
+  # Detect active environment
+  active_env <- environment %||%
+    Sys.getenv("R_CONFIG_ACTIVE", Sys.getenv("R_CONFIG_NAME", "default"))
+
+  # Read raw YAML
+  raw_config <- tryCatch(
+    .safe_read_yaml(config_file),
+    error = function(e) {
+      stop(sprintf("Failed to parse config file '%s': %s", config_file, e$message))
+    }
+  )
+
+  # Check if file has environment sections
+  has_envs <- .has_environment_sections(raw_config)
+
+  if (!has_envs) {
+    # Flat file - treat entire content as default environment
+    config <- raw_config
+  } else {
+    # Environment-scoped file
+    if (!"default" %in% names(raw_config)) {
+      stop(sprintf("Config file '%s' has environment sections but no 'default' environment", config_file))
+    }
+
+    # Start with default environment
+    config <- raw_config$default
+
+    # Merge active environment if different
+    if (active_env != "default") {
+      if (active_env %in% names(raw_config)) {
+        config <- modifyList(config, raw_config[[active_env]])
+      } else {
+        warning(sprintf("Environment '%s' not found in config, using 'default'", active_env))
+      }
+    }
+  }
+
+  # Resolve split file references recursively
+  config <- .resolve_split_files(config, active_env, config_file, character())
+
+  # Initialize standard sections AFTER split file resolution (if still missing)
   for (section in c("data", "connections", "git", "security", "packages", "directories")) {
     if (is.null(config[[section]])) {
       config[[section]] <- list()
@@ -90,130 +137,209 @@ read_config <- function(config_file = "config.yml") {
     config$options <- list()
   }
 
-  # 2. Load user config with config::get() to handle !expr
-  user_config <- config::get(file = config_file)
+  # Evaluate !expr expressions
+  config <- .eval_expressions(config)
 
-  # Function to evaluate env() calls
-  eval_env <- function(x) {
-    if (is.character(x)) {
-      # Handle vectors of character strings
-      if (length(x) > 1) {
-        lapply(x, eval_env)
-      } else if (grepl("^env\\(.*\\)$", x)) {
-        # Extract arguments from env() call
-        env_args <- gsub("^env\\(\"(.*?)\"(?:,\\s*\"(.*?)\")?\\)$", "\\1,\\2", x)
-        env_args <- strsplit(env_args, ",")[[1]]
-        env_args <- trimws(env_args)
+  config
+}
 
-        # Get environment variable with optional default
-        if (length(env_args) == 2) {
-          Sys.getenv(env_args[1], env_args[2])
-        } else {
-          Sys.getenv(env_args[1])
-        }
-      } else {
-        x
+
+# Helper: Check if config has environment sections
+.has_environment_sections <- function(config) {
+  if (!is.list(config) || length(config) == 0) {
+    return(FALSE)
+  }
+
+  # Check if top-level keys look like environment names
+  # Common environment names: default, production, development, test, staging
+  env_keywords <- c("default", "production", "development", "test", "testing", "staging")
+  top_keys <- names(config)
+
+  # If we have a 'default' key, assume environment sections
+  if ("default" %in% top_keys) {
+    return(TRUE)
+  }
+
+  # Otherwise, check if keys match common environment names
+  matches <- sum(top_keys %in% env_keywords)
+  return(matches > 0)
+}
+
+
+# Helper: Resolve split file references recursively
+.resolve_split_files <- function(config, environment, parent_file, visited_files, config_root = NULL, main_config_keys = NULL) {
+  # Track which keys are file references
+  file_refs <- character()
+
+  # First call: set config_root to parent file's directory and remember main config keys
+  if (is.null(config_root)) {
+    config_root <- dirname(parent_file)
+    main_config_keys <- names(config)
+  }
+
+  for (key in names(config)) {
+    value <- config[[key]]
+
+    # Check if value looks like a file reference
+    if (is.character(value) && length(value) == 1 && grepl("\\.ya?ml$", value, ignore.case = TRUE)) {
+      file_refs <- c(file_refs, key)
+
+      # Resolve file path relative to config root (not parent file!)
+      file_path <- .resolve_file_path(value, config_root)
+
+      # Normalize path for circular reference check
+      file_path_norm <- normalizePath(file_path, mustWork = FALSE)
+
+      # Check if file exists
+      if (!file.exists(file_path_norm)) {
+        stop(sprintf("%s not found (referenced from %s)", value, basename(parent_file)))
       }
-    } else if (is.list(x)) {
-      lapply(x, eval_env)
+
+      # Circular reference check
+      if (file_path_norm %in% visited_files) {
+        stop(sprintf("Circular reference detected: %s", paste(c(visited_files, file_path_norm), collapse = " -> ")))
+      }
+
+      # Read raw split file
+      raw_split <- tryCatch(
+        .safe_read_yaml(file_path_norm),
+        error = function(e) {
+          stop(sprintf("Failed to parse split file '%s': %s", value, e$message))
+        }
+      )
+
+      # Check if split file has environment sections
+      has_envs <- .has_environment_sections(raw_split)
+
+      if (!has_envs) {
+        # Flat split file - use as-is
+        split_config <- raw_split
+      } else {
+        # Environment-scoped split file
+        if (!"default" %in% names(raw_split)) {
+          stop(sprintf("Split file '%s' has environment sections but no 'default' environment", value))
+        }
+
+        # Merge environments (same logic as main config)
+        split_config <- raw_split$default
+        if (environment != "default" && environment %in% names(raw_split)) {
+          split_config <- modifyList(split_config, raw_split[[environment]])
+        }
+      }
+
+      # Recursively resolve nested split files (preserve config_root and main_config_keys)
+      split_config <- .resolve_split_files(split_config, environment, file_path_norm, c(visited_files, file_path_norm), config_root, main_config_keys)
+
+      # Evaluate !expr in split file
+      split_config <- .eval_expressions(split_config)
+
+      # Merge split file contents into main config
+      # Main file wins for conflicts
+      for (split_key in names(split_config)) {
+        if (split_key == key) {
+          # This is the section key (e.g., 'connections' in connections.yml)
+          # Replace the file reference with the actual data
+          config[[split_key]] <- split_config[[split_key]]
+        } else if (split_key %in% names(config)) {
+          if (split_key %in% file_refs) {
+            # This key is another file reference, not a conflict - skip
+            next
+          } else {
+            # Conflict: key already exists (either from main config or previous split file)
+            # Check if it's a simple value (not a file ref string)
+            is_real_value <- !is.character(config[[split_key]]) ||
+                            length(config[[split_key]]) != 1 ||
+                            !grepl("\\.ya?ml$", config[[split_key]], ignore.case = TRUE)
+
+            if (is_real_value) {
+              # Key was already defined - check if it came from main config
+              if (split_key %in% main_config_keys) {
+                # Conflict with main config
+                warning(sprintf(
+                  "Key '%s' defined in both main config and '%s'. Using value from main config.",
+                  split_key,
+                  value
+                ))
+              } else {
+                # Conflict with another split file
+                warning(sprintf(
+                  "Key '%s' already defined, ignoring value from '%s'",
+                  split_key,
+                  value
+                ))
+              }
+            } else {
+              # This is a file reference that will be processed later, not a conflict
+              config[[split_key]] <- split_config[[split_key]]
+            }
+          }
+        } else {
+          # No conflict - merge from split
+          config[[split_key]] <- split_config[[split_key]]
+        }
+      }
+
+      # Note: No need to remove file reference - if split_key == key, we already replaced it above
+      # If split_key != key (split file has different top-level keys), the reference stays as a string
+      # which is harmless
+    }
+  }
+
+  config
+}
+
+
+# Helper: Resolve file path relative to config root directory
+.resolve_file_path <- function(file_path, config_root_dir) {
+  # If absolute, return as-is
+  if (grepl("^/", file_path) || grepl("^[A-Za-z]:", file_path)) {
+    return(file_path)
+  }
+
+  # Relative path - resolve relative to config root directory
+  file.path(config_root_dir, file_path)
+}
+
+
+# Helper: Evaluate !expr expressions and env() calls
+.eval_expressions <- function(x) {
+  if (is.list(x)) {
+    # Recursively process lists - preserve names!
+    result <- lapply(x, .eval_expressions)
+    names(result) <- names(x)
+    result
+  } else if (is.character(x) && length(x) == 1) {
+    # Check for !expr marker
+    if (grepl("^!expr\\s+", x)) {
+      expr_string <- sub("^!expr\\s+", "", x)
+
+      # Evaluate in controlled environment
+      # WARNING: This evaluates arbitrary R code - only use trusted configs!
+      tryCatch(
+        eval(parse(text = expr_string), envir = new.env(parent = baseenv())),
+        error = function(e) {
+          stop(sprintf("Failed to evaluate expression '%s': %s", expr_string, e$message))
+        }
+      )
+    } else if (grepl("^env\\(.*\\)$", x)) {
+      # Handle env() syntax - cleaner alternative to !expr Sys.getenv()
+      # Extract arguments: env("VAR") or env("VAR", "default")
+      env_args <- gsub("^env\\(\"(.*?)\"(?:,\\s*\"(.*?)\")?\\)$", "\\1,\\2", x)
+      env_args <- strsplit(env_args, ",")[[1]]
+      env_args <- trimws(env_args)
+
+      # Get environment variable with optional default
+      if (length(env_args) == 2 && env_args[2] != "") {
+        Sys.getenv(env_args[1], env_args[2])
+      } else {
+        Sys.getenv(env_args[1])
+      }
     } else {
       x
     }
+  } else {
+    x
   }
-
-  # 3. Handle non-standard sections and options
-  standard_sections <- c("data", "connections", "git", "security", "packages", "directories", "project_type")
-
-  for (section in names(user_config)) {
-    if (section == "options") {
-      # Deep merge options to preserve nested defaults
-      config$options <- modifyList(config$options, user_config$options)
-    } else if (section == "directories") {
-      # Directories are top-level, merge with defaults
-      config$directories <- modifyList(config$directories, user_config$directories)
-    } else if (section == "project_type") {
-      # Project type is top-level metadata
-      config$project_type <- user_config$project_type
-    } else if (!section %in% standard_sections) {
-      # Other non-standard sections go into options
-      config$options[[section]] <- user_config[[section]]
-    }
-  }
-
-  # Helper function to merge section data
-  .merge_section <- function(config_section, new_data, section_name) {
-    if (is.null(new_data)) {
-      return(config_section)
-    }
-
-    if (section_name == "packages") {
-      # Packages are handled specially
-      return(new_data)
-    } else if (is.list(new_data)) {
-      if (length(new_data) > 0 && is.null(names(new_data))) {
-        # If it's an unnamed list, convert to named list
-        # e.g. [{example: file.csv}] -> {example: file.csv}
-        if (length(new_data) == 1 && is.list(new_data[[1]])) {
-          return(new_data[[1]])
-        }
-        return(new_data)
-      } else {
-        # Otherwise merge with existing config
-        return(modifyList(config_section, new_data))
-      }
-    } else {
-      return(new_data)
-    }
-  }
-
-  # Process each standard section (data, connections, git, security, packages)
-  # by either loading from settings file or merging direct YAML
-  for (section in c("data", "connections", "git", "packages", "security")) {
-    if (!is.null(user_config[[section]])) {
-      # Check if this is a settings file reference
-      is_settings_file <- is.character(user_config[[section]]) &&
-        length(user_config[[section]]) == 1 &&
-        grepl("^settings/", user_config[[section]])
-
-      if (is_settings_file) {
-        # This is a settings file reference
-        settings_file <- user_config[[section]]
-        if (file.exists(settings_file)) {
-          # Read settings file
-          settings <- .safe_read_yaml(settings_file)
-
-          # If the section is not already in the config, create an empty list for it
-          if (is.null(config$options[[section]])) {
-            config$options[[section]] <- list()
-          }
-
-          # If there's an options key, add to the corresponding section in options
-          if (!is.null(settings$options)) {
-            config$options[[section]] <- modifyList(config$options[[section]], settings$options)
-          }
-
-          # If there's a key matching the section name, use that
-          if (!is.null(settings[[section]])) {
-            config[[section]] <- .merge_section(config[[section]], settings[[section]], section)
-          } else {
-            # Otherwise use the whole settings file
-            config[[section]] <- .merge_section(config[[section]], settings, section)
-          }
-        } else {
-          warning(sprintf("Settings file not found: %s", settings_file))
-        }
-      } else {
-        # Direct YAML, patch into config
-        config[[section]] <- .merge_section(config[[section]], user_config[[section]], section)
-      }
-    }
-  }
-
-  # Process packages to ensure consistent format
-  config$packages <- .process_packages(config$packages)
-
-  # Evaluate env() calls
-  eval_env(config)
 }
 
 # Helper function to process package configurations
@@ -247,15 +373,20 @@ read_config <- function(config_file = "config.yml") {
 # Helper function to safely read YAML files
 #
 # Reads a YAML file while suppressing the "incomplete final line" warning
-# as long as the YAML is valid.
+# as long as the YAML is valid. Preserves !expr tags as strings for later evaluation.
 #
 # @param file Path to YAML file
 # @return Parsed YAML content
 .safe_read_yaml <- function(file) {
   # Read file content with warnings suppressed
   content <- readLines(file, warn = FALSE)
-  # Parse YAML
-  yaml::yaml.load(paste(content, collapse = "\n"))
+  # Parse YAML - handlers preserve !expr as strings for later evaluation
+  yaml::yaml.load(
+    paste(content, collapse = "\n"),
+    handlers = list(
+      expr = function(x) paste0("!expr ", x)
+    )
+  )
 }
 
 #' Write project configuration
@@ -286,14 +417,8 @@ write_config <- function(config, config_file = "config.yml", section = NULL) {
       }
     )
 
-    # Get current environment from config::get()
-    env <- tryCatch(
-      config::get("config")$environment,
-      error = function(e) {
-        # Default to "default" if config package fails
-        "default"
-      }
-    )
+    # Get current environment from R_CONFIG_ACTIVE or default
+    env <- Sys.getenv("R_CONFIG_ACTIVE", Sys.getenv("R_CONFIG_NAME", "default"))
 
     # Check if this section uses a settings file
     if (is.character(current[[env]][[section]]) && grepl("^settings/", current[[env]][[section]])) {

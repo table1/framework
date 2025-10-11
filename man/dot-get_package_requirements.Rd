@@ -7,7 +7,7 @@
 .get_package_requirements(config)
 }
 \arguments{
-\item{config}{Configuration object from config::get()}
+\item{config}{Configuration object from read_config()}
 }
 \description{
 Get package requirements from config

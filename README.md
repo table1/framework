@@ -203,14 +203,14 @@ result_save("report", file = "report.html", type = "notebook",
 ### 6. Query Databases
 
 ```yaml
-# config.yml
+# config.yml (using clean env() syntax)
 connections:
   db:
     driver: postgresql
-    host: !expr Sys.getenv("DB_HOST")
-    database: !expr Sys.getenv("DB_NAME")
-    user: !expr Sys.getenv("DB_USER")
-    password: !expr Sys.getenv("DB_PASS")
+    host: env("DB_HOST")
+    database: env("DB_NAME")
+    user: env("DB_USER")
+    password: env("DB_PASS")
 ```
 
 ```r
@@ -246,8 +246,17 @@ DB_PASS=secret
 DATA_ENCRYPTION_KEY=key123
 ```
 
-Reference in config:
+Reference in config (two syntaxes supported):
 ```yaml
+# Recommended: Clean env() syntax
+security:
+  data_key: env("DATA_ENCRYPTION_KEY")
+connections:
+  db:
+    host: env("DB_HOST")
+    password: env("DB_PASS", "default_password")  # With default
+
+# Also works: Traditional !expr syntax
 security:
   data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY")
 ```

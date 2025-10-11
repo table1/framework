@@ -26,8 +26,17 @@ DB_PASS=secret
 DATA_ENCRYPTION_KEY=key123
 ```
 
-Reference in config:
+Reference in config (two syntaxes supported):
 ```yaml
+# Recommended: Clean env() syntax
+security:
+  data_key: env("DATA_ENCRYPTION_KEY")
+connections:
+  db:
+    host: env("DB_HOST")
+    password: env("DB_PASS", "default_password")  # With default
+
+# Also works: Traditional !expr syntax
 security:
   data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY")
 ```
