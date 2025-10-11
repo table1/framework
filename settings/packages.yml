@@ -1,0 +1,14 @@
+options:
+packages:
+- name: dplyr
+  attached: true
+- name: readr
+  attached: false
+- name: ggplot2
+  attached: true
+- tidyr
+- tidymodels
+- stringr
+- forcats
+- purrr
+- lubridate

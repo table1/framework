@@ -1,3 +1,21 @@
+# Framework
+
+# Data directories (all types)
+data/*
+!data/*/.gitkeep
+!data/source/public/
+!data/source/public/**
+!data/in_progress/public/
+!data/in_progress/public/**
+!data/final/public/
+!data/final/public/**
+data/cached*
+data/scratch*
+
+# Results directories (analysis only - private by default)
+results/private/
+results/private/**
+
 # R specific
 .Rproj.user
 .Rhistory
@@ -5,40 +23,43 @@
 .Ruserdata
 .Rapp.history
 
-# Development
-framework*.tar.gz
-framework*.Rcheck/
-
 # OS specific
 .DS_Store
 Thumbs.db
-
-# IDE specific
-.vscode/
-.idea/
 
 # R workspace
 .Renviron
 .Rprofile
 
+# Framework internals
+framework.db
+.initiated
+.framework_renv_enabled
+.framework_scaffolded
+
 # Credentials
 .env
 .httr-oauth
+
+# renv
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
 
 # Cache directories
 *_cache/
 /cache/
 /*_files/
 
+# IDE specific files
+.idea
+.vscode
+
 # Config directories
 .history
 .aws
 .config
-
-# Vignette outputs
-vignettes/*.html
-vignettes/*.pdf
-
-# Claude
-.claude.claude/
-.readme-shared/

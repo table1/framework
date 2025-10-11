@@ -10,7 +10,8 @@
       "Read(//private/tmp/test_init_archive/**)",
       "Bash(R CMD INSTALL:*)",
       "Read(//private/tmp/test_init_archive2/**)",
-      "Read(//Users/erikwestlund/code/framework-project/**)"
+      "Read(//Users/erikwestlund/code/framework-project/**)",
+      "Bash(Rscript:*)"
     ],
     "deny": [],
     "ask": []

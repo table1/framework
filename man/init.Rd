@@ -11,6 +11,7 @@ init(
   lintr = NULL,
   styler = NULL,
   use_renv = FALSE,
+  attach_defaults = TRUE,
   subdir = NULL,
   force = FALSE,
   .dev_mode = FALSE
@@ -31,6 +32,10 @@ For backward compatibility: "default"/"minimal" map to "project"/"presentation".
 
 \item{use_renv}{If TRUE, enables renv for package management. Default FALSE.}
 
+\item{attach_defaults}{If TRUE, configures default packages to auto-attach on scaffold().
+Default packages: dplyr, tidyr, ggplot2 (auto-attached), readr, stringr, scales (installed only).
+Default TRUE.}
+
 \item{subdir}{Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.}
 
 \item{force}{If TRUE, will reinitialize even if project is already initialized.}
@@ -46,7 +51,8 @@ When run from an empty directory, requires project_name and type parameters.
 init(
   project_name = "MyProject",
   type = "project",
-  use_renv = FALSE
+  use_renv = FALSE,
+  attach_defaults = TRUE
 )
 
 # Course project with renv enabled
@@ -56,8 +62,8 @@ init(
   use_renv = TRUE
 )
 
-# Single presentation
-init(type = "presentation")
+# Single presentation without default packages
+init(type = "presentation", attach_defaults = FALSE)
 }
 
 }

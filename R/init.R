@@ -23,7 +23,7 @@
 
 #' Create config.yml from template
 #' @keywords internal
-.create_config_file <- function(type = "analysis", subdir = NULL) {
+.create_config_file <- function(type = "analysis", attach_defaults = TRUE, subdir = NULL) {
   # Try type-specific template first, fall back to generic
   template_name <- sprintf("templates/config.%s.fr.yml", type)
   template_path <- system.file(template_name, package = "framework")
@@ -39,7 +39,53 @@
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
   target_file <- file.path(target_dir, "config.yml")
 
-  file.copy(template_path, target_file, overwrite = TRUE)
+  # Read template content
+  content <- readLines(template_path, warn = FALSE)
+
+  # If attach_defaults is TRUE, replace the packages section with structured format
+  if (attach_defaults) {
+    # Find the packages section
+    packages_start <- grep("^\\s*packages:", content)
+    if (length(packages_start) > 0) {
+      # Find where packages section ends (next section or end of file)
+      section_headers <- grep("^\\s*[a-z_]+:", content)
+      next_section <- section_headers[section_headers > packages_start[1]]
+      packages_end <- if (length(next_section) > 0) next_section[1] - 1 else length(content)
+
+      # Remove old packages section
+      content <- content[-(packages_start:packages_end)]
+
+      # Insert new structured packages section
+      new_packages <- c(
+        "  packages:",
+        "    # Auto-attached packages (available without library() calls)",
+        "    - name: dplyr",
+        "      attached: true",
+        "    - name: tidyr",
+        "      attached: true",
+        "    - name: ggplot2",
+        "      attached: true",
+        "    # Installed but not auto-attached (use library() when needed)",
+        "    - name: readr",
+        "      attached: false",
+        "    - name: stringr",
+        "      attached: false",
+        "    - name: scales",
+        "      attached: false",
+        ""
+      )
+
+      # Insert at the packages_start position
+      content <- c(
+        content[1:(packages_start - 1)],
+        new_packages,
+        content[packages_start:length(content)]
+      )
+    }
+  }
+
+  # Write modified content
+  writeLines(content, target_file)
   message(sprintf("Created %s", target_file))
 }
 
@@ -225,6 +271,9 @@ message("Framework dev mode active - will load from: %s")
 #' @param lintr The lintr style to use.
 #' @param styler The styler style to use.
 #' @param use_renv If TRUE, enables renv for package management. Default FALSE.
+#' @param attach_defaults If TRUE, configures default packages to auto-attach on scaffold().
+#'   Default packages: dplyr, tidyr, ggplot2 (auto-attached), readr, stringr, scales (installed only).
+#'   Default TRUE.
 #' @param subdir Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.
 #' @param force If TRUE, will reinitialize even if project is already initialized.
 #'
@@ -234,7 +283,8 @@ message("Framework dev mode active - will load from: %s")
 #' init(
 #'   project_name = "MyProject",
 #'   type = "project",
-#'   use_renv = FALSE
+#'   use_renv = FALSE,
+#'   attach_defaults = TRUE
 #' )
 #'
 #' # Course project with renv enabled
@@ -244,8 +294,8 @@ message("Framework dev mode active - will load from: %s")
 #'   use_renv = TRUE
 #' )
 #'
-#' # Single presentation
-#' init(type = "presentation")
+#' # Single presentation without default packages
+#' init(type = "presentation", attach_defaults = FALSE)
 #' }
 #'
 #' @export
@@ -256,6 +306,7 @@ init <- function(
     lintr = NULL,
     styler = NULL,
     use_renv = FALSE,
+    attach_defaults = TRUE,
     subdir = NULL,
     force = FALSE,
     .dev_mode = FALSE) {
@@ -288,6 +339,7 @@ init <- function(
   checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(use_renv)
+  checkmate::assert_flag(attach_defaults)
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
@@ -316,7 +368,7 @@ init <- function(
 
     # Create foundational files
     .create_init_file(project_name, type, lintr, styler, subdir)
-    .create_config_file(type, subdir)
+    .create_config_file(type, attach_defaults, subdir)
     .create_env_file(subdir)
   } else {
     # Set defaults from template behavior

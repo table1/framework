@@ -1,14 +1,17 @@
 options:
 packages:
+# Auto-attached packages (available without library() calls)
 - name: dplyr
   attached: true
-- name: readr
-  attached: false
+- name: tidyr
+  attached: true
 - name: ggplot2
   attached: true
-- tidyr
-- tidymodels
-- stringr
-- forcats
-- purrr
-- lubridate
+
+# Installed but not auto-attached (use library() when needed)
+- name: readr
+  attached: false
+- name: stringr
+  attached: false
+- name: scales
+  attached: false

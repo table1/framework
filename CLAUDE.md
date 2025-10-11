@@ -33,6 +33,7 @@ The README uses a modular parts system located in `readme-parts/`:
 **Pre-commit hook**: A git pre-commit hook automatically:
 - Rebuilds package documentation (`devtools::document()`) when R/ files are committed
 - Rebuilds README.md when readme-parts/ files are committed
+- **Auto-syncs `2_quickstart.md`** to framework-project and rebuilds its README
 - Hook location: `.git/hooks/pre-commit`
 
 See `readme-parts/README.md` and `docs/readme-parts-guide.md` for complete documentation.

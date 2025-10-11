@@ -2,25 +2,22 @@
 
 ### Option 1: Use the Template (Recommended)
 
+**Step 1:** Clone the template (edit `my-project` to your desired name):
 ```bash
 git clone https://github.com/table1/framework-project my-project
 cd my-project
 ```
 
-Edit `init.R` with your settings, then run:
-```r
-devtools::install_github("table1/framework")
-source("init.R")
+**Step 2:** Run the interactive setup (copy-paste this):
+```bash
+R -e 'source("init.R")'
 ```
 
-**Most common setup:**
-```r
-framework::init(
-  project_name = "MyProject",
-  type = "project",  # Creates notebooks/, scripts/, data/, results/
-  use_renv = FALSE   # Set TRUE to enable renv for reproducibility
-)
-```
+That's it! The script will:
+- Install Framework if needed
+- Ask about project name, type, and configuration
+- Set up your project structure
+- Install default packages if desired
 
 ### Option 2: Start from Scratch
 
@@ -31,9 +28,9 @@ devtools::install_github("table1/framework")
 # Initialize in current directory
 framework::init(
   project_name = "MyProject",
-  type = "project",       # or "course" or "presentation"
-  use_renv = FALSE,       # Set TRUE to enable renv
-  interactive = FALSE
+  type = "project",        # or "course" or "presentation"
+  use_renv = FALSE,        # Set TRUE to enable renv
+  attach_defaults = TRUE   # Auto-attach dplyr, tidyr, ggplot2
 )
 ```
 
