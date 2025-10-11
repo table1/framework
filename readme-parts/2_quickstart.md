@@ -16,27 +16,19 @@ cd my-project
 
 **Step 3:** Run the setup:
 
-**Option A - Quick setup with defaults:**
+**macOS/Linux users?** Just run from terminal:
 ```bash
-./setup.sh                    # macOS/Linux
-setup.bat                     # Windows
+./setup.sh                              # Quick (uses defaults)
+./setup.sh "My Project" project n y    # Custom (specify options)
 ```
 
-**Option B - Custom setup:**
-```bash
-./setup.sh "My Project" project n y    # macOS/Linux
-#          name         type    renv  auto-load-pkgs
-
-setup.bat "My Project" project n y     # Windows
-```
-
-**Option C - Interactive (manual):**
+**Everyone else:**
 ```bash
 R
 ```
 Then in R:
 ```r
-source("init.R")
+source("init.R")  # Interactive prompts guide you through setup
 ```
 
 That's it! The script will:
