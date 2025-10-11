@@ -20,12 +20,12 @@ git clone https://github.com/table1/framework-project my-project
 cd my-project
 ```
 
-**Step 3:** Start R and run the interactive setup:
+**Step 3:** Start R:
 ```bash
 R
 ```
 
-Then in R:
+**Step 4:** Run the interactive setup (copy-paste in R):
 ```r
 source("init.R")
 ```

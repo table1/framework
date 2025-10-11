@@ -62,8 +62,20 @@ renv_enable <- function(sync = TRUE) {
 
   # Sync packages from config.yml if requested
   if (sync && file.exists("config.yml")) {
+    # First ensure yaml package is available (needed to read config)
+    if (!requireNamespace("yaml", quietly = TRUE)) {
+      message("Installing yaml package (required for config reading)...")
+      renv::install("yaml")
+    }
+
     message("Syncing packages from config.yml to renv...")
-    .sync_packages_to_renv()
+    tryCatch(
+      .sync_packages_to_renv(),
+      error = function(e) {
+        warning("Could not sync packages from config.yml: ", e$message, "\n",
+                "You can manually sync later with: packages_snapshot()")
+      }
+    )
   }
 
   message(
