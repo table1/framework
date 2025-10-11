@@ -1,25 +1,33 @@
 default:
-  # Project metadata
+  # --------------------------------------------------------------------------
+  # Project Metadata
+  # --------------------------------------------------------------------------
   project_type: course  # Type: project, course, or presentation
 
-  # Package dependencies - course/teaching focused
+  # --------------------------------------------------------------------------
+  # Package Dependencies
+  # --------------------------------------------------------------------------
+  # Packages for teaching and course materials
+  # --------------------------------------------------------------------------
   packages:
     - quarto
     - knitr
     - rmarkdown
     - dplyr
 
-  # Project options
+  # --------------------------------------------------------------------------
+  # Project Directories
+  # --------------------------------------------------------------------------
+  directories:
+    notebooks: notebooks              # Where make_notebook() creates files
+    presentations: presentations      # Where presentation stubs go
+    functions: functions              # Helper functions directory
+    cache: data/cached                # Cached computation results
+
+  # --------------------------------------------------------------------------
+  # Project Options
+  # --------------------------------------------------------------------------
   options:
-    # Directory paths (explicitly defined for discoverability)
-    notebook_dir: notebooks          # Where make_notebook() creates files
-    presentation_dir: presentations  # Where presentation stubs go
-    functions_dir: functions         # Single dir or list: [functions, helpers]
-
-    data:
-      cache_dir: data/cached         # Cached computation results
-
-    # renv integration
     renv_nag: true  # Show reproducibility message on first scaffold()
 
   # Data catalog

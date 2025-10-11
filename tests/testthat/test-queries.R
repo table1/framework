@@ -15,7 +15,7 @@ test_that("get_connection returns SQLite connection for framework db", {
   DBI::dbDisconnect(conn)
 })
 
-test_that("get_query executes SELECT query", {
+test_that("query_get executes SELECT query", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -26,7 +26,7 @@ test_that("get_query executes SELECT query", {
   setwd(test_dir)
 
   # Query framework database
-  result <- get_query("SELECT name, type FROM sqlite_master WHERE type='table'", "framework")
+  result <- query_get("SELECT name, type FROM sqlite_master WHERE type='table'", "framework")
 
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
@@ -34,7 +34,7 @@ test_that("get_query executes SELECT query", {
   expect_true("type" %in% names(result))
 })
 
-test_that("execute_query runs INSERT/UPDATE commands", {
+test_that("query_execute runs INSERT/UPDATE commands", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -45,23 +45,23 @@ test_that("execute_query runs INSERT/UPDATE commands", {
   setwd(test_dir)
 
   # Create a test table
-  execute_query("CREATE TABLE test_table (id INTEGER, name TEXT)", "framework")
+  query_execute("CREATE TABLE test_table (id INTEGER, name TEXT)", "framework")
 
   # Insert data
-  rows <- execute_query("INSERT INTO test_table (id, name) VALUES (1, 'test')", "framework")
+  rows <- query_execute("INSERT INTO test_table (id, name) VALUES (1, 'test')", "framework")
 
   expect_equal(rows, 1)
 
   # Verify data was inserted
-  result <- get_query("SELECT * FROM test_table", "framework")
+  result <- query_get("SELECT * FROM test_table", "framework")
   expect_equal(nrow(result), 1)
   expect_equal(result$name, "test")
 
   # Clean up
-  execute_query("DROP TABLE test_table", "framework")
+  query_execute("DROP TABLE test_table", "framework")
 })
 
-test_that("get_query handles empty result sets", {
+test_that("query_get handles empty result sets", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -72,15 +72,15 @@ test_that("get_query handles empty result sets", {
   setwd(test_dir)
 
   # Create and query empty table
-  execute_query("CREATE TABLE empty_table (id INTEGER)", "framework")
+  query_execute("CREATE TABLE empty_table (id INTEGER)", "framework")
 
-  result <- get_query("SELECT * FROM empty_table", "framework")
+  result <- query_get("SELECT * FROM empty_table", "framework")
 
   expect_s3_class(result, "data.frame")
   expect_equal(nrow(result), 0)
 
   # Clean up
-  execute_query("DROP TABLE empty_table", "framework")
+  query_execute("DROP TABLE empty_table", "framework")
 })
 
 test_that("db_find retrieves record by ID", {

@@ -1,31 +1,48 @@
 default:
-  # Project metadata
+  # --------------------------------------------------------------------------
+  # Project Metadata
+  # --------------------------------------------------------------------------
   project_type: project  # Type: project, course, or presentation
 
-  # Package dependencies - analysis focused
+  # --------------------------------------------------------------------------
+  # Package Dependencies
+  # --------------------------------------------------------------------------
+  # Packages to install and load during scaffold()
+  # Use simple names or version pinning: dplyr@1.1.0, user/repo@branch
+  # --------------------------------------------------------------------------
   packages:
     - dplyr
     - ggplot2
     - readr
     - tidyr
 
-  # Project options
+  # --------------------------------------------------------------------------
+  # Project Directories
+  # --------------------------------------------------------------------------
+  # Define the core directory structure for your project.
+  # Most users can leave these as defaults.
+  # All paths are relative to the project root.
+  # --------------------------------------------------------------------------
+  directories:
+    # Source code and notebooks
+    notebooks: notebooks          # Where make_notebook() creates files
+    scripts: scripts              # Where make_script() creates files
+    functions: functions          # Single dir or list: [functions, helpers]
+
+    # Analysis outputs
+    results_public: results/public    # Shareable outputs (plots, reports)
+    results_private: results/private  # Private outputs (internal reports)
+
+    # Data and caching
+    cache: data/cached            # Cached computation results
+    scratch: data/scratch         # Temporary workspace
+
+  # --------------------------------------------------------------------------
+  # Project Options
+  # --------------------------------------------------------------------------
   options:
-    # Directory paths (explicitly defined for discoverability)
-    notebook_dir: notebooks        # Where make_notebook() creates files
-    script_dir: scripts            # Where make_script() creates files
-    functions_dir: functions       # Single dir or list: [functions, helpers]
-
-    results:
-      public_dir: results/public   # Shareable analysis outputs
-      private_dir: results/private # Private analysis outputs
-
-    data:
-      cache_dir: data/cached       # Cached computation results
-      scratch_dir: data/scratch    # Temporary workspace
-
-    # renv integration
-    renv_nag: true  # Show reproducibility message on first scaffold()
+    # renv integration - show reproducibility message on first scaffold()
+    renv_nag: true
 
   # Data catalog
   data:

@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "mcp__zen__chat",
-      "Bash(R:*)",
-      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -A2 \"\"\"\"^#' @export \" {} ')"
+      "Bash(cat:*)",
+      "mcp__zen__consensus",
+      "Bash(xargs ls:*)"
     ],
     "deny": [],
     "ask": []

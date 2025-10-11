@@ -178,9 +178,7 @@ test_that("init from empty directory creates all necessary files", {
     project_name = "EmptyDirProject",
     type = "presentation",
     lintr = "default",
-    styler = "default",
-    interactive = FALSE
-  ))
+    styler = "default"  ))
 
   # Check that init.R was created
   expect_true(file.exists("init.R"))
@@ -216,9 +214,7 @@ test_that("init from empty directory creates correct init.R content", {
     project_name = "TestInit",
     type = "project",
     lintr = "default",
-    styler = "default",
-    interactive = FALSE
-  ))
+    styler = "default"  ))
 
   # Read init.R content
   init_content <- readLines("init.R")
@@ -243,9 +239,7 @@ test_that("init detects template vs empty directory correctly", {
 
   suppressMessages(init(
     project_name = "Empty",
-    type = "presentation",
-    interactive = FALSE
-  ))
+    type = "presentation"  ))
 
   # Should create init.R
   expect_true(file.exists("init.R"))
@@ -265,9 +259,7 @@ test_that("init detects template vs empty directory correctly", {
 
   suppressMessages(init(
     project_name = "Template",
-    type = "presentation",
-    interactive = FALSE
-  ))
+    type = "presentation"  ))
 
   # Should not overwrite init.R
   init_content <- readLines("init.R")
@@ -293,9 +285,7 @@ test_that("init with subdir creates files in subdirectory", {
   suppressMessages(init(
     project_name = "SubProject",
     type = "presentation",
-    subdir = "subproject",
-    interactive = FALSE
-  ))
+    subdir = "subproject"  ))
 
   # Check files created in subdirectory
   expect_true(file.exists("subproject/init.R"))

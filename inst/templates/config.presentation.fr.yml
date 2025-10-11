@@ -1,21 +1,29 @@
 default:
-  # Project metadata
+  # --------------------------------------------------------------------------
+  # Project Metadata
+  # --------------------------------------------------------------------------
   project_type: presentation  # Type: project, course, or presentation
 
-  # Package dependencies - presentation focused (minimal)
+  # --------------------------------------------------------------------------
+  # Package Dependencies
+  # --------------------------------------------------------------------------
+  # Minimal packages for presentations
+  # --------------------------------------------------------------------------
   packages:
     - quarto
     - knitr
 
-  # Project options
+  # --------------------------------------------------------------------------
+  # Project Directories
+  # --------------------------------------------------------------------------
+  directories:
+    functions: functions          # Helper functions
+    cache: data/cached            # Cached computation results
+
+  # --------------------------------------------------------------------------
+  # Project Options
+  # --------------------------------------------------------------------------
   options:
-    # Directory paths (explicitly defined for discoverability)
-    functions_dir: functions   # Helper functions
-
-    data:
-      cache_dir: data/cached   # Cached computation results
-
-    # renv integration
     renv_nag: true  # Show reproducibility message on first scaffold()
 
   # Data catalog

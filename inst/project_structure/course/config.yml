@@ -1,4 +1,14 @@
 default:
+  project_type: course
+
+  # Core directories
+  directories:
+    notebooks: notebooks
+    presentations: presentations
+    functions: functions
+    cache: data/cached
+
+  # Domain-specific settings (split files for scalability)
   data: settings/data.yml
   packages: settings/packages.yml
   connections: settings/connections.yml

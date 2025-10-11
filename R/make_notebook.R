@@ -353,7 +353,12 @@ list_stubs <- function(type = NULL) {
     error = function(e) NULL
   )
 
-  # Check for notebook directory in config
+  # Check for notebook directory in config (new directories structure)
+  if (!is.null(config$directories$notebooks)) {
+    return(config$directories$notebooks)
+  }
+
+  # Legacy: check options$notebook_dir for backward compatibility
   if (!is.null(config$options$notebook_dir)) {
     return(config$options$notebook_dir)
   }

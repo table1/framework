@@ -1,3 +1,70 @@
+#' Get configuration value by dot-notation key
+#'
+#' Laravel-style configuration helper that supports both flat and hierarchical
+#' key access using dot notation. Automatically checks common locations for
+#' directory settings.
+#'
+#' @param key Character. Dot-notation key path (e.g., "notebooks" or
+#'   "directories.notebooks" or "connections.db.host")
+#' @param default Optional default value if key is not found
+#' @param config_file Configuration file path (default: "config.yml")
+#'
+#' @return The configuration value, or default if not found
+#'
+#' @details
+#' For directory settings, the function checks multiple locations:
+#' - Direct: `config("notebooks")` checks `directories$notebooks`, then `options$notebook_dir`
+#' - Explicit: `config("directories.notebooks")` checks only `directories$notebooks`
+#'
+#' @examples
+#' \dontrun{
+#' # Get notebook directory (checks both locations)
+#' config("notebooks")
+#'
+#' # Get explicit nested setting
+#' config("directories.notebooks")
+#' config("connections.db.host")
+#'
+#' # With default value
+#' config("missing_key", default = "fallback")
+#' }
+#'
+#' @export
+config <- function(key, default = NULL, config_file = "config.yml") {
+  # Read full config
+  cfg <- read_config(config_file)
+
+  # Split key by dots
+  parts <- strsplit(key, "\\.")[[1]]
+
+  # For single-part keys, try smart directory lookups
+  if (length(parts) == 1) {
+    # Check directories first
+    if (!is.null(cfg$directories[[key]])) {
+      return(cfg$directories[[key]])
+    }
+    # Check options for legacy keys
+    legacy_key <- paste0(key, "_dir")
+    if (!is.null(cfg$options[[legacy_key]])) {
+      return(cfg$options[[legacy_key]])
+    }
+  }
+
+  # Navigate through config hierarchy
+  value <- cfg
+  for (part in parts) {
+    if (is.list(value) && part %in% names(value)) {
+      value <- value[[part]]
+    } else {
+      # Key not found - return default
+      return(default)
+    }
+  }
+
+  value
+}
+
+
 #' Read project configuration
 #'
 #' Reads the project configuration from config.yml, evaluating any expressions.
@@ -12,7 +79,7 @@ read_config <- function(config_file = "config.yml") {
   config <- .safe_read_yaml(skeleton_path)
 
   # Initialize all standard sections
-  for (section in c("data", "connections", "git", "security", "packages")) {
+  for (section in c("data", "connections", "git", "security", "packages", "directories")) {
     if (is.null(config[[section]])) {
       config[[section]] <- list()
     }
@@ -55,11 +122,19 @@ read_config <- function(config_file = "config.yml") {
   }
 
   # 3. Handle non-standard sections and options
+  standard_sections <- c("data", "connections", "git", "security", "packages", "directories", "project_type")
+
   for (section in names(user_config)) {
     if (section == "options") {
       # Deep merge options to preserve nested defaults
       config$options <- modifyList(config$options, user_config$options)
-    } else if (!section %in% c("data", "connections", "git", "security", "packages")) {
+    } else if (section == "directories") {
+      # Directories are top-level, merge with defaults
+      config$directories <- modifyList(config$directories, user_config$directories)
+    } else if (section == "project_type") {
+      # Project type is top-level metadata
+      config$project_type <- user_config$project_type
+    } else if (!section %in% standard_sections) {
       # Other non-standard sections go into options
       config$options[[section]] <- user_config[[section]]
     }
