@@ -11,10 +11,13 @@ A lightweight R package for structured, reproducible data analysis projects focu
 **Step 1:** Clone the template (edit `my-project` to your desired name):
 ```bash
 git clone https://github.com/table1/framework-project my-project
+```
+
+```bash
 cd my-project
 ```
 
-**Step 2:** Run the interactive setup (copy-paste this):
+**Step 2:** Run the interactive setup:
 ```bash
 R -e 'source("init.R")'
 ```
