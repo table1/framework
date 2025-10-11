@@ -14,16 +14,14 @@ git clone https://github.com/table1/framework-project my-project
 cd my-project
 ```
 
-**Step 3:** Run the interactive setup:
+**Step 3:** Start R and run the interactive setup:
 ```bash
-# macOS/Linux:
-R -e 'source("init.R")'
+R
+```
 
-# Windows (Command Prompt):
-R -e "source('init.R')"
-
-# Windows (PowerShell):
-R -e "source('init.R')"
+Then in R:
+```r
+source("init.R")
 ```
 
 That's it! The script will:
