@@ -1,4 +1,7 @@
 default:
+  # Project metadata
+  project_type: presentation  # Type: project, course, or presentation
+
   # Package dependencies - presentation focused (minimal)
   packages:
     - quarto
@@ -6,10 +9,11 @@ default:
 
   # Project options
   options:
-    # Directory paths (defaults shown - customize as needed)
-    functions_dir: functions
+    # Directory paths (explicitly defined for discoverability)
+    functions_dir: functions   # Helper functions
+
     data:
-      cache_dir: data/cached
+      cache_dir: data/cached   # Cached computation results
 
     # renv integration
     renv_nag: true  # Show reproducibility message on first scaffold()

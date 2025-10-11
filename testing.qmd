@@ -1,0 +1,50 @@
+---
+title: "testing"
+author: "Your Name"
+date: "2025-10-10"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    code-fold: false
+    df-print: paged
+execute:
+  echo: true
+  warning: true
+  message: true
+  cache: false
+---
+
+```{{r}}
+#| label: setup
+#| include: false
+
+library(framework)
+scaffold()
+```
+
+## Introduction
+
+Brief description of this notebook's purpose.
+
+```{{r}}
+# Your code here
+```
+
+## Analysis
+
+```{{r}}
+# Analysis code
+```
+
+## Results
+
+```{{r}}
+# Results code
+```
+
+## Session Info
+
+```{{r}}
+sessionInfo()
+```

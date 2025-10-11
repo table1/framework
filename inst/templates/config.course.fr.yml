@@ -1,4 +1,7 @@
 default:
+  # Project metadata
+  project_type: course  # Type: project, course, or presentation
+
   # Package dependencies - course/teaching focused
   packages:
     - quarto
@@ -8,10 +11,13 @@ default:
 
   # Project options
   options:
-    # Directory paths (defaults shown - customize as needed)
-    functions_dir: functions           # Single dir or list: [functions, helpers]
+    # Directory paths (explicitly defined for discoverability)
+    notebook_dir: notebooks          # Where make_notebook() creates files
+    presentation_dir: presentations  # Where presentation stubs go
+    functions_dir: functions         # Single dir or list: [functions, helpers]
+
     data:
-      cache_dir: data/cached
+      cache_dir: data/cached         # Cached computation results
 
     # renv integration
     renv_nag: true  # Show reproducibility message on first scaffold()

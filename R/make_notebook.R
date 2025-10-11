@@ -342,7 +342,7 @@ list_stubs <- function(type = NULL) {
 #' Get Notebook Directory from Config
 #'
 #' Reads config to determine where notebooks should be created.
-#' Falls back to "work" or current directory if config unavailable.
+#' Falls back to "notebooks", "work", or current directory if config unavailable.
 #'
 #' @return Character path to notebook directory
 #' @keywords internal
@@ -358,7 +358,11 @@ list_stubs <- function(type = NULL) {
     return(config$options$notebook_dir)
   }
 
-  # Default fallback
+  # Default fallback - check for notebooks/ then work/
+  if (dir.exists("notebooks")) {
+    return("notebooks")
+  }
+
   if (dir.exists("work")) {
     return("work")
   }

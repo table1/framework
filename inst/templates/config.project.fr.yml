@@ -1,4 +1,7 @@
 default:
+  # Project metadata
+  project_type: project  # Type: project, course, or presentation
+
   # Package dependencies - analysis focused
   packages:
     - dplyr
@@ -8,14 +11,18 @@ default:
 
   # Project options
   options:
-    # Directory paths (defaults shown - customize as needed)
-    functions_dir: functions           # Single dir or list: [functions, helpers]
+    # Directory paths (explicitly defined for discoverability)
+    notebook_dir: notebooks        # Where make_notebook() creates files
+    script_dir: scripts            # Where make_script() creates files
+    functions_dir: functions       # Single dir or list: [functions, helpers]
+
     results:
-      public_dir: results/public
-      private_dir: results/private
+      public_dir: results/public   # Shareable analysis outputs
+      private_dir: results/private # Private analysis outputs
+
     data:
-      cache_dir: data/cached
-      scratch_dir: data/scratch
+      cache_dir: data/cached       # Cached computation results
+      scratch_dir: data/scratch    # Temporary workspace
 
     # renv integration
     renv_nag: true  # Show reproducibility message on first scaffold()

@@ -11,6 +11,6 @@ Character path to notebook directory
 }
 \description{
 Reads config to determine where notebooks should be created.
-Falls back to "work" or current directory if config unavailable.
+Falls back to "notebooks", "work", or current directory if config unavailable.
 }
 \keyword{internal}
