@@ -16,19 +16,18 @@ cd my-project
 
 **Step 3:** Run the setup:
 
-**macOS/Linux users?** Just run from terminal:
+**macOS/Linux (or Git Bash on Windows):**
 ```bash
-./setup.sh                              # Quick (uses defaults)
-./setup.sh "My Project" project n y    # Custom (specify options)
+./setup.sh
 ```
 
-**Everyone else:**
+**Windows (or no shell):**
 ```bash
 R
 ```
 Then in R:
 ```r
-source("init.R")  # Interactive prompts guide you through setup
+source("init.R")
 ```
 
 That's it! The script will:
