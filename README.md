@@ -8,18 +8,28 @@ A lightweight R package for structured, reproducible data analysis projects focu
 
 ### Option 1: Use the Template (Recommended)
 
+**In your terminal:**
+
 **Step 1:** Clone the template (edit `my-project` to your desired name):
 ```bash
 git clone https://github.com/table1/framework-project my-project
 ```
 
+**Step 2:** Navigate into the project:
 ```bash
 cd my-project
 ```
 
-**Step 2:** Run the interactive setup:
+**Step 3:** Run the interactive setup:
 ```bash
+# macOS/Linux:
 R -e 'source("init.R")'
+
+# Windows (Command Prompt):
+R -e "source('init.R')"
+
+# Windows (PowerShell):
+R -e "source('init.R')"
 ```
 
 That's it! The script will:
