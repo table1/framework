@@ -12,7 +12,8 @@
       "Read(//private/tmp/test_init_archive2/**)",
       "Read(//Users/erikwestlund/code/framework-project/**)",
       "Bash(Rscript:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(R:*)"
     ],
     "deny": [],
     "ask": []

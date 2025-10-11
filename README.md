@@ -20,12 +20,27 @@ git clone https://github.com/table1/framework-project my-project
 cd my-project
 ```
 
-**Step 3:** Start R:
+**Step 3:** Run the setup:
+
+**Option A - Quick setup with defaults:**
+```bash
+./setup.sh                    # macOS/Linux
+setup.bat                     # Windows
+```
+
+**Option B - Custom setup:**
+```bash
+./setup.sh "My Project" project n y    # macOS/Linux
+#          name         type    renv  auto-load-pkgs
+
+setup.bat "My Project" project n y     # Windows
+```
+
+**Option C - Interactive (manual):**
 ```bash
 R
 ```
-
-**Step 4:** Run the interactive setup (copy-paste in R):
+Then in R:
 ```r
 source("init.R")
 ```
