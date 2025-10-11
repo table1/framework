@@ -2,26 +2,24 @@
 
 ### Option 1: Use the Template (Recommended)
 
-**In your terminal:**
+**One-liner (macOS/Linux/Windows with Git Bash):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/install.sh | bash
+```
 
-**Step 1:** Clone the template (edit `my-project` to your desired name):
+**Step-by-step (Windows/no shell):**
+
+1. Clone the template (edit `my-project` to your desired name):
 ```bash
 git clone https://github.com/table1/framework-project my-project
 ```
 
-**Step 2:** Navigate into the project:
+2. Navigate into the project:
 ```bash
 cd my-project
 ```
 
-**Step 3:** Run the setup:
-
-**macOS/Linux (or Git Bash on Windows):**
-```bash
-./setup.sh
-```
-
-**Windows (or no shell):**
+3. Start R and run setup:
 ```bash
 R
 ```
