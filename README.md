@@ -6,17 +6,18 @@ A lightweight R package for structured, reproducible data analysis projects focu
 
 ## Quick Start
 
-**Pick the method that fits your workflow:**
+**Preview:** During setup, you'll be asked to choose:
+- **Project type** - `project` (full-featured), `course` (teaching), or `presentation` (single talk)
+- **Notebook format** - Quarto `.qmd` (recommended) or RMarkdown `.Rmd`
+- **Package management** - Whether to renv for reproducibility or standard R packages
 
-- Creating **multiple projects**? Use the CLI tool (Option 1)
-- Creating **one project** and don't want to install anything? Use the one-time script (Option 2)
-- Want to **customize the template** first? Clone via Git (Option 3)
+Not sure? The defaults work great. You can always change these later in `config.yml`.
 
 ### Option 1: CLI Tool
 
 **One-time setup:**
 
-Start R, then:
+Start `R`, then:
 ```r
 # Install Framework and the CLI
 devtools::install_github("table1/framework")
@@ -41,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/new-p
 
 This guides you through creating a new project without installing the CLI.
 
-### Option 3: Template From Git
+### Option 3: Template From GitHub
 
 **Step-by-step:**
 
