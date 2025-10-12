@@ -20,7 +20,8 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(bash)",
-      "Bash(/tmp/test_author_integration.sh:*)"
+      "Bash(/tmp/test_author_integration.sh:*)",
+      "Bash(/tmp/test_direct_install.sh:*)"
     ],
     "deny": [],
     "ask": []
