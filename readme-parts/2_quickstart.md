@@ -35,42 +35,30 @@ curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/new-p
 
 This guides you through creating a new project without installing the CLI.
 
-### Option 3: Template From GitHub
+### Option 3: Manual Setup
 
-**Step-by-step:**
+Clone the template and customize `init.R` to your preferences:
 
-1. Clone the template (edit `my-project` to your desired name):
 ```bash
 git clone https://github.com/table1/framework-project my-project
-```
-
-2. Navigate into the project:
-```bash
 cd my-project
 ```
 
-3. Start R and run setup:
-```bash
-R
-```
-Then in R:
-```r
-source("init.R")
-```
-
-### Option 4: Direct R Package Usage
+**Open `init.R`** in your favorite editor to set your project name, type, and options, then run it:
 
 ```r
-# Install package
-devtools::install_github("table1/framework")
-
-# Initialize in current directory
 framework::init(
   project_name = "MyProject",
   type = "project",        # or "course" or "presentation"
-  use_renv = FALSE,        # Set TRUE to enable renv
-  attach_defaults = TRUE   # Auto-attach dplyr, tidyr, ggplot2
+  use_renv = FALSE,
+  default_notebook_format = "quarto",
+  author_name = "Your Name",  # Optional
+  author_email = "email@example.com",  # Optional
+  author_affiliation = "Johns Hopkins University"  # Optional
 )
+
+# Then run your code from your IDE. Or save your changes and run:
+source("init.R")
 ```
 
 ### Project Types
