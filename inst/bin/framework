@@ -39,7 +39,17 @@ case "$COMMAND" in
   update)
     # Update Framework package and CLI from GitHub
     printf "${BLUE}Updating Framework and CLI from GitHub...${NC}\n\n"
-    R --quiet --no-save -e "framework::cli_update()"
+    printf "Update dependencies to latest versions? [Y/n]: "
+    read -r response
+
+    case "$response" in
+      [nN]|[nN][oO])
+        R --quiet --no-save -e "framework::cli_update(upgrade_deps = FALSE)"
+        ;;
+      *)
+        R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
+        ;;
+    esac
     ;;
 
   help|--help|-h)

@@ -226,21 +226,31 @@ cli_uninstall <- function(location = c("user", "system")) {
 #' Since the CLI is a symlink to the installed package, updating the package
 #' automatically updates the CLI.
 #'
+#' This function runs quietly without interactive prompts, suitable for CLI usage.
+#' The CLI wrapper script handles user prompts in bash before calling this function.
+#'
 #' @param ref Git reference (branch, tag, or commit). Default: "main"
+#' @param upgrade_deps Update dependencies to latest versions. Default: TRUE
+#' @param force Force reinstall even if SHA hasn't changed. Default: FALSE
 #'
 #' @examples
 #' \dontrun{
-#' # Update to latest version
+#' # Update everything (package + dependencies)
 #' cli_update()
+#'
+#' # Update Framework only, keep current dependencies
+#' cli_update(upgrade_deps = FALSE)
+#'
+#' # Force reinstall
+#' cli_update(force = TRUE)
 #'
 #' # Update to specific branch
 #' cli_update(ref = "develop")
 #' }
 #'
 #' @export
-cli_update <- function(ref = "main") {
+cli_update <- function(ref = "main", upgrade_deps = TRUE, force = FALSE) {
   message("Updating Framework package and CLI from GitHub...")
-  message("")
 
   # Store old version
   old_version <- tryCatch(
@@ -248,10 +258,18 @@ cli_update <- function(ref = "main") {
     error = function(e) "unknown"
   )
 
-  # Update package
-  devtools::install_github("table1/framework", ref = ref, upgrade = "ask")
+  # Determine upgrade strategy
+  upgrade_mode <- if (upgrade_deps) "always" else "never"
 
-  message("")
+  # Update package (quietly, no interactive prompts)
+  devtools::install_github(
+    "table1/framework",
+    ref = ref,
+    upgrade = upgrade_mode,
+    force = force,
+    quiet = TRUE
+  )
+
   message("\u2713 Framework CLI updated!")
 
   # Show version info
@@ -259,15 +277,10 @@ cli_update <- function(ref = "main") {
 
   if (old_version != "unknown" && old_version != new_version) {
     message("Updated: ", old_version, " \u2192 ", new_version)
+  } else if (force) {
+    message("Reinstalled: ", new_version)
   } else {
-    message("Current version: ", new_version)
-  }
-
-  # Check if CLI is installed
-  cli_installed <- Sys.which("framework") != ""
-  if (!cli_installed) {
-    message("")
-    message("Note: CLI not installed. Run framework::cli_install() to install it.")
+    message("Already up to date: ", new_version)
   }
 
   invisible(new_version)
