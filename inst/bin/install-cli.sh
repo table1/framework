@@ -76,8 +76,8 @@ case "$SHELL_NAME" in
     ;;
 esac
 
-# Check if already in config
-if [ -f "$SHELL_CONFIG" ] && grep -q ".local/bin.*PATH\|PATH.*\.local/bin" "$SHELL_CONFIG"; then
+# Check if already in config (exact match for .local/bin)
+if [ -f "$SHELL_CONFIG" ] && grep -qE '\.local/bin|/\.local/bin|\$HOME/\.local/bin' "$SHELL_CONFIG"; then
   printf "${YELLOW}Note:${NC} ~/.local/bin is already in ${SHELL_CONFIG}\n"
   printf "but is not active in this session.\n\n"
   printf "To activate:\n"
