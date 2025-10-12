@@ -36,6 +36,13 @@ framework.db
 .initiated
 .framework_renv_enabled
 .framework_scaffolded
+.init.R.done
+
+# Project files (should not be in package repo)
+config.yml
+*.Rproj
+*.code-workspace
+functions/
 
 # Credentials
 .env
