@@ -13,15 +13,22 @@ A lightweight R package for structured, reproducible data analysis projects focu
 
 Not sure? The defaults work great. You can always change these later in `config.yml`.
 
-### Option 1: CLI Tool
+### Option 1: CLI Tool (Recommended)
 
-**One-time setup:**
+**Two-step install:**
 
-Start `R`, then:
+1. Install Framework in R:
 ```r
-# Install Framework and the CLI
 devtools::install_github("table1/framework")
-framework::cli_install()
+```
+
+2. Install CLI (choose one):
+```bash
+# Shell installer (handles PATH setup automatically)
+curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
+
+# OR from R (calls shell installer)
+R -e "framework::cli_install()"
 ```
 
 **Then create projects anywhere:**
@@ -121,14 +128,14 @@ project/
 ├── data/
 │   ├── source/private/     # Raw data (gitignored)
 │   ├── source/public/      # Public raw data
-│   ├── cached/            # Computation cache (gitignored)
-│   └── final/private/     # Results (gitignored)
-├── functions/             # Custom functions
-├── results/private/       # Analysis outputs (gitignored)
-├── docs/                  # Documentation
-├── config.yml            # Project configuration
-├── framework.db          # Metadata/tracking database
-└── .env                  # Secrets (gitignored)
+│   ├── cached/             # Computation cache (gitignored)
+│   └── final/private/      # Results (gitignored)
+├── functions/              # Custom functions
+├── results/private/        # Analysis outputs (gitignored)
+├── docs/                   # Documentation
+├── config.yml              # Project configuration
+├── framework.db            # Metadata/tracking database
+└── .env                    # Secrets (gitignored)
 ```
 
 ## Core Workflow
