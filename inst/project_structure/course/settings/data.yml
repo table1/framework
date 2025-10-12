@@ -1,27 +1,26 @@
-options:
-  cache_dir: data/cached
-  scratch_dir: data/scratch
-data:
-  source:
-    private:
-      example:
-        path: data/source/private/example.csv
-        type: csv
-        delimiter: comma
-        locked: true
-        codebook:
-          name: character
-          gender: character
-          birthday: date
-          birthtime: time
-          fav_number: 
-            type: integer
-            min: 1
-            max: 100
-    public:
-  in_progress:
-    private:
-    public:
-  final:
-    private:
-    public:
+cache_dir: data/cached
+scratch_dir: data/scratch
+
+source:
+  private:
+    example:
+      path: data/source/private/example.csv
+      type: csv
+      delimiter: comma
+      locked: true
+      codebook:
+        name: character
+        gender: character
+        birthday: date
+        birthtime: time
+        fav_number:
+          type: integer
+          min: 1
+          max: 100
+  public:
+in_progress:
+  private:
+  public:
+final:
+  private:
+  public:

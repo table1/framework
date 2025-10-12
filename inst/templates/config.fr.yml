@@ -1,9 +1,12 @@
 default:
   # Package dependencies
   packages:
-    - dplyr
-    - ggplot2
-    - readr
+    - name: dplyr
+      auto_attach: true
+    - name: ggplot2
+      auto_attach: true
+    - name: readr
+      auto_attach: false
 
   # Project options
   options:

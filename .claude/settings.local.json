@@ -13,7 +13,11 @@
       "Read(//Users/erikwestlund/code/framework-project/**)",
       "Bash(Rscript:*)",
       "Bash(chmod:*)",
-      "Bash(R:*)"
+      "Bash(R:*)",
+      "Bash(for file in inst/project_structure/*/settings/*.yml)",
+      "Bash(do if head -1 \"$file\")",
+      "Bash(then echo \"$file\" fi done)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

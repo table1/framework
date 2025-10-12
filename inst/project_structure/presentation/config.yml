@@ -2,8 +2,10 @@ default:
   data:
     - example: data/example.csv
   packages:
-    - dplyr
-    - ggplot2
+    - name: dplyr
+      auto_attach: true
+    - name: ggplot2
+      auto_attach: true
   connections:
     framework:
       driver: "sqlite"

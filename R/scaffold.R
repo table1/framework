@@ -21,6 +21,12 @@ scaffold <- function(config_file = "config.yml") {
   }
 
   .load_environment()
+
+  # Unlock config if it exists and is locked (from previous scaffold calls)
+  if (exists("config", envir = .GlobalEnv) && bindingIsLocked("config", .GlobalEnv)) {
+    unlockBinding("config", .GlobalEnv)
+  }
+
   config <<- .load_configuration(config_file)
 
   # Show educational message about renv (first scaffold only)
@@ -82,9 +88,10 @@ scaffold <- function(config_file = "config.yml") {
       list(name = pkg, load = FALSE)
     } else if (is.list(pkg)) {
       # List with loading behavior
+      # Support: auto_attach (preferred), attached (backward compat), load, scaffold
       list(
         name = pkg$name,
-        load = isTRUE(pkg$attached) || isTRUE(pkg$load) || isTRUE(pkg$scaffold)
+        load = isTRUE(pkg$auto_attach) || isTRUE(pkg$attached) || isTRUE(pkg$load) || isTRUE(pkg$scaffold)
       )
     } else {
       NULL

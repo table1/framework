@@ -8,10 +8,15 @@ default:
   # Package Dependencies
   # --------------------------------------------------------------------------
   # Minimal packages for presentations
+  # Use auto_attach: true to load automatically, false to install only
   # --------------------------------------------------------------------------
   packages:
-    - quarto
-    - knitr
+    - name: ggplot2
+      auto_attach: true
+    - name: quarto
+      auto_attach: false
+    - name: knitr
+      auto_attach: false
 
   # --------------------------------------------------------------------------
   # Project Directories

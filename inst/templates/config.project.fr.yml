@@ -7,14 +7,19 @@ default:
   # --------------------------------------------------------------------------
   # Package Dependencies
   # --------------------------------------------------------------------------
-  # Packages to install and load during scaffold()
-  # Use simple names or version pinning: dplyr@1.1.0, user/repo@branch
+  # Packages to install and optionally auto-load during scaffold()
+  # Use auto_attach: true to load automatically, false to install only
+  # Version pinning: dplyr@1.1.0, user/repo@branch
   # --------------------------------------------------------------------------
   packages:
-    - dplyr
-    - ggplot2
-    - readr
-    - tidyr
+    - name: dplyr
+      auto_attach: true
+    - name: tidyr
+      auto_attach: true
+    - name: ggplot2
+      auto_attach: true
+    - name: readr
+      auto_attach: false
 
   # --------------------------------------------------------------------------
   # Project Directories

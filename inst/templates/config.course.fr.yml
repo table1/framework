@@ -8,12 +8,19 @@ default:
   # Package Dependencies
   # --------------------------------------------------------------------------
   # Packages for teaching and course materials
+  # Use auto_attach: true to load automatically, false to install only
   # --------------------------------------------------------------------------
   packages:
-    - quarto
-    - knitr
-    - rmarkdown
-    - dplyr
+    - name: dplyr
+      auto_attach: true
+    - name: ggplot2
+      auto_attach: true
+    - name: quarto
+      auto_attach: false
+    - name: knitr
+      auto_attach: false
+    - name: rmarkdown
+      auto_attach: false
 
   # --------------------------------------------------------------------------
   # Project Directories
