@@ -21,11 +21,13 @@ scaffold <- function(config_file = "config.yml") {
   .load_environment()
 
   # Unlock config if it exists and is locked (from previous scaffold calls)
-  if (exists("config", envir = .GlobalEnv)) {
-    if (bindingIsLocked("config", .GlobalEnv)) {
+  tryCatch({
+    if (exists("config", envir = .GlobalEnv) && bindingIsLocked("config", .GlobalEnv)) {
       unlockBinding("config", .GlobalEnv)
     }
-  }
+  }, error = function(e) {
+    # Ignore binding check errors - config doesn't exist yet
+  })
 
   config <<- .load_configuration(config_file)
 
