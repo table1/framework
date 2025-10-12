@@ -54,6 +54,8 @@ security:
 | `result_save()` | Save analysis output |
 | `result_get()` | Retrieve saved result |
 | `scratch_capture()` | Quick debug/temp file save |
+| `install_cli()` | Install Framework CLI tool |
+| `cli_update()` | Update Framework and CLI to latest version |
 | `renv_enable()` | Enable renv for reproducibility (opt-in) |
 | `renv_disable()` | Disable renv integration |
 | `packages_snapshot()` | Save package versions to renv.lock |

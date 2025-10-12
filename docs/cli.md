@@ -109,6 +109,40 @@ init(
 
 Programmatic control, useful for automation.
 
+## Updating the CLI
+
+Update to the latest version:
+
+```r
+framework::cli_update()
+```
+
+This updates both the Framework package and CLI tool from GitHub. The CLI is a symlink to the installed package, so updating the package automatically updates the CLI.
+
+**Output:**
+```
+Updating Framework package and CLI from GitHub...
+
+✓ Framework CLI updated!
+Updated: 0.1.0 → 0.1.1
+```
+
+**Advanced:**
+```r
+# Update to specific branch
+framework::cli_update(ref = "develop")
+```
+
+Verify the update:
+```bash
+framework version
+```
+
+If the symlink breaks (rare), reinstall:
+```r
+framework::install_cli()
+```
+
 ## Uninstallation
 
 ```r

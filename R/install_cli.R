@@ -175,3 +175,57 @@ uninstall_cli <- function(location = c("user", "system")) {
 
   invisible(TRUE)
 }
+
+
+#' Update Framework CLI Tool
+#'
+#' Updates the Framework package and CLI tool to the latest version from GitHub.
+#' Since the CLI is a symlink to the installed package, updating the package
+#' automatically updates the CLI.
+#'
+#' @param ref Git reference (branch, tag, or commit). Default: "main"
+#'
+#' @examples
+#' \dontrun{
+#' # Update to latest version
+#' cli_update()
+#'
+#' # Update to specific branch
+#' cli_update(ref = "develop")
+#' }
+#'
+#' @export
+cli_update <- function(ref = "main") {
+  message("Updating Framework package and CLI from GitHub...")
+  message("")
+
+  # Store old version
+  old_version <- tryCatch(
+    as.character(packageVersion("framework")),
+    error = function(e) "unknown"
+  )
+
+  # Update package
+  devtools::install_github("table1/framework", ref = ref, upgrade = "ask")
+
+  message("")
+  message("\u2713 Framework CLI updated!")
+
+  # Show version info
+  new_version <- as.character(packageVersion("framework"))
+
+  if (old_version != "unknown" && old_version != new_version) {
+    message("Updated: ", old_version, " \u2192 ", new_version)
+  } else {
+    message("Current version: ", new_version)
+  }
+
+  # Check if CLI is installed
+  cli_installed <- Sys.which("framework") != ""
+  if (!cli_installed) {
+    message("")
+    message("Note: CLI not installed. Run framework::install_cli() to install it.")
+  }
+
+  invisible(new_version)
+}
