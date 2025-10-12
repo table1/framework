@@ -28,9 +28,32 @@ COMMAND="${1:-help}"
 
 case "$COMMAND" in
   new)
-    # Remove 'new' from arguments and pass the rest to new-project.sh
+    # Remove 'new' from arguments and check for --dev-mode
     shift
-    curl -fsSL "$SCRIPT_URL" | bash -s "$@"
+
+    # Check if --dev-mode flag is present
+    DEV_MODE=false
+    for arg in "$@"; do
+      if [ "$arg" = "--dev-mode" ]; then
+        DEV_MODE=true
+        break
+      fi
+    done
+
+    if [ "$DEV_MODE" = true ]; then
+      # Dev mode: use local new-project.sh and set environment variable
+      LOCAL_SCRIPT="$HOME/code/framework-project/new-project.sh"
+      if [ ! -f "$LOCAL_SCRIPT" ]; then
+        printf "${RED}Error: Dev mode requires framework-project at $HOME/code/framework-project${NC}\n"
+        exit 1
+      fi
+      export FW_DEV_MODE=true
+      export FW_DEV_PATH="$HOME/code/framework"
+      bash "$LOCAL_SCRIPT" "$@"
+    else
+      # Normal mode: fetch from GitHub
+      curl -fsSL "$SCRIPT_URL" | bash -s "$@"
+    fi
     ;;
 
   version)

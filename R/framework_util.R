@@ -108,11 +108,7 @@ standardize_wd <- function(project_root = NULL) {
     }
     
   } else {
-    warning(
-      "Could not determine project root directory. ",
-      "Current directory: ", getwd(), "\n",
-      "Consider specifying project_root explicitly."
-    )
+    # Return NULL silently - let calling function (scaffold) handle the error
     project_root <- NULL
   }
   

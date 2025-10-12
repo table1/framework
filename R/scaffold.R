@@ -10,7 +10,20 @@
 #' @export
 scaffold <- function(config_file = "config.yml") {
   # Standardize working directory first (for notebooks in subdirectories)
-  standardize_wd()
+  project_root <- standardize_wd()
+
+  # Fail fast if not in a Framework project
+  if (is.null(project_root) || !file.exists("config.yml")) {
+    stop(
+      "Could not locate a Framework project.\n",
+      "scaffold() searches for a project by looking for:\n",
+      "  - config.yml in current or parent directories\n",
+      "  - .Rproj file with config.yml nearby\n",
+      "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
+      "Current directory: ", getwd(), "\n",
+      "To create a new project, use: init()"
+    )
+  }
 
   # Only load package if not already loaded
   if (!"package:framework" %in% search()) {
