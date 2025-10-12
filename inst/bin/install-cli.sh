@@ -89,7 +89,7 @@ fi
 
 # Offer to add
 printf "Add to ${SHELL_CONFIG}? [y/N]: "
-read -r response
+read -r response </dev/tty
 
 case "$response" in
   [yY][eE][sS]|[yY])
