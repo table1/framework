@@ -9,21 +9,13 @@ Not sure? The defaults work great. You can always change these later in `config.
 
 ### Option 1: CLI Tool (Recommended)
 
-**Two-step install:**
+**One-command install:**
 
-1. Install Framework in R:
-```r
-devtools::install_github("table1/framework")
-```
-
-2. Install CLI (choose one):
 ```bash
-# Shell installer (handles PATH setup automatically)
 curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
-
-# OR from R (calls shell installer)
-R -e "framework::cli_install()"
 ```
+
+This installs both the Framework R package and the CLI tool, and sets up your PATH.
 
 **Then create projects anywhere:**
 ```bash

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Framework CLI Installer
 #
-# This script installs the Framework CLI tool to ~/.local/bin/framework
-# and optionally adds it to your shell PATH configuration.
+# This script installs the Framework R package and CLI tool in one command.
+# Usage: curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
 
 set -e
 
@@ -15,13 +15,30 @@ NC='\033[0m' # No Color
 BIN_DIR="$HOME/.local/bin"
 CLI_NAME="framework"
 
-# Detect R package installation directory
-PACKAGE_DIR=$(Rscript --quiet --no-save -e "cat(system.file(package='framework'))")
+printf "${BLUE}════════════════════════════════════════════════════${NC}\n"
+printf "${BLUE}  Framework Installation${NC}\n"
+printf "${BLUE}════════════════════════════════════════════════════${NC}\n\n"
+
+# Check if R package is installed
+PACKAGE_DIR=$(Rscript --quiet --no-save -e "cat(system.file(package='framework'))" 2>/dev/null || echo "")
 
 if [ -z "$PACKAGE_DIR" ] || [ "$PACKAGE_DIR" = "" ]; then
-  printf "${RED}Error: Framework package not found.${NC}\n"
-  printf "Install it first with: devtools::install_github('table1/framework')\n"
-  exit 1
+  printf "${YELLOW}Installing Framework R package from GitHub...${NC}\n\n"
+
+  # Install the R package
+  R --quiet --no-save <<'RCODE'
+if (!requireNamespace('devtools', quietly = TRUE)) {
+  install.packages('devtools', repos = 'https://cloud.r-project.org')
+}
+devtools::install_github('table1/framework', quiet = TRUE)
+RCODE
+
+  printf "\n${GREEN}✓ Framework package installed${NC}\n\n"
+
+  # Re-detect package directory
+  PACKAGE_DIR=$(Rscript --quiet --no-save -e "cat(system.file(package='framework'))")
+else
+  printf "${GREEN}Framework package already installed${NC}\n\n"
 fi
 
 CLI_SOURCE="$PACKAGE_DIR/bin/framework"
