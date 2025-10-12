@@ -140,67 +140,6 @@ renv_disable <- function(keep_renv = TRUE) {
   invisible(TRUE)
 }
 
-#' Show educational message about renv
-#'
-#' Displays a one-time message explaining renv integration and how to enable it.
-#' The message is suppressed if `options$renv_nag` is FALSE in config.yml or
-#' if `.framework_scaffolded` marker contains a timestamp (not first scaffold).
-#'
-#' @return Invisibly returns NULL
-#' @keywords internal
-.renv_nag <- function() {
-  # Check if this is the first scaffold
-  if (file.exists(".framework_scaffolded")) {
-    scaffold_info <- readLines(".framework_scaffolded", warn = FALSE)
-    # If file has timestamp, it's not the first scaffold
-    if (length(scaffold_info) > 0) {
-      return(invisible(NULL))
-    }
-  }
-
-  # Check if nagging is disabled in config
-  if (file.exists("config.yml")) {
-    config <- tryCatch(
-      read_config("config.yml"),
-      error = function(e) list(renv_nag = TRUE)
-    )
-
-    # Check new location first, then old location (backward compat)
-    renv_nag <- config$renv_nag
-    if (is.null(renv_nag)) {
-      renv_nag <- config$options$renv_nag
-      if (!is.null(renv_nag)) {
-        warning("config$options$renv_nag is deprecated. ",
-                "Move to config$renv_nag (root level)")
-      }
-    }
-
-    # Default to TRUE if not specified
-    if (is.null(renv_nag)) renv_nag <- TRUE
-
-    if (!renv_nag) {
-      return(invisible(NULL))
-    }
-  }
-
-  # Don't nag if renv is already enabled
-  if (renv_enabled()) {
-    return(invisible(NULL))
-  }
-
-  message(
-    "\n",
-    "\u2139 Reproducibility Tip\n\n",
-    "Framework can manage your R package versions with renv for reproducibility.\n",
-    "This ensures your project uses consistent package versions across environments.\n\n",
-    "To enable: renv_enable()\n",
-    "To disable this message: Set 'options: renv_nag: false' in config.yml\n",
-    "Learn more: ?renv_enable\n"
-  )
-
-  invisible(NULL)
-}
-
 #' Update .gitignore for renv
 #'
 #' Adds renv-related entries to .gitignore if they don't already exist.

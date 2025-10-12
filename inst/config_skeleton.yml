@@ -23,7 +23,6 @@ options:
     auto_update: false
 
   # renv integration
-  renv_nag: true
 
 connections:
 

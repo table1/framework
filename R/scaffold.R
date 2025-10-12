@@ -47,9 +47,6 @@ scaffold <- function(config_file = "config.yml") {
   config_obj <- .load_configuration(config_file)
   assign("config", config_obj, envir = .GlobalEnv)
 
-  # Show educational message about renv (first scaffold only)
-  .renv_nag()
-
   # Mark as scaffolded with timestamp
   .mark_scaffolded()
 

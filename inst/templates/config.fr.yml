@@ -26,7 +26,6 @@ default:
       scratch_dir: data/scratch
 
     # renv integration
-    renv_nag: true  # Show reproducibility message on first scaffold()
 
   # Data catalog
   data:
