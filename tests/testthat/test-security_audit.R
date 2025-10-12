@@ -1,0 +1,565 @@
+test_that("security_audit requires valid config file", {
+  # Create temp directory
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # No config file
+  expect_error(
+    security_audit(verbose = FALSE),
+    "Config file not found"
+  )
+})
+
+
+test_that("security_audit detects unignored private data directories", {
+  # Create test project
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create minimal config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  # Create private data directory and file
+  dir.create("data/source/private", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+
+  # Create empty .gitignore (no private data protection)
+  writeLines("", ".gitignore")
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Should detect unignored private directory
+  expect_true(nrow(audit$findings$gitignore_issues) > 0)
+  expect_true(any(audit$summary$status == "fail" | audit$summary$status == "warning"))
+  expect_true(length(audit$recommendations) > 0)
+})
+
+
+test_that("security_audit passes when private data is properly ignored", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  # Create private data directory and file
+  dir.create("data/source/private", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+
+  # Create .gitignore with proper protection
+  writeLines(c(
+    "data/source/private/",
+    "data/source/private/**"
+  ), ".gitignore")
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Should pass gitignore coverage check
+  expect_equal(
+    audit$summary$status[audit$summary$check == "gitignore_coverage"],
+    "pass"
+  )
+})
+
+
+test_that("security_audit detects orphaned data files", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config with standard directories
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private",
+        data_source_public = "data/source/public"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  # Create configured directories
+  dir.create("data/source/private", recursive = TRUE)
+  dir.create("data/source/public", recursive = TRUE)
+
+  # Create orphaned data file outside configured directories
+  write.csv(data.frame(orphaned = 1:5), "random_data.csv", row.names = FALSE)
+
+  # Create .gitignore
+  writeLines("data/", ".gitignore")
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Should detect orphaned file
+  expect_true(nrow(audit$findings$orphaned_files) > 0)
+  expect_true("random_data.csv" %in% audit$findings$orphaned_files$path)
+  expect_equal(
+    audit$summary$status[audit$summary$check == "orphaned_files"],
+    "warning"
+  )
+})
+
+
+test_that("security_audit detects git-tracked private data", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  # Create private data directory and file
+  dir.create("data/source/private", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+
+  # Initialize git and accidentally commit private data
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("add", "data/source/private/secrets.csv"), stdout = FALSE, stderr = FALSE)
+
+  # Create .gitignore AFTER accidentally tracking file
+  writeLines(c(
+    "data/source/private/",
+    "data/source/private/**"
+  ), ".gitignore")
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Should detect tracked private data
+  expect_true(nrow(audit$findings$private_data_exposure) > 0)
+  expect_equal(
+    audit$summary$status[audit$summary$check == "private_data_exposure"],
+    "fail"
+  )
+  expect_true(any(grepl("git rm --cached", audit$recommendations)))
+})
+
+
+test_that("security_audit skips git checks when git not available", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create minimal config (no git repo)
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  dir.create("data/source/private", recursive = TRUE)
+  writeLines("data/", ".gitignore")
+
+  # Run audit (no git repo, so git checks should be skipped)
+  expect_warning(
+    audit <- security_audit(check_git_history = TRUE, verbose = FALSE),
+    "Git not available"
+  )
+
+  # Git history check should be skipped
+  expect_equal(
+    audit$summary$status[audit$summary$check == "git_history"],
+    "skipped"
+  )
+})
+
+
+test_that("security_audit respects history_depth parameter", {
+  skip_if_not(file.exists(".git"), "Requires git repository")
+
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  dir.create("data/source/private", recursive = TRUE)
+  writeLines("data/", ".gitignore")
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Create initial commit
+  writeLines("test", "test.txt")
+  system2("git", c("add", "test.txt"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("commit", "-m", "initial"), stdout = FALSE, stderr = FALSE)
+
+  # Test different depth values
+  expect_silent(audit1 <- security_audit(history_depth = "all", verbose = FALSE))
+  expect_silent(audit2 <- security_audit(history_depth = "shallow", verbose = FALSE))
+  expect_silent(audit3 <- security_audit(history_depth = 10, verbose = FALSE))
+
+  expect_true(is.list(audit1))
+  expect_true(is.list(audit2))
+  expect_true(is.list(audit3))
+})
+
+
+test_that("security_audit auto_fix adds entries to .gitignore", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  # Create private data
+  dir.create("data/source/private", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+
+  # Create empty .gitignore
+  writeLines("", ".gitignore")
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Run audit with auto_fix
+  audit <- security_audit(check_git_history = FALSE, auto_fix = TRUE, verbose = FALSE)
+
+  # Check that .gitignore was updated
+  gitignore_content <- readLines(".gitignore", warn = FALSE)
+  expect_true(any(grepl("data/source/private", gitignore_content)))
+})
+
+
+test_that("security_audit saves results to framework database", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  dir.create("data/source/private", recursive = TRUE)
+  writeLines("data/", ".gitignore")
+
+  # Create framework database with proper initialization
+  con <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+
+  # Create meta table (framework database schema)
+  DBI::dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  ")
+
+  DBI::dbDisconnect(con)
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Check that metadata was saved
+  con <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  last_audit <- DBI::dbGetQuery(con,
+    "SELECT value FROM meta WHERE key = 'last_security_audit'")$value
+  status <- DBI::dbGetQuery(con,
+    "SELECT value FROM meta WHERE key = 'last_audit_status'")$value
+  DBI::dbDisconnect(con)
+
+  expect_true(!is.null(last_audit) && length(last_audit) > 0)
+  expect_true(!is.null(status) && length(status) > 0)
+  expect_true(status %in% c("pass", "warning", "fail"))
+})
+
+
+test_that("security_audit handles various data file extensions", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_public = "data/source/public"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  dir.create("data/source/public", recursive = TRUE)
+  writeLines("data/", ".gitignore")
+
+  # Create data files with various extensions
+  writeLines("test", "orphan.csv")
+  writeLines("test", "orphan.rds")
+  writeLines("test", "orphan.xlsx")
+  writeLines("test", "orphan.parquet")
+  writeLines("test", "not_data.txt")  # This should be flagged as txt is in default extensions
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Should detect orphaned data files
+  expect_true(nrow(audit$findings$orphaned_files) >= 4)
+  expect_true("orphan.csv" %in% audit$findings$orphaned_files$path)
+  expect_true("orphan.parquet" %in% audit$findings$orphaned_files$path)
+})
+
+
+test_that("security_audit returns correct structure", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create minimal valid setup
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list(
+        data_source_private = "data/source/private"
+      )
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  dir.create("data/source/private", recursive = TRUE)
+  writeLines("data/", ".gitignore")
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Run audit
+  audit <- security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  # Check structure
+  expect_true(is.list(audit))
+  expect_true("summary" %in% names(audit))
+  expect_true("findings" %in% names(audit))
+  expect_true("recommendations" %in% names(audit))
+  expect_true("audit_metadata" %in% names(audit))
+
+  # Check summary is a data frame
+  expect_s3_class(audit$summary, "data.frame")
+  expect_true(all(c("check", "status", "count") %in% names(audit$summary)))
+
+  # Check findings structure
+  expect_true(is.list(audit$findings))
+  expect_true("gitignore_issues" %in% names(audit$findings))
+  expect_true("git_history_issues" %in% names(audit$findings))
+  expect_true("orphaned_files" %in% names(audit$findings))
+  expect_true("private_data_exposure" %in% names(audit$findings))
+
+  # Check metadata
+  expect_true(is.list(audit$audit_metadata))
+  expect_true("timestamp" %in% names(audit$audit_metadata))
+  expect_true("framework_version" %in% names(audit$audit_metadata))
+})
+
+
+test_that("security_audit validates arguments", {
+  # Create temp directory with valid config
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list()
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+  writeLines("", ".gitignore")
+
+  # Test invalid arguments
+  expect_error(security_audit(config_file = 123, verbose = FALSE))
+  expect_error(security_audit(check_git_history = "yes", verbose = FALSE))
+  expect_error(security_audit(auto_fix = 1, verbose = FALSE))
+  expect_error(security_audit(verbose = "true", verbose = FALSE))
+  expect_error(security_audit(extensions = 123, verbose = FALSE))
+})
+
+
+test_that("security_audit handles sensitive filename patterns", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # Create config
+  config <- list(
+    default = list(
+      project_type = "project",
+      directories = list()
+    )
+  )
+  yaml::write_yaml(config, "config.yml")
+
+  # Initialize git with commits containing sensitive file patterns
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
+
+  # Commit file with sensitive name pattern
+  writeLines("test", "password_data.csv")
+  system2("git", c("add", "password_data.csv"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("commit", "-m", "test"), stdout = FALSE, stderr = FALSE)
+
+  writeLines("", ".gitignore")
+
+  # Run audit with git history
+  audit <- security_audit(history_depth = "all", verbose = FALSE)
+
+  # Should detect sensitive pattern in git history
+  # (The file has "password" in name and is a .csv data file)
+  if (nrow(audit$findings$git_history_issues) > 0) {
+    expect_true(any(grepl("password", audit$findings$git_history_issues$file, ignore.case = TRUE)))
+  }
+})
