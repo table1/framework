@@ -307,6 +307,9 @@ init <- function(
     styler = NULL,
     use_renv = FALSE,
     attach_defaults = TRUE,
+    author_name = NULL,
+    author_email = NULL,
+    author_affiliation = NULL,
     subdir = NULL,
     force = FALSE,
     .dev_mode = FALSE) {
@@ -340,6 +343,9 @@ init <- function(
   checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(use_renv)
   checkmate::assert_flag(attach_defaults)
+  checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(author_affiliation, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
@@ -378,7 +384,7 @@ init <- function(
   }
 
   # Continue with standard init process
-  .init_standard(project_name, type, lintr, styler, subdir, force)
+  .init_standard(project_name, type, lintr, styler, author_name, author_email, author_affiliation, subdir, force)
 
   # Enable renv if requested
   if (use_renv) {
@@ -402,12 +408,15 @@ init <- function(
 
 #' Standard initialization process (shared by both paths)
 #' @keywords internal
-.init_standard <- function(project_name, type, lintr, styler, subdir, force) {
+.init_standard <- function(project_name, type, lintr, styler, author_name = NULL, author_email = NULL, author_affiliation = NULL, subdir, force) {
   # Validate arguments (already validated in init, but keep for internal calls)
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(type, min.chars = 1)
   checkmate::assert_string(lintr, min.chars = 1)
   checkmate::assert_string(styler, min.chars = 1)
+  checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_string(author_affiliation, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
@@ -529,6 +538,43 @@ init <- function(
   if (file.exists(readme_template)) {
     readme_path <- file.path(target_dir, "README.md")
     file.copy(readme_template, readme_path, overwrite = TRUE)
+  }
+
+  # Update config.yml with author information if provided
+  has_author_info <- (!is.null(author_name) && nzchar(author_name)) ||
+                      (!is.null(author_email) && nzchar(author_email)) ||
+                      (!is.null(author_affiliation) && nzchar(author_affiliation))
+
+  if (has_author_info) {
+    config_path <- file.path(target_dir, "config.yml")
+    if (file.exists(config_path)) {
+      config_content <- readLines(config_path, warn = FALSE)
+
+      # Find the author section (looking for "  author:" - two spaces)
+      author_start <- grep("^  author:", config_content)
+      if (length(author_start) > 0) {
+        # Find where author section ends (next section at same indent level: "  <name>:")
+        next_section_pattern <- "^  [a-z_]+:"
+        all_sections <- grep(next_section_pattern, config_content)
+        next_section <- all_sections[all_sections > author_start[1]]
+        author_end <- if (length(next_section) > 0) next_section[1] - 1 else length(config_content)
+
+        # Update author fields (looking for "    name:" - four spaces)
+        for (i in author_start:author_end) {
+          if (!is.null(author_name) && nzchar(author_name) && grepl("^    name:", config_content[i])) {
+            config_content[i] <- sprintf("    name: \"%s\"", author_name)
+          }
+          if (!is.null(author_email) && nzchar(author_email) && grepl("^    email:", config_content[i])) {
+            config_content[i] <- sprintf("    email: \"%s\"", author_email)
+          }
+          if (!is.null(author_affiliation) && nzchar(author_affiliation) && grepl("^    affiliation:", config_content[i])) {
+            config_content[i] <- sprintf("    affiliation: \"%s\"", author_affiliation)
+          }
+        }
+
+        writeLines(config_content, config_path)
+      }
+    }
   }
 
   # Mark as initialized

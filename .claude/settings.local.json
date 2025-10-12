@@ -17,7 +17,10 @@
       "Bash(for file in inst/project_structure/*/settings/*.yml)",
       "Bash(do if head -1 \"$file\")",
       "Bash(then echo \"$file\" fi done)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(bash)",
+      "Bash(/tmp/test_author_integration.sh:*)"
     ],
     "deny": [],
     "ask": []

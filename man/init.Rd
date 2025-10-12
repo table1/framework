@@ -12,6 +12,9 @@ init(
   styler = NULL,
   use_renv = FALSE,
   attach_defaults = TRUE,
+  author_name = NULL,
+  author_email = NULL,
+  author_affiliation = NULL,
   subdir = NULL,
   force = FALSE,
   .dev_mode = FALSE

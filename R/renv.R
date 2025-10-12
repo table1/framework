@@ -80,7 +80,7 @@ renv_enable <- function(sync = TRUE) {
 
   message(
     "\n",
-    cli::col_green(cli::symbol$tick), " renv enabled successfully!\n\n",
+    "\u2713 renv enabled successfully!\n\n",
     "Your packages are now managed by renv for reproducibility.\n",
     "Use packages_snapshot() to update renv.lock after installing new packages.\n",
     "Use renv_disable() to turn off renv integration."
@@ -120,7 +120,7 @@ renv_disable <- function(keep_renv = TRUE) {
   if (keep_renv) {
     message(
       "\n",
-      cli::col_yellow(cli::symbol$info), " renv disabled\n\n",
+      "\u2139 renv disabled\n\n",
       "Your renv.lock file has been preserved.\n",
       "Use renv_enable() to re-activate renv integration."
     )
@@ -131,7 +131,7 @@ renv_disable <- function(keep_renv = TRUE) {
 
     message(
       "\n",
-      cli::col_yellow(cli::symbol$info), " renv disabled and removed\n\n",
+      "\u2139 renv disabled and removed\n\n",
       "All renv files have been deleted.\n",
       "Use renv_enable() to set up renv from scratch."
     )
@@ -176,7 +176,7 @@ renv_disable <- function(keep_renv = TRUE) {
 
   message(
     "\n",
-    cli::col_cyan(cli::symbol$info), " ", cli::style_bold("Reproducibility Tip"), "\n\n",
+    "\u2139 Reproducibility Tip\n\n",
     "Framework can manage your R package versions with renv for reproducibility.\n",
     "This ensures your project uses consistent package versions across environments.\n\n",
     "To enable: renv_enable()\n",

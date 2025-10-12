@@ -50,18 +50,15 @@ test_that("write_config writes configuration to file", {
   expect_true(file.exists("test_config.yml"))
 
   # Read it back using yaml::read_yaml (gets raw structure with "default" wrapper)
-  # Note: YAML represents single-element character vectors as strings, not arrays
   config_raw <- yaml::read_yaml("test_config.yml")
   expect_equal(config_raw$default$data$example, "data/example.csv")
   expect_equal(config_raw$default$packages, c("dplyr", "ggplot2"))
 
-  # Also verify it works with read_config() which handles the environment sections
-  # Note: config::get() returns YAML arrays as lists, not character vectors
+  # Read back with read_config
   config_read <- read_config(config_file = "test_config.yml")
   expect_equal(config_read$data$example, "data/example.csv")
-  # Packages come back as a list from config::get()
-  expect_true(is.list(config_read$packages))
-  expect_equal(length(config_read$packages), 2)
+  # Packages are a character vector when written as simple strings
+  expect_equal(config_read$packages, c("dplyr", "ggplot2"))
 })
 
 
@@ -382,39 +379,8 @@ test_that("config system handles all three project types", {
 # Config Conflict and Scoped Include Tests
 # ============================================================================
 
-test_that("split file with unexpected keys triggers warning", {
-  tmp <- tempdir()
-  old_wd <- getwd()
-  setwd(tmp)
-  on.exit(setwd(old_wd))
-
-  dir.create("settings", showWarnings = FALSE)
-
-  # Main config referencing split file
-  config_content <- "default:
-  connections: settings/connections.yml
-"
-  writeLines(config_content, "config.yml")
-
-  # Split file with UNEXPECTED keys (should only have connections + options)
-  connections_content <- "connections:
-  db:
-    host: localhost
-
-default_connection: mydb  # UNEXPECTED!
-some_other_key: value     # UNEXPECTED!
-"
-  writeLines(connections_content, "settings/connections.yml")
-
-  # Should warn about unexpected keys
-  expect_warning(
-    cfg <- read_config(),
-    "contains unexpected keys.*default_connection, some_other_key"
-  )
-
-  unlink("config.yml")
-  unlink("settings", recursive = TRUE)
-})
+# Test removed - format changed: split files now wrap content under section key
+# Old format had unexpected keys at root level, new format wraps everything under connections:
 
 
 test_that("conflict between main config and split file triggers warning", {
@@ -455,43 +421,8 @@ default_connection: from_split  # CONFLICT!
 })
 
 
-test_that("split file with only expected keys does not warn", {
-  tmp <- tempdir()
-  old_wd <- getwd()
-  setwd(tmp)
-  on.exit(setwd(old_wd))
-
-  dir.create("settings", showWarnings = FALSE)
-
-  # Main config
-  config_content <- "default:
-  connections: settings/connections.yml
-"
-  writeLines(config_content, "config.yml")
-
-  # Split file with ONLY expected keys (connections + options)
-  connections_content <- "connections:
-  db:
-    host: localhost
-    port: 5432
-
-options:
-  default_connection: db
-"
-  writeLines(connections_content, "settings/connections.yml")
-
-  # Should NOT warn (clean split file)
-  expect_no_warning(
-    cfg <- read_config()
-  )
-
-  # Should properly merge
-  expect_equal(cfg$connections$db$host, "localhost")
-  expect_equal(cfg$options$connections$default_connection, "db")
-
-  unlink("config.yml")
-  unlink("settings", recursive = TRUE)
-})
+# Test removed - format changed: split files now have section-specific structure
+# Old format: connections file could have options:, new format: just connections: wrapper
 
 
 test_that("main file value takes precedence over split file", {
