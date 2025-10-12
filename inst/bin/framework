@@ -7,8 +7,9 @@
 set -e
 
 # URL to the canonical new-project.sh script
-# Add timestamp to bypass GitHub CDN cache
-SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh?$(date +%s)"
+# Add package version to URL to bypass GitHub CDN cache when package updates
+PACKAGE_VERSION=$(Rscript --quiet --no-save -e "cat(as.character(packageVersion('framework')))" 2>/dev/null || echo "dev")
+SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh?v=${PACKAGE_VERSION}"
 
 # Detect color support
 if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
