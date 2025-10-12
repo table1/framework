@@ -252,6 +252,26 @@ cli_uninstall <- function(location = c("user", "system")) {
 cli_update <- function(ref = "main", upgrade_deps = TRUE, force = FALSE) {
   message("Updating Framework package and CLI from GitHub...")
 
+  # Check if devtools is available, install if missing
+  if (!requireNamespace("devtools", quietly = TRUE)) {
+    message("Installing devtools (required for updates)...")
+
+    # Check if we're in an renv project
+    if (renv_enabled()) {
+      # Use renv to install devtools
+      if (!requireNamespace("renv", quietly = TRUE)) {
+        stop(
+          "renv is enabled but not available. Please install renv first:\n",
+          "  install.packages('renv')"
+        )
+      }
+      renv::install("devtools")
+    } else {
+      # Use standard install.packages
+      install.packages("devtools", repos = "https://cloud.r-project.org")
+    }
+  }
+
   # Store old version
   old_version <- tryCatch(
     as.character(packageVersion("framework")),
