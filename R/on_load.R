@@ -6,5 +6,6 @@
 }
 
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage("Framework loaded.")
+  # Silent load - framework is ready to use
+  invisible()
 }

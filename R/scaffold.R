@@ -9,8 +9,6 @@
 #'
 #' @export
 scaffold <- function(config_file = "config.yml") {
-  message("Scaffolding your project...")
-
   # Standardize working directory first (for notebooks in subdirectories)
   standardize_wd()
 
@@ -23,8 +21,10 @@ scaffold <- function(config_file = "config.yml") {
   .load_environment()
 
   # Unlock config if it exists and is locked (from previous scaffold calls)
-  if (exists("config", envir = .GlobalEnv) && bindingIsLocked("config", .GlobalEnv)) {
-    unlockBinding("config", .GlobalEnv)
+  if (exists("config", envir = .GlobalEnv)) {
+    if (bindingIsLocked("config", .GlobalEnv)) {
+      unlockBinding("config", .GlobalEnv)
+    }
   }
 
   config <<- .load_configuration(config_file)
@@ -151,10 +151,18 @@ scaffold <- function(config_file = "config.yml") {
 #' @keywords internal
 .load_libraries <- function(config) {
   packages <- .get_package_requirements(config)
+
+  # Check if verbose mode is enabled
+  verbose <- isTRUE(config$options$verbose_scaffold)
+
   for (pkg in packages) {
     if (pkg$load) {
-      message(sprintf("Loading library: %s", pkg$name))
-      library(pkg$name, character.only = TRUE)
+      if (verbose) {
+        message(sprintf("Loading library: %s", pkg$name))
+      }
+      suppressPackageStartupMessages(
+        library(pkg$name, character.only = TRUE)
+      )
     }
   }
 }

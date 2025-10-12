@@ -101,10 +101,7 @@ standardize_wd <- function(project_root = NULL) {
     
     # Set the actual working directory
     old_wd <- setwd(project_root)
-    
-    # Provide feedback
-    message("Working directory standardized to: ", project_root)
-    
+
     # Check for expected files
     if (!file.exists("config.yml")) {
       warning("config.yml not found in standardized directory")
