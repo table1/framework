@@ -80,18 +80,9 @@ install_cli <- function(location = c("user", "system")) {
     # Make executable
     Sys.chmod(target, "755")
 
-    # Check if bin_dir is in PATH
-    path_dirs <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
-    in_path <- bin_dir %in% path_dirs
-
-    if (!in_path) {
-      .setup_path_interactive(bin_dir, target)
-    } else {
-      message(
-        "\u2713 CLI installed successfully!\n\n",
-        "Try: framework new myproject"
-      )
-    }
+    # Always check and offer to fix PATH, regardless of current state
+    # This ensures users get help even on reinstalls or if their shell config is outdated
+    .setup_path_interactive(bin_dir, target)
   } else {
     # System installation to /usr/local/bin
     target <- "/usr/local/bin/framework"
@@ -238,6 +229,16 @@ cli_update <- function(ref = "main") {
 .setup_path_interactive <- function(bin_dir, target) {
   message("\u2713 CLI installed to ", target, "\n")
 
+  # Check if bin_dir is in current PATH
+  path_dirs <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
+  in_path <- bin_dir %in% path_dirs
+
+  # If already in PATH, just confirm success
+  if (in_path) {
+    message("\nCLI is ready to use!\n\nTry: framework new myproject")
+    return(invisible(NULL))
+  }
+
   # Detect shell
   shell <- basename(Sys.getenv("SHELL"))
   if (shell == "") shell <- "bash"  # fallback
@@ -270,9 +271,9 @@ cli_update <- function(ref = "main") {
   if (already_added) {
     message(
       "\nNote: ~/.local/bin is already in your ", shell_config, "\n",
-      "but may not be active in this R session.\n\n",
+      "but is not active in this session.\n\n",
       "To use the CLI:\n",
-      "1. Restart your terminal, or\n",
+      "1. Restart your terminal (recommended), or\n",
       "2. Run in terminal: source ", shell_config, "\n\n",
       "Then try: framework new myproject"
     )

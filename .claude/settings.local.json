@@ -31,7 +31,8 @@
       "Read(//Users/erikwestlund/**)",
       "WebFetch(domain:stackoverflow.com)",
       "Bash(git mv:*)",
-      "Bash(/Users/erikwestlund/code/framework/inst/bin/framework help)"
+      "Bash(/Users/erikwestlund/code/framework/inst/bin/framework help)",
+      "Bash(echo \"$PATH\")"
     ],
     "deny": [],
     "ask": []
