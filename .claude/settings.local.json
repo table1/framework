@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(inst/bin/framework zen deepthink \"Design a security_audit() function for the Framework R package that:\n\n1. Compares data directories and their contents against .gitignore\n2. Checks git history to ensure no private data files are committed\n3. Uses config.yml to determine data directory locations\n4. Searches for data files OUTSIDE known data directories\n5. Provides actionable security recommendations\n\nKey considerations:\n- The package has data/public and data/private directories\n- Config system uses config(''directories.data_public''), config(''directories.data_private''), etc.\n- Should detect common data file extensions (.csv, .rds, .xlsx, .sqlite, etc.)\n- Should check both current working tree and git history\n- Should be helpful without being overly noisy\n- Should provide clear remediation steps\n\nDesign the function signature, return structure, and key implementation approach.\")"
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

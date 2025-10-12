@@ -471,7 +471,8 @@ security_audit <- function(config_file = "config.yml",
   git_args <- c(
     "log",
     "--all",
-    "--pretty=format:%H|%ai|%s",
+    "--pretty=format:%H|%ad|%s",
+    "--date=iso",
     "--name-status"
   )
 

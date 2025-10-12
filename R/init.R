@@ -406,8 +406,8 @@ init <- function(
     }
   }
 
-  # Continue with standard init process
-  .init_standard(project_name, type, lintr, styler, author_name, author_email, author_affiliation, default_notebook_format, subdir, force, use_git)
+  # Continue with standard init process (without git init)
+  .init_standard(project_name, type, lintr, styler, author_name, author_email, author_affiliation, default_notebook_format, subdir, force, FALSE)
 
   # Enable renv if requested
   if (use_renv) {
@@ -422,6 +422,11 @@ init <- function(
 
   # Archive init.R after successful initialization
   .archive_init_file(subdir)
+
+  # Initialize git AFTER archiving so all files are in final state
+  if (use_git) {
+    .init_git_repo(target_dir)
+  }
 
   # Display next steps if from empty directory
   if (!from_template) {
@@ -618,44 +623,6 @@ init <- function(
     }
   }
 
-  # Initialize git repository if requested and not already initialized
-  git_dir <- file.path(target_dir, ".git")
-  if (use_git && !file.exists(git_dir)) {
-    tryCatch({
-      # Initialize git
-      old_wd <- getwd()
-      on.exit(setwd(old_wd), add = TRUE)
-
-      if (!is.null(target_dir) && target_dir != ".") {
-        setwd(target_dir)
-      }
-
-      # Initialize repo
-      init_status <- system2("git", c("init"), stdout = FALSE, stderr = FALSE)
-      if (init_status != 0) {
-        stop("git init failed")
-      }
-
-      # Add .gitignore
-      add_status <- system2("git", c("add", ".gitignore"), stdout = FALSE, stderr = FALSE)
-      if (add_status != 0) {
-        stop("git add failed")
-      }
-
-      # Create initial commit (may fail if git config missing, that's okay)
-      commit_status <- system2("git", c("commit", "-m", "Initial commit: Add .gitignore"),
-                               stdout = FALSE, stderr = FALSE)
-
-      if (commit_status == 0) {
-        message("\u2713 Git repository initialized with initial commit")
-      } else {
-        message("\u2713 Git repository initialized (commit skipped - you may need to configure git user)")
-      }
-    }, error = function(e) {
-      message("Note: Could not initialize git repository. You can run 'git init' manually if needed.")
-    })
-  }
-
   # Mark as initialized
   writeLines(as.character(Sys.time()), file.path(target_dir, ".initiated"))
   message(sprintf("Project '%s' initialized successfully!", project_name))
@@ -690,4 +657,50 @@ remove_init <- function(subdir = NULL) {
   } else {
     FALSE
   }
+}
+
+#' Initialize git repository
+#' @keywords internal
+.init_git_repo <- function(target_dir = ".") {
+  git_dir <- file.path(target_dir, ".git")
+
+  if (file.exists(git_dir)) {
+    return(invisible(NULL))
+  }
+
+  tryCatch({
+    # Initialize git
+    old_wd <- getwd()
+    on.exit(setwd(old_wd), add = TRUE)
+
+    if (!is.null(target_dir) && target_dir != ".") {
+      setwd(target_dir)
+    }
+
+    # Initialize repo
+    init_status <- system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+    if (init_status != 0) {
+      stop("git init failed")
+    }
+
+    # Add all files
+    add_status <- system2("git", c("add", "."), stdout = FALSE, stderr = FALSE)
+    if (add_status != 0) {
+      stop("git add failed")
+    }
+
+    # Create initial commit (may fail if git config missing, that's okay)
+    commit_status <- system2("git", c("commit", "-m", "Project initialized."),
+                             stdout = FALSE, stderr = FALSE)
+
+    if (commit_status == 0) {
+      message("\u2713 Git repository initialized with initial commit")
+    } else {
+      message("\u2713 Git repository initialized (commit skipped - you may need to configure git user)")
+    }
+  }, error = function(e) {
+    message("Note: Could not initialize git repository. You can run 'git init' manually if needed.")
+  })
+
+  invisible(NULL)
 }
