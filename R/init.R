@@ -304,7 +304,7 @@ init <- function(
     type = NULL,
     project_structure = NULL,
     lintr = NULL,
-    styler = NULL,
+    styler = TRUE,
     use_renv = FALSE,
     attach_defaults = TRUE,
     author_name = NULL,
@@ -341,7 +341,10 @@ init <- function(
   checkmate::assert_string(type, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_string(styler, min.chars = 1, null.ok = TRUE)
+  checkmate::assert(
+    checkmate::check_flag(styler),
+    checkmate::check_string(styler, min.chars = 1)
+  )
   checkmate::assert_flag(use_renv)
   checkmate::assert_flag(attach_defaults)
   checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
@@ -377,7 +380,12 @@ init <- function(
 
     # Set defaults for optional parameters
     if (is.null(lintr)) lintr <- "default"
-    if (is.null(styler)) styler <- "default"
+    # Handle styler TRUE/FALSE or string
+    if (is.logical(styler)) {
+      styler <- if (styler) "default" else FALSE
+    } else if (is.null(styler)) {
+      styler <- "default"
+    }
 
     # Create foundational files
     .create_init_file(project_name, type, lintr, styler, subdir)
@@ -387,7 +395,12 @@ init <- function(
     # Set defaults from template behavior
     if (is.null(type)) type <- "project"
     if (is.null(lintr)) lintr <- "default"
-    if (is.null(styler)) styler <- "default"
+    # Handle styler TRUE/FALSE or string
+    if (is.logical(styler)) {
+      styler <- if (styler) "default" else FALSE
+    } else if (is.null(styler)) {
+      styler <- "default"
+    }
   }
 
   # Continue with standard init process

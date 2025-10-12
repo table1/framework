@@ -9,7 +9,7 @@ init(
   type = NULL,
   project_structure = NULL,
   lintr = NULL,
-  styler = NULL,
+  styler = TRUE,
   use_renv = FALSE,
   attach_defaults = TRUE,
   author_name = NULL,

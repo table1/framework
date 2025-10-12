@@ -18,6 +18,7 @@ default:
   # Version pinning: dplyr@1.1.0, user/repo@branch
   # --------------------------------------------------------------------------
   packages:
+    # Tidyverse packages for data manipulation and visualization
     - name: dplyr
       auto_attach: true
     - name: tidyr
@@ -26,6 +27,8 @@ default:
       auto_attach: true
     - name: readr
       auto_attach: false
+    # Note: framework, styler, and rmarkdown are installed automatically
+    # when you enable renv based on your project configuration
 
   # --------------------------------------------------------------------------
   # Project Directories

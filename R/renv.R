@@ -63,6 +63,25 @@ renv_enable <- function(sync = TRUE) {
     # Add renv directories to .gitignore if not already present
     .update_gitignore_for_renv()
 
+    # Always ensure framework is in renv.lock
+    # Framework is on GitHub at table1/framework
+    renv::install("table1/framework", rebuild = FALSE)
+
+    # Install styler if .styler.R exists (user enabled it)
+    if (file.exists(".styler.R")) {
+      if (!requireNamespace("styler", quietly = TRUE)) {
+        renv::install("styler")
+      }
+    }
+
+    # Always install rmarkdown when notebooks exist
+    # Quarto uses rmarkdown's knitr engine for R code chunks
+    if (dir.exists("notebooks") || file.exists("config.yml")) {
+      if (!requireNamespace("rmarkdown", quietly = TRUE)) {
+        renv::install("rmarkdown")
+      }
+    }
+
     # Sync packages from config.yml if requested
     pkg_count <- 0
     if (sync && file.exists("config.yml")) {
