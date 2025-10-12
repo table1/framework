@@ -347,7 +347,12 @@ init <- function(
   checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_affiliation, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_choice(default_notebook_format, c("quarto", "rmarkdown"), null.ok = TRUE)
+  # Handle empty string as NULL for validation
+  if (!is.null(default_notebook_format) && nzchar(default_notebook_format)) {
+    checkmate::assert_choice(default_notebook_format, c("quarto", "rmarkdown"))
+  } else {
+    default_notebook_format <- NULL
+  }
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
@@ -419,7 +424,13 @@ init <- function(
   checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_affiliation, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_choice(default_notebook_format, c("quarto", "rmarkdown"), null.ok = TRUE)
+  # Handle empty string as NULL
+  if (!is.null(default_notebook_format) && !nzchar(default_notebook_format)) {
+    default_notebook_format <- NULL
+  }
+  if (!is.null(default_notebook_format)) {
+    checkmate::assert_choice(default_notebook_format, c("quarto", "rmarkdown"))
+  }
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 

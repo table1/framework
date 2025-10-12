@@ -27,7 +27,8 @@
       "Bash(quarto render:*)",
       "Bash(for:*)",
       "Bash(do echo \"=== $file ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Read(//Users/erikwestlund/**)"
     ],
     "deny": [],
     "ask": []
