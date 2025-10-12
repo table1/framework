@@ -1,8 +1,12 @@
 ## Quick Start
 
-### Option 1: CLI Tool (Recommended for Developers)
+**Three ways to start:** CLI tool (persistent), one-time script (no installation), or clone the template directly.
+
+### Option 1: CLI Tool
 
 **One-time setup:**
+
+Start R, then:
 ```r
 # Install Framework and the CLI
 devtools::install_github("table1/framework")
@@ -18,7 +22,7 @@ framework new                      # Interactive mode
 
 The CLI fetches and runs the latest template script from GitHub, so you're always creating projects with the current version.
 
-### Option 2: One-Time Script (No Installation)
+### Option 2: One-Time Script (No CLI Installation)
 
 **One-liner (macOS/Linux/Windows with Git Bash):**
 ```bash
@@ -27,7 +31,7 @@ curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/new-p
 
 This guides you through creating a new project without installing the CLI.
 
-### Option 3: Manual Template Clone
+### Option 3: Template From Git
 
 **Step-by-step:**
 
