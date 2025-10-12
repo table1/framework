@@ -37,38 +37,28 @@ case "$COMMAND" in
     ;;
 
   help|--help|-h)
-    cat <<EOF
-${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}
-
-${YELLOW}Usage:${NC}
-  framework new [name] [type]    Create new project
-  framework version              Show Framework package version
-  framework help                 Show this help
-
-${YELLOW}Examples:${NC}
-  framework new                  ${GREEN}# Interactive mode (prompts for options)${NC}
-  framework new myproject        ${GREEN}# Create 'myproject' with defaults${NC}
-  framework new slides course    ${GREEN}# Create course project 'slides'${NC}
-
-${YELLOW}Project Types:${NC}
-  project       Full-featured data analysis (default)
-  course        Teaching materials
-  presentation  Single talk/presentation
-
-${YELLOW}Installation Alternatives:${NC}
-  If you prefer not to install the CLI, you can use:
-
-  ${GREEN}# One-time curl (no installation)${NC}
-  curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh | bash
-
-  ${GREEN}# Manual git clone${NC}
-  git clone https://github.com/table1/framework-project myproject
-
-${YELLOW}More Information:${NC}
-  Package:  https://github.com/table1/framework
-  Template: https://github.com/table1/framework-project
-
-EOF
+    printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
+    printf "${YELLOW}Usage:${NC}\n"
+    printf "  framework new [name] [type]    Create new project\n"
+    printf "  framework version              Show Framework package version\n"
+    printf "  framework help                 Show this help\n\n"
+    printf "${YELLOW}Examples:${NC}\n"
+    printf "  framework new                  ${GREEN}# Interactive mode (prompts for options)${NC}\n"
+    printf "  framework new myproject        ${GREEN}# Create 'myproject' with defaults${NC}\n"
+    printf "  framework new slides course    ${GREEN}# Create course project 'slides'${NC}\n\n"
+    printf "${YELLOW}Project Types:${NC}\n"
+    printf "  project       Full-featured data analysis (default)\n"
+    printf "  course        Teaching materials\n"
+    printf "  presentation  Single talk/presentation\n\n"
+    printf "${YELLOW}Installation Alternatives:${NC}\n"
+    printf "  If you prefer not to install the CLI, you can use:\n\n"
+    printf "  ${GREEN}# One-time curl (no installation)${NC}\n"
+    printf "  curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh | bash\n\n"
+    printf "  ${GREEN}# Manual git clone${NC}\n"
+    printf "  git clone https://github.com/table1/framework-project myproject\n\n"
+    printf "${YELLOW}More Information:${NC}\n"
+    printf "  Package:  https://github.com/table1/framework\n"
+    printf "  Template: https://github.com/table1/framework-project\n"
     ;;
 
   *)

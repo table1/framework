@@ -5,9 +5,9 @@
 \alias{install_cli}
 \title{Install Framework CLI Tool}
 \usage{
-cli_install(location = c("user", "system"))
+cli_install(location = c("user", "system"), use_installer = TRUE)
 
-install_cli(location = c("user", "system"))
+install_cli(location = c("user", "system"), use_installer = TRUE)
 }
 \arguments{
 \item{location}{Installation location: "user" (default) or "system".
@@ -15,12 +15,23 @@ install_cli(location = c("user", "system"))
 \item "user": Installs to \verb{~/.local/bin} (no sudo required)
 \item "system": Installs to \verb{/usr/local/bin} (requires sudo)
 }}
+
+\item{use_installer}{If TRUE (default), calls the shell installer script
+which handles PATH setup interactively. If FALSE, just creates symlink.}
 }
 \description{
 Creates a global \code{framework} command for creating new projects from the
 command line. The CLI provides a convenient wrapper around new-project.sh.
 }
 \details{
+\strong{Recommended:} Use the shell installer for better PATH setup:
+
+\if{html}{\out{<div class="sourceCode bash">}}\preformatted{curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
+}\if{html}{\out{</div>}}
+
+This R function is a simpler alternative that just creates the symlink.
+You'll need to manually add \verb{~/.local/bin} to your PATH if needed.
+
 The CLI tool provides three ways to create Framework projects:
 \enumerate{
 \item \strong{CLI (this tool)}: \verb{framework new myproject}
@@ -29,46 +40,37 @@ The CLI tool provides three ways to create Framework projects:
 }
 
 All three methods use the same underlying implementation (new-project.sh).
-
-After installation, the \code{framework} command will be available globally:
-\itemize{
-\item \verb{framework new} - Interactive project creation
-\item \verb{framework new myproject} - Create project with defaults
-\item \verb{framework new slides course} - Create course project
-\item \verb{framework version} - Show Framework version
-\item \verb{framework help} - Show help
 }
-}
-\section{User Installation}{
+\section{Installation Methods}{
 
-User installation (\code{location = "user"}) installs to \verb{~/.local/bin} without
-requiring sudo. If \verb{~/.local/bin} is not in your PATH, the installer will:
-\enumerate{
-\item Detect your shell (bash, zsh, fish)
-\item Offer to automatically add it to your shell config
-\item Provide clear instructions for activation
-}
 
-The installer is smart enough to detect if the PATH is already configured
-and won't duplicate entries
-}
+\strong{Shell installer (recommended):}
 
-\section{System Installation}{
+\if{html}{\out{<div class="sourceCode bash">}}\preformatted{curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
+}\if{html}{\out{</div>}}
 
-System installation (\code{location = "system"}) installs to \verb{/usr/local/bin}
-and requires sudo privileges. This makes the command available to all users.
+\strong{From R (simple):}
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{framework::cli_install()  # Calls shell installer
+framework::cli_install(use_installer = FALSE)  # Just symlink
+}\if{html}{\out{</div>}}
+
+\strong{System-wide:}
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{framework::cli_install(location = "system")  # Requires sudo
+}\if{html}{\out{</div>}}
 }
 
 \examples{
 \dontrun{
-# Install for current user (recommended)
+# Install for current user (calls shell installer)
 cli_install()
+
+# Install without shell installer (symlink only)
+cli_install(use_installer = FALSE)
 
 # Install system-wide (requires sudo)
 cli_install(location = "system")
-
-# Then use the CLI
-system("framework new myproject")
 }
 
 }

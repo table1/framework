@@ -3,9 +3,19 @@
 #' Creates a global `framework` command for creating new projects from the
 #' command line. The CLI provides a convenient wrapper around new-project.sh.
 #'
+#' **Recommended:** Use the shell installer for better PATH setup:
+#' ```bash
+#' curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
+#' ```
+#'
+#' This R function is a simpler alternative that just creates the symlink.
+#' You'll need to manually add `~/.local/bin` to your PATH if needed.
+#'
 #' @param location Installation location: "user" (default) or "system".
 #'   - "user": Installs to `~/.local/bin` (no sudo required)
 #'   - "system": Installs to `/usr/local/bin` (requires sudo)
+#' @param use_installer If TRUE (default), calls the shell installer script
+#'   which handles PATH setup interactively. If FALSE, just creates symlink.
 #'
 #' @details
 #' The CLI tool provides three ways to create Framework projects:
@@ -16,44 +26,59 @@
 #'
 #' All three methods use the same underlying implementation (new-project.sh).
 #'
-#' After installation, the `framework` command will be available globally:
-#' - `framework new` - Interactive project creation
-#' - `framework new myproject` - Create project with defaults
-#' - `framework new slides course` - Create course project
-#' - `framework version` - Show Framework version
-#' - `framework help` - Show help
+#' @section Installation Methods:
 #'
-#' @section User Installation:
-#' User installation (`location = "user"`) installs to `~/.local/bin` without
-#' requiring sudo. If `~/.local/bin` is not in your PATH, the installer will:
+#' **Shell installer (recommended):**
+#' ```bash
+#' curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
+#' ```
 #'
-#' 1. Detect your shell (bash, zsh, fish)
-#' 2. Offer to automatically add it to your shell config
-#' 3. Provide clear instructions for activation
+#' **From R (simple):**
+#' ```r
+#' framework::cli_install()  # Calls shell installer
+#' framework::cli_install(use_installer = FALSE)  # Just symlink
+#' ```
 #'
-#' The installer is smart enough to detect if the PATH is already configured
-#' and won't duplicate entries
-#'
-#' @section System Installation:
-#' System installation (`location = "system"`) installs to `/usr/local/bin`
-#' and requires sudo privileges. This makes the command available to all users.
+#' **System-wide:**
+#' ```r
+#' framework::cli_install(location = "system")  # Requires sudo
+#' ```
 #'
 #' @examples
 #' \dontrun{
-#' # Install for current user (recommended)
+#' # Install for current user (calls shell installer)
 #' cli_install()
+#'
+#' # Install without shell installer (symlink only)
+#' cli_install(use_installer = FALSE)
 #'
 #' # Install system-wide (requires sudo)
 #' cli_install(location = "system")
-#'
-#' # Then use the CLI
-#' system("framework new myproject")
 #' }
 #'
 #' @export
-cli_install <- function(location = c("user", "system")) {
+cli_install <- function(location = c("user", "system"), use_installer = TRUE) {
   location <- match.arg(location)
 
+  # For user installation, prefer the shell installer
+  if (location == "user" && use_installer) {
+    installer_script <- system.file("bin", "install-cli.sh", package = "framework")
+
+    if (file.exists(installer_script)) {
+      message("Running shell installer for better PATH setup...")
+      result <- system(installer_script)
+
+      if (result == 0) {
+        return(invisible(path.expand("~/.local/bin/framework")))
+      } else {
+        warning("Shell installer failed. Falling back to simple installation.")
+      }
+    } else {
+      warning("Shell installer not found. Using simple installation.")
+    }
+  }
+
+  # Simple installation (no interactive prompts)
   cli_script <- system.file("bin", "framework", package = "framework")
 
   if (!file.exists(cli_script)) {
@@ -80,9 +105,39 @@ cli_install <- function(location = c("user", "system")) {
     # Make executable
     Sys.chmod(target, "755")
 
-    # Always check and offer to fix PATH, regardless of current state
-    # This ensures users get help even on reinstalls or if their shell config is outdated
-    .setup_path_interactive(bin_dir, target)
+    message("\u2713 CLI installed to ", target, "\n")
+
+    # Check if in PATH
+    path_dirs <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
+    in_path <- bin_dir %in% path_dirs
+
+    if (in_path) {
+      message("\nCLI is ready to use!\n\nTry: framework new myproject")
+    } else {
+      # Detect shell and provide manual instructions
+      shell <- basename(Sys.getenv("SHELL"))
+      shell_config <- switch(
+        shell,
+        zsh = "~/.zshrc",
+        bash = "~/.bashrc",
+        fish = "~/.config/fish/config.fish",
+        "~/.profile"
+      )
+
+      export_line <- if (shell == "fish") {
+        "set -gx PATH $HOME/.local/bin $PATH"
+      } else {
+        'export PATH="$HOME/.local/bin:$PATH"'
+      }
+
+      message(
+        "\nTo use the CLI, add this line to ", shell_config, ":\n",
+        "  ", export_line, "\n\n",
+        "Then restart your terminal or run: source ", shell_config, "\n\n",
+        "Or reinstall with the shell installer:\n",
+        "  curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash"
+      )
+    }
   } else {
     # System installation to /usr/local/bin
     target <- "/usr/local/bin/framework"
@@ -226,110 +281,3 @@ install_cli <- cli_install
 #' @rdname cli_uninstall
 #' @export
 uninstall_cli <- cli_uninstall
-
-
-#' Interactive PATH Setup Helper
-#'
-#' Offers to automatically add ~/.local/bin to the user's shell PATH.
-#'
-#' @param bin_dir Directory to add to PATH
-#' @param target Full path to installed CLI
-#' @keywords internal
-.setup_path_interactive <- function(bin_dir, target) {
-  message("\u2713 CLI installed to ", target, "\n")
-
-  # Check if bin_dir is in current PATH
-  path_dirs <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
-  in_path <- bin_dir %in% path_dirs
-
-  # If already in PATH, just confirm success
-  if (in_path) {
-    message("\nCLI is ready to use!\n\nTry: framework new myproject")
-    return(invisible(NULL))
-  }
-
-  # Detect shell
-  shell <- basename(Sys.getenv("SHELL"))
-  if (shell == "") shell <- "bash"  # fallback
-
-  # Determine config file
-  shell_config <- switch(
-    shell,
-    zsh = "~/.zshrc",
-    bash = "~/.bashrc",
-    fish = "~/.config/fish/config.fish",
-    "~/.profile"  # fallback
-  )
-
-  shell_config_expanded <- path.expand(shell_config)
-
-  # Export line to add
-  export_line <- if (shell == "fish") {
-    "set -gx PATH $HOME/.local/bin $PATH"
-  } else {
-    'export PATH="$HOME/.local/bin:$PATH"'
-  }
-
-  # Check if already in config
-  already_added <- FALSE
-  if (file.exists(shell_config_expanded)) {
-    config_content <- readLines(shell_config_expanded, warn = FALSE)
-    already_added <- any(grepl(".local/bin.*PATH|PATH.*\\.local/bin", config_content, perl = TRUE))
-  }
-
-  if (already_added) {
-    message(
-      "\nNote: ~/.local/bin is already in your ", shell_config, "\n",
-      "but is not active in this session.\n\n",
-      "To use the CLI:\n",
-      "1. Restart your terminal (recommended), or\n",
-      "2. Run in terminal: source ", shell_config, "\n\n",
-      "Then try: framework new myproject"
-    )
-    return(invisible(NULL))
-  }
-
-  # Offer to add automatically
-  message(
-    "\nThe CLI needs ~/.local/bin in your PATH.\n\n",
-    "Would you like to automatically add it to ", shell_config, "? (y/n): "
-  )
-
-  response <- tolower(trimws(readline()))
-
-  if (response %in% c("y", "yes")) {
-    tryCatch(
-      {
-        # Add to shell config
-        cat(
-          sprintf("\n# Added by Framework CLI installer\n%s\n", export_line),
-          file = shell_config_expanded,
-          append = TRUE
-        )
-        message(
-          "\n\u2713 Added to ", shell_config, "\n\n",
-          "To activate:\n",
-          "1. Restart your terminal (recommended), or\n",
-          "2. Run in terminal: source ", shell_config, "\n\n",
-          "Then try: framework new myproject"
-        )
-      },
-      error = function(e) {
-        message(
-          "\n\u2717 Failed to write to ", shell_config, ": ", e$message, "\n\n",
-          "Please manually add this line to ", shell_config, ":\n",
-          "  ", export_line, "\n\n",
-          "Then restart your terminal or run: source ", shell_config
-        )
-      }
-    )
-  } else {
-    message(
-      "\nTo use the CLI, manually add this line to ", shell_config, ":\n",
-      "  ", export_line, "\n\n",
-      "Then restart your terminal or run: source ", shell_config
-    )
-  }
-
-  invisible(NULL)
-}
