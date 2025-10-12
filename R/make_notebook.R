@@ -103,8 +103,10 @@ make_notebook <- function(name,
   stub_content <- readLines(stub_path, warn = FALSE)
 
   # Replace placeholders
+  # Use the original name (before slugification) for the title
   filename_no_ext <- sub("\\.[^.]+$", "", basename(name_normalized))
-  stub_content <- gsub("{filename}", filename_no_ext, stub_content, fixed = TRUE)
+  original_name <- sub("\\.[^.]+$", "", basename(name))  # Original name for title
+  stub_content <- gsub("{filename}", original_name, stub_content, fixed = TRUE)
   stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
 
   # Write notebook
@@ -125,6 +127,35 @@ make_notebook <- function(name,
 }
 
 
+#' Slugify a String
+#'
+#' Converts a string to a filesystem-safe slug:
+#' - Converts to lowercase
+#' - Replaces spaces and special characters with hyphens
+#' - Removes consecutive hyphens
+#' - Trims leading/trailing hyphens
+#'
+#' @param text Character. String to slugify
+#'
+#' @return Character. Slugified string
+#' @keywords internal
+.slugify <- function(text) {
+  # Convert to lowercase
+  slug <- tolower(text)
+
+  # Replace spaces and special characters with hyphens
+  slug <- gsub("[^a-z0-9-]", "-", slug)
+
+  # Remove consecutive hyphens
+  slug <- gsub("-+", "-", slug)
+
+  # Trim leading/trailing hyphens
+  slug <- gsub("^-+|-+$", "", slug)
+
+  slug
+}
+
+
 #' Normalize Notebook Name and Detect Type
 #'
 #' @param name Character. File name with or without extension
@@ -142,30 +173,37 @@ make_notebook <- function(name,
   has_r <- grepl("\\.R$", name, ignore.case = TRUE)
 
   if (has_qmd) {
-    # .qmd extension provided
-    name_normalized <- sub("\\.qmd$", ".qmd", name, ignore.case = TRUE)
+    # .qmd extension provided - extract base name and slugify
+    base_name <- sub("\\.qmd$", "", name, ignore.case = TRUE)
+    base_name <- .slugify(base_name)
+    name_normalized <- paste0(base_name, ".qmd")
     type <- "quarto"
     ext <- "qmd"
   } else if (has_rmd) {
-    # .Rmd extension provided
-    name_normalized <- sub("\\.Rmd$", ".Rmd", name, ignore.case = TRUE)
+    # .Rmd extension provided - extract base name and slugify
+    base_name <- sub("\\.Rmd$", "", name, ignore.case = TRUE)
+    base_name <- .slugify(base_name)
+    name_normalized <- paste0(base_name, ".Rmd")
     type <- "rmarkdown"
     ext <- "Rmd"
   } else if (has_r) {
-    # .R extension provided
-    name_normalized <- sub("\\.R$", ".R", name, ignore.case = TRUE)
+    # .R extension provided - extract base name and slugify
+    base_name <- sub("\\.R$", "", name, ignore.case = TRUE)
+    base_name <- .slugify(base_name)
+    name_normalized <- paste0(base_name, ".R")
     type <- "script"
     ext <- "R"
   } else {
-    # No extension - use type preference
+    # No extension - slugify and add extension based on type
+    base_name <- .slugify(name)
     if (type == "quarto") {
-      name_normalized <- paste0(name, ".qmd")
+      name_normalized <- paste0(base_name, ".qmd")
       ext <- "qmd"
     } else if (type == "rmarkdown") {
-      name_normalized <- paste0(name, ".Rmd")
+      name_normalized <- paste0(base_name, ".Rmd")
       ext <- "Rmd"
     } else {
-      name_normalized <- paste0(name, ".R")
+      name_normalized <- paste0(base_name, ".R")
       ext <- "R"
     }
   }
