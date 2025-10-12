@@ -78,13 +78,7 @@ renv_enable <- function(sync = TRUE) {
     )
   }
 
-  message(
-    "\n",
-    "\u2713 renv enabled successfully!\n\n",
-    "Your packages are now managed by renv for reproducibility.\n",
-    "Use packages_snapshot() to update renv.lock after installing new packages.\n",
-    "Use renv_disable() to turn off renv integration."
-  )
+  message("\u2713 renv enabled")
 
   invisible(TRUE)
 }

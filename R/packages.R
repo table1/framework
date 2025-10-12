@@ -155,7 +155,14 @@
 
   # Install each package via renv
   for (pkg_spec in config$packages) {
-    spec <- .parse_package_spec(pkg_spec)
+    # Extract package name from list or string
+    if (is.list(pkg_spec)) {
+      pkg_name <- pkg_spec$name
+    } else {
+      pkg_name <- pkg_spec
+    }
+
+    spec <- .parse_package_spec(pkg_name)
 
     # Check if package is already installed at correct version
     if (requireNamespace(spec$name, quietly = TRUE)) {
