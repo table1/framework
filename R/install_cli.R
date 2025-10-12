@@ -25,12 +25,14 @@
 #'
 #' @section User Installation:
 #' User installation (`location = "user"`) installs to `~/.local/bin` without
-#' requiring sudo. You may need to add `~/.local/bin` to your PATH:
+#' requiring sudo. If `~/.local/bin` is not in your PATH, the installer will:
 #'
-#' ```bash
-#' # Add to ~/.bashrc or ~/.zshrc
-#' export PATH="$HOME/.local/bin:$PATH"
-#' ```
+#' 1. Detect your shell (bash, zsh, fish)
+#' 2. Offer to automatically add it to your shell config
+#' 3. Provide clear instructions for activation
+#'
+#' The installer is smart enough to detect if the PATH is already configured
+#' and won't duplicate entries
 #'
 #' @section System Installation:
 #' System installation (`location = "system"`) installs to `/usr/local/bin`
@@ -83,12 +85,7 @@ install_cli <- function(location = c("user", "system")) {
     in_path <- bin_dir %in% path_dirs
 
     if (!in_path) {
-      message(
-        "\u2713 CLI installed to ", target, "\n\n",
-        "Add to your PATH by adding this line to ~/.bashrc or ~/.zshrc:\n",
-        "  export PATH=\"$HOME/.local/bin:$PATH\"\n\n",
-        "Then restart your shell or run: source ~/.bashrc"
-      )
+      .setup_path_interactive(bin_dir, target)
     } else {
       message(
         "\u2713 CLI installed successfully!\n\n",
@@ -228,4 +225,101 @@ cli_update <- function(ref = "main") {
   }
 
   invisible(new_version)
+}
+
+
+#' Interactive PATH Setup Helper
+#'
+#' Offers to automatically add ~/.local/bin to the user's shell PATH.
+#'
+#' @param bin_dir Directory to add to PATH
+#' @param target Full path to installed CLI
+#' @keywords internal
+.setup_path_interactive <- function(bin_dir, target) {
+  message("\u2713 CLI installed to ", target, "\n")
+
+  # Detect shell
+  shell <- basename(Sys.getenv("SHELL"))
+  if (shell == "") shell <- "bash"  # fallback
+
+  # Determine config file
+  shell_config <- switch(
+    shell,
+    zsh = "~/.zshrc",
+    bash = "~/.bashrc",
+    fish = "~/.config/fish/config.fish",
+    "~/.profile"  # fallback
+  )
+
+  shell_config_expanded <- path.expand(shell_config)
+
+  # Export line to add
+  export_line <- if (shell == "fish") {
+    "set -gx PATH $HOME/.local/bin $PATH"
+  } else {
+    'export PATH="$HOME/.local/bin:$PATH"'
+  }
+
+  # Check if already in config
+  already_added <- FALSE
+  if (file.exists(shell_config_expanded)) {
+    config_content <- readLines(shell_config_expanded, warn = FALSE)
+    already_added <- any(grepl(".local/bin.*PATH|PATH.*\\.local/bin", config_content, perl = TRUE))
+  }
+
+  if (already_added) {
+    message(
+      "\nNote: ~/.local/bin is already in your ", shell_config, "\n",
+      "but may not be active in this R session.\n\n",
+      "To use the CLI:\n",
+      "1. Restart your terminal, or\n",
+      "2. Run in terminal: source ", shell_config, "\n\n",
+      "Then try: framework new myproject"
+    )
+    return(invisible(NULL))
+  }
+
+  # Offer to add automatically
+  message(
+    "\nThe CLI needs ~/.local/bin in your PATH.\n\n",
+    "Would you like to automatically add it to ", shell_config, "? (y/n): "
+  )
+
+  response <- tolower(trimws(readline()))
+
+  if (response %in% c("y", "yes")) {
+    tryCatch(
+      {
+        # Add to shell config
+        cat(
+          sprintf("\n# Added by Framework CLI installer\n%s\n", export_line),
+          file = shell_config_expanded,
+          append = TRUE
+        )
+        message(
+          "\n\u2713 Added to ", shell_config, "\n\n",
+          "To activate:\n",
+          "1. Restart your terminal (recommended), or\n",
+          "2. Run in terminal: source ", shell_config, "\n\n",
+          "Then try: framework new myproject"
+        )
+      },
+      error = function(e) {
+        message(
+          "\n\u2717 Failed to write to ", shell_config, ": ", e$message, "\n\n",
+          "Please manually add this line to ", shell_config, ":\n",
+          "  ", export_line, "\n\n",
+          "Then restart your terminal or run: source ", shell_config
+        )
+      }
+    )
+  } else {
+    message(
+      "\nTo use the CLI, manually add this line to ", shell_config, ":\n",
+      "  ", export_line, "\n\n",
+      "Then restart your terminal or run: source ", shell_config
+    )
+  }
+
+  invisible(NULL)
 }

@@ -24,15 +24,32 @@ By default, this installs to `~/.local/bin/framework` (user installation). To in
 framework::install_cli(location = "system")  # Requires sudo
 ```
 
-### Add to PATH (if needed)
+### PATH Setup
 
-If `~/.local/bin` is not in your PATH, add this to `~/.bashrc` or `~/.zshrc`:
+If `~/.local/bin` is not in your PATH, the installer will:
 
-```bash
-export PATH="$HOME/.local/bin:$PATH"
+1. **Detect your shell** (bash, zsh, fish)
+2. **Offer to automatically add it** to your shell config file
+3. **Provide clear instructions** for activation
+
+The installer is smart:
+- Detects if PATH is already configured (won't duplicate)
+- Shows shell-specific commands (e.g., fish syntax differs from bash/zsh)
+- Offers to do it for you or provides manual instructions
+
+**If you choose automatic setup:**
+```
+Would you like to automatically add it to ~/.zshrc? (y/n): y
+
+✓ Added to ~/.zshrc
+
+To activate:
+1. Restart your terminal (recommended), or
+2. Run in terminal: source ~/.zshrc
 ```
 
-Then restart your shell or run `source ~/.bashrc`.
+**If you decline or it's already configured:**
+Clear instructions are provided for manual setup.
 
 ## Usage
 

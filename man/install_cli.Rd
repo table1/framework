@@ -39,11 +39,15 @@ After installation, the \code{framework} command will be available globally:
 \section{User Installation}{
 
 User installation (\code{location = "user"}) installs to \verb{~/.local/bin} without
-requiring sudo. You may need to add \verb{~/.local/bin} to your PATH:
+requiring sudo. If \verb{~/.local/bin} is not in your PATH, the installer will:
+\enumerate{
+\item Detect your shell (bash, zsh, fish)
+\item Offer to automatically add it to your shell config
+\item Provide clear instructions for activation
+}
 
-\if{html}{\out{<div class="sourceCode bash">}}\preformatted{# Add to ~/.bashrc or ~/.zshrc
-export PATH="$HOME/.local/bin:$PATH"
-}\if{html}{\out{</div>}}
+The installer is smart enough to detect if the PATH is already configured
+and won't duplicate entries
 }
 
 \section{System Installation}{
