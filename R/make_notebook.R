@@ -10,7 +10,8 @@
 #'   - .R: R script
 #'   Examples: "1-init", "1-init.qmd", "analysis.Rmd", "script.R"
 #' @param type Character. File type: "quarto", "rmarkdown", or "script".
-#'   Auto-detected from extension if provided.
+#'   Auto-detected from extension if provided. If not specified and no extension
+#'   in name, reads from config `options$default_notebook_format` (defaults to "quarto").
 #' @param dir Character. Directory to create the file in. Reads from
 #'   config `options$notebook_dir`, defaults to "work/" or current directory.
 #' @param stub Character. Name of the stub template to use. Defaults to
@@ -69,6 +70,17 @@ make_notebook <- function(name,
                           stub = "default",
                           overwrite = FALSE) {
 
+  # Get default format from config if type not explicitly provided
+  if (missing(type)) {
+    cfg <- tryCatch(read_config(), error = function(e) NULL)
+    if (!is.null(cfg$options$default_notebook_format)) {
+      type <- match.arg(cfg$options$default_notebook_format,
+                       c("quarto", "rmarkdown", "script"))
+    } else {
+      type <- "quarto"  # Fallback to quarto if config not available
+    }
+  }
+
   # Normalize extension and detect type
   normalized <- .normalize_notebook_name(name, type)
   name_normalized <- normalized$name
@@ -108,6 +120,17 @@ make_notebook <- function(name,
   original_name <- sub("\\.[^.]+$", "", basename(name))  # Original name for title
   stub_content <- gsub("{filename}", original_name, stub_content, fixed = TRUE)
   stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
+
+  # Replace author placeholder with actual config value if available
+  # Try to load config to get author info
+  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  if (!is.null(cfg$author$name)) {
+    # Replace !expr config$author$name with the actual name as a string
+    stub_content <- gsub("!expr config\\$author\\$name",
+                        sprintf("\"%s\"", cfg$author$name),
+                        stub_content,
+                        fixed = FALSE)
+  }
 
   # Write notebook
   writeLines(stub_content, target_path)

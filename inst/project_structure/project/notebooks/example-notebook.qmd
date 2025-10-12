@@ -1,6 +1,6 @@
 ---
 title: "Example Notebook"
-author: "`r config$author$name`"
+author: !expr config$author$name
 date: "`r Sys.Date()`"
 format:
   html:

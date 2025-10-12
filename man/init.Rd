@@ -15,6 +15,7 @@ init(
   author_name = NULL,
   author_email = NULL,
   author_affiliation = NULL,
+  default_notebook_format = NULL,
   subdir = NULL,
   force = FALSE,
   .dev_mode = FALSE

@@ -12,6 +12,7 @@
   author_name = NULL,
   author_email = NULL,
   author_affiliation = NULL,
+  default_notebook_format = NULL,
   subdir,
   force
 )

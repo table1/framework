@@ -14,6 +14,11 @@ default:
     functions: functions
     cache: data/cached
 
+  # Project options
+  options:
+    default_notebook_format: quarto  # quarto or rmarkdown
+    renv_nag: true
+
   # Domain-specific settings (split files for scalability)
   data: settings/data.yml
   packages: settings/packages.yml

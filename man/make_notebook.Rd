@@ -22,7 +22,8 @@ Examples: "1-init", "1-init.qmd", "analysis.Rmd", "script.R"
 }}
 
 \item{type}{Character. File type: "quarto", "rmarkdown", or "script".
-Auto-detected from extension if provided.}
+Auto-detected from extension if provided. If not specified and no extension
+in name, reads from config \code{options$default_notebook_format} (defaults to "quarto").}
 
 \item{dir}{Character. Directory to create the file in. Reads from
 config \code{options$notebook_dir}, defaults to "work/" or current directory.}

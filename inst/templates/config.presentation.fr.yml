@@ -35,6 +35,9 @@ default:
   # Project Options
   # --------------------------------------------------------------------------
   options:
+    # Default notebook format for make_notebook() (quarto or rmarkdown)
+    default_notebook_format: quarto
+
     renv_nag: true  # Show reproducibility message on first scaffold()
 
   # --------------------------------------------------------------------------

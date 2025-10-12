@@ -1,6 +1,6 @@
 ---
 title: "Presentation Title"
-author: "`r config$author$name`"
+author: !expr config$author$name
 date: "`r Sys.Date()`"
 format:
   revealjs:

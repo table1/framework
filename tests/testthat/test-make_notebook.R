@@ -147,18 +147,77 @@ test_that("make_notebook creates notebooks with author config reference", {
   # Check content
   content <- readLines("notebooks/test-notebook.qmd")
 
-  # Check author line uses config reference
+  # Check author line is hardcoded (not config reference)
   author_line <- grep("^author:", content, value = TRUE)
-  expect_true(grepl("config\\$author\\$name", author_line))
-
-  # Check it doesn't have hardcoded "Your Name"
-  expect_false(grepl("Your Name", author_line))
+  expect_true(grepl("Dr. Jane Smith", author_line))
 
   # Check title is correct
   title_line <- grep("^title:", content, value = TRUE)
-  expect_true(grepl("Test Notebook", title_line))
+  expect_true(grepl("test-notebook", title_line))
 
   # Check setup chunk exists with scaffold()
   expect_true(any(grepl("library\\(framework\\)", content)))
   expect_true(any(grepl("scaffold\\(\\)", content)))
+})
+
+test_that("make_notebook respects default_notebook_format config", {
+  # Create temp directory
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit({
+    setwd(old_wd)
+    unlink(file.path(tmp, "notebooks"), recursive = TRUE)
+    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, ".env"))
+  })
+
+  dir.create("notebooks", showWarnings = FALSE)
+
+  # Test with rmarkdown default
+  config_content <- "default:
+  author:
+    name: Test User
+  directories:
+    notebooks: notebooks
+  options:
+    default_notebook_format: rmarkdown
+"
+  writeLines(config_content, "config.yml")
+  writeLines("", ".env")
+
+  # Create notebook without specifying type
+  suppressMessages(make_notebook("format-test"))
+  expect_true(file.exists("notebooks/format-test.Rmd"))
+  expect_false(file.exists("notebooks/format-test.qmd"))
+})
+
+test_that("make_notebook defaults to quarto when config missing format", {
+  # Create temp directory
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit({
+    setwd(old_wd)
+    unlink(file.path(tmp, "notebooks"), recursive = TRUE)
+    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, ".env"))
+  })
+
+  dir.create("notebooks", showWarnings = FALSE)
+
+  # Config without default_notebook_format
+  config_content <- "default:
+  author:
+    name: Test User
+  directories:
+    notebooks: notebooks
+"
+  writeLines(config_content, "config.yml")
+  writeLines("", ".env")
+
+  # Create notebook without specifying type
+  suppressMessages(make_notebook("no-format-test"))
+  expect_true(file.exists("notebooks/no-format-test.qmd"))
+  expect_false(file.exists("notebooks/no-format-test.Rmd"))
 })
