@@ -41,17 +41,17 @@
 #' @examples
 #' \dontrun{
 #' # Install for current user (recommended)
-#' install_cli()
+#' cli_install()
 #'
 #' # Install system-wide (requires sudo)
-#' install_cli(location = "system")
+#' cli_install(location = "system")
 #'
 #' # Then use the CLI
 #' system("framework new myproject")
 #' }
 #'
 #' @export
-install_cli <- function(location = c("user", "system")) {
+cli_install <- function(location = c("user", "system")) {
   location <- match.arg(location)
 
   cli_script <- system.file("bin", "framework", package = "framework")
@@ -126,14 +126,14 @@ install_cli <- function(location = c("user", "system")) {
 #' @examples
 #' \dontrun{
 #' # Uninstall user installation
-#' uninstall_cli()
+#' cli_uninstall()
 #'
 #' # Uninstall system installation
-#' uninstall_cli(location = "system")
+#' cli_uninstall(location = "system")
 #' }
 #'
 #' @export
-uninstall_cli <- function(location = c("user", "system")) {
+cli_uninstall <- function(location = c("user", "system")) {
   location <- match.arg(location)
 
   if (location == "user") {
@@ -212,11 +212,20 @@ cli_update <- function(ref = "main") {
   cli_installed <- Sys.which("framework") != ""
   if (!cli_installed) {
     message("")
-    message("Note: CLI not installed. Run framework::install_cli() to install it.")
+    message("Note: CLI not installed. Run framework::cli_install() to install it.")
   }
 
   invisible(new_version)
 }
+
+
+#' @rdname cli_install
+#' @export
+install_cli <- cli_install
+
+#' @rdname cli_uninstall
+#' @export
+uninstall_cli <- cli_uninstall
 
 
 #' Interactive PATH Setup Helper

@@ -7,7 +7,7 @@
     packageStartupMessage(
       "Framework loaded! \U0001F389\n\n",
       "Tip: Install the CLI for quick project creation:\n",
-      "  framework::install_cli()\n\n",
+      "  framework::cli_install()\n\n",
       "Then use: framework new myproject"
     )
   }

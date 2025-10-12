@@ -15,7 +15,7 @@ Start `R`, then:
 ```r
 # Install Framework and the CLI
 devtools::install_github("table1/framework")
-framework::install_cli()
+framework::cli_install()
 ```
 
 **Then create projects anywhere:**

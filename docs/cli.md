@@ -15,7 +15,7 @@ The Framework CLI provides a persistent command-line interface for quickly creat
 devtools::install_github("table1/framework")
 
 # Install CLI tool
-framework::install_cli()
+framework::cli_install()
 ```
 
 By default, this installs to `~/.local/bin/framework` (user installation). To install system-wide:
@@ -157,17 +157,17 @@ framework version
 
 If the symlink breaks (rare), reinstall:
 ```r
-framework::install_cli()
+framework::cli_install()
 ```
 
 ## Uninstallation
 
 ```r
 # Remove user installation
-framework::uninstall_cli()
+framework::cli_uninstall()
 
 # Remove system installation
-framework::uninstall_cli(location = "system")
+framework::cli_uninstall(location = "system")
 ```
 
 ## Platform Support
@@ -184,7 +184,7 @@ The CLI requires bash. Windows users should use WSL (Windows Subsystem for Linux
 
 1. Verify installation:
    ```r
-   framework::install_cli()
+   framework::cli_install()
    ```
 
 2. Check if installed:

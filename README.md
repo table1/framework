@@ -21,7 +21,7 @@ Start `R`, then:
 ```r
 # Install Framework and the CLI
 devtools::install_github("table1/framework")
-framework::install_cli()
+framework::cli_install()
 ```
 
 **Then create projects anywhere:**
@@ -311,7 +311,8 @@ security:
 | `result_save()` | Save analysis output |
 | `result_get()` | Retrieve saved result |
 | `scratch_capture()` | Quick debug/temp file save |
-| `install_cli()` | Install Framework CLI tool |
+| `cli_install()` | Install Framework CLI tool |
+| `cli_uninstall()` | Remove Framework CLI tool |
 | `cli_update()` | Update Framework and CLI to latest version |
 | `renv_enable()` | Enable renv for reproducibility (opt-in) |
 | `renv_disable()` | Disable renv integration |
