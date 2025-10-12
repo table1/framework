@@ -73,9 +73,19 @@ make_notebook <- function(name,
   # Get default format from config if type not explicitly provided
   if (missing(type)) {
     cfg <- tryCatch(read_config(), error = function(e) NULL)
-    if (!is.null(cfg$options$default_notebook_format)) {
-      type <- match.arg(cfg$options$default_notebook_format,
-                       c("quarto", "rmarkdown", "script"))
+
+    # Check new location first, then old location (backward compat)
+    default_format <- cfg$default_notebook_format
+    if (is.null(default_format)) {
+      default_format <- cfg$options$default_notebook_format
+      if (!is.null(default_format)) {
+        warning("config$options$default_notebook_format is deprecated. ",
+                "Move to config$default_notebook_format (root level)")
+      }
+    }
+
+    if (!is.null(default_format)) {
+      type <- match.arg(default_format, c("quarto", "rmarkdown", "script"))
     } else {
       type <- "quarto"  # Fallback to quarto if config not available
     }

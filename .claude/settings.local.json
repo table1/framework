@@ -28,7 +28,8 @@
       "Bash(for:*)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "Read(//Users/erikwestlund/**)"
+      "Read(//Users/erikwestlund/**)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "ask": []

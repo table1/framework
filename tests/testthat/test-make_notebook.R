@@ -151,9 +151,9 @@ test_that("make_notebook creates notebooks with author config reference", {
   author_line <- grep("^author:", content, value = TRUE)
   expect_true(grepl("Dr. Jane Smith", author_line))
 
-  # Check title is correct
+  # Check title is correct (uses original name, not slug)
   title_line <- grep("^title:", content, value = TRUE)
-  expect_true(grepl("test-notebook", title_line))
+  expect_true(grepl("Test Notebook", title_line))
 
   # Check setup chunk exists with scaffold()
   expect_true(any(grepl("library\\(framework\\)", content)))
@@ -180,8 +180,7 @@ test_that("make_notebook respects default_notebook_format config", {
     name: Test User
   directories:
     notebooks: notebooks
-  options:
-    default_notebook_format: rmarkdown
+  default_notebook_format: rmarkdown
 "
   writeLines(config_content, "config.yml")
   writeLines("", ".env")

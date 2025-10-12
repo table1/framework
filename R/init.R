@@ -590,11 +590,11 @@ init <- function(
         }
       }
 
-      # Update default_notebook_format in options section if provided
+      # Update default_notebook_format if provided (root level)
       if (has_format_pref) {
-        format_line <- grep("^    default_notebook_format:", config_content)
+        format_line <- grep("^  default_notebook_format:", config_content)
         if (length(format_line) > 0) {
-          config_content[format_line[1]] <- sprintf("    default_notebook_format: %s", default_notebook_format)
+          config_content[format_line[1]] <- sprintf("  default_notebook_format: %s", default_notebook_format)
         }
       }
 

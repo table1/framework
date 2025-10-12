@@ -1,8 +1,7 @@
 default:
-  # Project options
-  options:
-    default_notebook_format: quarto  # quarto or rmarkdown
-    renv_nag: true
+  # Project behavior
+  default_notebook_format: quarto  # quarto or rmarkdown
+  renv_nag: true
 
   data:
     - example: data/example.csv

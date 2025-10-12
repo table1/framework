@@ -17,10 +17,9 @@ default:
     cache: data/cached
     scratch: data/scratch
 
-  # Project options
-  options:
-    default_notebook_format: quarto  # quarto or rmarkdown
-    renv_nag: true
+  # Project behavior
+  default_notebook_format: quarto  # quarto or rmarkdown
+  renv_nag: true
 
   # Domain-specific settings (split files for scalability)
   data: settings/data.yml

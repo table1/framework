@@ -162,9 +162,23 @@ renv_disable <- function(keep_renv = TRUE) {
   if (file.exists("config.yml")) {
     config <- tryCatch(
       read_config("config.yml"),
-      error = function(e) list(options = list(renv_nag = TRUE))
+      error = function(e) list(renv_nag = TRUE)
     )
-    if (!is.null(config$options$renv_nag) && !config$options$renv_nag) {
+
+    # Check new location first, then old location (backward compat)
+    renv_nag <- config$renv_nag
+    if (is.null(renv_nag)) {
+      renv_nag <- config$options$renv_nag
+      if (!is.null(renv_nag)) {
+        warning("config$options$renv_nag is deprecated. ",
+                "Move to config$renv_nag (root level)")
+      }
+    }
+
+    # Default to TRUE if not specified
+    if (is.null(renv_nag)) renv_nag <- TRUE
+
+    if (!renv_nag) {
       return(invisible(NULL))
     }
   }

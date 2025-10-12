@@ -139,7 +139,7 @@ test_that(".renv_nag() shows message on first scaffold", {
   if (file.exists(".framework_renv_enabled")) file.remove(".framework_renv_enabled")
 
   # Create minimal config without renv_nag option
-  writeLines("default:\n  options:\n    renv_nag: true", "config.yml")
+  writeLines("default:\n  renv_nag: true", "config.yml")
 
   # Should show message on first scaffold
   expect_message(.renv_nag(), "Reproducibility Tip")
@@ -162,7 +162,7 @@ test_that(".renv_nag() suppressed on second scaffold", {
   writeLines("First scaffolded at: 2025-01-01", ".framework_scaffolded")
 
   # Create minimal config
-  writeLines("default:\n  options:\n    renv_nag: true", "config.yml")
+  writeLines("default:\n  renv_nag: true", "config.yml")
 
   # Should NOT show message (returns NULL invisibly)
   expect_invisible(.renv_nag())
@@ -183,7 +183,7 @@ test_that(".renv_nag() suppressed when renv_nag is FALSE in config", {
   if (file.exists(".framework_renv_enabled")) file.remove(".framework_renv_enabled")
 
   # Create minimal config with renv_nag: false
-  writeLines("default:\n  options:\n    renv_nag: false", "config.yml")
+  writeLines("default:\n  renv_nag: false", "config.yml")
 
   # Should NOT show message
   expect_invisible(.renv_nag())
@@ -205,7 +205,7 @@ test_that(".renv_nag() suppressed when renv is enabled", {
   writeLines("timestamp", ".framework_renv_enabled")
 
   # Create minimal config
-  writeLines("default:\n  options:\n    renv_nag: true", "config.yml")
+  writeLines("default:\n  renv_nag: true", "config.yml")
 
   # Should NOT show message when renv is enabled
   expect_invisible(.renv_nag())
