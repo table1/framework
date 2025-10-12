@@ -1,15 +1,16 @@
-# Auto-attached packages (available without library() calls)
-- name: dplyr
-  auto_attach: true
-- name: tidyr
-  auto_attach: true
-- name: ggplot2
-  auto_attach: true
+packages:
+  # Auto-attached packages (available without library() calls)
+  - name: dplyr
+    auto_attach: true
+  - name: tidyr
+    auto_attach: true
+  - name: ggplot2
+    auto_attach: true
 
-# Installed but not auto-attached (use library() when needed)
-- name: readr
-  auto_attach: false
-- name: stringr
-  auto_attach: false
-- name: scales
-  auto_attach: false
+  # Installed but not auto-attached (use library() when needed)
+  - name: readr
+    auto_attach: false
+  - name: stringr
+    auto_attach: false
+  - name: scales
+    auto_attach: false

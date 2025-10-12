@@ -20,16 +20,19 @@ scaffold <- function(config_file = "config.yml") {
 
   .load_environment()
 
-  # Unlock config if it exists and is locked (from previous scaffold calls)
-  tryCatch({
-    if (exists("config", envir = .GlobalEnv) && bindingIsLocked("config", .GlobalEnv)) {
+  # Remove old config if it exists and unlock if needed
+  if (exists("config", envir = .GlobalEnv)) {
+    tryCatch({
       unlockBinding("config", .GlobalEnv)
-    }
-  }, error = function(e) {
-    # Ignore binding check errors - config doesn't exist yet
-  })
+    }, error = function(e) {
+      # Binding doesn't exist or isn't locked
+    })
+    suppressWarnings(rm(config, envir = .GlobalEnv))
+  }
 
-  config <<- .load_configuration(config_file)
+  # Assign config to global environment
+  config_obj <- .load_configuration(config_file)
+  assign("config", config_obj, envir = .GlobalEnv)
 
   # Show educational message about renv (first scaffold only)
   .renv_nag()
@@ -37,8 +40,8 @@ scaffold <- function(config_file = "config.yml") {
   # Mark as scaffolded with timestamp
   .mark_scaffolded()
 
-  .install_required_packages(config)
-  .load_libraries(config)
+  .install_required_packages(config_obj)
+  .load_libraries(config_obj)
   .load_functions()
 
   # Source scaffold.R if it exists
