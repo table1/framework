@@ -1,6 +1,10 @@
 ## Quick Start
 
-**Three ways to start:** CLI tool (persistent), one-time script (no installation), or clone the template directly.
+**Pick the method that fits your workflow:**
+
+- Creating **multiple projects**? Use the CLI tool (Option 1)
+- Creating **one project** and don't want to install anything? Use the one-time script (Option 2)
+- Want to **customize the template** first? Clone via Git (Option 3)
 
 ### Option 1: CLI Tool
 
