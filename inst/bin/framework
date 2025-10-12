@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Framework CLI - Thin wrapper for new-project.sh
+#
+# This script provides a persistent CLI command for Framework.
+# It fetches and executes new-project.sh from the framework-project repository.
+
+set -e
+
+# URL to the canonical new-project.sh script
+SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh"
+
+# Colors for help output
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+COMMAND="${1:-help}"
+
+case "$COMMAND" in
+  new)
+    # Remove 'new' from arguments and pass the rest to new-project.sh
+    shift
+    curl -fsSL "$SCRIPT_URL" | bash -s "$@"
+    ;;
+
+  version)
+    # Show Framework package version
+    Rscript --quiet --no-save --slave -e "cat('Framework version', as.character(packageVersion('framework')), '\n')"
+    ;;
+
+  help|--help|-h)
+    cat <<EOF
+${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}
+
+${YELLOW}Usage:${NC}
+  framework new [name] [type]    Create new project
+  framework version              Show Framework package version
+  framework help                 Show this help
+
+${YELLOW}Examples:${NC}
+  framework new                  ${GREEN}# Interactive mode (prompts for options)${NC}
+  framework new myproject        ${GREEN}# Create 'myproject' with defaults${NC}
+  framework new slides course    ${GREEN}# Create course project 'slides'${NC}
+
+${YELLOW}Project Types:${NC}
+  project       Full-featured data analysis (default)
+  course        Teaching materials
+  presentation  Single talk/presentation
+
+${YELLOW}Installation Alternatives:${NC}
+  If you prefer not to install the CLI, you can use:
+
+  ${GREEN}# One-time curl (no installation)${NC}
+  curl -fsSL https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh | bash
+
+  ${GREEN}# Manual git clone${NC}
+  git clone https://github.com/table1/framework-project myproject
+
+${YELLOW}More Information:${NC}
+  Package:  https://github.com/table1/framework
+  Template: https://github.com/table1/framework-project
+
+EOF
+    ;;
+
+  *)
+    echo "Unknown command: $COMMAND"
+    echo "Run 'framework help' for usage information"
+    exit 1
+    ;;
+esac

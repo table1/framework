@@ -29,7 +29,9 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
       "Read(//Users/erikwestlund/**)",
-      "WebFetch(domain:stackoverflow.com)"
+      "WebFetch(domain:stackoverflow.com)",
+      "Bash(git mv:*)",
+      "Bash(/Users/erikwestlund/code/framework/inst/bin/framework help)"
     ],
     "deny": [],
     "ask": []
