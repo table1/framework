@@ -1,20 +1,26 @@
 # Framework
 
-# Data directories (all types)
-data/*
-!data/*/.gitkeep
-!data/source/public/
-!data/source/public/**
-!data/in_progress/public/
-!data/in_progress/public/**
-!data/final/public/
-!data/final/public/**
-data/cached*
-data/scratch*
+# Data directories - Private data (NEVER commit these!)
+data/source/private/
+data/source/private/**
+data/in_progress/private/
+data/in_progress/private/**
+data/final/private/
+data/final/private/**
 
-# Results directories (analysis only - private by default)
+# Data directories - Cache and scratch
+data/cached*
+data/cached/**
+data/scratch*
+data/scratch/**
+
+# Results directories (private by default)
 results/private/
 results/private/**
+
+# Keep directory structure but ignore contents
+data/*/.gitkeep
+!data/*/.gitkeep
 
 # R specific
 .Rproj.user

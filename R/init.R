@@ -271,6 +271,7 @@ message("Framework dev mode active - will load from: %s")
 #' @param lintr The lintr style to use.
 #' @param styler The styler style to use.
 #' @param use_renv If TRUE, enables renv for package management. Default FALSE.
+#' @param use_git If TRUE, initializes a git repository. Default TRUE.
 #' @param attach_defaults If TRUE, configures default packages to auto-attach on scaffold().
 #'   Default packages: dplyr, tidyr, ggplot2 (auto-attached), readr, stringr, scales (installed only).
 #'   Default TRUE.
@@ -306,6 +307,7 @@ init <- function(
     lintr = NULL,
     styler = TRUE,
     use_renv = FALSE,
+    use_git = TRUE,
     attach_defaults = TRUE,
     author_name = NULL,
     author_email = NULL,
@@ -346,6 +348,7 @@ init <- function(
     checkmate::check_string(styler, min.chars = 1)
   )
   checkmate::assert_flag(use_renv)
+  checkmate::assert_flag(use_git)
   checkmate::assert_flag(attach_defaults)
   checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
@@ -404,7 +407,7 @@ init <- function(
   }
 
   # Continue with standard init process
-  .init_standard(project_name, type, lintr, styler, author_name, author_email, author_affiliation, default_notebook_format, subdir, force)
+  .init_standard(project_name, type, lintr, styler, author_name, author_email, author_affiliation, default_notebook_format, subdir, force, use_git)
 
   # Enable renv if requested
   if (use_renv) {
@@ -428,7 +431,7 @@ init <- function(
 
 #' Standard initialization process (shared by both paths)
 #' @keywords internal
-.init_standard <- function(project_name, type, lintr, styler, author_name = NULL, author_email = NULL, author_affiliation = NULL, default_notebook_format = NULL, subdir, force) {
+.init_standard <- function(project_name, type, lintr, styler, author_name = NULL, author_email = NULL, author_affiliation = NULL, default_notebook_format = NULL, subdir, force, use_git = TRUE) {
   # Validate arguments (already validated in init, but keep for internal calls)
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(type, min.chars = 1)
@@ -613,6 +616,44 @@ init <- function(
 
       writeLines(config_content, config_path)
     }
+  }
+
+  # Initialize git repository if requested and not already initialized
+  git_dir <- file.path(target_dir, ".git")
+  if (use_git && !file.exists(git_dir)) {
+    tryCatch({
+      # Initialize git
+      old_wd <- getwd()
+      on.exit(setwd(old_wd), add = TRUE)
+
+      if (!is.null(target_dir) && target_dir != ".") {
+        setwd(target_dir)
+      }
+
+      # Initialize repo
+      init_status <- system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+      if (init_status != 0) {
+        stop("git init failed")
+      }
+
+      # Add .gitignore
+      add_status <- system2("git", c("add", ".gitignore"), stdout = FALSE, stderr = FALSE)
+      if (add_status != 0) {
+        stop("git add failed")
+      }
+
+      # Create initial commit (may fail if git config missing, that's okay)
+      commit_status <- system2("git", c("commit", "-m", "Initial commit: Add .gitignore"),
+                               stdout = FALSE, stderr = FALSE)
+
+      if (commit_status == 0) {
+        message("\u2713 Git repository initialized with initial commit")
+      } else {
+        message("\u2713 Git repository initialized (commit skipped - you may need to configure git user)")
+      }
+    }, error = function(e) {
+      message("Note: Could not initialize git repository. You can run 'git init' manually if needed.")
+    })
   }
 
   # Mark as initialized

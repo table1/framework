@@ -14,7 +14,8 @@
   author_affiliation = NULL,
   default_notebook_format = NULL,
   subdir,
-  force
+  force,
+  use_git = TRUE
 )
 }
 \description{

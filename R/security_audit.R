@@ -118,7 +118,9 @@ security_audit <- function(config_file = "config.yml",
   # Check git availability
   git_available <- .check_git_available()
   if (check_git_history && !git_available) {
-    warning("Git not available. Skipping git history checks.")
+    if (verbose) {
+      message("Note: Not a git repository. Skipping git history checks.")
+    }
     check_git_history <- FALSE
   }
 
@@ -562,6 +564,14 @@ security_audit <- function(config_file = "config.yml",
     ".framework_cache", ".quarto", "_cache", "_files"
   )
 
+  # Framework internal files to exclude (these are managed by Framework)
+  exclude_files <- c(
+    "framework.db",           # Framework database
+    ".framework_renv_enabled", # renv marker
+    ".framework_scaffolded",   # scaffold marker
+    ".initiated"               # init marker
+  )
+
   # Get all configured directory paths
   configured_paths <- unlist(data_dirs, use.names = FALSE)
 
@@ -571,6 +581,12 @@ security_audit <- function(config_file = "config.yml",
   for (file in all_files) {
     # Skip excluded directories
     if (any(sapply(exclude_dirs, function(d) grepl(paste0("^\\./", d), file)))) {
+      next
+    }
+
+    # Skip Framework internal files
+    file_name <- sub("^\\./", "", file)
+    if (file_name %in% exclude_files) {
       next
     }
 

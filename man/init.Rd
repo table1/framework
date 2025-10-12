@@ -11,6 +11,7 @@ init(
   lintr = NULL,
   styler = TRUE,
   use_renv = FALSE,
+  use_git = TRUE,
   attach_defaults = TRUE,
   author_name = NULL,
   author_email = NULL,
@@ -35,6 +36,8 @@ For backward compatibility: "default"/"minimal" map to "project"/"presentation".
 \item{styler}{The styler style to use.}
 
 \item{use_renv}{If TRUE, enables renv for package management. Default FALSE.}
+
+\item{use_git}{If TRUE, initializes a git repository. Default TRUE.}
 
 \item{attach_defaults}{If TRUE, configures default packages to auto-attach on scaffold().
 Default packages: dplyr, tidyr, ggplot2 (auto-attached), readr, stringr, scales (installed only).

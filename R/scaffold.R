@@ -50,6 +50,9 @@ scaffold <- function(config_file = "config.yml") {
   # Mark as scaffolded with timestamp
   .mark_scaffolded()
 
+  # Ensure framework database exists
+  .ensure_framework_db()
+
   .install_required_packages(config_obj)
   .load_libraries(config_obj)
   .load_functions()
@@ -58,6 +61,9 @@ scaffold <- function(config_file = "config.yml") {
   if (file.exists("scaffold.R")) {
     source("scaffold.R")
   }
+
+  # Check git status and provide helpful reminder
+  .check_git_status()
 }
 
 #' Load environment variables from .env file
@@ -243,6 +249,71 @@ scaffold <- function(config_file = "config.yml") {
       c(existing, paste("Scaffolded at:", Sys.time())),
       ".framework_scaffolded"
     )
+  }
+
+  invisible(NULL)
+}
+
+#' Ensure framework database exists
+#' @keywords internal
+.ensure_framework_db <- function() {
+  if (!file.exists("framework.db")) {
+    message(
+      "\u26A0 Framework database not found. Creating framework.db...\n",
+      "  This database tracks data integrity, cache, and results.\n",
+      "  It's already in .gitignore and safe to commit the schema."
+    )
+
+    # Initialize the database
+    tryCatch(
+      {
+        .init_db()
+        message("\u2713 Framework database created successfully")
+      },
+      error = function(e) {
+        warning(
+          "Could not create framework.db: ", e$message, "\n",
+          "Some Framework features (data tracking, caching, results) may not work.\n",
+          "You can manually create it by running: framework:::.init_db()"
+        )
+      }
+    )
+  }
+
+  invisible(NULL)
+}
+
+#' Check git status and provide helpful reminder
+#' @keywords internal
+.check_git_status <- function() {
+  # Check if git is available and we're in a repo
+  git_available <- tryCatch({
+    result <- system2("git", c("rev-parse", "--git-dir"), stdout = TRUE, stderr = TRUE)
+    !is.null(attr(result, "status")) && attr(result, "status") == 0 || is.null(attr(result, "status"))
+  }, error = function(e) FALSE, warning = function(w) FALSE)
+
+  if (!git_available) {
+    return(invisible(NULL))
+  }
+
+  # Check for uncommitted changes
+  status_result <- tryCatch({
+    system2("git", c("status", "--porcelain"), stdout = TRUE, stderr = FALSE)
+  }, error = function(e) NULL, warning = function(w) NULL)
+
+  if (is.null(status_result) || length(status_result) == 0) {
+    return(invisible(NULL))
+  }
+
+  # Count changes
+  n_changes <- length(status_result)
+
+  if (n_changes > 0) {
+    message(sprintf(
+      "\n\u26A0 Git: %d uncommitted file%s. Remember to commit your work!",
+      n_changes,
+      if (n_changes == 1) "" else "s"
+    ))
   }
 
   invisible(NULL)
