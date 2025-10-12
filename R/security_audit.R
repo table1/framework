@@ -239,7 +239,17 @@ security_audit <- function(config_file = "config.yml",
     warning = function(w) FALSE
   )
 
-  git_check && file.exists(".git")
+  # Check if we're in a git repository using git rev-parse
+  in_git_repo <- tryCatch(
+    {
+      result <- system2("git", c("rev-parse", "--git-dir"), stdout = TRUE, stderr = FALSE)
+      length(result) > 0
+    },
+    error = function(e) FALSE,
+    warning = function(w) FALSE
+  )
+
+  git_check && in_git_repo
 }
 
 
@@ -738,11 +748,77 @@ security_audit <- function(config_file = "config.yml",
                    check$count))
   }
 
+  # Show detailed findings for issues
+  has_issues <- FALSE
+
+  if (nrow(result$findings$gitignore_issues) > 0) {
+    has_issues <- TRUE
+    message("\n--- Gitignore Coverage Issues ---")
+    for (i in seq_len(nrow(result$findings$gitignore_issues))) {
+      issue <- result$findings$gitignore_issues[i, ]
+      message(sprintf("  %d. [%s] %s",
+                     i,
+                     toupper(issue$severity),
+                     issue$file))
+      message(sprintf("     Directory: %s", issue$directory))
+      message(sprintf("     Reason: %s\n", issue$reason))
+    }
+  }
+
+  if (nrow(result$findings$private_data_exposure) > 0) {
+    has_issues <- TRUE
+    message("\n--- Private Data Exposure (Git Tracked) ---")
+    for (i in seq_len(nrow(result$findings$private_data_exposure))) {
+      issue <- result$findings$private_data_exposure[i, ]
+      message(sprintf("  %d. %s (tracked in git)",
+                     i,
+                     issue$file))
+      message(sprintf("     Directory: %s\n", issue$directory))
+    }
+  }
+
+  if (nrow(result$findings$git_history_issues) > 0) {
+    has_issues <- TRUE
+    message("\n--- Git History Leaks ---")
+    for (i in seq_len(min(10, nrow(result$findings$git_history_issues)))) {
+      issue <- result$findings$git_history_issues[i, ]
+      message(sprintf("  %d. %s (%s in commit %s)",
+                     i,
+                     issue$file,
+                     issue$action,
+                     issue$commit))
+      message(sprintf("     Date: %s\n", issue$date))
+    }
+    if (nrow(result$findings$git_history_issues) > 10) {
+      message(sprintf("     ... and %d more issues in git history\n",
+                     nrow(result$findings$git_history_issues) - 10))
+    }
+  }
+
+  if (nrow(result$findings$orphaned_files) > 0) {
+    has_issues <- TRUE
+    message("\n--- Orphaned Data Files ---")
+    for (i in seq_len(min(10, nrow(result$findings$orphaned_files)))) {
+      issue <- result$findings$orphaned_files[i, ]
+      size_kb <- round(issue$size / 1024, 1)
+      message(sprintf("  %d. %s (%s KB, .%s)",
+                     i,
+                     issue$path,
+                     size_kb,
+                     issue$extension))
+    }
+    if (nrow(result$findings$orphaned_files) > 10) {
+      message(sprintf("     ... and %d more orphaned files\n",
+                     nrow(result$findings$orphaned_files) - 10))
+    }
+    message("")
+  }
+
   # Show recommendations
   if (length(result$recommendations) > 0) {
     message("\n=== Recommendations ===\n")
-    for (rec in result$recommendations) {
-      message(paste0("  - ", rec))
+    for (i in seq_along(result$recommendations)) {
+      message(sprintf("  %d. %s", i, result$recommendations[i]))
     }
   }
 
@@ -753,8 +829,15 @@ security_audit <- function(config_file = "config.yml",
   message("")
   if (has_failures) {
     message("\u2717 AUDIT FAILED - Critical security issues found")
+    message("\nTo view detailed findings:")
+    message("  audit <- security_audit()")
+    message("  View(audit$findings$gitignore_issues)")
+    message("  View(audit$findings$private_data_exposure)")
   } else if (has_warnings) {
     message("\u26A0 AUDIT PASSED WITH WARNINGS - Review findings")
+    message("\nTo view detailed findings:")
+    message("  audit <- security_audit()")
+    message("  View(audit$findings$orphaned_files)")
   } else {
     message("\u2713 AUDIT PASSED - No security issues found")
   }
