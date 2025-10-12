@@ -65,6 +65,7 @@ renv/staging/
 # IDE specific files
 .idea
 .vscode
+.claude/settings.local.json
 
 # Config directories
 .history
