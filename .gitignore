@@ -23,6 +23,11 @@ results/private/**
 .Ruserdata
 .Rapp.history
 
+# R package build artifacts
+*.tar.gz
+*.Rcheck/
+.Rbuildignore
+
 # OS specific
 .DS_Store
 Thumbs.db
