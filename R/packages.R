@@ -66,16 +66,13 @@
     } else {
       spec$repo
     }
-    message("Installing ", spec$name, " from GitHub (", pkg_ref, ")...")
     renv::install(pkg_ref)
   } else {
     # Install from CRAN
     if (!is.null(spec$version)) {
       pkg_ref <- paste0(spec$name, "@", spec$version)
-      message("Installing ", spec$name, " version ", spec$version, "...")
       renv::install(pkg_ref)
     } else {
-      message("Installing ", spec$name, " from CRAN...")
       renv::install(spec$name)
     }
   }
@@ -147,11 +144,8 @@
   config <- read_config("config.yml")
 
   if (is.null(config$packages) || length(config$packages) == 0) {
-    message("No packages listed in config.yml")
     return(invisible(TRUE))
   }
-
-  message("Syncing ", length(config$packages), " package(s) from config.yml...")
 
   # Install each package via renv
   for (pkg_spec in config$packages) {
@@ -188,10 +182,7 @@
   }
 
   # Snapshot to renv.lock
-  message("Creating snapshot in renv.lock...")
   renv::snapshot(prompt = FALSE)
-
-  message(cli::col_green(cli::symbol$tick), " Packages synced successfully!")
 
   invisible(TRUE)
 }

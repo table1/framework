@@ -42,43 +42,52 @@ renv_enable <- function(sync = TRUE) {
     )
   }
 
-  # Initialize renv if not already initialized
-  if (!file.exists("renv.lock")) {
-    message("Initializing renv...")
-    renv::init(bare = TRUE, restart = FALSE)
-  } else {
-    message("renv already initialized, activating...")
-    renv::activate()
-  }
+  message("Setting up renv (this may take a moment)...")
 
-  # Create marker file with timestamp
-  writeLines(
-    paste("Enabled at:", Sys.time()),
-    ".framework_renv_enabled"
-  )
-
-  # Add renv directories to .gitignore if not already present
-  .update_gitignore_for_renv()
-
-  # Sync packages from config.yml if requested
-  if (sync && file.exists("config.yml")) {
-    # First ensure yaml package is available (needed to read config)
-    if (!requireNamespace("yaml", quietly = TRUE)) {
-      message("Installing yaml package (required for config reading)...")
-      renv::install("yaml")
+  # Suppress renv output during initialization (capture both stdout and stderr)
+  invisible(capture.output({
+    # Initialize renv if not already initialized
+    if (!file.exists("renv.lock")) {
+      # Suppress renv startup messages
+      suppressMessages(renv::init(bare = TRUE, restart = FALSE))
+    } else {
+      suppressMessages(renv::activate())
     }
 
-    message("Syncing packages from config.yml to renv...")
-    tryCatch(
-      .sync_packages_to_renv(),
-      error = function(e) {
+    # Create marker file with timestamp
+    writeLines(
+      paste("Enabled at:", Sys.time()),
+      ".framework_renv_enabled"
+    )
+
+    # Add renv directories to .gitignore if not already present
+    .update_gitignore_for_renv()
+
+    # Sync packages from config.yml if requested
+    pkg_count <- 0
+    if (sync && file.exists("config.yml")) {
+      # First ensure yaml package is available (needed to read config)
+      if (!requireNamespace("yaml", quietly = TRUE)) {
+        renv::install("yaml")
+      }
+
+      tryCatch({
+        config <- read_config("config.yml")
+        pkg_count <- length(config$packages)
+        .sync_packages_to_renv()
+      }, error = function(e) {
         warning("Could not sync packages from config.yml: ", e$message, "\n",
                 "You can manually sync later with: packages_snapshot()")
-      }
-    )
-  }
+      })
+    }
+  }))
 
-  message("\u2713 renv enabled")
+  # Show clean summary
+  if (pkg_count > 0) {
+    message("\u2713 renv enabled (", pkg_count, " packages installed)")
+  } else {
+    message("\u2713 renv enabled")
+  }
 
   invisible(TRUE)
 }
