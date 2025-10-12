@@ -4,6 +4,12 @@ default:
   # --------------------------------------------------------------------------
   project_type: course  # Type: project, course, or presentation
 
+  # Instructor information (used in course materials, notebooks, etc.)
+  author:
+    name: "Instructor Name"
+    email: "instructor@university.edu"
+    affiliation: "University Name"
+
   # --------------------------------------------------------------------------
   # Package Dependencies
   # --------------------------------------------------------------------------

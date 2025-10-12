@@ -4,6 +4,12 @@ default:
   # --------------------------------------------------------------------------
   project_type: presentation  # Type: project, course, or presentation
 
+  # Presenter information (used in slides, handouts, etc.)
+  author:
+    name: "Your Name"
+    email: "your.email@example.com"
+    affiliation: "Your Institution"
+
   # --------------------------------------------------------------------------
   # Package Dependencies
   # --------------------------------------------------------------------------

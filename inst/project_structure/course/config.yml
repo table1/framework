@@ -1,6 +1,12 @@
 default:
   project_type: course
 
+  # Instructor information (used in course materials, notebooks, etc.)
+  author:
+    name: "Instructor Name"
+    email: "instructor@university.edu"
+    affiliation: "University Name"
+
   # Core directories
   directories:
     notebooks: notebooks

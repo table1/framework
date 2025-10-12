@@ -1,6 +1,12 @@
 default:
   project_type: project
 
+  # Author information (used in notebooks, reports, etc.)
+  author:
+    name: "Your Name"
+    email: "your.email@example.com"
+    affiliation: "Your Institution"
+
   # Core directories (inline for discoverability)
   directories:
     notebooks: notebooks
