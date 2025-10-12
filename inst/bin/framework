@@ -36,11 +36,18 @@ case "$COMMAND" in
     Rscript --quiet --no-save --slave -e "cat('Framework version', as.character(packageVersion('framework')), '\n')"
     ;;
 
+  update)
+    # Update Framework package and CLI from GitHub
+    printf "${BLUE}Updating Framework and CLI from GitHub...${NC}\n\n"
+    R --quiet --no-save -e "framework::cli_update()"
+    ;;
+
   help|--help|-h)
     printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
     printf "${YELLOW}Usage:${NC}\n"
     printf "  framework new [name] [type]    Create new project\n"
     printf "  framework version              Show Framework package version\n"
+    printf "  framework update               Update Framework and CLI from GitHub\n"
     printf "  framework help                 Show this help\n\n"
     printf "${YELLOW}Examples:${NC}\n"
     printf "  framework new                  ${GREEN}# Interactive mode (prompts for options)${NC}\n"
