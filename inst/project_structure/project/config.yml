@@ -103,3 +103,17 @@ default:
   security:
     data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY", "")
     results_key: !expr Sys.getenv("RESULTS_ENCRYPTION_KEY", "")
+
+  # --------------------------------------------------------------------------
+  # AI Assistant Configuration
+  # --------------------------------------------------------------------------
+  ai:
+    canonical_file: ""
+
+  # --------------------------------------------------------------------------
+  # Git Hooks
+  # --------------------------------------------------------------------------
+  git:
+    hooks:
+      ai_sync: false
+      data_security: false
