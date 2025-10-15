@@ -141,6 +141,27 @@ run_settings_checkin() {
     echo "FW_AI_ASSISTANTS=\"$assistants\"" >> "$frameworkrc.tmp2"
     mv "$frameworkrc.tmp2" "$frameworkrc"
     rm -f "$frameworkrc.tmp"
+
+    # Ask about canonical AI file preference
+    printf "\n${YELLOW}Default Canonical AI File${NC}\n"
+    printf "Which AI file should be the default canonical source?\n"
+    printf "(You can override this per-project)\n"
+    printf "  1. AGENTS.md (recommended - supports most assistants)\n"
+    printf "  2. CLAUDE.md\n"
+    printf "  3. .github/copilot-instructions.md\n"
+    printf "Choice (1-3) [1]: "
+    read -r canonical_choice
+
+    case "$canonical_choice" in
+      2) canonical_default="CLAUDE.md" ;;
+      3) canonical_default=".github/copilot-instructions.md" ;;
+      *) canonical_default="AGENTS.md" ;;
+    esac
+
+    # Update frameworkrc with canonical default
+    grep -v "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+    echo "FW_AI_CANONICAL_DEFAULT=\"$canonical_default\"" >> "$frameworkrc.tmp"
+    mv "$frameworkrc.tmp" "$frameworkrc"
   fi
 
   printf "\n${GREEN}✓ Preferences saved!${NC}\n"
@@ -161,6 +182,7 @@ case "$COMMAND" in
       export FW_IDES=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
       export FW_AI_SUPPORT=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
       export FW_AI_ASSISTANTS=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+      export FW_AI_CANONICAL_DEFAULT=$(grep "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
     fi
 
     # Remove 'new' from arguments and check for --dev-mode
