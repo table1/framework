@@ -799,30 +799,33 @@ make_init <- function(output_file = "init.R") {
     return(invisible(NULL))
   }
 
-  # Update config.yml with hook settings
+  # Update config.yml with hook settings using simple gsub (platform-safe)
   config_path <- file.path(target_dir, "config.yml")
   if (file.exists(config_path)) {
     tryCatch({
       config_content <- readLines(config_path, warn = FALSE)
 
-      # Find and update ai_sync hook setting
-      ai_sync_line <- grep("^      ai_sync:", config_content)
-      if (length(ai_sync_line) > 0) {
-        config_content[ai_sync_line[1]] <- sprintf("      ai_sync: %s", tolower(ai_sync_enabled))
-      }
+      # Update ai_sync hook setting (matches any spacing/comments)
+      config_content <- gsub(
+        "^(\\s*ai_sync:\\s*)false(\\s*.*)?$",
+        sprintf("\\1%s\\2", tolower(ai_sync_enabled)),
+        config_content
+      )
 
-      # Find and update data_security hook setting
-      data_security_line <- grep("^      data_security:", config_content)
-      if (length(data_security_line) > 0) {
-        config_content[data_security_line[1]] <- sprintf("      data_security: %s", tolower(data_security_enabled))
-      }
+      # Update data_security hook setting
+      config_content <- gsub(
+        "^(\\s*data_security:\\s*)false(\\s*.*)?$",
+        sprintf("\\1%s\\2", tolower(data_security_enabled)),
+        config_content
+      )
 
-      # Find and update canonical_file setting
+      # Update canonical_file setting if provided
       if (nzchar(ai_canonical)) {
-        canonical_line <- grep("^    canonical_file:", config_content)
-        if (length(canonical_line) > 0) {
-          config_content[canonical_line[1]] <- sprintf("    canonical_file: \"%s\"", ai_canonical)
-        }
+        config_content <- gsub(
+          "^(\\s*canonical_file:\\s*)\"\"(\\s*.*)?$",
+          sprintf("\\1\"%s\"\\2", ai_canonical),
+          config_content
+        )
       }
 
       writeLines(config_content, config_path)

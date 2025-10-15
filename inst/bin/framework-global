@@ -228,8 +228,12 @@ case "$COMMAND" in
       [nN]|[nN][oO])
         R --quiet --no-save -e "framework::cli_update(upgrade_deps = FALSE)"
         ;;
-      *)
+      [yY]|[yY][eE][sS]|"")
         R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
+        ;;
+      *)
+        printf "${RED}Invalid input. Please enter 'y' or 'n'.${NC}\n"
+        exit 1
         ;;
     esac
 
