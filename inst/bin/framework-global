@@ -34,8 +34,133 @@ fi
 
 COMMAND="${1:-help}"
 
+# Function to check if settings are configured
+check_settings_configured() {
+  frameworkrc="$HOME/.frameworkrc"
+
+  # If frameworkrc doesn't exist, settings not configured
+  if [ ! -f "$frameworkrc" ]; then
+    return 1
+  fi
+
+  # Check for required settings
+  fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+  fw_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+
+  # If any required setting is missing, not configured
+  if [ -z "$fw_ides" ] || [ -z "$fw_ai" ]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Function to run settings check-in
+run_settings_checkin() {
+  printf "\n${BLUE}═══════════════════════════════════════════════${NC}\n"
+  printf "${BLUE}Framework Global Settings Check-in${NC}\n"
+  printf "${BLUE}═══════════════════════════════════════════════${NC}\n\n"
+  printf "We've improved Framework's functionality!\n"
+  printf "Let's configure your preferences so future projects are set up just right.\n\n"
+
+  frameworkrc="$HOME/.frameworkrc"
+
+  # Create frameworkrc if it doesn't exist
+  if [ ! -f "$frameworkrc" ]; then
+    touch "$frameworkrc"
+  fi
+
+  # Ask about IDE preferences
+  printf "${YELLOW}IDE Preferences${NC}\n"
+  printf "Which IDE/editor do you primarily use?\n"
+  printf "  1. RStudio\n"
+  printf "  2. VS Code / Positron\n"
+  printf "  3. Both\n"
+  printf "Choice (1-3): "
+  read -r ide_choice
+
+  case "$ide_choice" in
+    1) ides="rstudio" ;;
+    2) ides="vscode" ;;
+    3) ides="rstudio,vscode" ;;
+    *) ides="rstudio,vscode" ;;  # Default to both
+  esac
+
+  # Update frameworkrc
+  grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+  echo "FW_IDES=\"$ides\"" >> "$frameworkrc.tmp"
+  mv "$frameworkrc.tmp" "$frameworkrc"
+
+  printf "\n${YELLOW}AI Assistant Support${NC}\n"
+  printf "Do you want Framework to create instruction files for AI coding assistants?\n"
+  printf "These files help assistants understand Framework conventions.\n"
+  printf "Enable AI assistant support? (y/n) [y]: "
+  read -r ai_response
+
+  if [ "$ai_response" = "n" ] || [ "$ai_response" = "N" ]; then
+    # User doesn't want AI support
+    grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+    grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
+    echo "FW_AI_SUPPORT=\"never\"" >> "$frameworkrc.tmp2"
+    mv "$frameworkrc.tmp2" "$frameworkrc"
+    rm -f "$frameworkrc.tmp"
+  else
+    # Ask which assistants
+    printf "\nWhich AI assistants do you use?\n"
+    printf "  1. Claude Code\n"
+    printf "  2. GitHub Copilot\n"
+    printf "  3. AGENTS.md (cross-platform)\n"
+    printf "  4. All of the above\n"
+    printf "Enter numbers (e.g., 1,3 or 4 for all): "
+    read -r selection
+
+    # Parse selection
+    assistants=""
+    if [ "$selection" = "4" ]; then
+      assistants="claude,copilot,agents"
+    else
+      if echo "$selection" | grep -q "1"; then assistants="claude"; fi
+      if echo "$selection" | grep -q "2"; then
+        if [ -n "$assistants" ]; then assistants="$assistants,copilot"; else assistants="copilot"; fi
+      fi
+      if echo "$selection" | grep -q "3"; then
+        if [ -n "$assistants" ]; then assistants="$assistants,agents"; else assistants="agents"; fi
+      fi
+    fi
+
+    if [ -z "$assistants" ]; then
+      assistants="claude"  # Default to Claude if nothing selected
+    fi
+
+    # Update frameworkrc
+    grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+    grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
+    echo "FW_AI_SUPPORT=\"yes\"" >> "$frameworkrc.tmp2"
+    echo "FW_AI_ASSISTANTS=\"$assistants\"" >> "$frameworkrc.tmp2"
+    mv "$frameworkrc.tmp2" "$frameworkrc"
+    rm -f "$frameworkrc.tmp"
+  fi
+
+  printf "\n${GREEN}✓ Preferences saved!${NC}\n"
+  printf "Your settings will be used as defaults for new projects.\n\n"
+}
+
 case "$COMMAND" in
   new)
+    # Check if settings are configured
+    if ! check_settings_configured; then
+      printf "\n${YELLOW}Before we get started...${NC}\n\n"
+      run_settings_checkin
+    fi
+
+    # Export settings so R can see them
+    frameworkrc="$HOME/.frameworkrc"
+    if [ -f "$frameworkrc" ]; then
+      export FW_IDES=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+      export FW_AI_SUPPORT=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+      export FW_AI_ASSISTANTS=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+    fi
+
     # Remove 'new' from arguments and check for --dev-mode
     shift
 
@@ -70,6 +195,11 @@ case "$COMMAND" in
     ;;
 
   update|self-update)
+    # Check if settings are configured
+    if ! check_settings_configured; then
+      run_settings_checkin
+    fi
+
     # Update Framework package and CLI from GitHub
     printf "${BLUE}Updating Framework and CLI from GitHub...${NC}\n\n"
     printf "Update dependencies to latest versions? [Y/n]: "
