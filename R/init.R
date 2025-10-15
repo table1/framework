@@ -728,14 +728,8 @@ make_init <- function(output_file = "init.R") {
       }
     }
 
-    # Create initial commit
-    commit_status <- system('git commit -m "Project initialized."', ignore.stdout = TRUE, ignore.stderr = TRUE)
-
-    if (commit_status == 0) {
-      message("\u2713 Git repository initialized with initial commit")
-    } else {
-      message("\u2713 Git repository initialized (commit skipped - you may need to configure git user)")
-    }
+    # Initial commit is deferred to scaffold() so all initialization completes first
+    message("\u2713 Git repository initialized (commit will be created after first scaffold())")
   }, error = function(e) {
     message("Note: Could not initialize git repository. You can run 'git init' manually if needed.")
   })
