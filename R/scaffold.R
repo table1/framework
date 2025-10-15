@@ -343,11 +343,12 @@ scaffold <- function(config_file = "config.yml") {
     system("git rev-parse HEAD > /dev/null 2>&1") == 0
   }, error = function(e) FALSE, warning = function(w) FALSE)
 
-  # Only create commit if this is first scaffold (no commits yet) or if changes exist
+  # Only create commit if this is first scaffold (no commits yet)
   if (!has_commits) {
     # No commits yet - add and commit everything
     tryCatch({
-      system("git add . > /dev/null 2>&1")
+      # Add all files (including any created after init, like .github/)
+      system("git add -A > /dev/null 2>&1")
       commit_result <- system("git commit -m \"Project initialized.\" > /dev/null 2>&1")
       if (commit_result == 0) {
         message("\u2713 Initial commit created: Project initialized.")
