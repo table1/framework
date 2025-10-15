@@ -111,7 +111,7 @@ run_settings_checkin() {
     printf "\nWhich AI assistants do you use?\n"
     printf "  1. Claude Code\n"
     printf "  2. GitHub Copilot\n"
-    printf "  3. AGENTS.md (cross-platform)\n"
+    printf "  3. AGENTS.md (OpenAI Codex and others)\n"
     printf "  4. All of the above\n"
     printf "Enter numbers (e.g., 1,3 or 4 for all): "
     read -r selection
@@ -308,7 +308,7 @@ case "$COMMAND" in
             printf "\nWhich AI assistants do you use? (Select all that apply)\n"
             printf "  1. Claude Code (CLAUDE.md)\n"
             printf "  2. GitHub Copilot (.github/copilot-instructions.md)\n"
-            printf "  3. AGENTS.md (cross-platform, industry standard)\n"
+            printf "  3. AGENTS.md (OpenAI Codex and others)\n"
             printf "  4. All of the above\n\n"
             printf "Enter numbers (e.g., 1,3 or 4 for all): "
             read -r selection
