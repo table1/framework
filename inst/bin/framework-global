@@ -347,6 +347,48 @@ case "$COMMAND" in
         esac
         ;;
 
+  sync:ai-context)
+    # Sync AI assistant context files
+    R --quiet --no-save -e "library(framework); ai_sync_context()"
+    ;;
+
+  hooks:list)
+    # List git hook status
+    R --quiet --no-save -e "library(framework); hooks_list()"
+    ;;
+
+  hooks:install)
+    # Install git hooks
+    R --quiet --no-save -e "library(framework); hooks_install()"
+    ;;
+
+  hooks:uninstall)
+    # Uninstall git hooks
+    R --quiet --no-save -e "library(framework); hooks_uninstall()"
+    ;;
+
+  hooks:enable)
+    # Enable specific hook
+    HOOK_NAME="$2"
+    if [ -z "$HOOK_NAME" ]; then
+      printf "${RED}Error: Hook name required${NC}\n"
+      printf "Usage: framework hooks:enable <ai_sync|data_security>\n"
+      exit 1
+    fi
+    R --quiet --no-save -e "library(framework); hooks_enable('$HOOK_NAME')"
+    ;;
+
+  hooks:disable)
+    # Disable specific hook
+    HOOK_NAME="$2"
+    if [ -z "$HOOK_NAME" ]; then
+      printf "${RED}Error: Hook name required${NC}\n"
+      printf "Usage: framework hooks:disable <ai_sync|data_security>\n"
+      exit 1
+    fi
+    R --quiet --no-save -e "library(framework); hooks_disable('$HOOK_NAME')"
+    ;;
+
   help|--help|-h)
     printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
 
@@ -370,6 +412,14 @@ case "$COMMAND" in
     printf "${YELLOW}Configuration:${NC}\n"
     printf "  framework configure:ides                Configure IDE preferences\n"
     printf "  framework configure:ai-agents           Configure AI assistant support\n\n"
+
+    printf "${YELLOW}AI & Git Hooks:${NC}\n"
+    printf "  framework sync:ai-context               Sync AI assistant context files\n"
+    printf "  framework hooks:list                    Show git hook status\n"
+    printf "  framework hooks:install                 Install git hooks\n"
+    printf "  framework hooks:uninstall               Remove git hooks\n"
+    printf "  framework hooks:enable <name>           Enable specific hook\n"
+    printf "  framework hooks:disable <name>          Disable specific hook\n\n"
 
     printf "${YELLOW}Maintenance:${NC}\n"
     printf "  framework version                       Show Framework package version\n"

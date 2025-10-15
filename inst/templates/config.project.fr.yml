@@ -58,6 +58,26 @@ default:
   default_notebook_format: quarto
 
   # --------------------------------------------------------------------------
+  # AI Assistant Configuration
+  # --------------------------------------------------------------------------
+  # Which AI assistant instruction file is the canonical source
+  # Other files will be synced from this one when using git hooks
+  # --------------------------------------------------------------------------
+  ai:
+    canonical_file: ""  # Options: AGENTS.md, CLAUDE.md, .github/copilot-instructions.md
+
+  # --------------------------------------------------------------------------
+  # Git Hooks
+  # --------------------------------------------------------------------------
+  # Automated tasks to run on git commits
+  # Enable/disable with: framework hooks:enable <name>
+  # --------------------------------------------------------------------------
+  git:
+    hooks:
+      ai_sync: false          # Sync AI assistant files before commit
+      data_security: false    # Check for secrets/credentials before commit
+
+  # --------------------------------------------------------------------------
   # Data Catalog
   # --------------------------------------------------------------------------
   # Simple approach: Define data sources inline

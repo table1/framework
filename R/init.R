@@ -381,6 +381,11 @@ init <- function(
     .create_ai_instructions(assistants, target_dir, project_name)
   }
 
+  # Configure git hooks if enabled
+  if (use_git) {
+    .configure_git_hooks(target_dir)
+  }
+
   # Display next steps if from empty directory
   if (!from_template) {
     .display_next_steps(project_name, type, use_renv)
@@ -734,6 +739,85 @@ make_init <- function(output_file = "init.R") {
   }, error = function(e) {
     message("Note: Could not initialize git repository. You can run 'git init' manually if needed.")
   })
+
+  invisible(NULL)
+}
+
+
+#' Configure git hooks based on environment variables
+#' @keywords internal
+.configure_git_hooks <- function(target_dir = ".") {
+  # Read hook configuration from environment variables (set by new-project.sh)
+  hooks_enabled <- Sys.getenv("FW_HOOKS_ENABLED", "FALSE")
+  ai_sync_enabled <- Sys.getenv("FW_HOOK_AI_SYNC", "FALSE")
+  data_security_enabled <- Sys.getenv("FW_HOOK_DATA_SECURITY", "FALSE")
+  ai_canonical <- Sys.getenv("FW_AI_CANONICAL", "")
+
+  # Convert string booleans to logical
+  hooks_enabled <- toupper(hooks_enabled) == "TRUE"
+  ai_sync_enabled <- toupper(ai_sync_enabled) == "TRUE"
+  data_security_enabled <- toupper(data_security_enabled) == "TRUE"
+
+  if (!hooks_enabled) {
+    return(invisible(NULL))
+  }
+
+  # Update config.yml with hook settings
+  config_path <- file.path(target_dir, "config.yml")
+  if (file.exists(config_path)) {
+    tryCatch({
+      config_content <- readLines(config_path, warn = FALSE)
+
+      # Find and update ai_sync hook setting
+      ai_sync_line <- grep("^      ai_sync:", config_content)
+      if (length(ai_sync_line) > 0) {
+        config_content[ai_sync_line[1]] <- sprintf("      ai_sync: %s", tolower(ai_sync_enabled))
+      }
+
+      # Find and update data_security hook setting
+      data_security_line <- grep("^      data_security:", config_content)
+      if (length(data_security_line) > 0) {
+        config_content[data_security_line[1]] <- sprintf("      data_security: %s", tolower(data_security_enabled))
+      }
+
+      # Find and update canonical_file setting
+      if (nzchar(ai_canonical)) {
+        canonical_line <- grep("^    canonical_file:", config_content)
+        if (length(canonical_line) > 0) {
+          config_content[canonical_line[1]] <- sprintf("    canonical_file: \"%s\"", ai_canonical)
+        }
+      }
+
+      writeLines(config_content, config_path)
+    }, error = function(e) {
+      warning("Could not update config.yml with hook settings: ", e$message)
+    })
+  }
+
+  # Install hooks if any are enabled
+  if (ai_sync_enabled || data_security_enabled) {
+    tryCatch({
+      # Change to target directory for hooks_install
+      old_wd <- getwd()
+      on.exit(setwd(old_wd), add = TRUE)
+
+      if (!is.null(target_dir) && target_dir != ".") {
+        setwd(target_dir)
+      }
+
+      # Install hooks
+      hooks_install(config_file = "config.yml", force = TRUE, verbose = FALSE)
+
+      # Show message about what was installed
+      hooks_msg <- character()
+      if (ai_sync_enabled) hooks_msg <- c(hooks_msg, "AI context sync")
+      if (data_security_enabled) hooks_msg <- c(hooks_msg, "data security check")
+
+      message(sprintf("✓ Installed git hooks: %s", paste(hooks_msg, collapse = ", ")))
+    }, error = function(e) {
+      message("Note: Could not install git hooks. You can run 'framework hooks:install' later")
+    })
+  }
 
   invisible(NULL)
 }

@@ -43,6 +43,20 @@ default:
   # Default notebook format for make_notebook() (quarto or rmarkdown)
   default_notebook_format: quarto
 
+  # --------------------------------------------------------------------------
+  # AI Assistant Configuration
+  # --------------------------------------------------------------------------
+  ai:
+    canonical_file: ""  # Options: AGENTS.md, CLAUDE.md, .github/copilot-instructions.md
+
+  # --------------------------------------------------------------------------
+  # Git Hooks
+  # --------------------------------------------------------------------------
+  git:
+    hooks:
+      ai_sync: false
+      data_security: false
+
   # renv integration - show reproducibility message on first scaffold()
 
   # --------------------------------------------------------------------------
