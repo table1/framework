@@ -89,9 +89,129 @@ case "$COMMAND" in
     # Configure Framework settings
     SUBCOMMAND="${2}"
     case "$SUBCOMMAND" in
+      ides)
+        # Configure IDE preferences
+        frameworkrc="$HOME/.frameworkrc"
+
+        # Read current settings
+        fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+
+        # Show status
+        printf "\n${BLUE}Framework IDE Configuration${NC}\n"
+        printf "═══════════════════════════════════════════════\n\n"
+        if [ -n "$fw_ides" ]; then
+          printf "Current IDEs: $fw_ides\n\n"
+        else
+          printf "Current IDEs: not configured (defaults to both)\n\n"
+        fi
+
+        # Ask which IDEs
+        printf "Which IDEs/editors do you use?\n"
+        printf "  1. RStudio\n"
+        printf "  2. VS Code / Positron\n"
+        printf "  3. Both\n\n"
+        printf "Enter choice (1-3): "
+        read -r choice
+
+        case "$choice" in
+          1)
+            ides="rstudio"
+            ;;
+          2)
+            ides="vscode"
+            ;;
+          3)
+            ides="rstudio,vscode"
+            ;;
+          *)
+            printf "\n${RED}Invalid choice. Configuration unchanged.${NC}\n"
+            exit 1
+            ;;
+        esac
+
+        # Update frameworkrc
+        if [ -f "$frameworkrc" ]; then
+          # Remove existing line
+          grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp"
+          mv "$frameworkrc.tmp" "$frameworkrc"
+        fi
+
+        # Add new line
+        echo "FW_IDES=\"$ides\"" >> "$frameworkrc"
+
+        printf "\n${GREEN}✓ IDE preferences saved${NC}\n"
+        printf "  IDEs: $ides\n"
+        ;;
       ai-agents)
-        # Configure AI assistant support
-        R --quiet --no-save -e "framework::configure_ai_agents()"
+        # Configure AI assistant support (bash prompting, no R readline)
+        frameworkrc="$HOME/.frameworkrc"
+
+        # Read current settings
+        fw_support=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+        fw_assistants=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+
+        # Show status
+        printf "\n${BLUE}Framework AI Assistant Support Configuration${NC}\n"
+        printf "═══════════════════════════════════════════════\n\n"
+        if [ "$fw_support" = "never" ]; then
+          printf "Current status: disabled\n\n"
+        elif [ "$fw_support" = "yes" ]; then
+          printf "Current status: enabled (assistants: $fw_assistants)\n\n"
+        else
+          printf "Current status: not configured\n\n"
+        fi
+
+        # Ask what to do
+        printf "What would you like to do?\n"
+        printf "  1. Enable/change AI assistant support\n"
+        printf "  2. Disable AI assistant support\n"
+        printf "  3. Cancel\n\n"
+        printf "Enter choice (1-3): "
+        read -r choice
+
+        case "$choice" in
+          1)
+            # Enable/change
+            printf "\nWhich AI assistants do you use? (Select all that apply)\n"
+            printf "  1. Claude Code (CLAUDE.md)\n"
+            printf "  2. GitHub Copilot (.github/copilot-instructions.md)\n"
+            printf "  3. AGENTS.md (cross-platform, industry standard)\n"
+            printf "  4. All of the above\n\n"
+            printf "Enter numbers (e.g., 1,3 or 4 for all): "
+            read -r selection
+
+            # Parse selection and convert to comma-separated list
+            assistants=""
+            if [ "$selection" = "4" ]; then
+              assistants="claude,copilot,agents"
+            else
+              # Parse comma-separated numbers
+              if echo "$selection" | grep -q "1"; then assistants="claude"; fi
+              if echo "$selection" | grep -q "2"; then
+                if [ -n "$assistants" ]; then assistants="$assistants,copilot"; else assistants="copilot"; fi
+              fi
+              if echo "$selection" | grep -q "3"; then
+                if [ -n "$assistants" ]; then assistants="$assistants,agents"; else assistants="agents"; fi
+              fi
+            fi
+
+            if [ -z "$assistants" ]; then
+              printf "\n${RED}No assistants selected. Configuration unchanged.${NC}\n"
+              exit 1
+            fi
+
+            # Call R to update frameworkrc
+            R --quiet --no-save -e "framework::configure_ai_agents(support='yes', assistants=c($(echo $assistants | sed 's/,/\",\"/g' | sed 's/^/\"/' | sed 's/$/\"/'  )))"
+            ;;
+          2)
+            # Disable
+            R --quiet --no-save -e "framework::configure_ai_agents(support='never')"
+            ;;
+          *)
+            printf "\n${YELLOW}Cancelled. No changes made.${NC}\n"
+            exit 0
+            ;;
+        esac
         ;;
       *)
         printf "${RED}Unknown configure target: ${SUBCOMMAND}${NC}\n"
@@ -122,6 +242,7 @@ case "$COMMAND" in
     printf "  framework configure:directories         Configure project directories\n\n"
 
     printf "${YELLOW}Configuration:${NC}\n"
+    printf "  framework configure ides                Configure IDE preferences\n"
     printf "  framework configure ai-agents           Configure AI assistant support\n\n"
 
     printf "${YELLOW}Maintenance:${NC}\n"

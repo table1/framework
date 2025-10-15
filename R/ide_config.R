@@ -98,11 +98,27 @@
   checkmate::assert_string(target_dir, min.chars = 1)
   checkmate::assert_flag(python)
 
-  # Create VS Code workspace file
-  .create_vscode_workspace(project_name, target_dir, python)
+  # Check user's IDE preferences from ~/.frameworkrc
+  fw_ides <- Sys.getenv("FW_IDES", "")
 
-  # Create .vscode/settings.json
-  .create_vscode_settings(target_dir, python)
+  # If not configured, default to both (backward compatibility)
+  if (fw_ides == "") {
+    ides <- c("vscode", "rstudio")
+  } else {
+    ides <- strsplit(fw_ides, ",")[[1]]
+    ides <- trimws(ides)
+  }
+
+  # Create VS Code configs if selected
+  if ("vscode" %in% ides || "positron" %in% ides) {
+    suppressMessages({
+      .create_vscode_workspace(project_name, target_dir, python)
+      .create_vscode_settings(target_dir, python)
+    })
+  }
+
+  # Note: RStudio uses .Rproj file which is always created
+  # No additional RStudio-specific configs needed
 
   invisible(TRUE)
 }

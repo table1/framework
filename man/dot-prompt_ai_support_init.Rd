@@ -2,11 +2,12 @@
 % Please edit documentation in R/configure_ai.R
 \name{.prompt_ai_support_init}
 \alias{.prompt_ai_support_init}
-\title{Prompt for AI Support During Project Init}
+\title{Get AI Support Preferences (Non-interactive)}
 \usage{
 .prompt_ai_support_init()
 }
 \description{
-Called during init() to ask about AI instructions for this project.
+Called during init() to check if AI instructions should be created.
+NO prompting - just returns saved preferences.
 }
 \keyword{internal}

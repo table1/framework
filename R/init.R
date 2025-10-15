@@ -365,14 +365,14 @@ init <- function(
   }
 
   # Delete init.R after successful initialization
-  .delete_init_file(subdir)
+  suppressMessages(.delete_init_file(subdir))
 
   # Clean up .gitkeep files from data/ and functions/
-  .cleanup_gitkeep_files(target_dir)
+  suppressMessages(.cleanup_gitkeep_files(target_dir))
 
   # Initialize git AFTER archiving so all files are in final state
   if (use_git) {
-    .init_git_repo(target_dir)
+    suppressMessages(.init_git_repo(target_dir))
   }
 
   # Prompt for AI assistant support (if enabled by user)

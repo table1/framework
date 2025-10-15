@@ -2,11 +2,17 @@
 % Please edit documentation in R/configure_ai.R
 \name{.prompt_ai_support_install}
 \alias{.prompt_ai_support_install}
-\title{Prompt for AI Support During CLI Install}
+\title{Set AI Support Preferences (Non-interactive)}
 \usage{
-.prompt_ai_support_install()
+.prompt_ai_support_install(support = "never", assistants = character(0))
+}
+\arguments{
+\item{support}{"yes" or "never"}
+
+\item{assistants}{Character vector like c("claude", "copilot")}
 }
 \description{
-Called during cli_install() to set initial AI preferences.
+Called from bash CLI to set AI preferences.
+NO prompting - bash handles all user interaction.
 }
 \keyword{internal}

@@ -4,23 +4,18 @@
 \alias{configure_ai_agents}
 \title{Configure AI Assistant Support}
 \usage{
-configure_ai_agents()
+configure_ai_agents(support = NULL, assistants = NULL)
+}
+\arguments{
+\item{support}{"yes", "never", or NULL (show current status)}
+
+\item{assistants}{Character vector of assistants: "claude", "copilot", "agents"}
 }
 \description{
-Interactive function to configure which AI coding assistants Framework
-should create instruction files for. Updates preferences in \verb{~/.frameworkrc}.
+Non-interactive function to configure AI assistant support.
+Should be called from bash CLI with parameters, not directly from R.
 }
 \details{
-This function allows you to:
-\itemize{
-\item Enable or disable AI assistant support
-\item Choose which assistants to create files for (Claude Code, GitHub Copilot, AGENTS.md)
-\item Change your default preferences at any time
-}
-
-Your preferences are stored in \verb{~/.frameworkrc} and will be used as defaults
-when creating new Framework projects.
-
 Supported AI assistants:
 \itemize{
 \item \strong{Claude Code}: Creates \code{CLAUDE.md} in project root
@@ -30,7 +25,13 @@ Supported AI assistants:
 }
 \examples{
 \dontrun{
-# Interactively configure AI assistant support
+# Enable AI support with Claude and Copilot
+configure_ai_agents(support = "yes", assistants = c("claude", "copilot"))
+
+# Disable AI support
+configure_ai_agents(support = "never")
+
+# Show current status
 configure_ai_agents()
 }
 
