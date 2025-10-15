@@ -328,6 +328,8 @@ scaffold <- function(config_file = "config.yml") {
 
 #' Create initial commit after first successful scaffold
 #' @keywords internal
+#' @note This function is now deprecated. Initial commits are created during init()
+#'   instead of scaffold(). Kept for backward compatibility with older projects.
 .commit_after_scaffold <- function() {
   # Check if git is available and we're in a repo
   git_available <- tryCatch({
@@ -344,6 +346,7 @@ scaffold <- function(config_file = "config.yml") {
   }, error = function(e) FALSE, warning = function(w) FALSE)
 
   # Only create commit if this is first scaffold (no commits yet)
+  # This handles the case where older projects initialized before init() created commits
   if (!has_commits) {
     # No commits yet - add and commit everything
     tryCatch({
@@ -351,7 +354,7 @@ scaffold <- function(config_file = "config.yml") {
       system("git add -A > /dev/null 2>&1")
       commit_result <- system("git commit -m \"Project initialized.\" > /dev/null 2>&1")
       if (commit_result == 0) {
-        message("\u2713 Initial commit created: Project initialized.")
+        message("\u2713 Initial commit created")
       }
     }, error = function(e) {
       # Silent failure - user may not have git configured

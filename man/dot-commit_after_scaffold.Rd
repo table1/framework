@@ -9,4 +9,8 @@
 \description{
 Create initial commit after first successful scaffold
 }
+\note{
+This function is now deprecated. Initial commits are created during init()
+instead of scaffold(). Kept for backward compatibility with older projects.
+}
 \keyword{internal}

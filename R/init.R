@@ -386,6 +386,11 @@ init <- function(
     .configure_git_hooks(target_dir)
   }
 
+  # Create initial commit after all initialization is complete
+  if (use_git) {
+    .create_initial_commit(target_dir)
+  }
+
   # Display next steps if from empty directory
   if (!from_template) {
     .display_next_steps(project_name, type, use_renv)
@@ -728,8 +733,7 @@ make_init <- function(output_file = "init.R") {
       }
     }
 
-    # Initial commit is deferred to scaffold() so all initialization completes first
-    message("\u2713 Git repository initialized (commit will be created after first scaffold())")
+    message("\u2713 Git repository initialized")
   }, error = function(e) {
     message("Note: Could not initialize git repository. You can run 'git init' manually if needed.")
   })
@@ -737,6 +741,45 @@ make_init <- function(output_file = "init.R") {
   invisible(NULL)
 }
 
+#' Create initial git commit after all initialization is complete
+#' @keywords internal
+.create_initial_commit <- function(target_dir = ".") {
+  # Change to target directory
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+
+  if (!is.null(target_dir) && target_dir != ".") {
+    setwd(target_dir)
+  }
+
+  # Check if we're in a git repo
+  git_check <- system("git rev-parse --git-dir", ignore.stdout = TRUE, ignore.stderr = TRUE)
+  if (git_check != 0) {
+    return(invisible(NULL))
+  }
+
+  # Check if there are any commits yet
+  has_commits <- system("git rev-parse HEAD", ignore.stdout = TRUE, ignore.stderr = TRUE) == 0
+
+  if (!has_commits) {
+    # No commits yet - add all files (including any created after init, like .github/)
+    system("git add -A", ignore.stdout = TRUE, ignore.stderr = TRUE)
+
+    # Create commit
+    commit_result <- system("git commit -m \"Project initialized.\"", ignore.stdout = TRUE, ignore.stderr = TRUE)
+
+    if (commit_result == 0) {
+      message("\u2713 Initial commit created")
+    } else {
+      # Commit failed - may need git user config
+      message("Note: Could not create initial commit. Configure git user with:")
+      message("  git config user.name \"Your Name\"")
+      message("  git config user.email \"your.email@example.com\"")
+    }
+  }
+
+  invisible(NULL)
+}
 
 #' Configure git hooks based on environment variables
 #' @keywords internal
