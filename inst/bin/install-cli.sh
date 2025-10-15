@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Framework CLI Installer
 #
-# This script installs the Framework R package and CLI tool in one command.
+# This script installs the Framework R package and CLI tool with hybrid routing.
+#
+# Installs:
+#   - Global shim: ~/.local/bin/framework (searches for local bin/framework)
+#   - Global implementation: ~/.local/bin/framework-global (fallback handler)
+#
 # Usage: curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
 
 set -e
@@ -13,10 +18,9 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 BIN_DIR="$HOME/.local/bin"
-CLI_NAME="framework"
 
 printf "${BLUE}════════════════════════════════════════════════════${NC}\n"
-printf "${BLUE}  Framework Installation${NC}\n"
+printf "${BLUE}  Framework CLI Installation${NC}\n"
 printf "${BLUE}════════════════════════════════════════════════════${NC}\n\n"
 
 # Check if R package is installed
@@ -41,26 +45,48 @@ else
   printf "${GREEN}Framework package already installed${NC}\n\n"
 fi
 
-CLI_SOURCE="$PACKAGE_DIR/bin/framework"
+# Verify source files exist
+SHIM_SOURCE="$PACKAGE_DIR/bin/framework-shim"
+GLOBAL_SOURCE="$PACKAGE_DIR/bin/framework-global"
 
-if [ ! -f "$CLI_SOURCE" ]; then
-  printf "${RED}Error: CLI script not found at $CLI_SOURCE${NC}\n"
+if [ ! -f "$SHIM_SOURCE" ]; then
+  printf "${RED}Error: Shim script not found at $SHIM_SOURCE${NC}\n"
+  exit 1
+fi
+
+if [ ! -f "$GLOBAL_SOURCE" ]; then
+  printf "${RED}Error: Global CLI script not found at $GLOBAL_SOURCE${NC}\n"
   exit 1
 fi
 
 # Create bin directory if it doesn't exist
 mkdir -p "$BIN_DIR"
 
-# Create symlink
-TARGET="$BIN_DIR/$CLI_NAME"
-if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
-  rm -f "$TARGET"
+# Install framework shim (the main entry point)
+SHIM_TARGET="$BIN_DIR/framework"
+if [ -L "$SHIM_TARGET" ] || [ -f "$SHIM_TARGET" ]; then
+  rm -f "$SHIM_TARGET"
 fi
+ln -s "$SHIM_SOURCE" "$SHIM_TARGET"
+chmod +x "$SHIM_TARGET"
 
-ln -s "$CLI_SOURCE" "$TARGET"
-chmod +x "$TARGET"
+printf "${GREEN}✓ Framework shim installed to $SHIM_TARGET${NC}\n"
 
-printf "${GREEN}✓ CLI installed to $TARGET${NC}\n\n"
+# Install framework-global (fallback implementation)
+GLOBAL_TARGET="$BIN_DIR/framework-global"
+if [ -L "$GLOBAL_TARGET" ] || [ -f "$GLOBAL_TARGET" ]; then
+  rm -f "$GLOBAL_TARGET"
+fi
+ln -s "$GLOBAL_SOURCE" "$GLOBAL_TARGET"
+chmod +x "$GLOBAL_TARGET"
+
+printf "${GREEN}✓ Framework global installed to $GLOBAL_TARGET${NC}\n\n"
+
+# Explain the hybrid pattern
+printf "${BLUE}Hybrid CLI Pattern:${NC}\n"
+printf "  • Inside projects: Uses project-local ${GREEN}bin/framework${NC}\n"
+printf "  • Outside projects: Uses global ${GREEN}framework-global${NC}\n"
+printf "  • Single command: ${GREEN}framework${NC} routes automatically\n\n"
 
 # Check if already in PATH
 if [[ ":$PATH:" == *":$BIN_DIR:"* ]]; then
@@ -77,49 +103,60 @@ SHELL_NAME=$(basename "$SHELL")
 case "$SHELL_NAME" in
   zsh)
     SHELL_CONFIG="$HOME/.zshrc"
-    EXPORT_LINE='export PATH="$HOME/.local/bin:$PATH"'
     ;;
   bash)
     SHELL_CONFIG="$HOME/.bashrc"
-    EXPORT_LINE='export PATH="$HOME/.local/bin:$PATH"'
     ;;
   fish)
     SHELL_CONFIG="$HOME/.config/fish/config.fish"
-    EXPORT_LINE='set -gx PATH $HOME/.local/bin $PATH'
     ;;
   *)
     SHELL_CONFIG="$HOME/.profile"
-    EXPORT_LINE='export PATH="$HOME/.local/bin:$PATH"'
     ;;
 esac
 
-# Check if already in config (exact match for .local/bin)
-if [ -f "$SHELL_CONFIG" ] && grep -qE '\.local/bin|/\.local/bin|\$HOME/\.local/bin' "$SHELL_CONFIG"; then
-  printf "${YELLOW}Note:${NC} ~/.local/bin is already in ${SHELL_CONFIG}\n"
-  printf "but is not active in this session.\n\n"
-  printf "To activate:\n"
-  printf "  1. Restart your terminal, or\n"
-  printf "  2. Run: ${BLUE}source ${SHELL_CONFIG}${NC}\n\n"
-  printf "Then try: ${BLUE}framework new myproject${NC}\n"
+# Check if PATH already includes .local/bin in shell config
+if [ -f "$SHELL_CONFIG" ] && grep -q "\.local/bin" "$SHELL_CONFIG"; then
+  printf "${GREEN}✓ PATH already configured in ${SHELL_CONFIG}${NC}\n"
+  printf "  (not active in this session)\n\n"
+  printf "${YELLOW}To activate now:${NC}\n"
+  printf "  ${BLUE}source ${SHELL_CONFIG}${NC}\n\n"
+  printf "Or restart your terminal, then try: ${BLUE}framework new myproject${NC}\n"
   exit 0
 fi
 
-# Offer to add
-printf "Add to ${SHELL_CONFIG}? [y/N]: "
+# First time setup
+printf "${YELLOW}Setup PATH automatically?${NC}\n"
+printf "  Framework needs ${BLUE}~/.local/bin${NC} in your PATH to work from anywhere.\n"
+printf "  This will add one line to ${BLUE}${SHELL_CONFIG}${NC}\n\n"
+printf "Add to PATH? [Y/n]: "
+
 read -r response </dev/tty
 
 case "$response" in
-  [yY][eE][sS]|[yY])
-    printf "\n# Added by Framework CLI installer\n%s\n" "$EXPORT_LINE" >> "$SHELL_CONFIG"
-    printf "\n${GREEN}✓ Added to ${SHELL_CONFIG}${NC}\n\n"
-    printf "To activate:\n"
-    printf "  1. Restart your terminal (recommended), or\n"
-    printf "  2. Run: ${BLUE}source ${SHELL_CONFIG}${NC}\n\n"
-    printf "Then try: ${BLUE}framework new myproject${NC}\n"
+  [nN][oO]|[nN])
+    printf "\n${YELLOW}Skipping PATH setup${NC}\n\n"
+    printf "To add manually later, add to ${BLUE}${SHELL_CONFIG}${NC}:\n"
+    if [ "$SHELL_NAME" = "fish" ]; then
+      printf "  ${BLUE}set -gx PATH \$HOME/.local/bin \$PATH${NC}\n\n"
+    else
+      printf "  ${BLUE}export PATH=\"\$HOME/.local/bin:\$PATH\"${NC}\n\n"
+    fi
+    printf "Then restart your terminal or run: ${BLUE}source ${SHELL_CONFIG}${NC}\n"
     ;;
   *)
-    printf "\nTo add manually, add this line to ${SHELL_CONFIG}:\n"
-    printf "  ${BLUE}%s${NC}\n\n" "$EXPORT_LINE"
-    printf "Then restart your terminal or run: ${BLUE}source ${SHELL_CONFIG}${NC}\n"
+    # Add PATH to shell config
+    if [ "$SHELL_NAME" = "fish" ]; then
+      printf "\n# Added by Framework CLI installer ($(date +%Y-%m-%d))\n" >> "$SHELL_CONFIG"
+      printf "set -gx PATH \$HOME/.local/bin \$PATH\n" >> "$SHELL_CONFIG"
+    else
+      printf "\n# Added by Framework CLI installer ($(date +%Y-%m-%d))\n" >> "$SHELL_CONFIG"
+      printf 'export PATH="$HOME/.local/bin:$PATH"\n' >> "$SHELL_CONFIG"
+    fi
+    printf "\n${GREEN}✓ Updated ${SHELL_CONFIG}${NC}\n\n"
+
+    printf "${YELLOW}To activate now:${NC}\n"
+    printf "  ${BLUE}source ${SHELL_CONFIG}${NC}\n\n"
+    printf "Or restart your terminal, then try: ${BLUE}framework new myproject${NC}\n"
     ;;
 esac

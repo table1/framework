@@ -2,20 +2,24 @@
 % Please edit documentation in R/framework_view.R
 \name{framework_view}
 \alias{framework_view}
-\title{Framework View function that opens a DataTable in the browser using DT package}
+\title{(Deprecated) Use view_create() instead}
 \usage{
 framework_view(x, title = NULL, max_rows = 5000)
 }
 \arguments{
-\item{x}{The data to view}
+\item{x}{The data to view (data.frame, plot, list, function, or other R object)}
 
-\item{title}{Optional title for the view}
+\item{title}{Optional title for the view. If NULL, uses the object name.}
 
-\item{max_rows}{Maximum number of rows to display for data frames (default: 1000)}
+\item{max_rows}{Maximum number of rows to display for data frames (default: 5000).
+Large data frames are automatically truncated with a warning.}
 }
 \value{
-Opens a browser window with the data in a DataTable
+Opens a browser window (called for side effects)
 }
 \description{
-Framework View function that opens a DataTable in the browser using DT package
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{framework_view()} was renamed to \code{view_create()} to follow the package's
+noun_verb naming convention for better discoverability and consistency.
 }

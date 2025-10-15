@@ -1,6 +1,6 @@
 ---
 title: "{filename}"
-author: !expr config$author$name
+author: "Your Name"
 date: "{date}"
 format:
   html:

@@ -9,7 +9,6 @@ init(
   type = NULL,
   project_structure = NULL,
   lintr = NULL,
-  styler = TRUE,
   use_renv = FALSE,
   use_git = TRUE,
   attach_defaults = TRUE,
@@ -32,8 +31,6 @@ Replaces deprecated project_structure parameter.}
 For backward compatibility: "default"/"minimal" map to "project"/"presentation".}
 
 \item{lintr}{The lintr style to use.}
-
-\item{styler}{The styler style to use.}
 
 \item{use_renv}{If TRUE, enables renv for package management. Default FALSE.}
 

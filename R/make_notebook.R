@@ -4,16 +4,22 @@
 #' from stub templates. Searches for user-provided stubs first (in `stubs/`
 #' directory), then falls back to framework defaults.
 #'
+#' **Convenient aliases**: Use [make_qmd()] or [make_rmd()] for explicit
+#' Quarto or RMarkdown notebook creation. Use [make_revealjs()] or
+#' [make_presentation()] for reveal.js presentations.
+#'
 #' @param name Character. The file name. Extension determines type:
 #'   - .qmd: Quarto notebook (default if no extension)
 #'   - .Rmd: RMarkdown notebook
 #'   - .R: R script
 #'   Examples: "1-init", "1-init.qmd", "analysis.Rmd", "script.R"
 #' @param type Character. File type: "quarto", "rmarkdown", or "script".
-#'   Auto-detected from extension if provided. If not specified and no extension
-#'   in name, reads from config `options$default_notebook_format` (defaults to "quarto").
+#'   Auto-detected from extension if provided. If NULL (default):
+#'   1. Checks config `default_notebook_format` (or legacy `options$default_notebook_format`)
+#'   2. Falls back to "quarto" (Framework is Quarto-first)
 #' @param dir Character. Directory to create the file in. Reads from
-#'   config `options$notebook_dir`, defaults to "work/" or current directory.
+#'   config `directories$notebooks` (or legacy `options$notebook_dir`), defaults
+#'   to "notebooks/", "work/", or current directory.
 #' @param stub Character. Name of the stub template to use. Defaults to
 #'   "default". User can create custom stubs in `stubs/notebook-{stub}.qmd`,
 #'   `stubs/notebook-{stub}.Rmd`, or `stubs/script-{stub}.R`.
@@ -50,28 +56,38 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Create work/1-init.qmd from default stub
+#' # Create notebooks/1-init.qmd (defaults to Quarto)
 #' make_notebook("1-init")
 #'
-#' # Create work/analysis.Rmd (RMarkdown)
+#' # Create notebooks/analysis.Rmd (RMarkdown, extension-based)
 #' make_notebook("analysis.Rmd")
 #'
+#' # Explicit type parameter
+#' make_notebook("report", type = "rmarkdown")
+#'
 #' # Use custom stub template
-#' make_notebook("report", stub = "analysis")
+#' make_notebook("report", stub = "minimal")
 #'
 #' # Create in specific directory
-#' make_notebook("explore", dir = "notebooks")
+#' make_notebook("explore", dir = "work")
+#'
+#' # Convenient aliases (recommended for explicit types)
+#' make_qmd("analysis")       # Always creates .qmd
+#' make_rmd("report")         # Always creates .Rmd
+#' make_revealjs("slides")    # Creates reveal.js presentation
+#' make_presentation("deck")  # Alias for make_revealjs()
 #' }
 #'
+#' @seealso [make_qmd()], [make_rmd()], [make_revealjs()], [make_presentation()]
 #' @export
 make_notebook <- function(name,
-                          type = c("quarto", "rmarkdown", "script"),
+                          type = NULL,
                           dir = NULL,
                           stub = "default",
                           overwrite = FALSE) {
 
-  # Get default format from config if type not explicitly provided
-  if (missing(type)) {
+  # Determine type: explicit parameter > config setting > quarto default
+  if (is.null(type)) {
     cfg <- tryCatch(read_config(), error = function(e) NULL)
 
     # Check new location first, then old location (backward compat)
@@ -87,8 +103,11 @@ make_notebook <- function(name,
     if (!is.null(default_format)) {
       type <- match.arg(default_format, c("quarto", "rmarkdown", "script"))
     } else {
-      type <- "quarto"  # Fallback to quarto if config not available
+      type <- "quarto"  # Default to Quarto (Framework is Quarto-first)
     }
+  } else {
+    # Validate explicit type
+    type <- match.arg(type, c("quarto", "rmarkdown", "script"))
   }
 
   # Normalize extension and detect type
@@ -444,4 +463,120 @@ list_stubs <- function(type = NULL) {
   }
 
   "."
+}
+
+
+#' Create a Quarto Notebook
+#'
+#' Convenient alias for `make_notebook(type = "quarto")`. Creates a .qmd file
+#' from stub templates.
+#'
+#' @param name Character. The file name (with or without .qmd extension)
+#' @param dir Character. Directory to create the file in. Reads from
+#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param stub Character. Name of the stub template to use. Default "default".
+#' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#'
+#' @return Invisible path to created notebook
+#'
+#' @examples
+#' \dontrun{
+#' # Create notebooks/analysis.qmd
+#' make_qmd("analysis")
+#'
+#' # Use custom stub
+#' make_qmd("report", stub = "minimal")
+#'
+#' # Create in specific directory
+#' make_qmd("explore", dir = "work")
+#' }
+#'
+#' @seealso [make_notebook()], [make_rmd()]
+#' @export
+make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
+  make_notebook(name = name, type = "quarto", dir = dir, stub = stub, overwrite = overwrite)
+}
+
+
+#' Create an RMarkdown Notebook
+#'
+#' Convenient alias for `make_notebook(type = "rmarkdown")`. Creates a .Rmd file
+#' from stub templates.
+#'
+#' @param name Character. The file name (with or without .Rmd extension)
+#' @param dir Character. Directory to create the file in. Reads from
+#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param stub Character. Name of the stub template to use. Default "default".
+#' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#'
+#' @return Invisible path to created notebook
+#'
+#' @examples
+#' \dontrun{
+#' # Create notebooks/analysis.Rmd
+#' make_rmd("analysis")
+#'
+#' # Use custom stub
+#' make_rmd("report", stub = "minimal")
+#'
+#' # Create in specific directory
+#' make_rmd("explore", dir = "work")
+#' }
+#'
+#' @seealso [make_notebook()], [make_qmd()]
+#' @export
+make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
+  make_notebook(name = name, type = "rmarkdown", dir = dir, stub = stub, overwrite = overwrite)
+}
+
+
+#' Create a Reveal.js Presentation
+#'
+#' Convenient alias for creating reveal.js presentations. Always creates a Quarto
+#' notebook with the revealjs stub template.
+#'
+#' @param name Character. The presentation name (with or without .qmd extension)
+#' @param dir Character. Directory to create the file in. Reads from
+#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#'
+#' @return Invisible path to created presentation
+#'
+#' @examples
+#' \dontrun{
+#' # Create notebooks/slides.qmd with reveal.js format
+#' make_revealjs("slides")
+#'
+#' # Create in specific directory
+#' make_revealjs("presentation", dir = "presentations")
+#' }
+#'
+#' @seealso [make_notebook()], [make_qmd()], [make_presentation()]
+#' @export
+make_revealjs <- function(name, dir = NULL, overwrite = FALSE) {
+  make_notebook(name = name, type = "quarto", dir = dir, stub = "revealjs", overwrite = overwrite)
+}
+
+
+#' Create a Presentation
+#'
+#' Alias for [make_revealjs()]. Creates a Quarto reveal.js presentation.
+#'
+#' @param name Character. The presentation name (with or without .qmd extension)
+#' @param dir Character. Directory to create the file in. Reads from
+#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#'
+#' @return Invisible path to created presentation
+#'
+#' @examples
+#' \dontrun{
+#' # Create notebooks/deck.qmd with reveal.js format
+#' make_presentation("deck")
+#' }
+#'
+#' @seealso [make_notebook()], [make_revealjs()]
+#' @export
+make_presentation <- function(name, dir = NULL, overwrite = FALSE) {
+  make_revealjs(name = name, dir = dir, overwrite = overwrite)
 }

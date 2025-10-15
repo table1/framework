@@ -242,12 +242,31 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 #' Update data spec in the correct YAML file
 #'
 #' Traverses a dot-notated key like "final.public.test" and updates or inserts
-#' the given spec in the corresponding YAML file (either embedded or external).
+#' the given spec in the corresponding YAML file (either embedded in config.yml
+#' or in an external settings/data.yml file). Automatically handles nested paths
+#' and creates intermediate structures as needed.
 #'
-#' @param path Dot notation key (e.g., "final.public.test")
-#' @param spec A named list containing the data spec
+#' @param path Dot notation key (e.g., "final.public.test") indicating where
+#'   to place the spec in the configuration hierarchy
+#' @param spec A named list containing the data spec fields (path, type,
+#'   delimiter, locked, encrypted, etc.)
+#'
+#' @return Invisibly returns NULL. Function is called for its side effect of
+#'   updating the YAML configuration file.
+#'
+#' @examples
+#' \dontrun{
+#' # Update a spec in the config
+#' data_spec_update("final.public.test", list(
+#'   path = "data/public/test.csv",
+#'   type = "csv",
+#'   delimiter = "comma",
+#'   locked = TRUE
+#' ))
+#' }
+#'
 #' @export
-update_data_spec <- function(path, spec) {
+data_spec_update <- function(path, spec) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_list(spec)

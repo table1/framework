@@ -1,36 +1,37 @@
 # Framework
 
-A lightweight R package for structured, reproducible data analysis projects focusing on convention over configuration.
+An R package for structured, reproducible data analysis projects with a great user experience.
 
 **⚠️ Active Development:** APIs may change. Version 1 with a stable API coming soon.
 
 ## Quick Start
 
 **Preview:** During setup, you'll be asked to choose:
-- **Project type** - `project` (full-featured), `course` (teaching), or `presentation` (single talk)
-- **Notebook format** - Quarto `.qmd` (recommended) or RMarkdown `.Rmd`
-- **Package management** - Whether to renv for reproducibility or standard R packages
+- **Project type**: `project` (full-featured), `course` (teaching), or `presentation` (single talk)
+- **Notebook format**: Quarto `.qmd` (recommended) or RMarkdown `.Rmd`
+- **Git**: Whether to initialize a `git` repository
+- **Package management**: Whether to use renv for package management
 
-Not sure? The defaults work great. You can always change these later in `config.yml`.
+Not sure? Choose the defaults. You can always change these later in `config.yml`.
 
 ### Option 1: CLI Tool (Recommended)
 
-**One-command install:**
+Install the CLI:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
 ```
 
-This installs both the Framework R package and the CLI tool, and sets up your PATH.
+And get started:
 
-**Then create projects anywhere:**
 ```bash
+# Create projects
 framework new myproject
 framework new slides presentation
-framework new                      # Interactive mode
+framework new
 ```
 
-The CLI fetches and runs the latest template script from GitHub, so you're always creating projects with the current version.
+See [Command Line Interface](#command-line-interface) for full details.
 
 ### Option 2: One-Time Script (No CLI Installation)
 
@@ -55,12 +56,12 @@ cd my-project
 ```r
 framework::init(
   project_name = "MyProject",
-  type = "project",        # or "course" or "presentation"
+  type = "project",                                  # or "course" or "presentation"
   use_renv = FALSE,
   default_notebook_format = "quarto",
-  author_name = "Your Name",  # Optional
-  author_email = "email@example.com",  # Optional
-  author_affiliation = "Johns Hopkins University"  # Optional
+  author_name = "Your Name",                         # Allows auto-filling Notebook author (optional)
+  author_email = "email@example.com", 
+  author_affiliation = "Johns Hopkins University"  
 )
 
 # Then run your code from your IDE. Or save your changes and run:
@@ -69,37 +70,13 @@ source("init.R")
 
 ### Project Types
 
-- **project** (default): Full-featured with `notebooks/`, `scripts/`, `data/` (public/private splits), `results/`, `functions/`, `docs/`
-- **course**: For teaching with `presentations/`, `notebooks/`, `data/`, `functions/`, `docs/`
-- **presentation**: Minimal for single talks with `data/`, `functions/`, `results/`
+- **project** (default): Full-featured research projects with exploratory notebooks, production scripts, organized data management, and documentation
+- **course**: Teaching materials with presentations, student notebooks, and example data
+- **presentation**: Single talks or presentations with minimal overhead: just data, helper functions, and output
 
-**Not sure?** Use `type = "project"` - it's the most flexible.
+**Not sure?** Use `type = "project"`. You can always delete directories you don't need; you won't break anything.
 
-## What It Does
-
-Framework reduces boilerplate and enforces best practices for data analysis:
-
-- **Project scaffolding** - Standardized directories, config-driven setup
-- **Data management** - Declarative data catalog, integrity tracking, encryption
-- **Auto-loading** - Packages and custom functions loaded automatically
-- **Optional renv integration** - Reproducible package management (opt-in)
-- **Caching** - Smart caching for expensive computations
-- **Database helpers** - PostgreSQL, SQLite with credential management
-- **Results tracking** - Save/retrieve analysis outputs with blinding support
-- **Supported formats** - CSV, TSV, RDS, Stata (.dta), SPSS (.sav), SAS (.xpt, .sas7bdat)
-
-## What Gets Created
-
-When you run `init()`, Framework creates:
-
-- **Project structure** - Organized directories (varies by type)
-- **Configuration files** - `config.yml` and optional `settings/` files
-- **Git setup** - `.gitignore` configured to protect private data
-- **Tooling** - `.lintr`, `.styler.R`, `.editorconfig` for code quality
-- **Database** - `framework.db` for metadata tracking
-- **Environment** - `.env` template for secrets
-
-### Example: Project Type Structure
+**Example structure:**
 
 ```
 project/
@@ -118,6 +95,65 @@ project/
 └── .env                    # Secrets (gitignored)
 ```
 
+## Why Use Framework?
+
+Framework reduces boilerplate and enforces best practices for data analysis:
+
+- **Project scaffolding**: Standardized directories, config-driven setup
+- **Data management**: Declarative data catalog, integrity tracking, encryption (on roadmap)
+- **Auto-loading**: Load the packages you use in every file with one command; no more file juggling with your `library()` calls
+- **Pain-free `renv` integration**: Use `renv` for reproducible package management without having to fight `renv` or babysit it.
+- **Caching**: Smart caching for expensive computations
+- **Database helpers**: PostgreSQL, SQLite with credential management
+- **Supported file formats**: CSV, TSV, RDS, Stata (.dta), SPSS (.sav), SAS (.xpt, .sas7bdat)
+
+## What Gets Created
+
+When you run `init()`, Framework creates:
+
+- **Project structure**: Organized directories (varies by type)
+- **Configuration files**: `config.yml` and optional `settings/` files
+- **Git setup**: `.gitignore` configured to protect private data
+- **Tooling**: `.lintr`, `.editorconfig` for code quality
+- **Database**: `framework.db` for metadata tracking
+- **Environment**: `.env` template for secrets
+
+## Command Line Interface
+
+The Framework CLI provides a `framework` command that automatically adapts based on where you are:
+- **Outside projects**: Create new projects (`framework new`)
+- **Inside projects**: Project commands like `framework make:notebook`, `framework scaffold`
+
+### Installation
+
+**One-line install**:
+```bash
+curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
+```
+
+Or from R:
+```r
+framework::cli_install()
+```
+
+This installs the `framework` command and adds it to your PATH.
+
+### Project Commands
+
+Once inside a Framework project:
+
+```bash
+framework scaffold           # Load packages, install dependencies
+framework make:notebook analysis  # Create notebooks/analysis.qmd
+framework make:script process     # Create scripts/process.R
+```
+
+### Updating
+
+```bash
+framework update      # Update Framework package on your system
+```
+
 ## Core Workflow
 
 ### 1. Initialize Your Session
@@ -127,23 +163,60 @@ library(framework)
 scaffold()  # Loads packages, functions, config, standardizes working directory
 ```
 
+### 2. Load Data
+
+Use `data_load()` to read data with automatic integrity tracking. Every read is logged in the framework database with a SHA-256 hash, so you'll be notified if source data changes.
+
+**Configure in `config.yml`:**
+
+```yaml
+data:
+  source:
+    private:
+      survey:
+        path: data/source/private/survey.csv
+        type: csv
+        locked: true  # Errors if file changes
+```
+
+**Then load with dot notation:**
+
+```r
+df <- data_load("source.private.survey")
+```
+
+**Or point directly to a file:**
+
+You can still read files without having them in your configuration. This approach still provides data integrity tracking:
+
+```r
+df <- data_load("data/example.csv")       # Framework detects type
+df <- data_load("data/stata_file.dta")    # Stata
+df <- data_load("data/spss_file.sav")     # SPSS
+```
+
+### 3. Do your analysis
+
+Do your work.
+
 ### 2. Create Notebooks & Scripts
 
-Framework provides artisan-style commands for creating files from templates:
+Framework provides commands for creating files from templates:
 
 ```r
 # Create a Quarto notebook (default)
 make_notebook("1-exploration")  # → notebooks/1-exploration.qmd
 
-# Create an RMarkdown notebook
-make_notebook("analysis.Rmd")   # → notebooks/analysis.Rmd
+# Convenient aliases for explicit types
+make_qmd("analysis")            # → notebooks/analysis.qmd (always Quarto)
+make_rmd("report")              # → notebooks/report.Rmd (always RMarkdown)
 
-# Create an R script (two ways)
-make_notebook("process-data.R") # → scripts/process-data.R
-make_script("process-data")     # → scripts/process-data.R (convenience wrapper)
+# Create presentations
+make_revealjs("slides")         # → notebooks/slides.qmd (reveal.js presentation)
+make_presentation("deck")       # → notebooks/deck.qmd (alias for make_revealjs)
 
-# Create a reveal.js presentation
-make_notebook("results-presentation", stub = "revealjs")
+# Create an R script
+make_script("process-data")     # → scripts/process-data.R
 
 # List available stubs
 list_stubs()
@@ -155,6 +228,7 @@ list_stubs()
 - `revealjs` - Quarto presentation using reveal.js (Quarto only)
 
 **Custom stubs:** Create a `stubs/` directory in your project:
+
 ```
 stubs/
   notebook-analysis.qmd     # Custom notebook template
@@ -168,6 +242,7 @@ Stub templates support placeholders:
 - `{date}` - Current date (YYYY-MM-DD)
 
 **Configure default directories in config.yml:**
+
 ```yaml
 options:
   notebook_dir: "notebooks"  # Where make_notebook() creates notebook files
@@ -285,6 +360,28 @@ security:
   data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY")
 ```
 
+### AI Assistant Support
+
+Framework can create instruction files that help AI coding assistants understand your project structure:
+
+```r
+# During CLI install, you'll be asked once about AI support
+framework::cli_install()
+
+# Reconfigure AI assistant preferences anytime
+framework::configure_ai_agents()
+
+# Or via CLI
+framework configure ai-agents
+```
+
+Supported assistants:
+- **Claude Code** (CLAUDE.md)
+- **GitHub Copilot** (.github/copilot-instructions.md)
+- **AGENTS.md** (cross-platform standard)
+
+Your preferences are stored in `~/.frameworkrc` and used as defaults for new projects.
+
 ## Key Functions
 
 | Function | Purpose |
@@ -309,11 +406,11 @@ security:
 
 ## Data Integrity & Security
 
-- **Hash tracking** - All data files tracked with SHA-256 hashes
-- **Locked data** - Flag files as read-only, errors on modification
-- **Encryption** - AES encryption for sensitive data/results
-- **Gitignore by default** - Private directories auto-ignored
-- **Security audits** - Comprehensive security scanning with `security_audit()`
+- **Hash tracking**: All data files tracked with SHA-256 hashes
+- **Locked data**: Flag files as read-only, errors on modification
+- **Encryption**: AES encryption for sensitive data/results
+- **Gitignore by default**: Private directories auto-ignored
+- **Security audits**: Comprehensive security scanning with `security_audit()`
 
 ### Security Auditing
 
@@ -350,12 +447,12 @@ audit <- security_audit(history_depth = 100)
 
 === Recommendations ===
 
-  - CRITICAL: Private data files found in git history!
-  - Consider using git-filter-repo to remove sensitive data
-  - Found 3 data file(s) outside configured directories
-  - Move orphaned files to appropriate data directories
+ : CRITICAL: Private data files found in git history!
+ : Consider using git-filter-repo to remove sensitive data
+ : Found 3 data file(s) outside configured directories
+ : Move orphaned files to appropriate data directories
 
-✗ AUDIT FAILED - Critical security issues found
+✗ AUDIT FAILED: Critical security issues found
 ```
 
 **Results structure:**
@@ -392,7 +489,7 @@ Framework includes **optional** [renv](https://rstudio.github.io/renv/) integrat
 renv_enable()
 
 # That's it! Framework handles the rest automatically:
-# ✓ Installs framework, styler, rmarkdown, and your config.yml packages
+# ✓ Installs framework, rmarkdown, and your config.yml packages
 # ✓ Creates renv.lock with exact versions
 # ✓ Updates .gitignore to exclude renv cache
 ```
@@ -402,7 +499,6 @@ renv_enable()
 **When you enable renv:**
 1. Framework automatically installs essential packages:
    - `framework` (from GitHub: table1/framework)
-   - `styler` (if you enabled it during init, default: TRUE)
    - `rmarkdown` (needed by Quarto for R code chunks)
    - All packages listed in `config.yml`
 
@@ -462,18 +558,12 @@ packages:
 
 When you run `renv_enable()` or `packages_snapshot()`, Framework installs these exact versions and records them in `renv.lock`.
 
-### Why Framework's renv is Different
-
-Unlike vanilla renv, Framework's integration:
-- **Automatically handles framework itself** (installs from GitHub)
-- **No "out of sync" warnings** - styler and rmarkdown handled automatically
-- **Zero configuration** - just enable and go
-- **Works with config.yml** - packages defined in one place
-- **Clean, quiet output** - no overwhelming install logs
+Package management should come almost for free, so Framework aims to handle all the messy details of `renv` so you can focus on your work.
 
 See [renv integration docs](docs/features/renv_integration.md) for advanced usage.
 
 ## Roadmap
 
-- Excel file support
-- Quarto codebook generation
+- **Better database support**: Support DuckDB, MySQL, SQL Server, and other Postgres-like databases.
+- **Results tracking**: Save/retrieve analysis outputs with blinding support
+- **Results publishing]**: Configure an S3 bucket and publish your notebooks with ease.

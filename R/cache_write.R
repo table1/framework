@@ -10,10 +10,14 @@
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
-  # Get config
-  config <- read_config()
-  cache_dir <- config$options$data$cache_dir
-  default_expire <- config$options$data$cache_default_expire
+  # Get cache directory from config
+  cache_dir <- config("cache")
+  if (is.null(cache_dir)) {
+    stop("Cache directory not configured. Add 'directories: cache: data/cached' to config.yml")
+  }
+
+  config_obj <- read_config()
+  default_expire <- config_obj$options$data$cache_default_expire
 
   # Determine cache file path
   cache_file <- if (is.null(file)) {
@@ -24,12 +28,14 @@
 
   # Create cache directory if it doesn't exist
   cache_dir <- dirname(cache_file)
-  tryCatch(
-    dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE),
-    error = function(e) {
+  if (!dir.exists(cache_dir)) {
+    tryCatch({
+      dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+      message(sprintf("Created cache directory: %s", cache_dir))
+    }, error = function(e) {
       stop(sprintf("Failed to create cache directory: %s", e$message))
-    }
-  )
+    })
+  }
 
   # Save value to RDS file
   tryCatch(

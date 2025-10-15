@@ -1,5 +1,8 @@
 default:
-  project_type: course
+  # --------------------------------------------------------------------------
+  # Project Metadata
+  # --------------------------------------------------------------------------
+  project_type: course  # Type: project, course, or presentation
 
   # Instructor information (used in course materials, notebooks, etc.)
   author:
@@ -7,20 +10,68 @@ default:
     email: "instructor@university.edu"
     affiliation: "University Name"
 
-  # Core directories
+  # --------------------------------------------------------------------------
+  # Package Dependencies
+  # --------------------------------------------------------------------------
+  # Packages for teaching and course materials
+  # Use auto_attach: true to load automatically, false to install only
+  # --------------------------------------------------------------------------
+  packages:
+    - name: dplyr
+      auto_attach: true
+    - name: ggplot2
+      auto_attach: true
+    - name: quarto
+      auto_attach: false
+    - name: knitr
+      auto_attach: false
+    - name: rmarkdown
+      auto_attach: false
+
+  # --------------------------------------------------------------------------
+  # Project Directories
+  # --------------------------------------------------------------------------
   directories:
-    notebooks: notebooks
-    presentations: presentations
-    functions: functions
-    cache: data/cached
+    notebooks: notebooks              # Where make_notebook() creates files
+    scripts: scripts                  # Where make_script() creates files
+    presentations: presentations      # Where presentation stubs go
+    functions: functions              # Helper functions directory
+    cache: data/cached                # Cached computation results
 
-  # Project behavior
-  default_notebook_format: quarto  # quarto or rmarkdown
-  renv_nag: true
+  # --------------------------------------------------------------------------
+  # Project Behavior
+  # --------------------------------------------------------------------------
+  # Default notebook format for make_notebook() (quarto or rmarkdown)
+  default_notebook_format: quarto
 
-  # Domain-specific settings (split files for scalability)
-  data: settings/data.yml
-  packages: settings/packages.yml
-  connections: settings/connections.yml
-  git: settings/git.yml
-  security: settings/security.yml
+  # renv integration - show reproducibility message on first scaffold()
+
+  # --------------------------------------------------------------------------
+  # Data Catalog
+  # --------------------------------------------------------------------------
+  # For complex data catalogs, use split file: data: settings/data.yml
+  # --------------------------------------------------------------------------
+  data:
+    # Example: Uncomment and modify
+    # example:
+    #   path: data/example.csv
+    #   type: csv
+    #   locked: true
+
+  # --------------------------------------------------------------------------
+  # Database Connections
+  # --------------------------------------------------------------------------
+  # ⚠️ PRECEDENCE: Main config ALWAYS wins over split files
+  # --------------------------------------------------------------------------
+  connections:
+    # Example: Uncomment and modify
+    # db:
+    #   driver: postgresql
+    #   host: !expr Sys.getenv("DB_HOST")
+    #   database: !expr Sys.getenv("DB_NAME")
+    #   user: !expr Sys.getenv("DB_USER")
+    #   password: !expr Sys.getenv("DB_PASS")
+
+  # Security settings
+  security:
+    data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY", "")

@@ -1,7 +1,7 @@
 Package: framework
 Type: Package
 Title: A Framework for Data Management
-Version: 0.1.1
+Version: 0.1.16
 Authors@R: 
     person("Erik", "Westlund", , "ewestlund@jhu.edu", role = c("aut", "cre"))
 Maintainer: Erik Westlund <ewestlund@jhu.edu>
@@ -14,19 +14,17 @@ Imports:
     checkmate,
     DBI,
     RSQLite,
-    RPostgres,
     yaml,
-    digest,
     glue,
     fs,
     readr,
     dotenv,
-    haven
+    openssl,
+    lubridate
 Suggests:
     testthat (>= 3.0.0),
     cyclocomp,
     usethis,
-    styler,
     languageserver,
     devtools,
     sodium,
@@ -34,6 +32,9 @@ Suggests:
     DT,
     renv,
     remotes,
-    cli
+    cli,
+    RPostgres,
+    haven,
+    readxl
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)

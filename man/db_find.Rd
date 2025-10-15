@@ -2,7 +2,7 @@
 % Please edit documentation in R/queries.R
 \name{db_find}
 \alias{db_find}
-\title{Find a record by ID}
+\title{(Deprecated) Use connection_find() instead}
 \usage{
 db_find(conn, table_name, id, with_trashed = FALSE)
 }
@@ -11,13 +11,17 @@ db_find(conn, table_name, id, with_trashed = FALSE)
 
 \item{table_name}{Name of the table to query}
 
-\item{id}{The ID to look up}
+\item{id}{The ID to look up (integer or string)}
 
-\item{with_trashed}{Whether to include soft-deleted records (default: FALSE). Only applies if deleted_at column exists.}
+\item{with_trashed}{Whether to include soft-deleted records (default: FALSE).
+Only applies if deleted_at column exists in the table.}
 }
 \value{
-A data frame with the record, or empty if not found
+A data frame with the record
 }
 \description{
-Finds a single record in a table by its ID.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{db_find()} was renamed to \code{connection_find()} to follow the package's
+noun_verb naming convention for better discoverability and consistency.
 }

@@ -18,9 +18,11 @@ standardize_wd()                 # Normalize working directory for notebooks
 
 ### Notebook & Script Creation
 ```r
-make_notebook("1-init")          # Create notebooks/1-init.qmd
-make_notebook("analysis.Rmd")    # Create RMarkdown notebook
-make_notebook("slides", stub="revealjs")  # Use reveal.js stub
+make_notebook("1-init")          # Create notebooks/1-init.qmd (defaults to Quarto)
+make_qmd("analysis")             # Explicit Quarto notebook
+make_rmd("report")               # Explicit RMarkdown notebook
+make_revealjs("slides")          # Create reveal.js presentation
+make_presentation("deck")        # Alias for make_revealjs()
 make_script("process-data")      # Create scripts/process-data.R
 list_stubs()                     # Show available stubs
 stubs_publish()                  # Publish stubs for customization
@@ -78,6 +80,11 @@ affected <- query_execute("UPDATE ...", "mydb")      # Execute non-query
 ```r
 config <- read_config()          # Read config.yml or settings/*.yml
 write_config(config)             # Write config back
+```
+
+### AI Assistant Support
+```r
+configure_ai_agents()            # Configure AI assistant support
 ```
 
 ---
@@ -161,6 +168,7 @@ capture_output(expr)             # Capture console output
 | `cache_forget()` | Delete cached item |
 | `cache_get()` | Retrieve from cache |
 | `capture_output()` | Capture console output |
+| `configure_ai_agents()` | Configure AI assistant support |
 | `data_load()` | Load data (internal) |
 | `data_save()` | Save data (internal) |
 | `db_find()` | Find record by ID |
@@ -175,6 +183,10 @@ capture_output(expr)             # Capture console output
 | `load_data()` | Load from data catalog |
 | `load_data_or_cache()` | Load or compute |
 | `make_notebook()` | Create notebook from stub |
+| `make_presentation()` | Create presentation (reveal.js) |
+| `make_qmd()` | Create Quarto notebook |
+| `make_revealjs()` | Create reveal.js presentation |
+| `make_rmd()` | Create RMarkdown notebook |
 | `make_script()` | Create script from stub |
 | `now()` | Current timestamp |
 | `packages_restore()` | Restore package versions |

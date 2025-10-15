@@ -11,7 +11,7 @@ query_get <- function(query, connection_name, ...) {
   checkmate::assert_string(query, min.chars = 1)
   checkmate::assert_string(connection_name, min.chars = 1)
 
-  get_connection(connection_name) |>
+  connection_get(connection_name) |>
     (\(con) {
       on.exit(DBI::dbDisconnect(con))
       tryCatch(
@@ -36,7 +36,7 @@ query_execute <- function(query, connection_name, ...) {
   checkmate::assert_string(query, min.chars = 1)
   checkmate::assert_string(connection_name, min.chars = 1)
 
-  get_connection(connection_name) |>
+  connection_get(connection_name) |>
     (\(con) {
       on.exit(DBI::dbDisconnect(con))
       tryCatch(
@@ -50,14 +50,26 @@ query_execute <- function(query, connection_name, ...) {
 
 #' Find a record by ID
 #'
-#' Finds a single record in a table by its ID.
+#' Finds a single record in a table by its ID. Supports soft-delete patterns
+#' where records have a deleted_at column.
+#'
 #' @param conn Database connection
 #' @param table_name Name of the table to query
-#' @param id The ID to look up
-#' @param with_trashed Whether to include soft-deleted records (default: FALSE). Only applies if deleted_at column exists.
-#' @return A data frame with the record, or empty if not found
+#' @param id The ID to look up (integer or string)
+#' @param with_trashed Whether to include soft-deleted records (default: FALSE).
+#'   Only applies if deleted_at column exists in the table.
+#'
+#' @return A data frame with the record, or empty data frame if not found
+#'
+#' @examples
+#' \dontrun{
+#' conn <- connection_get("postgres")
+#' user <- connection_find(conn, "users", 42)
+#' DBI::dbDisconnect(conn)
+#' }
+#'
 #' @export
-db_find <- function(conn, table_name, id, with_trashed = FALSE) {
+connection_find <- function(conn, table_name, id, with_trashed = FALSE) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
   checkmate::assert_string(table_name, min.chars = 1)
@@ -92,5 +104,21 @@ db_find <- function(conn, table_name, id, with_trashed = FALSE) {
       stop(sprintf("Failed to query table '%s': %s", table_name, e$message))
     }
   )
+}
+
+
+#' @title (Deprecated) Use connection_find() instead
+#' @description `r lifecycle::badge("deprecated")`
+#'
+#' `db_find()` was renamed to `connection_find()` to follow the package's
+#' noun_verb naming convention for better discoverability and consistency.
+#'
+#' @inheritParams connection_find
+#' @return A data frame with the record
+#' @export
+db_find <- function(conn, table_name, id, with_trashed = FALSE) {
+  .Deprecated("connection_find", package = "framework",
+              msg = "db_find() is deprecated. Use connection_find() instead.")
+  connection_find(conn, table_name, id, with_trashed)
 }
 

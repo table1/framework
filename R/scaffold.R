@@ -62,6 +62,9 @@ scaffold <- function(config_file = "config.yml") {
     source("scaffold.R")
   }
 
+  # Create initial commit after first successful scaffold (if in git repo and no commits yet)
+  .commit_after_scaffold()
+
   # Check git status and provide helpful reminder
   .check_git_status()
 }
@@ -71,8 +74,9 @@ scaffold <- function(config_file = "config.yml") {
 .load_environment <- function() {
   config <- read_config()
 
-  if (!is.null(config$options$dotenv_location)) {
-    dotenv_path <- config$options$dotenv_location
+  # Only check root level dotenv_location (not nested in options)
+  if (!is.null(config$dotenv_location)) {
+    dotenv_path <- config$dotenv_location
 
     if (dir.exists(dotenv_path)) {
       dotenv_path <- file.path(dotenv_path, ".env")
@@ -84,7 +88,10 @@ scaffold <- function(config_file = "config.yml") {
 
     dotenv::load_dot_env(dotenv_path)
   } else {
-    dotenv::load_dot_env()
+    # Only load .env if it exists (optional for projects without secrets)
+    if (file.exists(".env")) {
+      dotenv::load_dot_env()
+    }
   }
 }
 
@@ -314,6 +321,41 @@ scaffold <- function(config_file = "config.yml") {
       n_changes,
       if (n_changes == 1) "" else "s"
     ))
+  }
+
+  invisible(NULL)
+}
+
+#' Create initial commit after first successful scaffold
+#' @keywords internal
+.commit_after_scaffold <- function() {
+  # Check if git is available and we're in a repo
+  git_available <- tryCatch({
+    system("git rev-parse --git-dir > /dev/null 2>&1") == 0
+  }, error = function(e) FALSE, warning = function(w) FALSE)
+
+  if (!git_available) {
+    return(invisible(NULL))
+  }
+
+  # Check if there are any commits yet
+  has_commits <- tryCatch({
+    system("git rev-parse HEAD > /dev/null 2>&1") == 0
+  }, error = function(e) FALSE, warning = function(w) FALSE)
+
+  # Only create commit if this is first scaffold (no commits yet) or if changes exist
+  if (!has_commits) {
+    # No commits yet - add and commit everything
+    tryCatch({
+      system("git add . > /dev/null 2>&1")
+      commit_result <- system("git commit -m \"Project initialized.\" > /dev/null 2>&1")
+      if (commit_result == 0) {
+        message("\u2713 Initial commit created: Project initialized.")
+      }
+    }, error = function(e) {
+      # Silent failure - user may not have git configured
+      invisible(NULL)
+    })
   }
 
   invisible(NULL)

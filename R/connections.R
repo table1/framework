@@ -1,10 +1,18 @@
 #' Get a database connection from config
 #'
 #' Gets a database connection based on the connection name in config.yml.
-#' @param name Name of the connection in config.yml (e.g. "postgres")
-#' @return A database connection object
+#'
+#' @param name Character. Name of the connection in config.yml (e.g., "postgres")
+#' @return A database connection object (DBIConnection)
+#'
+#' @examples
+#' \dontrun{
+#' conn <- connection_get("postgres")
+#' DBI::dbListTables(conn)
+#' }
+#'
 #' @export
-get_connection <- function(name) {
+connection_get <- function(name) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
 
@@ -37,4 +45,20 @@ get_connection <- function(name) {
       stop(sprintf("Failed to connect to '%s': %s", name, e$message))
     }
   )
+}
+
+
+#' @title (Deprecated) Use connection_get() instead
+#' @description `r lifecycle::badge("deprecated")`
+#'
+#' `get_connection()` was renamed to `connection_get()` to follow the package's
+#' noun_verb naming convention for better discoverability and consistency.
+#'
+#' @inheritParams connection_get
+#' @return A database connection object
+#' @export
+get_connection <- function(name) {
+  .Deprecated("connection_get", package = "framework",
+              msg = "get_connection() is deprecated. Use connection_get() instead.")
+  connection_get(name)
 }

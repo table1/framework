@@ -1,9 +1,12 @@
 #' Load data using dot notation path or direct file path
 #'
+#' Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
+#' and SAS (.sas7bdat, .xpt) file formats.
+#'
 #' @param path Dot notation path (e.g. "source.private.example") or direct file path
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
-#' @param ... Additional arguments passed to read functions (readr::read_delim, haven::read_*, etc.)
+#' @param ... Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)
 #' @export
 data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   # Validate arguments
@@ -23,6 +26,8 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
         txt = "tsv",  # Assume .txt files are tab-delimited
         dat = "tsv",  # Assume .dat files are tab-delimited
         rds = "rds",
+        xlsx = "excel",
+        xls = "excel",
         dta = "stata",
         sav = "spss",
         zsav = "spss",
@@ -39,12 +44,12 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   } else {
     # Try to get data specification from config
     spec <- tryCatch(
-      get_data_spec(path),
+      data_spec_get(path),
       error = function(e) {
         stop(sprintf("Path '%s' is not a valid file and failed to get data specification: %s", path, e$message))
       }
     )
-    
+
     if (is.null(spec)) {
       stop(sprintf("No data specification found for path: %s", path))
     }
@@ -141,12 +146,14 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
       tsv = "tab",
       txt = "tab", # Common for tab-delimited
       dat = "tab", # Common for tab-delimited
+      xlsx = NA,   # Excel files don't use delimiters
+      xls = NA,    # Excel files don't use delimiters
       NULL
     )
   }
 
-  # Determine delimiter
-  if (is.null(delim)) {
+  # Determine delimiter (only for delimited file types)
+  if (is.null(delim) && spec$type %in% c("csv", "tsv")) {
     # Use delimiter from spec if available, otherwise guess from extension
     if (is.null(spec$delimiter) || is.na(spec$delimiter)) {
       delim <- guess_delimiter_from_ext(spec$path)
@@ -212,6 +219,26 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
       }
     )
   } else {
+    # Helper to check for haven package
+    require_haven <- function(file_type) {
+      if (!requireNamespace("haven", quietly = TRUE)) {
+        stop(
+          sprintf("%s files require the haven package.\n", file_type),
+          "Install with: install.packages('haven')"
+        )
+      }
+    }
+
+    # Helper to check for readxl package
+    require_readxl <- function() {
+      if (!requireNamespace("readxl", quietly = TRUE)) {
+        stop(
+          "Excel files require the readxl package.\n",
+          "Install with: install.packages('readxl')"
+        )
+      }
+    }
+
     # Load data normally
     data <- tryCatch(
       switch(spec$type,
@@ -222,11 +249,30 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
           readr::read_delim(spec$path, show_col_types = FALSE, delim = "\t", ...)
         },
         rds = readRDS(spec$path),
-        stata = haven::read_dta(spec$path, ...),
-        spss = haven::read_sav(spec$path, ...),
-        spss_por = haven::read_por(spec$path, ...),
-        sas = haven::read_sas(spec$path, ...),
-        sas_xpt = haven::read_xpt(spec$path, ...),
+        excel = {
+          require_readxl()
+          readxl::read_excel(spec$path, ...)
+        },
+        stata = {
+          require_haven("Stata")
+          haven::read_dta(spec$path, ...)
+        },
+        spss = {
+          require_haven("SPSS")
+          haven::read_sav(spec$path, ...)
+        },
+        spss_por = {
+          require_haven("SPSS portable")
+          haven::read_por(spec$path, ...)
+        },
+        sas = {
+          require_haven("SAS")
+          haven::read_sas(spec$path, ...)
+        },
+        sas_xpt = {
+          require_haven("SAS transport")
+          haven::read_xpt(spec$path, ...)
+        },
         stop(sprintf("Unsupported file type: %s", spec$type))
       ),
       error = function(e) {
@@ -272,7 +318,7 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
   )
 
   cache_key <- sprintf("data.%s", path)
-  get_or_cache(cache_key,
+  cache_fetch(cache_key,
     {
       message(sprintf("Loading data from file: %s (cached as %s)", path, cache_key))
       load_data(path)
@@ -315,11 +361,35 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 
 #' Get data specification from config
 #'
-#' Gets the data specification for a given dot notation path
-#' @param path Dot notation path (e.g. "source.private.example")
-#' @return The data specification as a list
+#' Gets the data specification for a given dot notation path from config.yml.
+#' Supports dot notation (e.g., "source.private.example"), relative paths, and
+#' absolute paths. Auto-detects file type from extension and applies intelligent
+#' defaults for common formats.
+#'
+#' @param path Dot notation path (e.g. "source.private.example"), relative path,
+#'   or absolute path to a data file
+#'
+#' @return A list with data specification including:
+#'   \itemize{
+#'     \item \code{path} - Full file path
+#'     \item \code{type} - File type (csv, rds, stata, spss, sas, etc.)
+#'     \item \code{delimiter} - Delimiter for CSV files (comma, tab, etc.)
+#'     \item \code{locked} - Whether file is locked for integrity checking
+#'     \item \code{private} - Whether file is in private data directory
+#'     \item \code{encrypted} - Whether file is encrypted
+#'   }
+#'
+#' @examples
+#' \dontrun{
+#' # Get spec from dot notation
+#' spec <- data_spec_get("source.private.my_data")
+#'
+#' # Get spec from file path
+#' spec <- data_spec_get("data/public/example.csv")
+#' }
+#'
 #' @export
-get_data_spec <- function(path) {
+data_spec_get <- function(path) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
 
@@ -340,6 +410,11 @@ get_data_spec <- function(path) {
     # For CSV files
     if (grepl("\\.csv$", path, ignore.case = TRUE)) {
       return(list(type = "csv", delimiter = "comma"))
+    }
+
+    # Excel files
+    if (grepl("\\.(xlsx|xls)$", path, ignore.case = TRUE)) {
+      return(list(type = "excel", delimiter = NULL))
     }
 
     # Stata files

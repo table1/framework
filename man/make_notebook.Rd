@@ -6,7 +6,7 @@
 \usage{
 make_notebook(
   name,
-  type = c("quarto", "rmarkdown", "script"),
+  type = NULL,
   dir = NULL,
   stub = "default",
   overwrite = FALSE
@@ -22,11 +22,15 @@ Examples: "1-init", "1-init.qmd", "analysis.Rmd", "script.R"
 }}
 
 \item{type}{Character. File type: "quarto", "rmarkdown", or "script".
-Auto-detected from extension if provided. If not specified and no extension
-in name, reads from config \code{options$default_notebook_format} (defaults to "quarto").}
+Auto-detected from extension if provided. If NULL (default):
+\enumerate{
+\item Checks config \code{default_notebook_format} (or legacy \code{options$default_notebook_format})
+\item Falls back to "quarto" (Framework is Quarto-first)
+}}
 
 \item{dir}{Character. Directory to create the file in. Reads from
-config \code{options$notebook_dir}, defaults to "work/" or current directory.}
+config \code{directories$notebooks} (or legacy \code{options$notebook_dir}), defaults
+to "notebooks/", "work/", or current directory.}
 
 \item{stub}{Character. Name of the stub template to use. Defaults to
 "default". User can create custom stubs in \verb{stubs/notebook-\{stub\}.qmd},
@@ -43,6 +47,9 @@ from stub templates. Searches for user-provided stubs first (in \verb{stubs/}
 directory), then falls back to framework defaults.
 }
 \details{
+\strong{Convenient aliases}: Use \code{\link[=make_qmd]{make_qmd()}} or \code{\link[=make_rmd]{make_rmd()}} for explicit
+Quarto or RMarkdown notebook creation. Use \code{\link[=make_revealjs]{make_revealjs()}} or
+\code{\link[=make_presentation]{make_presentation()}} for reveal.js presentations.
 \subsection{Stub Template Resolution}{
 
 The function searches for stub templates in this order:
@@ -79,17 +86,29 @@ Templates can use placeholders:
 }
 \examples{
 \dontrun{
-# Create work/1-init.qmd from default stub
+# Create notebooks/1-init.qmd (defaults to Quarto)
 make_notebook("1-init")
 
-# Create work/analysis.Rmd (RMarkdown)
+# Create notebooks/analysis.Rmd (RMarkdown, extension-based)
 make_notebook("analysis.Rmd")
 
+# Explicit type parameter
+make_notebook("report", type = "rmarkdown")
+
 # Use custom stub template
-make_notebook("report", stub = "analysis")
+make_notebook("report", stub = "minimal")
 
 # Create in specific directory
-make_notebook("explore", dir = "notebooks")
+make_notebook("explore", dir = "work")
+
+# Convenient aliases (recommended for explicit types)
+make_qmd("analysis")       # Always creates .qmd
+make_rmd("report")         # Always creates .Rmd
+make_revealjs("slides")    # Creates reveal.js presentation
+make_presentation("deck")  # Alias for make_revealjs()
 }
 
+}
+\seealso{
+\code{\link[=make_qmd]{make_qmd()}}, \code{\link[=make_rmd]{make_rmd()}}, \code{\link[=make_revealjs]{make_revealjs()}}, \code{\link[=make_presentation]{make_presentation()}}
 }

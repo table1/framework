@@ -6,16 +6,18 @@ The `make_notebook()` function provides an artisan-like interface for creating n
 
 ```r
 # Create a Quarto notebook (default)
-make_notebook("1-init")  # Creates work/1-init.qmd
+make_notebook("1-init")  # Creates notebooks/1-init.qmd
 
-# Create an RMarkdown notebook
-make_notebook("analysis.Rmd")
+# Convenient aliases for explicit types
+make_qmd("analysis")     # Always creates .qmd (Quarto)
+make_rmd("report")       # Always creates .Rmd (RMarkdown)
+
+# Create presentations
+make_revealjs("slides")     # Creates reveal.js presentation
+make_presentation("deck")   # Alias for make_revealjs()
 
 # Create an R script
-make_notebook("process.R")
-
-# Create a revealjs presentation
-make_notebook("slides", stub = "revealjs")
+make_script("process")   # Creates scripts/process.R
 
 # List available stubs
 list_stubs()

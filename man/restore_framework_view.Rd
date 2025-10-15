@@ -2,13 +2,16 @@
 % Please edit documentation in R/framework_view.R
 \name{restore_framework_view}
 \alias{restore_framework_view}
-\title{Restore the original View function}
+\title{(Deprecated) Use view_restore() instead}
 \usage{
 restore_framework_view()
 }
 \value{
-Invisibly returns TRUE if successful
+Invisibly returns TRUE or FALSE
 }
 \description{
-This function will restore the original View function if it was overridden.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{restore_framework_view()} was renamed to \code{view_restore()} to follow the
+package's noun_verb naming convention for better discoverability and consistency.
 }

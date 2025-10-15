@@ -2,14 +2,16 @@
 % Please edit documentation in R/framework_view.R
 \name{use_framework_view}
 \alias{use_framework_view}
-\title{Override the default View function with the Framework View version}
+\title{(Deprecated) Use view_use() instead}
 \usage{
 use_framework_view()
 }
 \value{
-Invisibly returns TRUE if successful
+Invisibly returns TRUE
 }
 \description{
-This function will replace the default View function with our Framework View version.
-It should be called when loading the framework.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{use_framework_view()} was renamed to \code{view_use()} to follow the package's
+noun_verb naming convention for better discoverability and consistency.
 }

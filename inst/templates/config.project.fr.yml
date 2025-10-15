@@ -27,8 +27,8 @@ default:
       auto_attach: true
     - name: readr
       auto_attach: false
-    # Note: framework, styler, and rmarkdown are installed automatically
-    # when you enable renv based on your project configuration
+    # Note: framework and rmarkdown are installed automatically
+    # when you enable renv
 
   # --------------------------------------------------------------------------
   # Project Directories

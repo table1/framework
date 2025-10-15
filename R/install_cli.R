@@ -78,13 +78,21 @@ cli_install <- function(location = c("user", "system"), use_installer = TRUE) {
     }
   }
 
-  # Simple installation (no interactive prompts)
-  cli_script <- system.file("bin", "framework", package = "framework")
+  # Simple installation (no interactive prompts) - hybrid CLI pattern
+  shim_script <- system.file("bin", "framework-shim", package = "framework")
+  global_script <- system.file("bin", "framework-global", package = "framework")
 
-  if (!file.exists(cli_script)) {
+  if (!file.exists(shim_script)) {
     stop(
-      "CLI script not found. This may indicate a package installation issue.\n",
-      "Expected location: ", cli_script
+      "CLI shim script not found. This may indicate a package installation issue.\n",
+      "Expected location: ", shim_script
+    )
+  }
+
+  if (!file.exists(global_script)) {
+    stop(
+      "CLI global script not found. This may indicate a package installation issue.\n",
+      "Expected location: ", global_script
     )
   }
 
@@ -92,29 +100,35 @@ cli_install <- function(location = c("user", "system"), use_installer = TRUE) {
     # User installation to ~/.local/bin
     bin_dir <- path.expand("~/.local/bin")
     dir.create(bin_dir, showWarnings = FALSE, recursive = TRUE)
-    target <- file.path(bin_dir, "framework")
 
-    # Remove existing symlink/file
-    if (file.exists(target)) {
-      file.remove(target)
+    # Install shim (main entry point)
+    shim_target <- file.path(bin_dir, "framework")
+    if (file.exists(shim_target)) {
+      file.remove(shim_target)
     }
+    file.symlink(shim_script, shim_target)
+    Sys.chmod(shim_target, "755")
 
-    # Create symlink
-    file.symlink(cli_script, target)
+    # Install global implementation
+    global_target <- file.path(bin_dir, "framework-global")
+    if (file.exists(global_target)) {
+      file.remove(global_target)
+    }
+    file.symlink(global_script, global_target)
+    Sys.chmod(global_target, "755")
 
-    # Make executable
-    Sys.chmod(target, "755")
-
-    message("\u2713 CLI installed to ", target, "\n")
+    message("\u2713 Framework CLI installed (hybrid pattern)\n")
+    message("  Shim: ", shim_target, "\n")
+    message("  Global: ", global_target, "\n")
 
     # Check if in PATH
     path_dirs <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
     in_path <- bin_dir %in% path_dirs
 
     if (in_path) {
-      message("\nCLI is ready to use!\n\nTry: framework new myproject")
+      message("\n\u2713 CLI is ready to use!\n\nTry: framework new myproject")
     } else {
-      # Detect shell and provide manual instructions
+      # Detect shell
       shell <- basename(Sys.getenv("SHELL"))
       shell_config <- switch(
         shell,
@@ -124,42 +138,110 @@ cli_install <- function(location = c("user", "system"), use_installer = TRUE) {
         "~/.profile"
       )
 
-      export_line <- if (shell == "fish") {
+      # PATH export line based on shell
+      path_line <- if (shell == "fish") {
         "set -gx PATH $HOME/.local/bin $PATH"
       } else {
         'export PATH="$HOME/.local/bin:$PATH"'
       }
 
+      # Check if PATH already configured in shell config
+      config_path <- path.expand(shell_config)
+
+      if (file.exists(config_path)) {
+        config_content <- readLines(config_path, warn = FALSE)
+        if (any(grepl("\\.local/bin", config_content))) {
+          message(
+            "\n\u2713 PATH already configured in ", shell_config, "\n",
+            "  (not active in this session)\n\n",
+            "To activate now:\n",
+            "  source ", shell_config, "\n\n",
+            "Or restart your terminal, then try: framework new myproject"
+          )
+
+          # Prompt for AI assistant support
+          ai_prefs <- .prompt_ai_support_install()
+          frameworkrc <- path.expand("~/.frameworkrc")
+          .update_frameworkrc(frameworkrc, ai_prefs$support, ai_prefs$assistants)
+
+          return(invisible(shim_target))
+        }
+      }
+
+      # Ask to add PATH
       message(
-        "\nTo use the CLI, add this line to ", shell_config, ":\n",
-        "  ", export_line, "\n\n",
-        "Then restart your terminal or run: source ", shell_config, "\n\n",
-        "Or reinstall with the shell installer:\n",
-        "  curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash"
+        "\nSetup PATH automatically?\n",
+        "  Framework needs ~/.local/bin in your PATH to work from anywhere.\n",
+        "  This will add one line to ", shell_config, "\n"
       )
+
+      response <- readline("Add to PATH? [Y/n]: ")
+
+      if (tolower(trimws(response)) %in% c("n", "no")) {
+        message(
+          "\nSkipping PATH setup\n\n",
+          "To add manually later, add to ", shell_config, ":\n",
+          "  ", path_line, "\n\n",
+          "Then restart your terminal or run: source ", shell_config
+        )
+      } else {
+        # Add PATH to shell config
+        timestamp <- format(Sys.Date(), "%Y-%m-%d")
+        new_lines <- c(
+          sprintf("\n# Added by Framework CLI installer (%s)", timestamp),
+          path_line
+        )
+
+        cat(new_lines, file = config_path, sep = "\n", append = TRUE)
+        message("\n\u2713 Updated ", shell_config, "\n")
+
+        message(
+          "\nTo activate now:\n",
+          "  source ", shell_config, "\n\n",
+          "Or restart your terminal, then try: framework new myproject"
+        )
+      }
+
+      # Prompt for AI assistant support
+      ai_prefs <- .prompt_ai_support_install()
+      frameworkrc <- path.expand("~/.frameworkrc")
+      .update_frameworkrc(frameworkrc, ai_prefs$support, ai_prefs$assistants)
     }
   } else {
     # System installation to /usr/local/bin
-    target <- "/usr/local/bin/framework"
+    shim_target <- "/usr/local/bin/framework"
+    global_target <- "/usr/local/bin/framework-global"
 
     # Remove existing if present
-    if (file.exists(target)) {
-      system(sprintf("sudo rm -f %s", shQuote(target)), ignore.stdout = TRUE)
+    if (file.exists(shim_target)) {
+      system(sprintf("sudo rm -f %s", shQuote(shim_target)), ignore.stdout = TRUE)
+    }
+    if (file.exists(global_target)) {
+      system(sprintf("sudo rm -f %s", shQuote(global_target)), ignore.stdout = TRUE)
     }
 
-    # Create symlink with sudo
-    cmd <- sprintf(
+    # Create symlinks with sudo
+    shim_cmd <- sprintf(
       "sudo ln -sf %s %s && sudo chmod 755 %s",
-      shQuote(cli_script),
-      target,
-      target
+      shQuote(shim_script),
+      shim_target,
+      shim_target
+    )
+    global_cmd <- sprintf(
+      "sudo ln -sf %s %s && sudo chmod 755 %s",
+      shQuote(global_script),
+      global_target,
+      global_target
     )
 
-    result <- system(cmd, ignore.stdout = TRUE)
+    shim_result <- system(shim_cmd, ignore.stdout = TRUE)
+    global_result <- system(global_cmd, ignore.stdout = TRUE)
 
-    if (result == 0) {
+    if (shim_result == 0 && global_result == 0) {
       message(
-        "\u2713 CLI installed to ", target, "\n\n",
+        "\u2713 Framework CLI installed system-wide (hybrid pattern)\n",
+        "  Shim: ", shim_target, "\n",
+        "  Global: ", global_target, "\n\n",
         "Try: framework new myproject"
       )
     } else {
@@ -167,13 +249,13 @@ cli_install <- function(location = c("user", "system"), use_installer = TRUE) {
     }
   }
 
-  invisible(target)
+  invisible(shim_target)
 }
 
 
 #' Uninstall Framework CLI Tool
 #'
-#' Removes the global `framework` command.
+#' Removes the global `framework` command and framework-global.
 #'
 #' @param location Installation location to remove: "user" or "system".
 #'   Must match the location used during installation.
@@ -192,28 +274,48 @@ cli_uninstall <- function(location = c("user", "system")) {
   location <- match.arg(location)
 
   if (location == "user") {
-    target <- path.expand("~/.local/bin/framework")
+    shim_target <- path.expand("~/.local/bin/framework")
+    global_target <- path.expand("~/.local/bin/framework-global")
   } else {
-    target <- "/usr/local/bin/framework"
+    shim_target <- "/usr/local/bin/framework"
+    global_target <- "/usr/local/bin/framework-global"
   }
 
-  if (!file.exists(target)) {
-    message("CLI not found at ", target)
-    return(invisible(FALSE))
-  }
+  removed <- FALSE
 
   if (location == "user") {
-    file.remove(target)
-    message("\u2713 CLI removed from ", target)
-  } else {
-    cmd <- sprintf("sudo rm -f %s", shQuote(target))
-    result <- system(cmd, ignore.stdout = TRUE)
-
-    if (result == 0) {
-      message("\u2713 CLI removed from ", target)
-    } else {
-      stop("Uninstallation failed. Check sudo permissions.")
+    if (file.exists(shim_target)) {
+      file.remove(shim_target)
+      message("\u2713 Removed ", shim_target)
+      removed <- TRUE
     }
+    if (file.exists(global_target)) {
+      file.remove(global_target)
+      message("\u2713 Removed ", global_target)
+      removed <- TRUE
+    }
+  } else {
+    if (file.exists(shim_target)) {
+      cmd <- sprintf("sudo rm -f %s", shQuote(shim_target))
+      result <- system(cmd, ignore.stdout = TRUE)
+      if (result == 0) {
+        message("\u2713 Removed ", shim_target)
+        removed <- TRUE
+      }
+    }
+    if (file.exists(global_target)) {
+      cmd <- sprintf("sudo rm -f %s", shQuote(global_target))
+      result <- system(cmd, ignore.stdout = TRUE)
+      if (result == 0) {
+        message("\u2713 Removed ", global_target)
+        removed <- TRUE
+      }
+    }
+  }
+
+  if (!removed) {
+    message("CLI not found at expected locations")
+    return(invisible(FALSE))
   }
 
   invisible(TRUE)

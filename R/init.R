@@ -1,6 +1,6 @@
 #' Create init.R from template
 #' @keywords internal
-.create_init_file <- function(project_name, type, lintr, styler, subdir = NULL) {
+.create_init_file <- function(project_name, type, lintr, subdir = NULL) {
   template_path <- system.file("templates/init.fr.R", package = "framework")
   if (!file.exists(template_path)) {
     stop("Template init.fr.R not found in package")
@@ -12,7 +12,6 @@
   content <- gsub("\\{\\{PROJECT_NAME\\}\\}", project_name, content)
   content <- gsub("\\{\\{PROJECT_TYPE\\}\\}", type, content)
   content <- gsub("\\{\\{LINTR\\}\\}", lintr, content)
-  content <- gsub("\\{\\{STYLER\\}\\}", styler, content)
 
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
   target_file <- file.path(target_dir, "init.R")
@@ -89,21 +88,6 @@
   message(sprintf("Created %s", target_file))
 }
 
-#' Create .env from template
-#' @keywords internal
-.create_env_file <- function(subdir = NULL) {
-  template_path <- system.file("templates/.env.fr", package = "framework")
-  if (!file.exists(template_path)) {
-    stop("Template .env.fr not found in package")
-  }
-
-  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
-  target_file <- file.path(target_dir, ".env")
-
-  file.copy(template_path, target_file, overwrite = TRUE)
-  message(sprintf("Created %s", target_file))
-}
-
 #' Create development .Rprofile
 #' @keywords internal
 .create_dev_rprofile <- function(subdir = NULL) {
@@ -174,47 +158,23 @@ message("Framework dev mode active - will load from: %s")
 }
 
 
-#' Archive init.R after successful initialization
+#' Delete init.R after successful initialization
 #' @keywords internal
-.archive_init_file <- function(subdir = NULL) {
+.delete_init_file <- function(subdir = NULL) {
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
   init_file <- file.path(target_dir, "init.R")
-  archive_file <- file.path(target_dir, ".init.R.done")
 
-  # Only archive if init.R exists
+  # Only delete if init.R exists
   if (!file.exists(init_file)) {
     return(invisible(NULL))
   }
 
-  # Read original init.R content
-  init_content <- tryCatch(
-    readLines(init_file, warn = FALSE),
-    error = function(e) {
-      warning(sprintf("Could not read init.R for archiving: %s", e$message))
-      return(NULL)
-    }
-  )
-
-  if (is.null(init_content)) {
-    return(invisible(NULL))
-  }
-
-  # Prepend documentation comment
-  archive_content <- c(
-    "# This file was used to initialize this project and can be safely deleted.",
-    "# It's preserved here for documentation and reproducibility.",
-    "# Original initialization command:",
-    "#",
-    init_content
-  )
-
-  # Write to hidden archive file
+  # Delete init.R
   tryCatch({
-    writeLines(archive_content, archive_file)
     file.remove(init_file)
-    message(sprintf("\u2713 Archived init.R to %s", basename(archive_file)))
+    message("\u2713 Cleaned up init.R (use make_init() to recreate for reference)")
   }, error = function(e) {
-    warning(sprintf("Could not archive init.R: %s", e$message))
+    warning(sprintf("Could not delete init.R: %s", e$message))
   })
 
   invisible(NULL)
@@ -237,12 +197,14 @@ message("Framework dev mode active - will load from: %s")
 
   cat("Next steps:\n")
   cat("  1. Review and edit config.yml\n")
-  cat("  2. Add secrets to .env (gitignored)\n")
-  cat("  3. Start a new R session in this directory\n")
-  cat("  4. Run:\n")
+  cat("  2. Start a new R session in this directory\n")
+  cat("  3. Run:\n")
   cat("       library(framework)\n")
   cat("       scaffold()\n")
-  cat("  5. Start analyzing!\n\n")
+  cat("  4. Start analyzing!\n\n")
+  cat("Optional:\n")
+  cat("  • Add database connections: configure_connection()\n")
+  cat("  • Store secrets: make_env(VAR_NAME = \"value\")\n\n")
 
   # Additional context based on project type
   if (type == "course") {
@@ -269,7 +231,6 @@ message("Framework dev mode active - will load from: %s")
 #' @param project_structure DEPRECATED. Use 'type' parameter instead.
 #'   For backward compatibility: "default"/"minimal" map to "project"/"presentation".
 #' @param lintr The lintr style to use.
-#' @param styler The styler style to use.
 #' @param use_renv If TRUE, enables renv for package management. Default FALSE.
 #' @param use_git If TRUE, initializes a git repository. Default TRUE.
 #' @param attach_defaults If TRUE, configures default packages to auto-attach on scaffold().
@@ -305,7 +266,6 @@ init <- function(
     type = NULL,
     project_structure = NULL,
     lintr = NULL,
-    styler = TRUE,
     use_renv = FALSE,
     use_git = TRUE,
     attach_defaults = TRUE,
@@ -343,10 +303,6 @@ init <- function(
   checkmate::assert_string(type, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
-  checkmate::assert(
-    checkmate::check_flag(styler),
-    checkmate::check_string(styler, min.chars = 1)
-  )
   checkmate::assert_flag(use_renv)
   checkmate::assert_flag(use_git)
   checkmate::assert_flag(attach_defaults)
@@ -362,10 +318,11 @@ init <- function(
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
-  # Check if already initialized
-  init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
-  if (file.exists(init_file) && !force) {
-    stop("Project already initialized. Use force = TRUE to reinitialize.")
+  # Check if already initialized (by checking for config.yml)
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  config_file <- file.path(target_dir, "config.yml")
+  if (file.exists(config_file) && !force) {
+    stop("Project already initialized (config.yml exists). Use force = TRUE to reinitialize.")
   }
 
   # Detect if running from template (has init.R) or empty directory
@@ -383,31 +340,18 @@ init <- function(
 
     # Set defaults for optional parameters
     if (is.null(lintr)) lintr <- "default"
-    # Handle styler TRUE/FALSE or string
-    if (is.logical(styler)) {
-      styler <- if (styler) "default" else FALSE
-    } else if (is.null(styler)) {
-      styler <- "default"
-    }
 
     # Create foundational files
-    .create_init_file(project_name, type, lintr, styler, subdir)
+    .create_init_file(project_name, type, lintr, subdir)
     .create_config_file(type, attach_defaults, subdir)
-    .create_env_file(subdir)
   } else {
     # Set defaults from template behavior
     if (is.null(type)) type <- "project"
     if (is.null(lintr)) lintr <- "default"
-    # Handle styler TRUE/FALSE or string
-    if (is.logical(styler)) {
-      styler <- if (styler) "default" else FALSE
-    } else if (is.null(styler)) {
-      styler <- "default"
-    }
   }
 
   # Continue with standard init process (without git init)
-  .init_standard(project_name, type, lintr, styler, author_name, author_email, author_affiliation, default_notebook_format, subdir, force, FALSE)
+  .init_standard(project_name, type, lintr, author_name, author_email, author_affiliation, default_notebook_format, subdir, force, FALSE)
 
   # Enable renv if requested
   if (use_renv) {
@@ -420,12 +364,21 @@ init <- function(
     .create_dev_rprofile(subdir)
   }
 
-  # Archive init.R after successful initialization
-  .archive_init_file(subdir)
+  # Delete init.R after successful initialization
+  .delete_init_file(subdir)
+
+  # Clean up .gitkeep files from data/ and functions/
+  .cleanup_gitkeep_files(target_dir)
 
   # Initialize git AFTER archiving so all files are in final state
   if (use_git) {
     .init_git_repo(target_dir)
+  }
+
+  # Prompt for AI assistant support (if enabled by user)
+  assistants <- .prompt_ai_support_init()
+  if (length(assistants) > 0) {
+    .create_ai_instructions(assistants, target_dir, project_name)
   }
 
   # Display next steps if from empty directory
@@ -436,12 +389,11 @@ init <- function(
 
 #' Standard initialization process (shared by both paths)
 #' @keywords internal
-.init_standard <- function(project_name, type, lintr, styler, author_name = NULL, author_email = NULL, author_affiliation = NULL, default_notebook_format = NULL, subdir, force, use_git = TRUE) {
+.init_standard <- function(project_name, type, lintr, author_name = NULL, author_email = NULL, author_affiliation = NULL, default_notebook_format = NULL, subdir, force, use_git = TRUE) {
   # Validate arguments (already validated in init, but keep for internal calls)
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(type, min.chars = 1)
   checkmate::assert_string(lintr, min.chars = 1)
-  checkmate::assert_string(styler, min.chars = 1)
   checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(author_affiliation, min.chars = 1, null.ok = TRUE)
@@ -455,11 +407,8 @@ init <- function(
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
-  # Determine path for .initiated marker
-  init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
-  if (file.exists(init_file) && !force) {
-    stop("Project already initialized. Use force = TRUE to reinitialize.")
-  }
+  # NOTE: init() already checked for config.yml, no need to check again here
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
 
   # Derive project name
   if (!is.null(project_name)) {
@@ -472,9 +421,7 @@ init <- function(
 
   # Validate template style files
   lintr_template <- system.file("templates", paste0(".lintr.", lintr, ".fr"), package = "framework")
-  styler_template <- system.file("templates", paste0(".styler.", styler, ".fr.R"), package = "framework")
   if (!file.exists(lintr_template)) stop(sprintf("Lintr style '%s' not found", lintr))
-  if (!file.exists(styler_template)) stop(sprintf("Styler style '%s' not found", styler))
 
   # Remove existing *.Rproj file (only one per project)
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
@@ -500,12 +447,12 @@ init <- function(
     # Skip files already handled explicitly
     if (fname == "project.fr.Rproj") next
     if (fname == "init.fr.R") next  # Skip init.R template (handled separately in empty dir case)
-    if (fname == ".env.fr") next  # Skip .env template (handled separately in empty dir case)
+    if (fname == ".env.fr") next  # Skip .env template (removed, use make_env() instead)
     if (fname == "test.fr.R") next  # Skip test file template
 
-    # Skip type-specific config and README files (these are handled separately)
+    # Skip type-specific config and README files
     if (grepl("^config\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
-    if (grepl("^README\\.(project|course|presentation)\\.fr\\.md$", fname)) next
+    if (grepl("^README.*\\.fr\\.md$", fname)) next  # Skip all README templates (now in project_structure)
     if (fname == "config.fr.yml") next  # Skip generic config (handled separately)
 
     if (!grepl("\\.fr($|\\.)", fname)) next
@@ -513,7 +460,7 @@ init <- function(
     # Replace `.fr.` with `.` or `.fr` suffix with nothing
     new_name <- gsub("\\.fr\\.", ".", fname)
     new_name <- gsub("\\.fr$", "", new_name)
-    # Remove .default from lintr and styler files (both in middle and end)
+    # Remove .default from lintr files (both in middle and end)
     new_name <- gsub("\\.default\\.", ".", new_name)
     new_name <- gsub("\\.default$", "", new_name)
 
@@ -550,30 +497,20 @@ init <- function(
     dir.create(target_path, showWarnings = FALSE, recursive = TRUE)
   }
 
-  structure_files <- list.files(structure_dir, recursive = TRUE, full.names = TRUE)
+  structure_files <- list.files(structure_dir, recursive = TRUE, full.names = TRUE, all.files = TRUE)
   for (file in structure_files) {
-    if (basename(file) == ".gitkeep") next
     rel_path <- sub(paste0("^", structure_dir, "/?"), "", file)
+
+    # Skip connections.yml for presentation projects (no database by default)
+    if (type == "presentation" && grepl("settings/connections\\.yml$", rel_path)) {
+      next
+    }
+
     target_path <- file.path(target_dir, rel_path)
     file.copy(file, target_path, overwrite = TRUE)
   }
 
-  # Copy .env.example to .env if present
-  env_example <- file.path(target_dir, ".env.example")
-  if (file.exists(env_example)) {
-    file.copy(env_example, file.path(target_dir, ".env"), overwrite = TRUE)
-  }
-
-  # Copy type-specific README → README.md
-  readme_template <- system.file("templates", sprintf("README.%s.fr.md", type), package = "framework")
-  if (!file.exists(readme_template)) {
-    # Fall back to generic README if type-specific doesn't exist
-    readme_template <- system.file("templates", "README.fr.md", package = "framework")
-  }
-  if (file.exists(readme_template)) {
-    readme_path <- file.path(target_dir, "README.md")
-    file.copy(readme_template, readme_path, overwrite = TRUE)
-  }
+  # README.md is now part of project_structure and copied above
 
   # Update config.yml with author information and notebook format if provided
   has_author_info <- (!is.null(author_name) && nzchar(author_name)) ||
@@ -623,12 +560,13 @@ init <- function(
     }
   }
 
-  # Mark as initialized
-  writeLines(as.character(Sys.time()), file.path(target_dir, ".initiated"))
+  # Initialization complete (config.yml serves as marker)
   message(sprintf("Project '%s' initialized successfully!", project_name))
 }
 
 #' Check if project is initialized
+#'
+#' Checks for existence of config.yml to determine initialization status.
 #'
 #' @param subdir Optional subdirectory to check.
 #' @return Logical indicating if project is initialized.
@@ -637,11 +575,14 @@ is_initialized <- function(subdir = NULL) {
   # Validate arguments
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
 
-  init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
-  file.exists(init_file)
+  config_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, "config.yml") else "config.yml"
+  file.exists(config_file)
 }
 
 #' Remove initialization
+#'
+#' Removes config.yml to mark project as uninitialized.
+#' WARNING: This will delete your project configuration!
 #'
 #' @param subdir Optional subdirectory to check.
 #' @return Logical indicating if removal was successful.
@@ -650,13 +591,93 @@ remove_init <- function(subdir = NULL) {
   # Validate arguments
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
 
-  init_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, ".initiated") else ".initiated"
-  if (file.exists(init_file)) {
-    unlink(init_file)
+  config_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, "config.yml") else "config.yml"
+  if (file.exists(config_file)) {
+    warning("Removing config.yml - your project configuration will be deleted!", call. = FALSE)
+    unlink(config_file)
     TRUE
   } else {
     FALSE
   }
+}
+
+#' Recreate init.R for reference
+#'
+#' Generates an init.R file showing the initialization logic.
+#' Useful for documentation and understanding how the project was set up.
+#'
+#' @param output_file Path where init.R should be written. Default: "init.R"
+#' @return Invisibly returns TRUE on success
+#' @export
+#' @examples
+#' \dontrun{
+#' # Recreate init.R to see initialization logic
+#' make_init()
+#'
+#' # Write to a different location
+#' make_init("docs/init_reference.R")
+#' }
+make_init <- function(output_file = "init.R") {
+  checkmate::assert_string(output_file, min.chars = 1)
+
+  template_path <- system.file("templates/init.fr.R", package = "framework")
+  if (!file.exists(template_path)) {
+    stop("Template init.fr.R not found in package")
+  }
+
+  # Read template
+  content <- readLines(template_path, warn = FALSE)
+
+  # Add header explaining this is generated
+  header <- c(
+    "# This file was generated by make_init() for reference purposes.",
+    "# It shows the initialization logic used by framework::init().",
+    "# You can safely delete this file.",
+    "",
+    ""
+  )
+
+  content <- c(header, content)
+
+  # Write file
+  writeLines(content, output_file)
+  message(sprintf("✓ Created %s", output_file))
+  message("  This file shows initialization logic for reference.")
+  message("  Placeholders like {{PROJECT_NAME}} would be replaced during actual init().")
+
+  invisible(TRUE)
+}
+
+#' Remove .gitkeep files from data/ and functions/ directories
+#' @keywords internal
+.cleanup_gitkeep_files <- function(target_dir = ".") {
+  # Find all .gitkeep files in data/ and functions/ directories
+  data_gitkeeps <- list.files(
+    path = file.path(target_dir, "data"),
+    pattern = "^\\.gitkeep$",
+    recursive = TRUE,
+    full.names = TRUE,
+    all.files = TRUE
+  )
+
+  functions_gitkeeps <- list.files(
+    path = file.path(target_dir, "functions"),
+    pattern = "^\\.gitkeep$",
+    recursive = TRUE,
+    full.names = TRUE,
+    all.files = TRUE
+  )
+
+  all_gitkeeps <- c(data_gitkeeps, functions_gitkeeps)
+
+  if (length(all_gitkeeps) > 0) {
+    removed_count <- sum(file.remove(all_gitkeeps))
+    if (removed_count > 0) {
+      message(sprintf("\u2713 Cleaned up %d .gitkeep file%s", removed_count, if (removed_count == 1) "" else "s"))
+    }
+  }
+
+  invisible(NULL)
 }
 
 #' Initialize git repository
@@ -678,20 +699,32 @@ remove_init <- function(subdir = NULL) {
     }
 
     # Initialize repo
-    init_status <- system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+    init_status <- system("git init", ignore.stdout = TRUE, ignore.stderr = TRUE)
     if (init_status != 0) {
       stop("git init failed")
     }
 
     # Add all files
-    add_status <- system2("git", c("add", "."), stdout = FALSE, stderr = FALSE)
+    add_status <- system("git add .", ignore.stdout = TRUE, ignore.stderr = TRUE)
     if (add_status != 0) {
       stop("git add failed")
     }
 
-    # Create initial commit (may fail if git config missing, that's okay)
-    commit_status <- system2("git", c("commit", "-m", "Project initialized."),
-                             stdout = FALSE, stderr = FALSE)
+    # Force-add .gitignore files in private directories (defense-in-depth)
+    private_gitignores <- c(
+      "data/source/private/.gitignore",
+      "data/in_progress/private/.gitignore",
+      "data/final/private/.gitignore",
+      "results/private/.gitignore"
+    )
+    for (gitignore_path in private_gitignores) {
+      if (file.exists(gitignore_path)) {
+        system(paste0("git add -f ", gitignore_path), ignore.stdout = TRUE, ignore.stderr = TRUE)
+      }
+    }
+
+    # Create initial commit
+    commit_status <- system('git commit -m "Project initialized."', ignore.stdout = TRUE, ignore.stderr = TRUE)
 
     if (commit_status == 0) {
       message("\u2713 Git repository initialized with initial commit")

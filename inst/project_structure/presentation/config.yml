@@ -1,15 +1,57 @@
 default:
-  # Project behavior
-  default_notebook_format: quarto  # quarto or rmarkdown
-  renv_nag: true
+  # --------------------------------------------------------------------------
+  # Project Metadata
+  # --------------------------------------------------------------------------
+  project_type: presentation  # Type: project, course, or presentation
 
-  data:
-    - example: data/example.csv
+  # Presenter information (used in slides, handouts, etc.)
+  author:
+    name: "Your Name"
+    email: "your.email@example.com"
+    affiliation: "Your Institution"
+
+  # --------------------------------------------------------------------------
+  # Package Dependencies
+  # --------------------------------------------------------------------------
+  # Minimal packages for presentations
+  # Use auto_attach: true to load automatically, false to install only
+  # --------------------------------------------------------------------------
   packages:
-    - name: dplyr
-      auto_attach: true
     - name: ggplot2
       auto_attach: true
+    - name: dplyr
+      auto_attach: true
+
+  # --------------------------------------------------------------------------
+  # Project Directories
+  # --------------------------------------------------------------------------
+  directories:
+    notebooks: "."                # Presentation files in root (with presentation.qmd)
+    functions: functions          # Helper functions
+    cache: data/cached            # Cached computation results
+
+  # --------------------------------------------------------------------------
+  # Project Behavior
+  # --------------------------------------------------------------------------
+  # Default notebook format for make_notebook() (quarto or rmarkdown)
+  default_notebook_format: quarto
+
+  # --------------------------------------------------------------------------
+  # Data Catalog
+  # --------------------------------------------------------------------------
+  # Simple inline for most presentations
+  # Large catalogs: use split file (data: settings/data.yml)
+  # ⚠️ Main config ALWAYS wins over split files
+  # --------------------------------------------------------------------------
+  data:
+    # Uncomment to use example data:
+    # example:
+    #   path: data/example.csv
+    #   type: csv
+
+  # --------------------------------------------------------------------------
+  # Database Connections
+  # --------------------------------------------------------------------------
   connections:
     framework:
       driver: "sqlite"

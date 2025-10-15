@@ -38,10 +38,14 @@
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
-  # Get config
-  config <- read_config()
-  cache_dir <- config$options$data$cache_dir
-  default_expire <- config$options$data$cache_default_expire
+  # Get cache directory from config
+  cache_dir <- config("cache")
+  if (is.null(cache_dir)) {
+    stop("Cache directory not configured. Add 'directories: cache: data/cached' to config.yml")
+  }
+
+  config_obj <- read_config()
+  default_expire <- config_obj$options$data$cache_default_expire
 
   # Determine cache file path
   cache_file <- if (is.null(file)) {
@@ -161,14 +165,40 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 }
 
 #' Get a value, caching the result if not found
-#' @param name The cache name
-#' @param expr The expression to evaluate and cache
-#' @param file Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)
-#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
-#' @param refresh Optional boolean or function that returns boolean to force refresh
-#' @return The result of expr
+#'
+#' Attempts to retrieve a cached value by name. If the cache doesn't exist,
+#' is expired, or a refresh is requested, evaluates the expression and caches
+#' the result. This is the primary caching interface for expensive computations.
+#'
+#' @param name The cache name (non-empty string identifier)
+#' @param expr The expression to evaluate and cache if cache miss occurs.
+#'   Expression is evaluated in the parent frame.
+#' @param file Optional file path to store the cache
+#'   (default: {config$options$data$cache_dir}/{name}.rds)
+#' @param expire_after Optional expiration time in hours
+#'   (default: from config$options$data$cache_default_expire)
+#' @param refresh Optional boolean or function that returns boolean to force
+#'   refresh. If TRUE or if function returns TRUE, cache is invalidated and
+#'   expression is re-evaluated.
+#'
+#' @return The cached value (if cache hit) or the result of evaluating expr
+#'   (if cache miss or refresh requested)
+#'
+#' @examples
+#' \dontrun{
+#' # Cache expensive computation
+#' result <- cache_fetch("my_analysis", {
+#'   expensive_computation()
+#' })
+#'
+#' # Force refresh when data changes
+#' result <- cache_fetch("analysis", {
+#'   run_analysis()
+#' }, refresh = file.mtime("data.csv") > cache_time)
+#' }
+#'
 #' @export
-get_or_cache <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
+cache_fetch <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
@@ -204,4 +234,20 @@ get_or_cache <- function(name, expr, file = NULL, expire_after = NULL, refresh =
   )
 
   value
+}
+
+
+#' @title (Deprecated) Use cache_fetch() instead
+#' @description `r lifecycle::badge("deprecated")`
+#'
+#' `get_or_cache()` was renamed to `cache_fetch()` to follow the package's
+#' noun_verb naming convention for better discoverability and consistency.
+#'
+#' @inheritParams cache_fetch
+#' @return The cached or computed value
+#' @export
+get_or_cache <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
+  .Deprecated("cache_fetch", package = "framework",
+              msg = "get_or_cache() is deprecated. Use cache_fetch() instead.")
+  cache_fetch(name, expr, file, expire_after, refresh)
 }

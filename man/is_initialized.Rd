@@ -13,5 +13,5 @@ is_initialized(subdir = NULL)
 Logical indicating if project is initialized.
 }
 \description{
-Check if project is initialized
+Checks for existence of config.yml to determine initialization status.
 }

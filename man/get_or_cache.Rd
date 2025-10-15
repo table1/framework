@@ -2,24 +2,32 @@
 % Please edit documentation in R/cache_read.R
 \name{get_or_cache}
 \alias{get_or_cache}
-\title{Get a value, caching the result if not found}
+\title{(Deprecated) Use cache_fetch() instead}
 \usage{
 get_or_cache(name, expr, file = NULL, expire_after = NULL, refresh = FALSE)
 }
 \arguments{
-\item{name}{The cache name}
+\item{name}{The cache name (non-empty string identifier)}
 
-\item{expr}{The expression to evaluate and cache}
+\item{expr}{The expression to evaluate and cache if cache miss occurs.
+Expression is evaluated in the parent frame.}
 
-\item{file}{Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)}
+\item{file}{Optional file path to store the cache
+(default: {config$options$data$cache_dir}/{name}.rds)}
 
-\item{expire_after}{Optional expiration time in hours (default: from config$options$data$cache_default_expire)}
+\item{expire_after}{Optional expiration time in hours
+(default: from config$options$data$cache_default_expire)}
 
-\item{refresh}{Optional boolean or function that returns boolean to force refresh}
+\item{refresh}{Optional boolean or function that returns boolean to force
+refresh. If TRUE or if function returns TRUE, cache is invalidated and
+expression is re-evaluated.}
 }
 \value{
-The result of expr
+The cached or computed value
 }
 \description{
-Get a value, caching the result if not found
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_or_cache()} was renamed to \code{cache_fetch()} to follow the package's
+noun_verb naming convention for better discoverability and consistency.
 }

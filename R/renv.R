@@ -63,16 +63,12 @@ renv_enable <- function(sync = TRUE) {
     # Add renv directories to .gitignore if not already present
     .update_gitignore_for_renv()
 
+    # Create .renvignore to exclude Framework data/output directories
+    .create_renvignore()
+
     # Always ensure framework is in renv.lock
     # Framework is on GitHub at table1/framework
     renv::install("table1/framework", rebuild = FALSE)
-
-    # Install styler if .styler.R exists (user enabled it)
-    if (file.exists(".styler.R")) {
-      if (!requireNamespace("styler", quietly = TRUE)) {
-        renv::install("styler")
-      }
-    }
 
     # Always install rmarkdown when notebooks exist
     # Quarto uses rmarkdown's knitr engine for R code chunks
@@ -196,6 +192,42 @@ renv_disable <- function(keep_renv = TRUE) {
     writeLines(c(existing, renv_entries), gitignore_path)
     message("Updated .gitignore with renv entries")
   }
+
+  invisible(NULL)
+}
+
+#' Create .renvignore file for Framework projects
+#'
+#' Creates a .renvignore file that excludes Framework data and output
+#' directories from renv dependency scanning.
+#'
+#' @return Invisibly returns NULL
+#' @keywords internal
+.create_renvignore <- function() {
+  renvignore_path <- ".renvignore"
+
+  # Skip if already exists
+  if (file.exists(renvignore_path)) {
+    return(invisible(NULL))
+  }
+
+  renvignore_content <- c(
+    "# Exclude Framework data and output directories from renv tracking",
+    "data/",
+    "results/",
+    "scratch/",
+    "work/",
+    "",
+    "# R project files",
+    "*.Rproj",
+    ".Rproj.user",
+    "",
+    "# Framework markers",
+    ".framework_renv_enabled",
+    ".framework_scaffolded"
+  )
+
+  writeLines(renvignore_content, renvignore_path)
 
   invisible(NULL)
 }

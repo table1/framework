@@ -8,7 +8,6 @@
   project_name,
   type,
   lintr,
-  styler,
   author_name = NULL,
   author_email = NULL,
   author_affiliation = NULL,

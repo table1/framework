@@ -13,8 +13,9 @@ data_load(path, delim = NULL, keep_attributes = FALSE, ...)
 
 \item{keep_attributes}{Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)}
 
-\item{...}{Additional arguments passed to read functions (readr::read_delim, haven::read_*, etc.)}
+\item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
 \description{
-Load data using dot notation path or direct file path
+Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
+and SAS (.sas7bdat, .xpt) file formats.
 }

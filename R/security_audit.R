@@ -115,13 +115,21 @@ security_audit <- function(config_file = "config.yml",
     stop(sprintf("Config file not found: %s", config_file))
   }
 
-  # Check git availability
+  # Require git repository
   git_available <- .check_git_available()
-  if (check_git_history && !git_available) {
+  if (!git_available) {
     if (verbose) {
-      message("Note: Not a git repository. Skipping git history checks.")
+      message("\n=== Framework Security Audit ===\n")
+      message("✗ security_audit() requires a git repository\n")
+      message("This tool is designed to prevent accidentally committing")
+      message("and pushing sensitive data files to remote repositories.\n")
+      message("Without version control, there is no data leakage risk to audit.\n")
+      message("If you intended to use git, initialize it with:")
+      message("  git init")
+      message("  git add .")
+      message("  git commit -m 'Initial commit'\n")
     }
-    check_git_history <- FALSE
+    return(invisible(NULL))
   }
 
   if (verbose) {

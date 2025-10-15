@@ -66,17 +66,52 @@ R -e "library(framework); packageVersion('framework')"
 # Generate documentation from roxygen2 comments
 R -e "devtools::document()"
 
+# Rebuild README from parts
+Rscript readme-parts/build.R
+
 # Install and rebuild documentation
 R -e "devtools::install(quick = TRUE)"
+```
+
+### Documentation Update Checklist
+
+**CRITICAL: When adding or modifying exported functions, ALWAYS update:**
+
+1. **inst/templates/framework-cheatsheet.fr.md** - User-facing quick reference (gets copied to new projects)
+   - Add function to appropriate section with brief comment
+   - Add to alphabetical function reference table
+
+2. **readme-parts/4_usage_notebooks.md** - If function is related to notebooks/scripts
+   - Update examples in "Create Notebooks & Scripts" section
+   - Keep content synchronized with framework-project template
+
+3. **docs/*.md** - Topic-specific documentation
+   - Update relevant guides (e.g., `docs/make_notebook.md`)
+   - Add usage examples and edge cases
+
+4. **README.md** - Rebuild after editing parts:
+   ```bash
+   Rscript readme-parts/build.R
+   ```
+
+5. **R function roxygen2 comments** - Document with examples and seealso links
+
+**Quick verification:**
+```bash
+# Check if function appears in cheatsheet
+grep "function_name" inst/templates/framework-cheatsheet.fr.md
+
+# Rebuild README to catch any part file changes
+Rscript readme-parts/build.R
+
+# Regenerate R docs
+R -e "devtools::document()"
 ```
 
 ### Code Quality
 ```bash
 # Run linting
 R -e "lintr::lint_package()"
-
-# Run styler for code formatting
-R -e "styler::style_pkg()"
 
 # Check code complexity
 R -e "cyclocomp::cyclocomp_package()"
@@ -388,7 +423,7 @@ Both project structures include a pre-configured "framework" connection:
 
 ### Package Dependencies (from DESCRIPTION)
 **Core Imports**: DBI, RSQLite, RPostgres, yaml, digest, glue, fs, readr, dotenv
-**Development Suggests**: testthat, cyclocomp, usethis, styler, languageserver, devtools, sodium (encryption), httpgd (graphics device), DT (data tables)
+**Development Suggests**: testthat, cyclocomp, usethis, languageserver, devtools, sodium (encryption), httpgd (graphics device), DT (data tables)
 
 ## Development Notes
 

@@ -145,7 +145,7 @@ test_that("load_data fails for non-existent file", {
   expect_error(load_data("nonexistent.file.csv"))
 })
 
-test_that("get_data_spec retrieves data specification from config", {
+test_that("data_spec_get retrieves data specification from config", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -165,7 +165,7 @@ test_that("get_data_spec retrieves data specification from config", {
   )
   write_config(config)
 
-  spec <- get_data_spec("source.test")
+  spec <- data_spec_get("source.test")
 
   expect_type(spec, "list")
   expect_equal(spec$path, "data/test.csv")
@@ -173,7 +173,7 @@ test_that("get_data_spec retrieves data specification from config", {
   expect_equal(spec$delimiter, "comma")
 })
 
-test_that("update_data_spec updates configuration", {
+test_that("data_spec_update updates configuration", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -190,10 +190,96 @@ test_that("update_data_spec updates configuration", {
     delimiter = "tab"
   )
 
-  update_data_spec("source.new_test", new_spec)
+  data_spec_update("source.new_test", new_spec)
 
   # Read back
-  spec <- get_data_spec("source.new_test")
+  spec <- data_spec_get("source.new_test")
   expect_equal(spec$path, "data/new_test.csv")
   expect_equal(spec$delimiter, "tab")
+})
+
+test_that("load_data reads Excel files directly", {
+  skip_if_not_installed("readxl")
+  skip_if_not_installed("writexl")
+  
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create an Excel file
+  dir.create("data/excel", recursive = TRUE)
+  test_data <- data.frame(x = 1:5, y = letters[1:5], z = 10:14)
+  writexl::write_xlsx(test_data, "data/excel/test.xlsx")
+
+  # Load using direct path
+  loaded <- load_data("data/excel/test.xlsx")
+
+  expect_equal(nrow(loaded), 5)
+  expect_equal(loaded$x, 1:5)
+  expect_equal(loaded$y, letters[1:5])
+  expect_equal(loaded$z, 10:14)
+})
+
+test_that("load_data reads Excel files from config", {
+  skip_if_not_installed("readxl")
+  skip_if_not_installed("writexl")
+  
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create an Excel file
+  dir.create("data/excel", recursive = TRUE)
+  test_data <- data.frame(name = c("Alice", "Bob"), age = c(25, 30))
+  writexl::write_xlsx(test_data, "data/excel/people.xlsx")
+
+  # Add to config
+  config <- read_config()
+  config$data$source <- list(
+    people = list(
+      path = "data/excel/people.xlsx",
+      type = "excel",
+      locked = FALSE,
+      encrypted = FALSE
+    )
+  )
+  write_config(config)
+
+  # Load it back
+  loaded <- suppressWarnings(load_data("source.people"))
+
+  expect_equal(nrow(loaded), 2)
+  expect_equal(loaded$name, c("Alice", "Bob"))
+  expect_equal(loaded$age, c(25, 30))
+})
+
+test_that("data_spec_get detects Excel file type", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create a fake Excel file
+  dir.create("data/excel", recursive = TRUE)
+  file.create("data/excel/test.xlsx")
+
+  # Get spec by direct path
+  spec <- data_spec_get("data/excel/test.xlsx")
+
+  expect_equal(spec$type, "excel")
+  expect_null(spec$delimiter)
 })

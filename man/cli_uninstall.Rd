@@ -14,7 +14,7 @@ uninstall_cli(location = c("user", "system"))
 Must match the location used during installation.}
 }
 \description{
-Removes the global \code{framework} command.
+Removes the global \code{framework} command and framework-global.
 }
 \examples{
 \dontrun{

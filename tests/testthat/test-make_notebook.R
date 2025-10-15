@@ -220,3 +220,127 @@ test_that("make_notebook defaults to quarto when config missing format", {
   expect_true(file.exists("notebooks/no-format-test.qmd"))
   expect_false(file.exists("notebooks/no-format-test.Rmd"))
 })
+
+test_that("make_qmd() always creates Quarto notebooks", {
+  # Create temp directory
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit({
+    setwd(old_wd)
+    unlink(file.path(tmp, "notebooks"), recursive = TRUE)
+    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, ".env"))
+  })
+
+  dir.create("notebooks", showWarnings = FALSE)
+
+  # Config with rmarkdown default (should be ignored by make_qmd)
+  config_content <- "default:
+  author:
+    name: Test User
+  directories:
+    notebooks: notebooks
+  default_notebook_format: rmarkdown
+"
+  writeLines(config_content, "config.yml")
+  writeLines("", ".env")
+
+  # Create notebook with make_qmd - should create .qmd despite config
+  suppressMessages(make_qmd("qmd-alias-test"))
+  expect_true(file.exists("notebooks/qmd-alias-test.qmd"))
+  expect_false(file.exists("notebooks/qmd-alias-test.Rmd"))
+})
+
+test_that("make_rmd() always creates RMarkdown notebooks", {
+  # Create temp directory
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit({
+    setwd(old_wd)
+    unlink(file.path(tmp, "notebooks"), recursive = TRUE)
+    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, ".env"))
+  })
+
+  dir.create("notebooks", showWarnings = FALSE)
+
+  # Config with quarto default (should be ignored by make_rmd)
+  config_content <- "default:
+  author:
+    name: Test User
+  directories:
+    notebooks: notebooks
+  default_notebook_format: quarto
+"
+  writeLines(config_content, "config.yml")
+  writeLines("", ".env")
+
+  # Create notebook with make_rmd - should create .Rmd despite config
+  suppressMessages(make_rmd("rmd-alias-test"))
+  expect_true(file.exists("notebooks/rmd-alias-test.Rmd"))
+  expect_false(file.exists("notebooks/rmd-alias-test.qmd"))
+})
+
+test_that("aliases work with custom stubs and directories", {
+  # Create temp directory
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit({
+    setwd(old_wd)
+    unlink(file.path(tmp, "work"), recursive = TRUE)
+    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, ".env"))
+  })
+
+  dir.create("work", showWarnings = FALSE)
+
+  # Minimal config
+  config_content <- "default:
+  author:
+    name: Test User
+"
+  writeLines(config_content, "config.yml")
+  writeLines("", ".env")
+
+  # Test make_qmd with explicit directory
+  suppressMessages(make_qmd("custom-dir", dir = "work"))
+  expect_true(file.exists("work/custom-dir.qmd"))
+
+  # Test make_rmd with explicit directory
+  suppressMessages(make_rmd("custom-dir-rmd", dir = "work"))
+  expect_true(file.exists("work/custom-dir-rmd.Rmd"))
+})
+
+test_that("make_notebook type parameter overrides config", {
+  # Create temp directory
+  tmp <- tempdir()
+  old_wd <- getwd()
+  setwd(tmp)
+  on.exit({
+    setwd(old_wd)
+    unlink(file.path(tmp, "notebooks"), recursive = TRUE)
+    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, ".env"))
+  })
+
+  dir.create("notebooks", showWarnings = FALSE)
+
+  # Config with quarto default
+  config_content <- "default:
+  author:
+    name: Test User
+  directories:
+    notebooks: notebooks
+  default_notebook_format: quarto
+"
+  writeLines(config_content, "config.yml")
+  writeLines("", ".env")
+
+  # Explicit type parameter should override config
+  suppressMessages(make_notebook("override-test", type = "rmarkdown"))
+  expect_true(file.exists("notebooks/override-test.Rmd"))
+  expect_false(file.exists("notebooks/override-test.qmd"))
+})

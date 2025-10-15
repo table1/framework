@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# Framework CLI - Global Implementation
+#
+# This is the actual CLI implementation that handles all commands.
+# Called by the framework shim when no project-local bin/framework exists.
+#
+# Provides commands:
+#   new         - Create new Framework project
+#   version     - Show Framework package version
+#   update      - Update Framework from GitHub (alias: self-update)
+#   help        - Show help information
+
+set -e
+
+# URL to the canonical new-project.sh script
+# Add package version to URL to bypass GitHub CDN cache when package updates
+PACKAGE_VERSION=$(Rscript --quiet --no-save -e "cat(as.character(packageVersion('framework')))" 2>/dev/null || echo "dev")
+SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh?v=${PACKAGE_VERSION}"
+
+# Detect color support
+if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
+  BLUE='\033[0;34m'
+  YELLOW='\033[1;33m'
+  GREEN='\033[0;32m'
+  RED='\033[0;31m'
+  NC='\033[0m'
+else
+  BLUE=''
+  YELLOW=''
+  GREEN=''
+  RED=''
+  NC=''
+fi
+
+COMMAND="${1:-help}"
+
+case "$COMMAND" in
+  new)
+    # Remove 'new' from arguments and check for --dev-mode
+    shift
+
+    # Check if --dev-mode flag is present
+    DEV_MODE=false
+    for arg in "$@"; do
+      if [ "$arg" = "--dev-mode" ]; then
+        DEV_MODE=true
+        break
+      fi
+    done
+
+    if [ "$DEV_MODE" = true ]; then
+      # Dev mode: use local new-project.sh and set environment variable
+      LOCAL_SCRIPT="$HOME/code/framework-project/new-project.sh"
+      if [ ! -f "$LOCAL_SCRIPT" ]; then
+        printf "${RED}Error: Dev mode requires framework-project at $HOME/code/framework-project${NC}\n"
+        exit 1
+      fi
+      export FW_DEV_MODE=true
+      export FW_DEV_PATH="$HOME/code/framework"
+      bash "$LOCAL_SCRIPT" "$@"
+    else
+      # Normal mode: fetch from GitHub
+      curl -fsSL "$SCRIPT_URL" | bash -s "$@"
+    fi
+    ;;
+
+  version)
+    # Show Framework package version
+    Rscript --quiet --no-save --slave -e "cat('Framework version', as.character(packageVersion('framework')), '\n')"
+    ;;
+
+  update|self-update)
+    # Update Framework package and CLI from GitHub
+    printf "${BLUE}Updating Framework and CLI from GitHub...${NC}\n\n"
+    printf "Update dependencies to latest versions? [Y/n]: "
+    read -r response
+
+    case "$response" in
+      [nN]|[nN][oO])
+        R --quiet --no-save -e "framework::cli_update(upgrade_deps = FALSE)"
+        ;;
+      *)
+        R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
+        ;;
+    esac
+    ;;
+
+  configure)
+    # Configure Framework settings
+    SUBCOMMAND="${2}"
+    case "$SUBCOMMAND" in
+      ai-agents)
+        # Configure AI assistant support
+        R --quiet --no-save -e "framework::configure_ai_agents()"
+        ;;
+      *)
+        printf "${RED}Unknown configure target: ${SUBCOMMAND}${NC}\n"
+        printf "Available: ai-agents\n"
+        exit 1
+        ;;
+    esac
+    ;;
+
+  help|--help|-h)
+    printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
+
+    printf "${YELLOW}Create:${NC}\n"
+    printf "  framework new [name] [type]             Create new project\n\n"
+
+    printf "${YELLOW}Make:${NC}\n"
+    printf "  framework make:notebook [name]          Create notebook (Quarto/RMarkdown)\n"
+    printf "  framework make:quarto [name]            Create Quarto notebook (.qmd)\n"
+    printf "  framework make:rmd [name]               Create RMarkdown notebook (.Rmd)\n"
+    printf "  framework make:script [name]            Create R script (.R)\n"
+    printf "  framework make:presentation [name]      Create reveal.js presentation\n\n"
+
+    printf "${YELLOW}Configure:${NC}\n"
+    printf "  framework configure:author              Set author information\n"
+    printf "  framework configure:data                Add data source to config\n"
+    printf "  framework configure:connection          Add database connection\n"
+    printf "  framework configure:packages            Add package dependency\n"
+    printf "  framework configure:directories         Configure project directories\n\n"
+
+    printf "${YELLOW}Configuration:${NC}\n"
+    printf "  framework configure ai-agents           Configure AI assistant support\n\n"
+
+    printf "${YELLOW}Maintenance:${NC}\n"
+    printf "  framework version                       Show Framework package version\n"
+    printf "  framework update                        Update Framework and CLI\n"
+    printf "  framework help                          Show this help\n\n"
+
+    printf "${YELLOW}Project Types:${NC}\n"
+    printf "  project       Full-featured data analysis (default)\n"
+    printf "  course        Teaching materials\n"
+    printf "  presentation  Single talk/presentation\n\n"
+
+    printf "${YELLOW}More Information:${NC}\n"
+    printf "  https://github.com/table1/framework\n"
+    ;;
+
+  *)
+    echo "Unknown command: $COMMAND"
+    echo "Run 'framework help' for usage information"
+    exit 1
+    ;;
+esac

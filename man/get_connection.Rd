@@ -2,16 +2,19 @@
 % Please edit documentation in R/connections.R
 \name{get_connection}
 \alias{get_connection}
-\title{Get a database connection from config}
+\title{(Deprecated) Use connection_get() instead}
 \usage{
 get_connection(name)
 }
 \arguments{
-\item{name}{Name of the connection in config.yml (e.g. "postgres")}
+\item{name}{Character. Name of the connection in config.yml (e.g., "postgres")}
 }
 \value{
 A database connection object
 }
 \description{
-Gets a database connection based on the connection name in config.yml.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_connection()} was renamed to \code{connection_get()} to follow the package's
+noun_verb naming convention for better discoverability and consistency.
 }
