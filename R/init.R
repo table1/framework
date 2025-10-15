@@ -386,6 +386,31 @@ init <- function(
     .configure_git_hooks(target_dir)
   }
 
+  # Sync AI context files if AI assistants were configured (ensures clean initial commit)
+  if (use_git) {
+    # Check if any AI instruction files exist
+    ai_files_exist <- any(c(
+      file.exists(file.path(target_dir, "CLAUDE.md")),
+      file.exists(file.path(target_dir, "AGENTS.md")),
+      file.exists(file.path(target_dir, ".github/copilot-instructions.md"))
+    ))
+
+    if (ai_files_exist) {
+      tryCatch({
+        old_wd <- getwd()
+        on.exit(setwd(old_wd), add = TRUE)
+        if (!is.null(target_dir) && target_dir != ".") {
+          setwd(target_dir)
+        }
+
+        # Run AI sync silently before initial commit
+        ai_sync_context(verbose = FALSE)
+      }, error = function(e) {
+        # Silently skip if sync fails
+      })
+    }
+  }
+
   # Create initial commit after all initialization is complete
   if (use_git) {
     .create_initial_commit(target_dir)

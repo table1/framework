@@ -303,6 +303,9 @@ hooks_list <- function(config_file = "config.yml") {
       "  echo \"✗ AI context sync failed\"",
       "  exit 1",
       "fi",
+      "",
+      "# Add any files modified by AI sync",
+      "git add CLAUDE.md AGENTS.md .github/copilot-instructions.md 2>/dev/null || true",
       ""
     ) else NULL,
     if (data_security_enabled) c(
