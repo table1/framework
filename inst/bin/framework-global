@@ -215,12 +215,8 @@ case "$COMMAND" in
     esac
     ;;
 
-  configure)
-    # Configure Framework settings
-    SUBCOMMAND="${2}"
-    case "$SUBCOMMAND" in
-      ides)
-        # Configure IDE preferences
+  configure:ides)
+    # Configure IDE preferences
         frameworkrc="$HOME/.frameworkrc"
 
         # Read current settings
@@ -272,8 +268,9 @@ case "$COMMAND" in
         printf "\n${GREEN}✓ IDE preferences saved${NC}\n"
         printf "  IDEs: $ides\n"
         ;;
-      ai-agents)
-        # Configure AI assistant support (bash prompting, no R readline)
+
+  configure:ai-agents)
+    # Configure AI assistant support (bash prompting, no R readline)
         frameworkrc="$HOME/.frameworkrc"
 
         # Read current settings
@@ -343,13 +340,6 @@ case "$COMMAND" in
             ;;
         esac
         ;;
-      *)
-        printf "${RED}Unknown configure target: ${SUBCOMMAND}${NC}\n"
-        printf "Available: ai-agents\n"
-        exit 1
-        ;;
-    esac
-    ;;
 
   help|--help|-h)
     printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
@@ -372,8 +362,8 @@ case "$COMMAND" in
     printf "  framework configure:directories         Configure project directories\n\n"
 
     printf "${YELLOW}Configuration:${NC}\n"
-    printf "  framework configure ides                Configure IDE preferences\n"
-    printf "  framework configure ai-agents           Configure AI assistant support\n\n"
+    printf "  framework configure:ides                Configure IDE preferences\n"
+    printf "  framework configure:ai-agents           Configure AI assistant support\n\n"
 
     printf "${YELLOW}Maintenance:${NC}\n"
     printf "  framework version                       Show Framework package version\n"
