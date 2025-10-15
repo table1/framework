@@ -228,6 +228,11 @@ configure_ai_agents <- function() {
     return(character(0))
   }
 
+  # Only prompt in interactive sessions
+  if (!interactive()) {
+    return(character(0))
+  }
+
   if (fw_support != "yes") {
     # User hasn't configured yet - ask now for the first time
     message("\n")
