@@ -19,10 +19,10 @@ SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-
 
 # Detect color support
 if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
-  BLUE='\033[0;34m'
-  YELLOW='\033[1;33m'
-  GREEN='\033[0;32m'
-  RED='\033[0;31m'
+  BLUE='\033[1;34m'    # Bright blue - readable on both dark and light backgrounds
+  YELLOW='\033[1;33m'  # Bright yellow - readable on both dark and light backgrounds
+  GREEN='\033[1;32m'   # Bright green - readable on both dark and light backgrounds
+  RED='\033[1;31m'     # Bright red - readable on both dark and light backgrounds
   NC='\033[0m'
 else
   BLUE=''
@@ -73,16 +73,18 @@ run_settings_checkin() {
   # Ask about IDE preferences
   printf "${YELLOW}IDE Preferences${NC}\n"
   printf "Which IDE/editor do you primarily use?\n"
-  printf "  1. RStudio\n"
-  printf "  2. VS Code / Positron\n"
+  printf "  1. Positron / VS Code\n"
+  printf "  2. RStudio\n"
   printf "  3. Both\n"
-  printf "Choice (1-3): "
+  printf "  4. Neither (other editor)\n"
+  printf "Choice (1-4): "
   read -r ide_choice
 
   case "$ide_choice" in
-    1) ides="rstudio" ;;
-    2) ides="vscode" ;;
+    1) ides="vscode" ;;
+    2) ides="rstudio" ;;
     3) ides="rstudio,vscode" ;;
+    4) ides="none" ;;
     *) ides="rstudio,vscode" ;;  # Default to both
   esac
 
@@ -195,12 +197,7 @@ case "$COMMAND" in
     ;;
 
   update|self-update)
-    # Check if settings are configured
-    if ! check_settings_configured; then
-      run_settings_checkin
-    fi
-
-    # Update Framework package and CLI from GitHub
+    # Update Framework package and CLI from GitHub first
     printf "${BLUE}Updating Framework and CLI from GitHub...${NC}\n\n"
     printf "Update dependencies to latest versions? [Y/n]: "
     read -r response
@@ -213,6 +210,11 @@ case "$COMMAND" in
         R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
         ;;
     esac
+
+    # Check if settings are configured (after update)
+    if ! check_settings_configured; then
+      run_settings_checkin
+    fi
     ;;
 
   configure:ides)
@@ -233,21 +235,25 @@ case "$COMMAND" in
 
         # Ask which IDEs
         printf "Which IDEs/editors do you use?\n"
-        printf "  1. RStudio\n"
-        printf "  2. VS Code / Positron\n"
-        printf "  3. Both\n\n"
-        printf "Enter choice (1-3): "
+        printf "  1. Positron / VS Code\n"
+        printf "  2. RStudio\n"
+        printf "  3. Both\n"
+        printf "  4. Neither (other editor)\n\n"
+        printf "Enter choice (1-4): "
         read -r choice
 
         case "$choice" in
           1)
-            ides="rstudio"
+            ides="vscode"
             ;;
           2)
-            ides="vscode"
+            ides="rstudio"
             ;;
           3)
             ides="rstudio,vscode"
+            ;;
+          4)
+            ides="none"
             ;;
           *)
             printf "\n${RED}Invalid choice. Configuration unchanged.${NC}\n"
