@@ -44,6 +44,35 @@ This is the **Framework** R package - a data management and project scaffolding 
 
 **Framework is Quarto-first**: The package prioritizes Quarto for notebooks and documentation, with RMarkdown provided for backward compatibility.
 
+## Configuration Philosophy
+
+**CRITICAL: When adding new configurable settings, ALWAYS follow this pattern:**
+
+1. **Add to global defaults** (`~/.frameworkrc`):
+   - Add `FW_*` environment variable with sensible default
+   - Document in comments what the setting controls
+   - Example: `FW_SEED="20241016"  # Random seed for reproducibility`
+
+2. **Add to project templates** (all three `config.yml` files):
+   - `inst/project_structure/project/config.yml`
+   - `inst/project_structure/course/config.yml`
+   - `inst/project_structure/presentation/config.yml`
+   - Include inline comments explaining the setting
+   - Reference global fallback in comments
+
+3. **Implement resolution logic** (in relevant R function):
+   - Check project config first: `config$setting_name`
+   - Fall back to global: `Sys.getenv("FW_SETTING_NAME", "")`
+   - Provide sensible default if neither exists
+   - Example: `.set_random_seed()` in `R/scaffold.R`
+
+4. **Document the hierarchy** (in this CLAUDE.md):
+   - Add to "Configuration Locations & Hierarchy" section
+   - Include resolution order example
+   - Explain when each tier is used
+
+This pattern ensures consistency and predictability across Framework.
+
 ## Package Development Commands
 
 ### Building and Testing
@@ -145,6 +174,7 @@ make release       # Full release workflow (clean, docs, test, check)
 2. **Environment Scaffolding (`R/scaffold.R`)**
    - `scaffold()` function loads project environment
    - Handles environment variables, configuration, package installation/loading
+   - **Sets random seed** for reproducibility (project config → global fallback → skip)
    - Sources all `.R` files from `functions/` directory
    - Executes project-specific `scaffold.R` if present
 
@@ -407,12 +437,49 @@ default:
   project_type: project             # ← Keep here
 ```
 
-### Configuration Locations
-- **Main config**: `config.yml` (created by `init()`)
-- **Split files**: `settings/` directory (optional, for complex projects)
-- **Environment variables**: `.env` file for secrets (gitignored)
-- **Framework database**: `framework.db` for metadata tracking
-- **Package defaults**: Built into Framework, auto-fill missing values
+### Configuration Locations & Hierarchy
+
+Framework uses a **three-tier configuration hierarchy** for maximum flexibility:
+
+**1. Project-Level Config** (`config.yml`) - Highest Priority
+- Created during `init()` in each project
+- Project-specific settings (seed, packages, directories, data catalog, etc.)
+- Overrides global defaults
+
+**2. Global User Config** (`~/.frameworkrc`) - Fallback Defaults
+- User-wide preferences applied to ALL new projects
+- Settings include:
+  - `FW_SEED`: Default random seed (YYYYMMDD format recommended)
+  - `FW_AUTHOR_NAME`, `FW_AUTHOR_EMAIL`, `FW_AUTHOR_AFFILIATION`: Author info
+  - `FW_DEFAULT_FORMAT`: Default notebook format (quarto or rmarkdown)
+  - `FW_IDES`: IDE preferences (vscode, rstudio, both, none)
+  - `FW_AI_SUPPORT`, `FW_AI_ASSISTANTS`: AI assistant configuration
+- Updated via `framework configure:*` CLI commands or by editing `~/.frameworkrc` directly
+
+**3. Package Defaults** - Last Resort
+- Built into Framework package
+- Used only when neither project nor global config specifies a value
+
+**Resolution Order Examples:**
+
+```r
+# Random seed resolution (in scaffold())
+1. Check config$seed in project config.yml
+2. Fall back to Sys.getenv("FW_SEED") from ~/.frameworkrc
+3. Skip seeding if neither is set
+
+# Author information resolution (in init())
+1. Check explicit parameters: init(author_name = "...")
+2. Fall back to Sys.getenv("FW_AUTHOR_NAME") from ~/.frameworkrc
+3. Use placeholder "Your Name" from package defaults
+```
+
+**File Locations:**
+- **Project config**: `./config.yml` (created by `init()`)
+- **Global config**: `~/.frameworkrc` (managed by CLI)
+- **Split files**: `./settings/` directory (optional, for complex projects)
+- **Environment secrets**: `.env` file (gitignored)
+- **Metadata tracking**: `framework.db` (SQLite database)
 
 ### Default Connections
 Both project structures include a pre-configured "framework" connection:
@@ -436,10 +503,27 @@ Both project structures include a pre-configured "framework" connection:
 
 ### Function Naming Conventions
 
-- Primary data functions use snake_case: `load_data()`, `save_data()`
-- Internal implementation uses both patterns:
-  - `data_load()` (internal) vs `load_data()` (exported alias)
-  - This dual naming exists for backward compatibility
+**CRITICAL: Namespaced functions are ALWAYS primary, non-namespaced are aliases for backward compatibility.**
+
+Framework uses a consistent naming pattern where namespaced functions (with prefixes like `data_`, `result_`, `cache_`) are the primary API:
+
+**Primary (Namespaced)**:
+- `data_load()`, `data_save()`, `data_list()`
+- `result_save()`, `result_get()`, `result_list()`
+- `cache_fetch()`, `cache_get()`, `cache_flush()`
+- `query_get()`, `query_execute()`
+- `scratch_capture()`, `scratch_clean()`
+
+**Aliases (Backward Compatibility)**:
+- `load_data()` → `data_load()`
+- `save_data()` → `data_save()`
+- `list_data()` → `data_list()`
+
+**When creating new functions:**
+1. Always define the namespaced version first as the primary function
+2. Add backward compatibility alias afterward if needed
+3. Document the alias relationship in roxygen comments
+4. Export both functions
 
 ### Documentation Status
 

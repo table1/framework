@@ -36,6 +36,13 @@ default:
   # Default notebook format for make_notebook() (quarto or rmarkdown)
   default_notebook_format: quarto
 
+  # Random seed for reproducibility
+  # Set during scaffold() to ensure consistent random operations
+  # Use YYYYMMDD format (e.g., 20241016) or any integer
+  # Set to null to disable automatic seeding
+  # Falls back to global ~/.frameworkrc FW_SEED if not specified
+  seed: 20241016
+
   # --------------------------------------------------------------------------
   # Data Catalog
   # --------------------------------------------------------------------------

@@ -476,21 +476,19 @@ security_audit <- function(config_file = "config.yml",
   }
 
   # Build git log command
-  git_args <- c(
-    "log",
-    "--all",
-    "--pretty=format:%H|%ad|%s",
-    "--date=iso",
-    "--name-status"
+  # Note: Use system() instead of system2() to avoid shell interpretation issues with git format strings
+  # The %H, %ad, %s placeholders need to be passed directly to git, not interpreted by shell
+  git_cmd <- sprintf(
+    "git log --all '--pretty=format:%%H|%%ad|%%s' --date=iso --name-status%s",
+    if (!is.null(depth_arg)) paste0(" -", depth_arg) else ""
   )
-
-  if (!is.null(depth_arg)) {
-    git_args <- c(git_args, paste0("-", depth_arg))
-  }
 
   # Get git log
   log_output <- tryCatch(
-    system2("git", git_args, stdout = TRUE, stderr = FALSE),
+    {
+      output <- system(git_cmd, intern = TRUE)
+      if (is.null(attr(output, "status"))) output else character()
+    },
     error = function(e) character()
   )
 

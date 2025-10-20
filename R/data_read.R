@@ -113,7 +113,7 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
           type = spec$type,
           delimiter = if (!is.null(spec$delimiter)) spec$delimiter else NA,
           locked = if (!is.null(spec$locked)) spec$locked else FALSE,
-          encrypted = data_record$encrypted,
+          encrypted = as.logical(data_record$encrypted),
           hash = current_hash
         ),
         error = function(e) {
@@ -196,7 +196,7 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
     )
 
     # Parse decrypted data based on type
-    tryCatch(
+    data <- tryCatch(
       switch(spec$type,
         csv = {
           # Convert raw bytes to string and parse as CSV
@@ -218,6 +218,13 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
         stop(sprintf("Failed to parse decrypted data: %s", e$message))
       }
     )
+
+    # Output description if available
+    if (!is.null(spec$description) && nzchar(spec$description)) {
+      message(sprintf("ℹ %s", spec$description))
+    }
+
+    data
   } else {
     # Helper to check for haven package
     require_haven <- function(file_type) {
@@ -288,6 +295,11 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
       data <- as.data.frame(data)
     }
 
+    # Output description if available
+    if (!is.null(spec$description) && nzchar(spec$description)) {
+      message(sprintf("ℹ %s", spec$description))
+    }
+
     data
   }
 }
@@ -300,6 +312,109 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 #' @export
 load_data <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   data_load(path, delim, keep_attributes, ...)
+}
+
+#' List all data entries from config
+#'
+#' Lists all data specifications defined in the configuration, showing the
+#' data key, path, type, and description (if available).
+#'
+#' @return A data frame with columns: name, path, type, locked, encrypted, description
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # List all data entries
+#' data_list()
+#'
+#' # Use the alias
+#' list_data()
+#' }
+data_list <- function() {
+  config <- read_config()
+
+  if (is.null(config$data) || length(config$data) == 0) {
+    message("No data entries found in configuration")
+    return(invisible(data.frame(
+      name = character(),
+      path = character(),
+      type = character(),
+      locked = logical(),
+      encrypted = logical(),
+      description = character(),
+      stringsAsFactors = FALSE
+    )))
+  }
+
+  # Recursively extract all data entries
+  extract_entries <- function(obj, prefix = "") {
+    entries <- list()
+
+    for (name in names(obj)) {
+      item <- obj[[name]]
+      full_name <- if (nzchar(prefix)) paste(prefix, name, sep = ".") else name
+
+      if (is.list(item) && !is.null(item$path)) {
+        # This is a data entry
+        entries[[full_name]] <- list(
+          name = full_name,
+          path = item$path,
+          type = if (!is.null(item$type)) item$type else NA_character_,
+          locked = if (!is.null(item$locked)) item$locked else FALSE,
+          encrypted = if (!is.null(item$encrypted)) item$encrypted else FALSE,
+          description = if (!is.null(item$description)) item$description else NA_character_
+        )
+      } else if (is.list(item) && is.null(item$path)) {
+        # This is a nested structure, recurse
+        nested <- extract_entries(item, full_name)
+        entries <- c(entries, nested)
+      }
+    }
+
+    entries
+  }
+
+  entries_list <- extract_entries(config$data)
+
+  if (length(entries_list) == 0) {
+    message("No data entries found in configuration")
+    return(invisible(NULL))
+  }
+
+  # Print formatted output
+  message(sprintf("\n%d data %s found:\n", length(entries_list), if (length(entries_list) == 1) "entry" else "entries"))
+
+  for (entry in entries_list) {
+    # Name with type badge
+    type_badge <- sprintf("[%s]", toupper(entry$type))
+    message(sprintf("• %s %s", entry$name, type_badge))
+
+    # Path
+    message(sprintf("  Path: %s", entry$path))
+
+    # Flags (locked, encrypted)
+    flags <- c()
+    if (entry$locked) flags <- c(flags, "🔒 locked")
+    if (entry$encrypted) flags <- c(flags, "🔐 encrypted")
+    if (length(flags) > 0) {
+      message(sprintf("  %s", paste(flags, collapse = ", ")))
+    }
+
+    # Description (if available)
+    if (!is.na(entry$description) && nzchar(entry$description)) {
+      message(sprintf("  ℹ %s", entry$description))
+    }
+
+    message("")  # Blank line between entries
+  }
+
+  invisible(NULL)
+}
+
+#' Alias for backward compatibility
+#' @export
+list_data <- function() {
+  data_list()
 }
 
 #' Load data with caching
@@ -377,6 +492,7 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 #'     \item \code{locked} - Whether file is locked for integrity checking
 #'     \item \code{private} - Whether file is in private data directory
 #'     \item \code{encrypted} - Whether file is encrypted
+#'     \item \code{description} - Optional description of the dataset (displayed when loading)
 #'   }
 #'
 #' @examples

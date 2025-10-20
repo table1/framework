@@ -19,6 +19,7 @@ A list with data specification including:
 \item \code{locked} - Whether file is locked for integrity checking
 \item \code{private} - Whether file is in private data directory
 \item \code{encrypted} - Whether file is encrypted
+\item \code{description} - Optional description of the dataset (displayed when loading)
 }
 }
 \description{

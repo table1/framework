@@ -53,6 +53,9 @@ scaffold <- function(config_file = "config.yml") {
   # Ensure framework database exists
   .ensure_framework_db()
 
+  # Set random seed for reproducibility (if configured)
+  .set_random_seed(config_obj)
+
   .install_required_packages(config_obj)
   .load_libraries(config_obj)
   .load_functions()
@@ -285,6 +288,38 @@ scaffold <- function(config_file = "config.yml") {
         )
       }
     )
+  }
+
+  invisible(NULL)
+}
+
+#' Set random seed for reproducibility
+#' @param config Configuration object from read_config()
+#' @keywords internal
+#' @description
+#' Sets the random seed for reproducibility. Checks for seed in this order:
+#' 1. Project config.yml (seed: value)
+#' 2. Global ~/.frameworkrc (FW_SEED)
+#' 3. Skip seeding if both are NULL or empty
+.set_random_seed <- function(config) {
+  # Try project config first
+  seed_value <- config$seed
+
+  # Fall back to global frameworkrc if project seed not specified
+  if (is.null(seed_value)) {
+    global_seed <- Sys.getenv("FW_SEED", "")
+    if (nzchar(global_seed)) {
+      seed_value <- as.integer(global_seed)
+    }
+  }
+
+  # Set seed if we have a valid value
+  if (!is.null(seed_value) && !is.na(seed_value)) {
+    set.seed(seed_value)
+    message(sprintf(
+      "\u2713 Random seed set to %s (for reproducibility). Override with set.seed() if needed.",
+      seed_value
+    ))
   }
 
   invisible(NULL)
