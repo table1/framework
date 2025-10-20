@@ -196,9 +196,9 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' packages_snapshot()
+#' renv_snapshot()
 #' }
-packages_snapshot <- function(prompt = FALSE) {
+renv_snapshot <- function(prompt = FALSE) {
   if (!renv_enabled()) {
     stop(
       "renv is not enabled for this project.\n",
@@ -227,9 +227,9 @@ packages_snapshot <- function(prompt = FALSE) {
 #' @export
 #' @examples
 #' \dontrun{
-#' packages_restore()
+#' renv_restore()
 #' }
-packages_restore <- function(prompt = FALSE) {
+renv_restore <- function(prompt = FALSE) {
   if (!renv_enabled()) {
     stop(
       "renv is not enabled for this project.\n",
@@ -242,7 +242,7 @@ packages_restore <- function(prompt = FALSE) {
   }
 
   if (!file.exists("renv.lock")) {
-    stop("No renv.lock file found. Run packages_snapshot() first.")
+    stop("No renv.lock file found. Run renv_snapshot() first.")
   }
 
   message("Restoring packages from renv.lock...")
@@ -261,9 +261,9 @@ packages_restore <- function(prompt = FALSE) {
 #' @export
 #' @examples
 #' \dontrun{
-#' packages_status()
+#' renv_status()
 #' }
-packages_status <- function() {
+renv_status <- function() {
   if (!renv_enabled()) {
     stop(
       "renv is not enabled for this project.\n",
@@ -278,6 +278,64 @@ packages_status <- function() {
   renv::status()
 }
 
+#' Sync packages with renv.lock
+#'
+#' Resolves inconsistencies between installed packages and renv.lock by:
+#' 1. Installing missing packages that are used in code
+#' 2. Recording installed packages to renv.lock
+#'
+#' This is a convenience wrapper that calls renv::restore() followed by
+#' renv::snapshot() to bring the project into a consistent state.
+#'
+#' @param prompt Logical; if TRUE, prompt before making changes
+#' @return Invisibly returns TRUE on success
+#' @export
+#' @examples
+#' \dontrun{
+#' # Check status
+#' renv_status()
+#'
+#' # Fix inconsistencies
+#' renv_sync()
+#' }
+renv_sync <- function(prompt = FALSE) {
+  if (!renv_enabled()) {
+    stop(
+      "renv is not enabled for this project.\n",
+      "Use renv_enable() to enable renv integration."
+    )
+  }
+
+  if (!requireNamespace("renv", quietly = TRUE)) {
+    stop("renv package is required but not installed")
+  }
+
+  message("Synchronizing packages with renv.lock...")
+  message("")
+
+  # Step 1: Install missing packages
+  message("1. Installing missing packages...")
+  tryCatch({
+    renv::restore(prompt = prompt)
+  }, error = function(e) {
+    # renv::restore() throws an error if nothing to restore, which is fine
+    if (!grepl("nothing to restore", e$message, ignore.case = TRUE)) {
+      warning("Error during restore: ", e$message)
+    }
+  })
+
+  # Step 2: Record installed packages to renv.lock
+  message("2. Recording installed packages to renv.lock...")
+  renv::snapshot(prompt = prompt)
+
+  message("")
+  message(cli::col_green(cli::symbol$tick), " Packages synchronized!")
+  message("")
+  message("All packages are now consistent with renv.lock")
+
+  invisible(TRUE)
+}
+
 #' Update packages
 #'
 #' A user-facing wrapper around renv::update() that ensures renv is enabled.
@@ -287,10 +345,10 @@ packages_status <- function() {
 #' @export
 #' @examples
 #' \dontrun{
-#' packages_update()
-#' packages_update(c("dplyr", "ggplot2"))
+#' renv_update()
+#' renv_update(c("dplyr", "ggplot2"))
 #' }
-packages_update <- function(packages = NULL) {
+renv_update <- function(packages = NULL) {
   if (!renv_enabled()) {
     stop(
       "renv is not enabled for this project.\n",

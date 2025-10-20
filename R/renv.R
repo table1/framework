@@ -92,7 +92,7 @@ renv_enable <- function(sync = TRUE) {
         .sync_packages_to_renv()
       }, error = function(e) {
         warning("Could not sync packages from config.yml: ", e$message, "\n",
-                "You can manually sync later with: packages_snapshot()")
+                "You can manually sync later with: renv_snapshot()")
       })
     }
   }))
