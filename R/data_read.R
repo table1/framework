@@ -221,7 +221,7 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 
     # Output description if available
     if (!is.null(spec$description) && nzchar(spec$description)) {
-      message(sprintf("ℹ %s", spec$description))
+      message(sprintf("ℹ %s: %s", path, spec$description))
     }
 
     data
@@ -297,7 +297,7 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 
     # Output description if available
     if (!is.null(spec$description) && nzchar(spec$description)) {
-      message(sprintf("ℹ %s", spec$description))
+      message(sprintf("ℹ %s: %s", path, spec$description))
     }
 
     data

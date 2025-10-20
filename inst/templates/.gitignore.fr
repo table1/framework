@@ -65,6 +65,9 @@ renv/staging/
 .idea
 .vscode
 
+# AI Assistant contexts
+.claude/settings.local.json
+
 # Config directories
 .history
 .aws
