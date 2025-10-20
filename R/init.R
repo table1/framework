@@ -485,6 +485,11 @@ init <- function(
     if (fname == ".env.fr") next  # Skip .env template (removed, use make_env() instead)
     if (fname == "test.fr.R") next  # Skip test file template
 
+    # Skip AI instruction files (handled by .create_ai_instructions based on user selection)
+    if (fname == "CLAUDE.fr.md") next
+    if (fname == "AGENTS.fr.md") next
+    if (fname == "copilot-instructions.fr.md") next
+
     # Skip type-specific config and README files
     if (grepl("^config\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
     if (grepl("^README.*\\.fr\\.md$", fname)) next  # Skip all README templates (now in project_structure)
