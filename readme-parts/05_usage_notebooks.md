@@ -40,7 +40,7 @@ Stub templates support placeholders:
 - `{filename}` - File name without extension
 - `{date}` - Current date (YYYY-MM-DD)
 
-**Configure default directories in config.yml:**
+**Configure default directories in settings.yml:**
 
 ```yaml
 options:

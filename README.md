@@ -12,7 +12,7 @@ An R package for structured, reproducible data analysis projects with a great us
 - **Git**: Whether to initialize a `git` repository
 - **Package management**: Whether to use renv for package management
 
-Not sure? Choose the defaults. You can always change these later in `config.yml`.
+Not sure? Choose the defaults. You can always change these later in `settings.yml`.
 
 ### Option 1: CLI Tool (Recommended)
 
@@ -90,7 +90,7 @@ project/
 ├── functions/              # Custom functions
 ├── results/private/        # Analysis outputs (gitignored)
 ├── docs/                   # Documentation
-├── config.yml              # Project configuration
+├── settings.yml              # Project configuration
 ├── framework.db            # Metadata/tracking database
 └── .env                    # Secrets (gitignored)
 ```
@@ -112,7 +112,7 @@ Framework reduces boilerplate and enforces best practices for data analysis:
 When you run `init()`, Framework creates:
 
 - **Project structure**: Organized directories (varies by type)
-- **Configuration files**: `config.yml` and optional `settings/` files
+- **Configuration files**: `settings.yml` and optional `settings/` files
 - **Git setup**: `.gitignore` configured to protect private data
 - **Tooling**: `.lintr`, `.editorconfig` for code quality
 - **Database**: `framework.db` for metadata tracking
@@ -167,7 +167,7 @@ scaffold()  # Loads packages, functions, config, standardizes working directory
 
 Use `data_load()` to read data with automatic integrity tracking. Every read is logged in the framework database with a SHA-256 hash, so you'll be notified if source data changes.
 
-**Configure in `config.yml`:**
+**Configure in `settings.yml`:**
 
 ```yaml
 data:
@@ -241,7 +241,7 @@ Stub templates support placeholders:
 - `{filename}` - File name without extension
 - `{date}` - Current date (YYYY-MM-DD)
 
-**Configure default directories in config.yml:**
+**Configure default directories in settings.yml:**
 
 ```yaml
 options:
@@ -253,7 +253,7 @@ options:
 
 **Via config:**
 ```yaml
-# config.yml or settings/data.yml
+# settings.yml or settings/data.yml
 data:
   source:
     private:
@@ -302,7 +302,7 @@ result_save("report", file = "report.html", type = "notebook",
 ### 6. Query Databases
 
 ```yaml
-# config.yml (using clean env() syntax)
+# settings.yml (using clean env() syntax)
 connections:
   db:
     driver: postgresql
@@ -489,7 +489,7 @@ Framework includes **optional** [renv](https://rstudio.github.io/renv/) integrat
 renv_enable()
 
 # That's it! Framework handles the rest automatically:
-# ✓ Installs framework, rmarkdown, and your config.yml packages
+# ✓ Installs framework, rmarkdown, and your settings.yml packages
 # ✓ Creates renv.lock with exact versions
 # ✓ Updates .gitignore to exclude renv cache
 ```
@@ -500,7 +500,7 @@ renv_enable()
 1. Framework automatically installs essential packages:
    - `framework` (from GitHub: table1/framework)
    - `rmarkdown` (needed by Quarto for R code chunks)
-   - All packages listed in `config.yml`
+   - All packages listed in `settings.yml`
 
 2. Creates `renv.lock` - a snapshot of exact package versions
 
@@ -544,7 +544,7 @@ packages_update()
 renv_disable()  # Keeps renv.lock for future use
 ```
 
-### Version Pinning in config.yml
+### Version Pinning in settings.yml
 
 Control exact package versions in your config:
 

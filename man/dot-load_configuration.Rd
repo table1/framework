@@ -2,11 +2,11 @@
 % Please edit documentation in R/scaffold.R
 \name{.load_configuration}
 \alias{.load_configuration}
-\title{Load configuration from config.yml}
+\title{Load configuration from settings file}
 \usage{
-.load_configuration(config_file = "config.yml")
+.load_configuration(config_file = NULL)
 }
 \description{
-Load configuration from config.yml
+Load configuration from settings file
 }
 \keyword{internal}

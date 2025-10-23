@@ -76,10 +76,20 @@ affected <- query_execute("UPDATE ...", "mydb")      # Execute non-query
 
 ## Configuration
 
-### Config Files
+### Settings Helper (Dot Notation)
 ```r
-config <- read_config()          # Read config.yml or settings/*.yml
-write_config(config)             # Write config back
+settings()                          # View entire settings (pretty-printed in console)
+settings("directories")             # Get all directories
+settings("directories.notebooks")   # Get nested value with dot notation
+settings("notebooks")               # Smart lookup (checks directories section)
+settings("connections.db.host")     # Access deep nested values
+settings("missing", default = "x")  # Provide fallback for missing keys
+```
+
+### Settings Files
+```r
+settings <- read_config()        # Read settings.yml (or config.yml)
+write_config(settings)           # Write settings back
 ```
 
 ### AI Assistant Support

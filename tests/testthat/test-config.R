@@ -505,3 +505,147 @@ test_that("multiple split files can coexist without conflicts", {
   unlink("config.yml")
   unlink("settings", recursive = TRUE)
 })
+
+# ---- config() Helper Tests ----
+
+test_that("config() returns entire config when no key provided", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  cfg <- config()
+  expect_type(cfg, "list")
+  expect_true("directories" %in% names(cfg))
+  expect_true("packages" %in% names(cfg))
+})
+
+test_that("config() accesses nested values with dot notation", {
+  test_dir <- create_test_project(type = "project")
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Test nested access - get whatever directories exist
+  dirs <- config("directories")
+  if (length(dirs) > 0) {
+    first_key <- names(dirs)[1]
+    first_value <- config(paste0("directories.", first_key))
+    expect_equal(first_value, dirs[[first_key]])
+  }
+})
+
+test_that("config() returns default for missing keys", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Missing key with default
+  result <- config("missing.key", default = "fallback")
+  expect_equal(result, "fallback")
+
+  # Missing key without default
+  result <- config("missing.key")
+  expect_null(result)
+})
+
+test_that("config() returns entire sections as lists", {
+  test_dir <- create_test_project(type = "project")
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Get entire directories section
+  dirs <- config("directories")
+  expect_type(dirs, "list")
+  expect_true(length(dirs) > 0)  # Should have at least some directories
+})
+
+test_that("config() handles smart directory lookups", {
+  test_dir <- create_test_project(type = "project")
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Single-word key should check directories section
+  # Get whatever directories exist and test smart lookup
+  dirs <- config("directories")
+  if (length(dirs) > 0) {
+    first_key <- names(dirs)[1]
+    # Smart lookup (no "directories." prefix)
+    smart_result <- config(first_key)
+    # Should match the direct access
+    expect_equal(smart_result, dirs[[first_key]])
+  }
+})
+
+test_that("config() returns raw values in non-interactive mode", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Tests run in non-interactive mode
+  # Should return raw list, not invisible
+  dirs <- config("directories")
+  expect_type(dirs, "list")
+  expect_visible(dirs)
+})
+
+test_that("config() works with deep nesting", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create config with deep nesting
+  yaml::write_yaml(list(
+    default = list(
+      level1 = list(
+        level2 = list(
+          level3 = list(
+            value = "deep_value"
+          )
+        )
+      )
+    )
+  ), "config.yml")
+
+  # Access deep value
+  result <- config("level1.level2.level3.value")
+  expect_equal(result, "deep_value")
+
+  # Access intermediate level
+  level2 <- config("level1.level2")
+  expect_type(level2, "list")
+  expect_true("level3" %in% names(level2))
+})

@@ -76,3 +76,6 @@ renv/staging/
 .history
 .aws
 .config.claude/
+
+# Auto-generated VS Code tasks (managed by ~/code/projects/tools/gen_tasks.sh)
+.vscode/tasks.json

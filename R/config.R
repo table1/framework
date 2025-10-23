@@ -1,38 +1,72 @@
-#' Get configuration value by dot-notation key
+#' Get settings value by dot-notation key
 #'
-#' Laravel-style configuration helper that supports both flat and hierarchical
+#' Framework's primary configuration helper that supports both flat and hierarchical
 #' key access using dot notation. Automatically checks common locations for
-#' directory settings.
+#' directory settings. Pretty-prints nested structures in interactive sessions.
 #'
 #' @param key Character. Dot-notation key path (e.g., "notebooks" or
-#'   "directories.notebooks" or "connections.db.host")
-#' @param default Optional default value if key is not found
-#' @param config_file Configuration file path (default: "config.yml")
+#'   "directories.notebooks" or "connections.db.host"). If NULL, returns entire settings.
+#' @param default Optional default value if key is not found (default: NULL)
+#' @param settings_file Settings file path (default: checks "settings.yml" then "config.yml")
 #'
-#' @return The configuration value, or default if not found
+#' @return The settings value, or default if not found. In interactive sessions,
+#'   nested structures are pretty-printed and returned invisibly.
 #'
 #' @details
 #' For directory settings, the function checks multiple locations:
-#' - Direct: `config("notebooks")` checks `directories$notebooks`, then `options$notebook_dir`
-#' - Explicit: `config("directories.notebooks")` checks only `directories$notebooks`
+#' - Direct: `settings("notebooks")` checks `directories$notebooks`, then `options$notebook_dir`
+#' - Explicit: `settings("directories.notebooks")` checks only `directories$notebooks`
+#'
+#' **File Discovery:**
+#' - Checks `settings.yml` first (Framework's preferred convention)
+#' - Falls back to `config.yml` if settings.yml not found
+#' - You can override with explicit `settings_file` parameter
+#'
+#' **Output Behavior:**
+#' - Interactive sessions: Pretty-prints nested lists/structures and returns invisibly
+#' - Non-interactive (scripts): Returns raw value without printing
+#' - Simple values: Always returned directly without modification
 #'
 #' @examples
 #' \dontrun{
 #' # Get notebook directory (checks both locations)
-#' config("notebooks")
+#' settings("notebooks")
 #'
 #' # Get explicit nested setting
-#' config("directories.notebooks")
-#' config("connections.db.host")
+#' settings("directories.notebooks")
+#' settings("connections.db.host")
+#'
+#' # Get entire section
+#' settings("directories")  # Returns all directory settings
+#' settings("connections")  # Returns all connection settings
+#'
+#' # View entire settings
+#' settings()  # Returns full configuration
 #'
 #' # With default value
-#' config("missing_key", default = "fallback")
+#' settings("missing_key", default = "fallback")
 #' }
 #'
 #' @export
-config <- function(key, default = NULL, config_file = "config.yml") {
+settings <- function(key = NULL, default = NULL, settings_file = NULL) {
+  # Discover settings file if not specified
+  if (is.null(settings_file)) {
+    if (file.exists("settings.yml")) {
+      settings_file <- "settings.yml"
+    } else if (file.exists("config.yml")) {
+      settings_file <- "config.yml"
+    } else {
+      stop("No settings file found. Looking for settings.yml or config.yml")
+    }
+  }
+
   # Read full config
-  cfg <- read_config(config_file)
+  cfg <- read_config(settings_file)
+
+  # If no key provided, return entire config with pretty-printing
+  if (is.null(key)) {
+    return(.pretty_print_config(cfg))
+  }
 
   # Split key by dots
   parts <- strsplit(key, "\\.")[[1]]
@@ -61,7 +95,24 @@ config <- function(key, default = NULL, config_file = "config.yml") {
     }
   }
 
-  value
+  # Pretty-print if appropriate
+  .pretty_print_config(value)
+}
+
+#' Get configuration value (alias for settings)
+#'
+#' Compatibility alias for \code{\link{settings}}. Framework recommends using
+#' \code{settings()} for new projects, but \code{config()} continues to work.
+#'
+#' @param key Character. Dot-notation key path
+#' @param default Optional default value if key is not found
+#' @param config_file Configuration file path (default: auto-discover)
+#'
+#' @return The configuration value
+#' @seealso \code{\link{settings}}
+#' @export
+config <- function(key = NULL, default = NULL, config_file = NULL) {
+  settings(key = key, default = default, settings_file = config_file)
 }
 
 
@@ -469,4 +520,26 @@ write_config <- function(config, config_file = "config.yml", section = NULL) {
   }
 
   invisible(NULL)
+}
+
+#' Pretty-print configuration values (internal)
+#'
+#' Intelligently formats configuration output based on session type.
+#' In interactive sessions, pretty-prints nested structures. In scripts,
+#' returns raw values.
+#'
+#' @param value Configuration value to format
+#' @return In interactive mode with complex values: invisible return after printing.
+#'   Otherwise: raw value.
+#' @keywords internal
+.pretty_print_config <- function(value) {
+  # Only pretty-print in interactive sessions for complex structures
+  if (interactive() && (is.list(value) || length(value) > 1)) {
+    cat("Configuration:\n")
+    str(value, max.level = 3, give.attr = FALSE, comp.str = "  ")
+    invisible(value)
+  } else {
+    # Return raw value for scripts or simple values
+    value
+  }
 }

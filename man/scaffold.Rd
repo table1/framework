@@ -4,14 +4,14 @@
 \alias{scaffold}
 \title{Initialize and load the project environment}
 \usage{
-scaffold(config_file = "config.yml")
+scaffold(config_file = NULL)
 }
 \description{
 This function initializes the project environment by:
 \enumerate{
 \item Standardizing the working directory (for notebooks in subdirectories)
 \item Loading environment variables from .env
-\item Loading configuration from config.yml
+\item Loading configuration from settings.yml (or config.yml)
 \item Installing required packages
 \item Loading all functions from the functions directory
 }

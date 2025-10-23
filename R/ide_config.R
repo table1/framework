@@ -8,7 +8,15 @@
   checkmate::assert_string(target_dir, min.chars = 1)
   checkmate::assert_flag(python)
 
-  workspace_file <- file.path(target_dir, paste0(project_name, ".code-workspace"))
+  # Sanitize project name for workspace filename
+  # 1. Convert to lowercase
+  # 2. Convert spaces to hyphens
+  # 3. Remove all special characters except hyphens
+  sanitized_name <- tolower(project_name)
+  sanitized_name <- gsub("\\s+", "-", sanitized_name)
+  sanitized_name <- gsub("[^a-z0-9-]", "", sanitized_name)
+
+  workspace_file <- file.path(target_dir, paste0(sanitized_name, ".code-workspace"))
 
   # Base workspace configuration
   workspace_config <- list(

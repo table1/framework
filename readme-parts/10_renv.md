@@ -9,7 +9,7 @@ Framework includes **optional** [renv](https://rstudio.github.io/renv/) integrat
 renv_enable()
 
 # That's it! Framework handles the rest automatically:
-# ✓ Installs framework, rmarkdown, and your config.yml packages
+# ✓ Installs framework, rmarkdown, and your settings.yml packages
 # ✓ Creates renv.lock with exact versions
 # ✓ Updates .gitignore to exclude renv cache
 ```
@@ -20,7 +20,7 @@ renv_enable()
 1. Framework automatically installs essential packages:
    - `framework` (from GitHub: table1/framework)
    - `rmarkdown` (needed by Quarto for R code chunks)
-   - All packages listed in `config.yml`
+   - All packages listed in `settings.yml`
 
 2. Creates `renv.lock` - a snapshot of exact package versions
 
@@ -64,7 +64,7 @@ packages_update()
 renv_disable()  # Keeps renv.lock for future use
 ```
 
-### Version Pinning in config.yml
+### Version Pinning in settings.yml
 
 Control exact package versions in your config:
 

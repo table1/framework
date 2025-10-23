@@ -2,7 +2,7 @@
 
 **Via config:**
 ```yaml
-# config.yml or settings/data.yml
+# settings.yml or settings/data.yml
 data:
   source:
     private:
@@ -51,7 +51,7 @@ result_save("report", file = "report.html", type = "notebook",
 ### 6. Query Databases
 
 ```yaml
-# config.yml (using clean env() syntax)
+# settings.yml (using clean env() syntax)
 connections:
   db:
     driver: postgresql

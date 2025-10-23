@@ -21,7 +21,7 @@ may be rendered from subdirectories.
 \details{
 The function looks for common framework project indicators:
 \itemize{
-\item config.yml file
+\item settings.yml or config.yml file
 \item .Rprofile file
 \item Being in common subdirectories (scratch, work)
 }

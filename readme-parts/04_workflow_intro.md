@@ -11,7 +11,7 @@ scaffold()  # Loads packages, functions, config, standardizes working directory
 
 Use `data_load()` to read data with automatic integrity tracking. Every read is logged in the framework database with a SHA-256 hash, so you'll be notified if source data changes.
 
-**Configure in `config.yml`:**
+**Configure in `settings.yml`:**
 
 ```yaml
 data:

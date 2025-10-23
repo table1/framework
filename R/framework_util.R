@@ -1,3 +1,34 @@
+#' Check if settings file exists
+#'
+#' Checks for settings.yml (preferred) or config.yml (backward compatibility).
+#'
+#' @param path Optional path to check in (default: current directory)
+#' @return TRUE if either file exists, FALSE otherwise
+#' @keywords internal
+.has_settings_file <- function(path = ".") {
+  file.exists(file.path(path, "settings.yml")) || file.exists(file.path(path, "config.yml"))
+}
+
+#' Get settings file path
+#'
+#' Returns path to settings.yml (preferred) or config.yml (backward compatibility).
+#'
+#' @param path Optional path to check in (default: current directory)
+#' @return Path to settings file, or NULL if neither exists
+#' @keywords internal
+.get_settings_file <- function(path = ".") {
+  settings_path <- file.path(path, "settings.yml")
+  config_path <- file.path(path, "config.yml")
+
+  if (file.exists(settings_path)) {
+    return(settings_path)
+  } else if (file.exists(config_path)) {
+    return(config_path)
+  } else {
+    return(NULL)
+  }
+}
+
 #' Standardize Working Directory for Framework Projects
 #'
 #' This function helps standardize the working directory when working with
@@ -8,13 +39,13 @@
 #'   If NULL (default), the function will attempt to find it automatically.
 #'
 #' @return Invisibly returns the standardized project root path.
-#' 
+#'
 #' @details
 #' The function looks for common framework project indicators:
-#' - config.yml file
+#' - settings.yml or config.yml file
 #' - .Rprofile file
 #' - Being in common subdirectories (scratch, work)
-#' 
+#'
 #' It sets both the regular working directory and knitr's root.dir option
 #' if knitr is available.
 #'
@@ -38,29 +69,29 @@ standardize_wd <- function(project_root = NULL) {
         condition = basename(current) %in% c("scratch", "work", "analysis", "reports"),
         path = dirname(current)
       ),
-      # If config.yml exists in current directory
+      # If settings file exists in current directory
       list(
-        condition = file.exists("config.yml"),
+        condition = .has_settings_file("."),
         path = current
       ),
-      # If config.yml exists in parent
+      # If settings file exists in parent
       list(
-        condition = file.exists("../config.yml"),
+        condition = .has_settings_file(".."),
         path = normalizePath("..")
       ),
-      # If config.yml exists in grandparent
+      # If settings file exists in grandparent
       list(
-        condition = file.exists("../../config.yml"),
+        condition = .has_settings_file("../.."),
         path = normalizePath("../..")
       ),
       # If we're in project root and R subdirectory exists
       list(
-        condition = file.exists("R/config.yml"),
+        condition = .has_settings_file("R"),
         path = file.path(current, "R")
       ),
       # If we can find an .Rprofile in parent directories
       list(
-        condition = file.exists("../.Rprofile") && file.exists("../R/config.yml"),
+        condition = file.exists("../.Rprofile") && .has_settings_file("../R"),
         path = file.path(dirname(current), "R")
       )
     )
@@ -103,8 +134,8 @@ standardize_wd <- function(project_root = NULL) {
     old_wd <- setwd(project_root)
 
     # Check for expected files
-    if (!file.exists("config.yml")) {
-      warning("config.yml not found in standardized directory")
+    if (!.has_settings_file(".")) {
+      warning("settings.yml or config.yml not found in standardized directory")
     }
     
   } else {

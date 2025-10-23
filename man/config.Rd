@@ -2,44 +2,24 @@
 % Please edit documentation in R/config.R
 \name{config}
 \alias{config}
-\title{Get configuration value by dot-notation key}
+\title{Get configuration value (alias for settings)}
 \usage{
-config(key, default = NULL, config_file = "config.yml")
+config(key = NULL, default = NULL, config_file = NULL)
 }
 \arguments{
-\item{key}{Character. Dot-notation key path (e.g., "notebooks" or
-"directories.notebooks" or "connections.db.host")}
+\item{key}{Character. Dot-notation key path}
 
 \item{default}{Optional default value if key is not found}
 
-\item{config_file}{Configuration file path (default: "config.yml")}
+\item{config_file}{Configuration file path (default: auto-discover)}
 }
 \value{
-The configuration value, or default if not found
+The configuration value
 }
 \description{
-Laravel-style configuration helper that supports both flat and hierarchical
-key access using dot notation. Automatically checks common locations for
-directory settings.
+Compatibility alias for \code{\link{settings}}. Framework recommends using
+\code{settings()} for new projects, but \code{config()} continues to work.
 }
-\details{
-For directory settings, the function checks multiple locations:
-\itemize{
-\item Direct: \code{config("notebooks")} checks \code{directories$notebooks}, then \code{options$notebook_dir}
-\item Explicit: \code{config("directories.notebooks")} checks only \code{directories$notebooks}
-}
-}
-\examples{
-\dontrun{
-# Get notebook directory (checks both locations)
-config("notebooks")
-
-# Get explicit nested setting
-config("directories.notebooks")
-config("connections.db.host")
-
-# With default value
-config("missing_key", default = "fallback")
-}
-
+\seealso{
+\code{\link{settings}}
 }

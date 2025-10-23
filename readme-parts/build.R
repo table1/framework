@@ -2,7 +2,7 @@
 # Build README.md from parts in readme-parts/
 
 # Get all numbered markdown files in order
-parts <- list.files("readme-parts", pattern = "^[0-9]+_.*\\.md$", full.names = TRUE)
+parts <- list.files(".", pattern = "^[0-9]+_.*\\.md$", full.names = TRUE)
 parts <- sort(parts)
 
 if (length(parts) == 0) {
@@ -17,8 +17,8 @@ content <- sapply(parts, function(f) {
 # Combine with blank lines between sections
 readme <- paste(content, collapse = "\n\n")
 
-# Write to README.md
-writeLines(readme, "README.md")
+# Write to README.md in parent directory
+writeLines(readme, "../README.md")
 
 cat("✓ Built README.md from", length(parts), "parts\n")
 cat("Parts used:\n")

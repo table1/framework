@@ -24,19 +24,19 @@
 #' @keywords internal
 .create_config_file <- function(type = "analysis", attach_defaults = TRUE, subdir = NULL) {
   # Try type-specific template first, fall back to generic
-  template_name <- sprintf("templates/config.%s.fr.yml", type)
+  template_name <- sprintf("templates/settings.%s.fr.yml", type)
   template_path <- system.file(template_name, package = "framework")
 
   if (!file.exists(template_path)) {
     # Fall back to generic template
-    template_path <- system.file("templates/config.fr.yml", package = "framework")
+    template_path <- system.file("templates/settings.fr.yml", package = "framework")
     if (!file.exists(template_path)) {
-      stop("Template config.fr.yml not found in package")
+      stop("Template settings.fr.yml not found in package")
     }
   }
 
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
-  target_file <- file.path(target_dir, "config.yml")
+  target_file <- file.path(target_dir, "settings.yml")
 
   # Read template content
   content <- readLines(template_path, warn = FALSE)
@@ -196,7 +196,7 @@ message("Framework dev mode active - will load from: %s")
   cat("\n")
 
   cat("Next steps:\n")
-  cat("  1. Review and edit config.yml\n")
+  cat("  1. Review and edit settings.yml\n")
   cat("  2. Start a new R session in this directory\n")
   cat("  3. Run:\n")
   cat("       library(framework)\n")
@@ -447,11 +447,19 @@ init <- function(
 
   # Derive project name
   if (!is.null(project_name)) {
-    # Keep original capitalization, just convert spaces to hyphens for filenames
-    rproj_name <- gsub("\\s+", "-", project_name)
+    # Convert to lowercase and sanitize for filenames:
+    # 1. Convert to lowercase
+    # 2. Convert spaces to hyphens
+    # 3. Remove all special characters except hyphens
+    rproj_name <- tolower(project_name)
+    rproj_name <- gsub("\\s+", "-", rproj_name)
+    rproj_name <- gsub("[^a-z0-9-]", "", rproj_name)
   } else {
     project_name <- basename(getwd())
-    rproj_name <- project_name
+    # Apply same sanitization to derived name
+    rproj_name <- tolower(project_name)
+    rproj_name <- gsub("\\s+", "-", rproj_name)
+    rproj_name <- gsub("[^a-z0-9-]", "", rproj_name)
   }
 
   # Validate template style files
@@ -490,10 +498,10 @@ init <- function(
     if (fname == "AGENTS.fr.md") next
     if (fname == "copilot-instructions.fr.md") next
 
-    # Skip type-specific config and README files
-    if (grepl("^config\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
+    # Skip type-specific settings and README files
+    if (grepl("^settings\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
     if (grepl("^README.*\\.fr\\.md$", fname)) next  # Skip all README templates (now in project_structure)
-    if (fname == "config.fr.yml") next  # Skip generic config (handled separately)
+    if (fname == "settings.fr.yml") next  # Skip generic settings (handled separately)
 
     if (!grepl("\\.fr($|\\.)", fname)) next
 
@@ -552,14 +560,42 @@ init <- function(
 
   # README.md is now part of project_structure and copied above
 
-  # Update config.yml with author information and notebook format if provided
+  # Rename settings/ directory based on user preference
+  config_dir_pref <- Sys.getenv("FW_CONFIG_DIR", "settings")
+  if (config_dir_pref == "config" && dir.exists(file.path(target_dir, "settings"))) {
+    # Rename settings/ to config/
+    file.rename(
+      from = file.path(target_dir, "settings"),
+      to = file.path(target_dir, "config")
+    )
+
+    # Update references in config.yml
+    config_path <- file.path(target_dir, "config.yml")
+    if (file.exists(config_path)) {
+      config_content <- readLines(config_path, warn = FALSE)
+      # Replace "settings/" with "config/" in references
+      config_content <- gsub("settings/", "config/", config_content, fixed = TRUE)
+      writeLines(config_content, config_path)
+    }
+  }
+
+  # Update settings.yml (or config.yml) with author information and notebook format if provided
   has_author_info <- (!is.null(author_name) && nzchar(author_name)) ||
                       (!is.null(author_email) && nzchar(author_email)) ||
                       (!is.null(author_affiliation) && nzchar(author_affiliation))
   has_format_pref <- !is.null(default_notebook_format) && nzchar(default_notebook_format)
 
   if (has_author_info || has_format_pref) {
+    # Find settings file (prefer settings.yml, fallback to config.yml)
+    settings_path <- file.path(target_dir, "settings.yml")
     config_path <- file.path(target_dir, "config.yml")
+
+    if (file.exists(settings_path)) {
+      config_path <- settings_path
+    } else if (!file.exists(config_path)) {
+      config_path <- settings_path  # Use settings.yml as default name
+    }
+
     if (file.exists(config_path)) {
       config_content <- readLines(config_path, warn = FALSE)
 

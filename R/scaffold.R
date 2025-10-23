@@ -3,22 +3,32 @@
 #' This function initializes the project environment by:
 #' 1. Standardizing the working directory (for notebooks in subdirectories)
 #' 2. Loading environment variables from .env
-#' 3. Loading configuration from config.yml
+#' 3. Loading configuration from settings.yml (or config.yml)
 #' 4. Installing required packages
 #' 5. Loading all functions from the functions directory
 #'
 #' @export
-scaffold <- function(config_file = "config.yml") {
+scaffold <- function(config_file = NULL) {
   # Standardize working directory first (for notebooks in subdirectories)
   project_root <- standardize_wd()
 
+  # Auto-discover settings file if not specified
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file(".")
+    if (is.null(config_file)) {
+      config_file <- NA  # Will trigger error below
+    } else {
+      config_file <- basename(config_file)
+    }
+  }
+
   # Fail fast if not in a Framework project
-  if (is.null(project_root) || !file.exists("config.yml")) {
+  if (is.null(project_root) || is.na(config_file) || !file.exists(config_file)) {
     stop(
       "Could not locate a Framework project.\n",
       "scaffold() searches for a project by looking for:\n",
-      "  - config.yml in current or parent directories\n",
-      "  - .Rproj file with config.yml nearby\n",
+      "  - settings.yml or config.yml in current or parent directories\n",
+      "  - .Rproj file with settings file nearby\n",
       "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
       "Current directory: ", getwd(), "\n",
       "To create a new project, use: init()"
@@ -31,7 +41,7 @@ scaffold <- function(config_file = "config.yml") {
     library(framework)
   }
 
-  .load_environment()
+  .load_environment(config_file)
 
   # Remove old config if it exists and unlock if needed
   if (exists("config", envir = .GlobalEnv)) {
@@ -58,7 +68,7 @@ scaffold <- function(config_file = "config.yml") {
 
   .install_required_packages(config_obj)
   .load_libraries(config_obj)
-  .load_functions()
+  .load_functions(config_file)
 
   # Source scaffold.R if it exists
   if (file.exists("scaffold.R")) {
@@ -74,8 +84,19 @@ scaffold <- function(config_file = "config.yml") {
 
 #' Load environment variables from .env file
 #' @keywords internal
-.load_environment <- function() {
-  config <- read_config()
+.load_environment <- function(config_file = NULL) {
+  # Auto-discover settings file if not provided
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file(".")
+    if (!is.null(config_file)) {
+      config_file <- basename(config_file)
+    } else {
+      # No settings file found, skip env loading
+      return(invisible(NULL))
+    }
+  }
+
+  config <- read_config(config_file)
 
   # Only check root level dotenv_location (not nested in options)
   if (!is.null(config$dotenv_location)) {
@@ -98,9 +119,19 @@ scaffold <- function(config_file = "config.yml") {
   }
 }
 
-#' Load configuration from config.yml
+#' Load configuration from settings file
 #' @keywords internal
-.load_configuration <- function(config_file = "config.yml") {
+.load_configuration <- function(config_file = NULL) {
+  # Auto-discover if not provided
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file(".")
+    if (!is.null(config_file)) {
+      config_file <- basename(config_file)
+    } else {
+      stop("No settings.yml or config.yml file found")
+    }
+  }
+
   read_config(config_file)
 }
 
@@ -200,8 +231,23 @@ scaffold <- function(config_file = "config.yml") {
 
 #' Load all R files from functions directories
 #' @keywords internal
-.load_functions <- function() {
-  config <- read_config()
+.load_functions <- function(config_file = NULL) {
+  # Auto-discover settings file if not provided
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file(".")
+    if (!is.null(config_file)) {
+      config_file <- basename(config_file)
+    } else {
+      # No settings file, use default
+      func_dirs <- "functions"
+      if (dir.exists(func_dirs)) {
+        .source_dir(func_dirs)
+      }
+      return(invisible(NULL))
+    }
+  }
+
+  config <- read_config(config_file)
 
   # Get function directories from config (can be list or single value)
   func_dirs <- config$options$functions_dir

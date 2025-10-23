@@ -77,12 +77,25 @@ case "$COMMAND" in
     esac
     ;;
 
+  renv:sync)
+    # Sync renv environment for current project
+    if [ ! -f "config.yml" ]; then
+      printf "${YELLOW}Warning: No config.yml found in current directory${NC}\n"
+      printf "Are you in a Framework project directory?\n"
+      exit 1
+    fi
+
+    printf "${BLUE}Syncing renv environment for current project...${NC}\n\n"
+    R --no-save -e "framework::scaffold(); framework::packages_status(); framework::packages_restore()"
+    ;;
+
   help|--help|-h)
     printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
     printf "${YELLOW}Usage:${NC}\n"
     printf "  framework new [name] [type]    Create new project\n"
     printf "  framework version              Show Framework package version\n"
     printf "  framework update               Update Framework and CLI from GitHub\n"
+    printf "  framework renv:sync            Sync renv environment for current project\n"
     printf "  framework help                 Show this help\n\n"
     printf "${YELLOW}Examples:${NC}\n"
     printf "  framework new                  ${GREEN}# Interactive mode (prompts for options)${NC}\n"

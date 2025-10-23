@@ -6,7 +6,7 @@
 - **Git**: Whether to initialize a `git` repository
 - **Package management**: Whether to use renv for package management
 
-Not sure? Choose the defaults. You can always change these later in `config.yml`.
+Not sure? Choose the defaults. You can always change these later in `settings.yml`.
 
 ### Option 1: CLI Tool (Recommended)
 
@@ -84,7 +84,7 @@ project/
 ├── functions/              # Custom functions
 ├── results/private/        # Analysis outputs (gitignored)
 ├── docs/                   # Documentation
-├── config.yml              # Project configuration
+├── settings.yml              # Project configuration
 ├── framework.db            # Metadata/tracking database
 └── .env                    # Secrets (gitignored)
 ```
@@ -106,7 +106,7 @@ Framework reduces boilerplate and enforces best practices for data analysis:
 When you run `init()`, Framework creates:
 
 - **Project structure**: Organized directories (varies by type)
-- **Configuration files**: `config.yml` and optional `settings/` files
+- **Configuration files**: `settings.yml` and optional `settings/` files
 - **Git setup**: `.gitignore` configured to protect private data
 - **Tooling**: `.lintr`, `.editorconfig` for code quality
 - **Database**: `framework.db` for metadata tracking
