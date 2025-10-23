@@ -701,113 +701,71 @@ view_create <- function(x, title = NULL, max_rows = 5000) {
   utils::browseURL(temp_file)
 }
 
-#' Activate the enhanced view function globally
+
+
+#' View data with enhanced browser-based interface
 #'
-#' Overrides R's default View() function with Framework's enhanced view_create()
-#' function. The original View function is preserved and can be restored later
-#' using view_restore(). This provides an enhanced viewing experience for all
-#' R objects across your session.
+#' Opens an interactive, browser-based viewer for R objects with search, filtering,
+#' sorting, pagination, and export capabilities (CSV/Excel). Provides a rich
+#' DataTables interface for data frames and enhanced views for plots, lists, and
+#' other R objects. This is the recommended function for exploring data in detail.
 #'
-#' @return Invisibly returns TRUE if successful
+#' Unlike R's built-in \code{View()}, this function:
+#' \itemize{
+#'   \item Works consistently across all IDEs (VS Code, RStudio, Positron, terminal)
+#'   \item Provides search and column filtering
+#'   \item Allows export to CSV and Excel
+#'   \item Offers sorting and pagination
+#'   \item Respects IDE-native viewers (doesn't override them)
+#' }
+#'
+#' @param x The data to view (data.frame, plot, list, function, or other R object)
+#' @param title Optional title for the view. If NULL, uses the object name.
+#' @param max_rows Maximum number of rows to display for data frames (default: 5000).
+#'   Large data frames are automatically truncated with a warning.
+#'
+#' @return Invisibly returns NULL. Function is called for its side effect of
+#'   opening a browser window with the rendered view.
 #'
 #' @examples
 #' \dontrun{
-#' # Activate enhanced viewing
-#' view_use()
+#' # View a data frame with interactive table
+#' view_detail(mtcars)
 #'
-#' # Now View() uses Framework's enhanced viewer
-#' View(mtcars)  # Opens enhanced browser-based table
+#' # View with custom title
+#' view_detail(iris, title = "Iris Dataset")
 #'
-#' # Restore original View when done
-#' view_restore()
+#' # View a plot
+#' library(ggplot2)
+#' p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+#' view_detail(p)
+#'
+#' # View a list
+#' view_detail(list(a = 1, b = 2, c = list(d = 3)))
 #' }
 #'
+#' @seealso \code{\link{view_create}} (underlying implementation)
 #' @export
-view_use <- function() {
-  # Store the original View function
-  if (!exists(".original_view", envir = .GlobalEnv)) {
-    assign(".original_view", utils::View, envir = .GlobalEnv)
-  }
-
-  # Replace View with our version
-  assign("View", view_create, envir = .GlobalEnv)
-
-  invisible(TRUE)
+view_detail <- function(x, title = NULL, max_rows = 5000) {
+  view_create(x, title, max_rows)
 }
 
 
-#' Restore the original View function
-#'
-#' Restores R's default View() function if it was previously overridden by
-#' view_use(). This undoes the global View function override and returns to
-#' R's built-in viewing behavior.
-#'
-#' @return Invisibly returns TRUE if successful, FALSE if no override was active
-#'
-#' @examples
-#' \dontrun{
-#' # Activate enhanced viewing
-#' view_use()
-#' View(mtcars)  # Uses Framework's viewer
-#'
-#' # Restore original View
-#' view_restore()
-#' View(mtcars)  # Uses R's default viewer
-#' }
-#'
-#' @export
-view_restore <- function() {
-  if (exists(".original_view", envir = .GlobalEnv)) {
-    assign("View", .original_view, envir = .GlobalEnv)
-    rm(".original_view", envir = .GlobalEnv)
-    return(invisible(TRUE))
-  }
-
-  invisible(FALSE)
-}
-
-
-#' @title (Deprecated) Use view_create() instead
+#' @title (Deprecated) Use view_create() or view_detail() instead
 #' @description `r lifecycle::badge("deprecated")`
 #'
 #' `framework_view()` was renamed to `view_create()` to follow the package's
 #' noun_verb naming convention for better discoverability and consistency.
 #'
+#' **Recommended:** Use `view_detail()` for the clearest, most user-friendly name.
+#'
 #' @inheritParams view_create
 #' @return Opens a browser window (called for side effects)
 #' @export
 framework_view <- function(x, title = NULL, max_rows = 5000) {
-  .Deprecated("view_create", package = "framework",
-              msg = "framework_view() is deprecated. Use view_create() instead.")
+  .Deprecated("view_detail", package = "framework",
+              msg = "framework_view() is deprecated. Use view_detail() instead.")
   view_create(x, title, max_rows)
 }
 
 
-#' @title (Deprecated) Use view_use() instead
-#' @description `r lifecycle::badge("deprecated")`
-#'
-#' `use_framework_view()` was renamed to `view_use()` to follow the package's
-#' noun_verb naming convention for better discoverability and consistency.
-#'
-#' @return Invisibly returns TRUE
-#' @export
-use_framework_view <- function() {
-  .Deprecated("view_use", package = "framework",
-              msg = "use_framework_view() is deprecated. Use view_use() instead.")
-  view_use()
-}
-
-
-#' @title (Deprecated) Use view_restore() instead
-#' @description `r lifecycle::badge("deprecated")`
-#'
-#' `restore_framework_view()` was renamed to `view_restore()` to follow the
-#' package's noun_verb naming convention for better discoverability and consistency.
-#'
-#' @return Invisibly returns TRUE or FALSE
-#' @export
-restore_framework_view <- function() {
-  .Deprecated("view_restore", package = "framework",
-              msg = "restore_framework_view() is deprecated. Use view_restore() instead.")
-  view_restore()
-}

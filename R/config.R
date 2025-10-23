@@ -304,10 +304,13 @@ read_config <- function(config_file = "config.yml", environment = NULL) {
 
             if (is_real_value) {
               # Special case: 'options' key can exist in both main and split files
-              # Only merge if both are lists, otherwise warn
-              if (split_key == "options" && is.list(config$options) && is.list(split_config$options)) {
-                # Merge options sections (main config wins for conflicts)
-                config$options <- modifyList(split_config$options, config$options)
+              # Merge if both are lists, skip with no warning if already present
+              if (split_key == "options") {
+                if (is.list(config$options) && is.list(split_config$options)) {
+                  # Merge options sections (main config wins for conflicts)
+                  config$options <- modifyList(split_config$options, config$options)
+                }
+                # Otherwise silently skip - options can exist in multiple split files
               } else if (split_key %in% main_config_keys) {
                 # Conflict with main config - warn
                 warning(sprintf(

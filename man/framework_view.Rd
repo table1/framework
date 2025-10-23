@@ -2,7 +2,7 @@
 % Please edit documentation in R/framework_view.R
 \name{framework_view}
 \alias{framework_view}
-\title{(Deprecated) Use view_create() instead}
+\title{(Deprecated) Use view_create() or view_detail() instead}
 \usage{
 framework_view(x, title = NULL, max_rows = 5000)
 }
@@ -22,4 +22,6 @@ Opens a browser window (called for side effects)
 
 \code{framework_view()} was renamed to \code{view_create()} to follow the package's
 noun_verb naming convention for better discoverability and consistency.
+
+\strong{Recommended:} Use \code{view_detail()} for the clearest, most user-friendly name.
 }

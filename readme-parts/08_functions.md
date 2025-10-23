@@ -5,6 +5,7 @@
 | `scaffold()` | Initialize session (load packages, functions, config) |
 | `data_load()` | Load data from path or config |
 | `data_save()` | Save data with integrity tracking |
+| `view_detail()` | Enhanced browser-based data viewer with search/export |
 | `query_get()` | Execute SQL query, return data |
 | `query_execute()` | Execute SQL command |
 | `get_or_cache()` | Lazy evaluation with caching |
