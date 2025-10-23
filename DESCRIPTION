@@ -1,7 +1,7 @@
 Package: framework
 Type: Package
 Title: A Framework for Data Management
-Version: 0.4.0
+Version: 0.4.1
 Authors@R: 
     person("Erik", "Westlund", , "ewestlund@jhu.edu", role = c("aut", "cre"))
 Maintainer: Erik Westlund <ewestlund@jhu.edu>
@@ -38,3 +38,4 @@ Suggests:
     readxl
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)
+
