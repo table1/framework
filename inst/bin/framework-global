@@ -58,12 +58,6 @@ check_settings_configured() {
 
 # Function to run settings check-in
 run_settings_checkin() {
-  printf "\n${BLUE}═══════════════════════════════════════════════${NC}\n"
-  printf "${BLUE}Framework Global Settings Check-in${NC}\n"
-  printf "${BLUE}═══════════════════════════════════════════════${NC}\n\n"
-  printf "We've improved Framework's functionality!\n"
-  printf "Let's configure your preferences so future projects are set up just right.\n\n"
-
   frameworkrc="$HOME/.frameworkrc"
 
   # Create frameworkrc if it doesn't exist
@@ -71,120 +65,146 @@ run_settings_checkin() {
     touch "$frameworkrc"
   fi
 
-  # Ask about IDE preferences
-  printf "${YELLOW}IDE Preferences${NC}\n"
-  printf "Which IDE/editor do you primarily use?\n"
-  printf "  1. Positron / VS Code\n"
-  printf "  2. RStudio\n"
-  printf "  3. Both\n"
-  printf "  4. Neither (other editor)\n"
-  printf "Choice (1-4): "
-  read -r ide_choice
+  # Read existing settings
+  existing_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+  existing_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+  existing_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
 
-  case "$ide_choice" in
-    1) ides="vscode" ;;
-    2) ides="rstudio" ;;
-    3) ides="rstudio,vscode" ;;
-    4) ides="none" ;;
-    *) ides="rstudio,vscode" ;;  # Default to both
-  esac
-
-  # Update frameworkrc
-  grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-  echo "FW_IDES=\"$ides\"" >> "$frameworkrc.tmp"
-  mv "$frameworkrc.tmp" "$frameworkrc"
-
-  printf "\n${YELLOW}AI Assistant Support${NC}\n"
-  printf "Do you want Framework to create instruction files for AI coding assistants?\n"
-  printf "These files help assistants understand Framework conventions.\n"
-  printf "Enable AI assistant support? (y/n) [y]: "
-  read -r ai_response
-
-  if [ "$ai_response" = "n" ] || [ "$ai_response" = "N" ]; then
-    # User doesn't want AI support
-    grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-    grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
-    echo "FW_AI_SUPPORT=\"never\"" >> "$frameworkrc.tmp2"
-    mv "$frameworkrc.tmp2" "$frameworkrc"
-    rm -f "$frameworkrc.tmp"
-  else
-    # Ask which assistants
-    printf "\nWhich AI assistants do you use?\n"
-    printf "  1. Claude Code\n"
-    printf "  2. GitHub Copilot\n"
-    printf "  3. AGENTS.md (OpenAI Codex and others)\n"
-    printf "  4. All of the above\n"
-    printf "Enter numbers (e.g., 1,3 or 4 for all): "
-    read -r selection
-
-    # Parse selection
-    assistants=""
-    if [ "$selection" = "4" ]; then
-      assistants="claude,copilot,agents"
-    else
-      if echo "$selection" | grep -q "1"; then assistants="claude"; fi
-      if echo "$selection" | grep -q "2"; then
-        if [ -n "$assistants" ]; then assistants="$assistants,copilot"; else assistants="copilot"; fi
-      fi
-      if echo "$selection" | grep -q "3"; then
-        if [ -n "$assistants" ]; then assistants="$assistants,agents"; else assistants="agents"; fi
-      fi
-    fi
-
-    if [ -z "$assistants" ]; then
-      assistants="claude"  # Default to Claude if nothing selected
-    fi
-
-    # Update frameworkrc
-    grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-    grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
-    echo "FW_AI_SUPPORT=\"yes\"" >> "$frameworkrc.tmp2"
-    echo "FW_AI_ASSISTANTS=\"$assistants\"" >> "$frameworkrc.tmp2"
-    mv "$frameworkrc.tmp2" "$frameworkrc"
-    rm -f "$frameworkrc.tmp"
-
-    # Ask about canonical AI file preference
-    printf "\n${YELLOW}Default Canonical AI File${NC}\n"
-    printf "Which AI file should be the default canonical source?\n"
-    printf "(You can override this per-project)\n"
-    printf "  1. AGENTS.md (recommended - supports most assistants)\n"
-    printf "  2. CLAUDE.md\n"
-    printf "  3. .github/copilot-instructions.md\n"
-    printf "Choice (1-3) [1]: "
-    read -r canonical_choice
-
-    case "$canonical_choice" in
-      2) canonical_default="CLAUDE.md" ;;
-      3) canonical_default=".github/copilot-instructions.md" ;;
-      *) canonical_default="AGENTS.md" ;;
-    esac
-
-    # Update frameworkrc with canonical default
-    grep -v "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-    echo "FW_AI_CANONICAL_DEFAULT=\"$canonical_default\"" >> "$frameworkrc.tmp"
-    mv "$frameworkrc.tmp" "$frameworkrc"
+  # Only show header if we need to ask questions
+  if [ -z "$existing_ides" ] || [ -z "$existing_ai" ] || [ -z "$existing_config_dir" ]; then
+    printf "\n${BLUE}═══════════════════════════════════════════════${NC}\n"
+    printf "${BLUE}Framework Settings Configuration${NC}\n"
+    printf "${BLUE}═══════════════════════════════════════════════${NC}\n\n"
   fi
 
-  # Ask about configuration directory preference
-  printf "\n${YELLOW}Configuration Directory Preference${NC}\n"
-  printf "Where should split configuration files be stored in new projects?\n"
-  printf "  1. settings/ (recommended - descriptive, follows R conventions)\n"
-  printf "  2. config/ (compact, follows web framework conventions)\n"
-  printf "Choice (1-2) [1]: "
-  read -r config_dir_choice
+  # Ask about IDE preferences (only if not set)
+  if [ -z "$existing_ides" ]; then
+    printf "${YELLOW}IDE Preferences${NC}\n"
+    printf "Which IDE/editor do you primarily use?\n"
+    printf "  1. Positron / VS Code\n"
+    printf "  2. RStudio\n"
+    printf "  3. Both\n"
+    printf "  4. Neither (other editor)\n"
+    printf "Choice (1-4): "
+    read -r ide_choice
 
-  case "$config_dir_choice" in
-    2) config_dir="config" ;;
-    *) config_dir="settings" ;;
-  esac
+    case "$ide_choice" in
+      1) ides="vscode" ;;
+      2) ides="rstudio" ;;
+      3) ides="rstudio,vscode" ;;
+      4) ides="none" ;;
+      *) ides="rstudio,vscode" ;;  # Default to both
+    esac
 
-  # Update frameworkrc
-  grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-  echo "FW_CONFIG_DIR=\"$config_dir\"" >> "$frameworkrc.tmp"
-  mv "$frameworkrc.tmp" "$frameworkrc"
+    # Update frameworkrc
+    grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+    echo "FW_IDES=\"$ides\"" >> "$frameworkrc.tmp"
+    mv "$frameworkrc.tmp" "$frameworkrc"
+    printf "\n"
+  fi
 
-  printf "\n${GREEN}✓ Preferences saved!${NC}\n"
-  printf "Your settings will be used as defaults for new projects.\n\n"
+  # Ask about AI support (only if not set)
+  if [ -z "$existing_ai" ]; then
+    printf "${YELLOW}AI Assistant Support${NC}\n"
+    printf "Do you want Framework to create instruction files for AI coding assistants?\n"
+    printf "These files help assistants understand Framework conventions.\n"
+    printf "Enable AI assistant support? (y/n) [y]: "
+    read -r ai_response
+
+    if [ "$ai_response" = "n" ] || [ "$ai_response" = "N" ]; then
+      # User doesn't want AI support
+      grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+      grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
+      echo "FW_AI_SUPPORT=\"never\"" >> "$frameworkrc.tmp2"
+      mv "$frameworkrc.tmp2" "$frameworkrc"
+      rm -f "$frameworkrc.tmp"
+    else
+      # Ask about each assistant individually with yes/no
+      printf "\nWhich AI assistants do you use? (y/n for each)\n"
+
+      printf "  Claude Code? [y]: "
+      read -r use_claude
+
+      printf "  GitHub Copilot? [n]: "
+      read -r use_copilot
+
+      printf "  AGENTS.md (OpenAI Codex and others)? [n]: "
+      read -r use_agents
+
+      # Build assistants list
+      assistants=""
+      if [ "$use_claude" != "n" ] && [ "$use_claude" != "N" ]; then
+        assistants="claude"
+      fi
+      if [ "$use_copilot" = "y" ] || [ "$use_copilot" = "Y" ]; then
+        if [ -n "$assistants" ]; then assistants="$assistants,copilot"; else assistants="copilot"; fi
+      fi
+      if [ "$use_agents" = "y" ] || [ "$use_agents" = "Y" ]; then
+        if [ -n "$assistants" ]; then assistants="$assistants,agents"; else assistants="agents"; fi
+      fi
+
+      if [ -z "$assistants" ]; then
+        assistants="claude"  # Default to Claude if nothing selected
+      fi
+
+      # Update frameworkrc
+      grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+      grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
+      echo "FW_AI_SUPPORT=\"yes\"" >> "$frameworkrc.tmp2"
+      echo "FW_AI_ASSISTANTS=\"$assistants\"" >> "$frameworkrc.tmp2"
+      mv "$frameworkrc.tmp2" "$frameworkrc"
+      rm -f "$frameworkrc.tmp"
+
+      # Ask about canonical AI file preference
+      printf "\n${YELLOW}Default Canonical AI File${NC}\n"
+      printf "Which AI file should be the default canonical source?\n"
+      printf "(You can override this per-project)\n"
+      printf "  1. AGENTS.md (recommended - supports most assistants)\n"
+      printf "  2. CLAUDE.md\n"
+      printf "  3. .github/copilot-instructions.md\n"
+      printf "Choice (1-3) [1]: "
+      read -r canonical_choice
+
+      case "$canonical_choice" in
+        2) canonical_default="CLAUDE.md" ;;
+        3) canonical_default=".github/copilot-instructions.md" ;;
+        *) canonical_default="AGENTS.md" ;;
+      esac
+
+      # Update frameworkrc with canonical default
+      grep -v "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+      echo "FW_AI_CANONICAL_DEFAULT=\"$canonical_default\"" >> "$frameworkrc.tmp"
+      mv "$frameworkrc.tmp" "$frameworkrc"
+    fi
+    printf "\n"
+  fi
+
+  # Ask about configuration directory preference (only if not set)
+  if [ -z "$existing_config_dir" ]; then
+    printf "${YELLOW}Configuration Directory Preference${NC}\n"
+    printf "Where should split configuration files be stored in new projects?\n"
+    printf "  1. settings/ (recommended - descriptive, follows R conventions)\n"
+    printf "  2. config/ (compact, follows web framework conventions)\n"
+    printf "Choice (1-2) [1]: "
+    read -r config_dir_choice
+
+    case "$config_dir_choice" in
+      2) config_dir="config" ;;
+      *) config_dir="settings" ;;
+    esac
+
+    # Update frameworkrc
+    grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+    echo "FW_CONFIG_DIR=\"$config_dir\"" >> "$frameworkrc.tmp"
+    mv "$frameworkrc.tmp" "$frameworkrc"
+    printf "\n"
+  fi
+
+  # Only show completion message if we asked any questions
+  if [ -z "$existing_ides" ] || [ -z "$existing_ai" ] || [ -z "$existing_config_dir" ]; then
+    printf "${GREEN}✓ Preferences saved!${NC}\n"
+    printf "Your settings will be used as defaults for new projects.\n\n"
+  fi
 }
 
 case "$COMMAND" in
