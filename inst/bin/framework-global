@@ -46,9 +46,10 @@ check_settings_configured() {
   # Check for required settings
   fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
   fw_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+  fw_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
 
   # If any required setting is missing, not configured
-  if [ -z "$fw_ides" ] || [ -z "$fw_ai" ]; then
+  if [ -z "$fw_ides" ] || [ -z "$fw_ai" ] || [ -z "$fw_config_dir" ]; then
     return 1
   fi
 
@@ -164,6 +165,24 @@ run_settings_checkin() {
     mv "$frameworkrc.tmp" "$frameworkrc"
   fi
 
+  # Ask about configuration directory preference
+  printf "\n${YELLOW}Configuration Directory Preference${NC}\n"
+  printf "Where should split configuration files be stored in new projects?\n"
+  printf "  1. settings/ (recommended - descriptive, follows R conventions)\n"
+  printf "  2. config/ (compact, follows web framework conventions)\n"
+  printf "Choice (1-2) [1]: "
+  read -r config_dir_choice
+
+  case "$config_dir_choice" in
+    2) config_dir="config" ;;
+    *) config_dir="settings" ;;
+  esac
+
+  # Update frameworkrc
+  grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+  echo "FW_CONFIG_DIR=\"$config_dir\"" >> "$frameworkrc.tmp"
+  mv "$frameworkrc.tmp" "$frameworkrc"
+
   printf "\n${GREEN}✓ Preferences saved!${NC}\n"
   printf "Your settings will be used as defaults for new projects.\n\n"
 }
@@ -183,6 +202,7 @@ case "$COMMAND" in
       export FW_AI_SUPPORT=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
       export FW_AI_ASSISTANTS=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
       export FW_AI_CANONICAL_DEFAULT=$(grep "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+      export FW_CONFIG_DIR=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
     fi
 
     # Remove 'new' from arguments and check for --dev-mode
