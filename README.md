@@ -257,15 +257,24 @@ options:
 data:
   source:
     private:
-      survey:
-        path: data/source/private/survey.dta
-        type: stata
-        locked: true
+      import:
+        survey:
+          path: data/source/private/survey.dta
+          type: stata
+          locked: true
 ```
 
 ```r
-# Load using dot notation
-df <- data_load("source.private.survey")
+# Load using dot notation (follows YAML structure exactly)
+df <- data_load("source.private.import.survey")
+
+# If data_load() fails, it suggests available paths:
+# Error: No data specification found for path: source.private.survey
+#
+# Available data paths:
+#   source.private.import.survey
+#   source.private.import.companies
+#   ...
 ```
 
 **Direct path:**
@@ -274,6 +283,8 @@ df <- data_load("data/my_file.csv")       # CSV
 df <- data_load("data/stata_file.dta")    # Stata
 df <- data_load("data/spss_file.sav")     # SPSS
 ```
+
+**Important:** Dot notation paths must match your YAML structure exactly. Each level in the YAML becomes a dot-separated part of the path. Use underscores for multi-word keys (e.g., `modeling_data`, not `modeling.data`).
 
 Statistical formats (Stata/SPSS/SAS) strip metadata by default for safety. Use `keep_attributes = TRUE` to preserve labels.
 

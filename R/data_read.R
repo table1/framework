@@ -51,7 +51,19 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
     )
 
     if (is.null(spec)) {
-      stop(sprintf("No data specification found for path: %s", path))
+      # Get suggestions for similar paths
+      suggestions <- .get_data_path_suggestions(path)
+
+      error_msg <- sprintf("No data specification found for path: %s", path)
+      if (length(suggestions) > 0) {
+        error_msg <- paste0(
+          error_msg,
+          "\n\nAvailable data paths:\n  ",
+          paste(suggestions, collapse = "\n  "),
+          "\n\nTip: Use settings('data') to explore the full catalog, or narrow it down with settings('data.source.private')"
+        )
+      }
+      stop(error_msg)
     }
   }
 
@@ -653,4 +665,55 @@ data_spec_get <- function(path) {
   }
 
   DBI::dbDisconnect(con)
+}
+
+#' Get suggestions for available data paths
+#'
+#' Helper function that extracts all available data paths from config.
+#' Used to provide helpful suggestions when data_load() fails.
+#'
+#' @param attempted_path The path that the user tried (optional, for future fuzzy matching)
+#' @return Character vector of available data paths
+#' @keywords internal
+.get_data_path_suggestions <- function(attempted_path = NULL) {
+  config <- tryCatch(
+    read_config(),
+    error = function(e) {
+      return(character())
+    }
+  )
+
+  if (is.null(config$data) || length(config$data) == 0) {
+    return(character())
+  }
+
+  # Recursively extract all data entry paths
+  extract_paths <- function(obj, prefix = "") {
+    paths <- character()
+
+    for (name in names(obj)) {
+      item <- obj[[name]]
+      full_name <- if (nzchar(prefix)) paste(prefix, name, sep = ".") else name
+
+      if (is.list(item) && !is.null(item$path)) {
+        # This is a data entry
+        paths <- c(paths, full_name)
+      } else if (is.list(item) && is.null(item$path)) {
+        # This is a nested structure, recurse
+        nested <- extract_paths(item, full_name)
+        paths <- c(paths, nested)
+      }
+    }
+
+    paths
+  }
+
+  all_paths <- extract_paths(config$data)
+
+  # Limit to first 20 suggestions
+  if (length(all_paths) > 20) {
+    all_paths <- c(all_paths[1:20], sprintf("... and %d more", length(all_paths) - 20))
+  }
+
+  all_paths
 }

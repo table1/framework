@@ -303,16 +303,20 @@ read_config <- function(config_file = "config.yml", environment = NULL) {
                             !grepl("\\.ya?ml$", config[[split_key]], ignore.case = TRUE)
 
             if (is_real_value) {
-              # Key was already defined - check if it came from main config
-              if (split_key %in% main_config_keys) {
-                # Conflict with main config
+              # Special case: 'options' key can exist in both main and split files
+              # Only merge if both are lists, otherwise warn
+              if (split_key == "options" && is.list(config$options) && is.list(split_config$options)) {
+                # Merge options sections (main config wins for conflicts)
+                config$options <- modifyList(split_config$options, config$options)
+              } else if (split_key %in% main_config_keys) {
+                # Conflict with main config - warn
                 warning(sprintf(
                   "Key '%s' defined in both main config and '%s'. Using value from main config.",
                   split_key,
                   value
                 ))
               } else {
-                # Conflict with another split file
+                # Conflict with another split file - warn
                 warning(sprintf(
                   "Key '%s' already defined, ignoring value from '%s'",
                   split_key,
