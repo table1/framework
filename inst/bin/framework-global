@@ -43,13 +43,12 @@ check_settings_configured() {
     return 1
   fi
 
-  # Check for required settings
+  # Check for required settings (FW_CONFIG_DIR is per-project, not required here)
   fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
   fw_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-  fw_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
 
   # If any required setting is missing, not configured
-  if [ -z "$fw_ides" ] || [ -z "$fw_ai" ] || [ -z "$fw_config_dir" ]; then
+  if [ -z "$fw_ides" ] || [ -z "$fw_ai" ]; then
     return 1
   fi
 
@@ -68,10 +67,9 @@ run_settings_checkin() {
   # Read existing settings
   existing_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
   existing_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-  existing_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
 
   # Only show header if we need to ask questions
-  if [ -z "$existing_ides" ] || [ -z "$existing_ai" ] || [ -z "$existing_config_dir" ]; then
+  if [ -z "$existing_ides" ] || [ -z "$existing_ai" ]; then
     printf "\n${BLUE}═══════════════════════════════════════════════${NC}\n"
     printf "${BLUE}Framework Settings Configuration${NC}\n"
     printf "${BLUE}═══════════════════════════════════════════════${NC}\n\n"
@@ -179,29 +177,8 @@ run_settings_checkin() {
     printf "\n"
   fi
 
-  # Ask about configuration directory preference (only if not set)
-  if [ -z "$existing_config_dir" ]; then
-    printf "${YELLOW}Configuration Directory Preference${NC}\n"
-    printf "Where should split configuration files be stored in new projects?\n"
-    printf "  1. settings/ (recommended - descriptive, follows R conventions)\n"
-    printf "  2. config/ (compact, follows web framework conventions)\n"
-    printf "Choice (1-2) [1]: "
-    read -r config_dir_choice
-
-    case "$config_dir_choice" in
-      2) config_dir="config" ;;
-      *) config_dir="settings" ;;
-    esac
-
-    # Update frameworkrc
-    grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-    echo "FW_CONFIG_DIR=\"$config_dir\"" >> "$frameworkrc.tmp"
-    mv "$frameworkrc.tmp" "$frameworkrc"
-    printf "\n"
-  fi
-
   # Only show completion message if we asked any questions
-  if [ -z "$existing_ides" ] || [ -z "$existing_ai" ] || [ -z "$existing_config_dir" ]; then
+  if [ -z "$existing_ides" ] || [ -z "$existing_ai" ]; then
     printf "${GREEN}✓ Preferences saved!${NC}\n"
     printf "Your settings will be used as defaults for new projects.\n\n"
   fi
@@ -222,8 +199,42 @@ case "$COMMAND" in
       export FW_AI_SUPPORT=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
       export FW_AI_ASSISTANTS=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
       export FW_AI_CANONICAL_DEFAULT=$(grep "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-      export FW_CONFIG_DIR=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
     fi
+
+    # Ask about configuration directory preference for THIS project
+    # Use global setting as default if it exists
+    global_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+    if [ -z "$global_config_dir" ]; then
+      global_config_dir="settings"  # Default if not set
+    fi
+
+    # Show current default in the prompt
+    if [ "$global_config_dir" = "config" ]; then
+      default_choice="2"
+      default_display="2"
+    else
+      default_choice="1"
+      default_display="1"
+    fi
+
+    printf "\n${YELLOW}Configuration Directory${NC}\n"
+    printf "Where should split configuration files be stored in this project?\n"
+    printf "  1. settings/ (recommended - descriptive, follows R conventions)\n"
+    printf "  2. config/ (compact, follows web framework conventions)\n"
+    printf "Choice (1-2) [${default_display}]: "
+    read -r config_dir_choice
+
+    # Use default if user just hits enter
+    if [ -z "$config_dir_choice" ]; then
+      config_dir_choice="$default_choice"
+    fi
+
+    case "$config_dir_choice" in
+      2) export FW_CONFIG_DIR="config" ;;
+      *) export FW_CONFIG_DIR="settings" ;;
+    esac
+
+    printf "\n"
 
     # Remove 'new' from arguments and check for --dev-mode
     shift
