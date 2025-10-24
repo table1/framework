@@ -1,18 +1,20 @@
 #' Load data using dot notation path or direct file path
 #'
 #' Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
-#' and SAS (.sas7bdat, .xpt) file formats.
+#' and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
 #'
 #' @param path Dot notation path (e.g. "source.private.example") or direct file path
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
+#' @param password Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @param ... Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)
 #' @export
-data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
+data_load <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_choice(delim, c("comma", "tab", "semicolon", "space", ",", "\t", ";", " "), null.ok = TRUE)
   checkmate::assert_flag(keep_attributes)
+  checkmate::assert_string(password, null.ok = TRUE)
 
   # Check if path is a direct file path
   if (file.exists(path)) {
@@ -179,29 +181,27 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
     }
   }
 
-  # Load data based on encryption
-  if (spec$encrypted) {
-    config <- tryCatch(
-      read_config(),
-      error = function(e) {
-        stop(sprintf("Failed to read config: %s", e$message))
-      }
-    )
+  # Auto-detect encryption and decrypt if needed
+  is_encrypted <- .is_encrypted_file(spec$path)
 
-    if (is.null(config$security$data_key)) {
-      stop("Data encryption key not found in config")
+  if (is_encrypted) {
+    # Get password (from parameter, environment, or prompt)
+    pwd <- if (!is.null(password)) {
+      password
+    } else {
+      .get_encryption_password(prompt = TRUE)
     }
 
     # Read and decrypt the file
     encrypted_data <- tryCatch(
-      readBin(spec$path, "raw", n = file.size(spec$path)),
+      readBin(spec$path, "raw", n = file.info(spec$path)$size),
       error = function(e) {
         stop(sprintf("Failed to read encrypted file: %s", e$message))
       }
     )
 
     decrypted_data <- tryCatch(
-      .decrypt_data(encrypted_data, config$security$data_key),
+      .decrypt_with_password(encrypted_data, pwd),
       error = function(e) {
         stop(sprintf("Failed to decrypt data: %s", e$message))
       }

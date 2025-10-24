@@ -10,7 +10,8 @@ data_save(
   type = "csv",
   delimiter = "comma",
   locked = TRUE,
-  encrypted = FALSE
+  encrypted = FALSE,
+  password = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ data_save(
 \item{locked}{Whether the file should be locked after saving}
 
 \item{encrypted}{Whether the file should be encrypted}
+
+\item{password}{Optional password for encryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts}
 }
 \description{
 Save data using dot notation path

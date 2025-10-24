@@ -4,7 +4,7 @@
 \alias{data_load}
 \title{Load data using dot notation path or direct file path}
 \usage{
-data_load(path, delim = NULL, keep_attributes = FALSE, ...)
+data_load(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 }
 \arguments{
 \item{path}{Dot notation path (e.g. "source.private.example") or direct file path}
@@ -13,9 +13,11 @@ data_load(path, delim = NULL, keep_attributes = FALSE, ...)
 
 \item{keep_attributes}{Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)}
 
+\item{password}{Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts}
+
 \item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
 \description{
 Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
-and SAS (.sas7bdat, .xpt) file formats.
+and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
 }

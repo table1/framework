@@ -6,8 +6,9 @@
 #' @param delimiter Delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param locked Whether the file should be locked after saving
 #' @param encrypted Whether the file should be encrypted
+#' @param password Optional password for encryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @export
-data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE) {
+data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE, password = NULL) {
   # Validate arguments
   checkmate::assert_data_frame(data, min.rows = 1)
   checkmate::assert_string(path, min.chars = 1)
@@ -15,6 +16,7 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   checkmate::assert_choice(delimiter, c("comma", "tab", "semicolon", "space"))
   checkmate::assert_flag(locked)
   checkmate::assert_flag(encrypted)
+  checkmate::assert_string(password, null.ok = TRUE)
 
   # Split path into components
   parts <- strsplit(path, "\\.")[[1]]
@@ -30,9 +32,11 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 
   # Prepare data for saving
   if (encrypted) {
-    config <- read_config()
-    if (is.null(config$security$data_key)) {
-      stop("Data encryption key not found in config")
+    # Get password
+    pwd <- if (!is.null(password)) {
+      password
+    } else {
+      .get_encryption_password(prompt = TRUE)
     }
 
     # Serialize data based on type
@@ -49,7 +53,7 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
         temp_file <- tempfile(fileext = ".csv")
         readr::write_csv(data, temp_file)
         # Read raw bytes
-        content <- readBin(temp_file, "raw", n = file.size(temp_file))
+        content <- readBin(temp_file, "raw", n = file.info(temp_file)$size)
         unlink(temp_file)
         content
       },
@@ -58,9 +62,11 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
     )
 
     # Encrypt the serialized data
-    encrypted_data <- .encrypt_data(serialized_data, config$security$data_key)
+    encrypted_data <- .encrypt_with_password(serialized_data, pwd)
     # Write encrypted data
     writeBin(encrypted_data, file_path)
+
+    message(sprintf("Data encrypted and saved to: %s", file_path))
   } else {
     # Save data normally
     switch(type,
@@ -138,9 +144,10 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 #' @param delimiter Delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param locked Whether the file should be locked after saving
 #' @param encrypted Whether the file should be encrypted
+#' @param password Optional password for encryption
 #' @export
-save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE) {
-  data_save(data, path, type, delimiter, locked, encrypted)
+save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TRUE, encrypted = FALSE, password = NULL) {
+  data_save(data, path, type, delimiter, locked, encrypted, password)
 }
 
 

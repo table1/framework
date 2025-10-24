@@ -11,7 +11,8 @@ result_save(
   blind = FALSE,
   public = FALSE,
   comment = "",
-  file = NULL
+  file = NULL,
+  password = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ result_save(
 \item{comment}{Optional description}
 
 \item{file}{Optional path to a file to save (e.g. a QMD notebook)}
+
+\item{password}{Optional password for encryption. If NULL and blind=TRUE, uses ENCRYPTION_PASSWORD from environment or prompts}
 }
 \description{
 Save a result

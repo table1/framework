@@ -10,7 +10,8 @@ save_data(
   type = "csv",
   delimiter = "comma",
   locked = TRUE,
-  encrypted = FALSE
+  encrypted = FALSE,
+  password = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ save_data(
 \item{locked}{Whether the file should be locked after saving}
 
 \item{encrypted}{Whether the file should be encrypted}
+
+\item{password}{Optional password for encryption}
 }
 \description{
 Alias for backward compatibility

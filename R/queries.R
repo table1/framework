@@ -1,10 +1,27 @@
 #' Get data from a database query
 #'
-#' Gets data from a database using a query and connection name.
+#' Gets data from a database using a query and connection name. The connection
+#' is created, used, and automatically closed. For better performance with
+#' multiple queries, enable connection pooling via `pool: true` in your
+#' connection configuration.
+#'
 #' @param query SQL query to execute
 #' @param connection_name Name of the connection in config.yml
 #' @param ... Additional arguments passed to DBI::dbGetQuery
 #' @return A data frame with the query results
+#'
+#' @examples
+#' \dontrun{
+#' # Default: creates new connection, auto-disconnects
+#' users <- query_get("SELECT * FROM users", "my_db")
+#'
+#' # To use pooling, configure in config.yml:
+#' # connections:
+#' #   my_db:
+#' #     driver: postgres
+#' #     pool: true
+#' }
+#'
 #' @export
 query_get <- function(query, connection_name, ...) {
   # Validate arguments
@@ -13,7 +30,12 @@ query_get <- function(query, connection_name, ...) {
 
   connection_get(connection_name) |>
     (\(con) {
-      on.exit(DBI::dbDisconnect(con))
+      # Only disconnect non-pool connections
+      # Pools manage their own connection lifecycle
+      if (!inherits(con, "Pool")) {
+        on.exit(DBI::dbDisconnect(con))
+      }
+
       tryCatch(
         DBI::dbGetQuery(con, query, ...),
         error = function(e) {
@@ -25,11 +47,28 @@ query_get <- function(query, connection_name, ...) {
 
 #' Execute a database query
 #'
-#' Executes a query on a database without returning results.
+#' Executes a query on a database without returning results. The connection
+#' is created, used, and automatically closed. For better performance with
+#' multiple queries, enable connection pooling via `pool: true` in your
+#' connection configuration.
+#'
 #' @param query SQL query to execute
 #' @param connection_name Name of the connection in config.yml
 #' @param ... Additional arguments passed to DBI::dbExecute
 #' @return Number of rows affected
+#'
+#' @examples
+#' \dontrun{
+#' # Default: creates new connection, auto-disconnects
+#' rows <- query_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
+#'
+#' # To use pooling, configure in config.yml:
+#' # connections:
+#' #   my_db:
+#' #     driver: postgres
+#' #     pool: true
+#' }
+#'
 #' @export
 query_execute <- function(query, connection_name, ...) {
   # Validate arguments
@@ -38,7 +77,12 @@ query_execute <- function(query, connection_name, ...) {
 
   connection_get(connection_name) |>
     (\(con) {
-      on.exit(DBI::dbDisconnect(con))
+      # Only disconnect non-pool connections
+      # Pools manage their own connection lifecycle
+      if (!inherits(con, "Pool")) {
+        on.exit(DBI::dbDisconnect(con))
+      }
+
       tryCatch(
         DBI::dbExecute(con, query, ...),
         error = function(e) {
@@ -79,17 +123,16 @@ connection_find <- function(conn, table_name, id, with_trashed = FALSE) {
   )
   checkmate::assert_flag(with_trashed)
 
-  # Check if deleted_at column exists in the table
-  has_deleted_at <- tryCatch({
-    table_info <- DBI::dbGetQuery(conn, sprintf("PRAGMA table_info(%s)", table_name))
-    "deleted_at" %in% table_info$name
-  }, error = function(e) {
-    # If we can't check (e.g., not SQLite), assume it doesn't exist
-    FALSE
-  })
+  # Check if deleted_at column exists in the table (cross-database)
+  has_deleted_at <- .has_column(conn, table_name, "deleted_at")
 
-  # Build query
-  query <- sprintf("SELECT * FROM %s WHERE id = ?", table_name)
+  # Build query with appropriate parameter placeholder
+  # PostgreSQL uses $1, most others use ?
+  placeholder <- if (inherits(conn, "PqConnection")) "$1" else "?"
+
+  query <- sprintf("SELECT * FROM %s WHERE id = %s",
+                   DBI::dbQuoteIdentifier(conn, table_name),
+                   placeholder)
 
   if (!with_trashed && has_deleted_at) {
     query <- paste0(query, " AND deleted_at IS NULL")

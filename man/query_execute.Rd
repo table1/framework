@@ -17,5 +17,21 @@ query_execute(query, connection_name, ...)
 Number of rows affected
 }
 \description{
-Executes a query on a database without returning results.
+Executes a query on a database without returning results. The connection
+is created, used, and automatically closed. For better performance with
+multiple queries, enable connection pooling via \code{pool: true} in your
+connection configuration.
+}
+\examples{
+\dontrun{
+# Default: creates new connection, auto-disconnects
+rows <- query_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
+
+# To use pooling, configure in config.yml:
+# connections:
+#   my_db:
+#     driver: postgres
+#     pool: true
+}
+
 }

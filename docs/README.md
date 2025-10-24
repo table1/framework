@@ -4,6 +4,30 @@ This directory contains development documentation for the Framework R package.
 
 ## Directory Structure
 
+### User Guides
+
+- **`database-getting-started.md`** - Complete guide to using Framework's database functionality
+  - Which databases are supported and what drivers are needed
+  - How to install and configure database drivers
+  - Configuration examples for all 5 database backends
+  - Common tasks (CRUD, transactions, queries)
+  - Troubleshooting and best practices
+
+- **`connection-pooling.md`** - Connection pooling guide (RECOMMENDED)
+  - Why use connection pools vs manual connections
+  - Quick start and configuration
+  - Common patterns (notebooks, Shiny apps, scripts, dbplyr)
+  - Pool management and debugging
+  - Performance tuning and best practices
+
+- **`multi-database-support.md`** - Technical reference for database support
+  - Full API documentation for all database functions
+  - Driver management functions (`drivers_status()`, `drivers_install()`, `connection_check()`)
+  - Cross-database features (soft deletes, auto-timestamps, schema introspection)
+  - Architecture notes and implementation details
+
+### Developer Documentation
+
 ### `CLAUDE.md`
 Development standards and conventions for AI assistants and developers working on the package. Covers:
 - Code quality standards
@@ -16,11 +40,11 @@ Development standards and conventions for AI assistants and developers working o
 Debugging logs, bug reports, and fix documentation:
 - `BUG_FIXES.md` - Log of bugs discovered and fixed during development
 
+### `features/`
+Feature proposals and development tracking
+
 ### `architecture/` (future)
 Design documents and architectural decision records (ADRs)
-
-### `api/` (future)
-API documentation and usage guides
 
 ## Documentation Philosophy
 

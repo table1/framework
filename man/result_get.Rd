@@ -4,10 +4,12 @@
 \alias{result_get}
 \title{Get a result}
 \usage{
-result_get(name)
+result_get(name, password = NULL)
 }
 \arguments{
 \item{name}{Result name}
+
+\item{password}{Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts}
 }
 \value{
 The result value, or NULL if not found or hash mismatch

@@ -17,5 +17,21 @@ query_get(query, connection_name, ...)
 A data frame with the query results
 }
 \description{
-Gets data from a database using a query and connection name.
+Gets data from a database using a query and connection name. The connection
+is created, used, and automatically closed. For better performance with
+multiple queries, enable connection pooling via \code{pool: true} in your
+connection configuration.
+}
+\examples{
+\dontrun{
+# Default: creates new connection, auto-disconnects
+users <- query_get("SELECT * FROM users", "my_db")
+
+# To use pooling, configure in config.yml:
+# connections:
+#   my_db:
+#     driver: postgres
+#     pool: true
+}
+
 }

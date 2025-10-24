@@ -5,12 +5,7 @@
 #' @keywords internal
 .connect_postgres <- function(config) {
   # Check if RPostgres is available
-  if (!requireNamespace("RPostgres", quietly = TRUE)) {
-    stop(
-      "PostgreSQL connections require the RPostgres package.\n",
-      "Install with: install.packages('RPostgres')"
-    )
-  }
+  .require_driver("PostgreSQL", "RPostgres")
 
   required_fields <- c("host", "port", "database", "user", "password")
   missing_fields <- required_fields[!required_fields %in% names(config)]

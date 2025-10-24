@@ -6,14 +6,16 @@
 #' @param public Whether the result should be public (default: FALSE)
 #' @param comment Optional description
 #' @param file Optional path to a file to save (e.g. a QMD notebook)
+#' @param password Optional password for encryption. If NULL and blind=TRUE, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @export
-result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL) {
+result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE, comment = "", file = NULL, password = NULL) {
   # Validate inputs
   checkmate::assert_string(name)
   checkmate::assert_string(type)
   checkmate::assert_flag(blind)
   checkmate::assert_flag(public)
   checkmate::assert_string(comment, null.ok = TRUE)
+  checkmate::assert_string(password, null.ok = TRUE)
   if (!is.null(file)) {
     checkmate::assert_file_exists(file)
   }
@@ -45,13 +47,16 @@ result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
     result_file <- file.path(results_dir, paste0(name, ".rds"))
 
     if (blind) {
-      # Get encryption key
-      config <- read_config()
-      if (is.null(config$security$results_key)) {
-        stop("Results encryption key not found in config")
+      # Get password (from parameter, environment, or prompt)
+      pwd <- if (!is.null(password)) {
+        password
+      } else {
+        .get_encryption_password(prompt = TRUE)
       }
-      # Encrypt and save
-      encrypted_data <- .encrypt_data(serialize(value, NULL), config$security$results_key)
+
+      # Serialize and encrypt
+      serialized_data <- serialize(value, NULL)
+      encrypted_data <- .encrypt_with_password(serialized_data, pwd)
       writeBin(encrypted_data, result_file)
       message(sprintf("Saved encrypted R object to %s", result_file))
     } else {
@@ -96,11 +101,13 @@ result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
 
 #' Get a result
 #' @param name Result name
+#' @param password Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @return The result value, or NULL if not found or hash mismatch
 #' @export
-result_get <- function(name) {
-  # Validate argument
+result_get <- function(name, password = NULL) {
+  # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(password, null.ok = TRUE)
 
   # Get result record
   con <- tryCatch(
@@ -152,17 +159,21 @@ result_get <- function(name) {
                  name, result$hash, current_hash))
   }
 
-  # Read result
+  # Auto-detect encryption and read result
+  is_encrypted <- .is_encrypted_file(result_file)
+
   tryCatch({
-    if (result$blind) {
-      # Get encryption key
-      config <- read_config()
-      if (is.null(config$security$results_key)) {
-        stop("Results encryption key not found in config")
+    if (is_encrypted) {
+      # Get password (from parameter, environment, or prompt)
+      pwd <- if (!is.null(password)) {
+        password
+      } else {
+        .get_encryption_password(prompt = TRUE)
       }
+
       # Read and decrypt
-      encrypted_data <- readBin(result_file, "raw", n = file.size(result_file))
-      decrypted_data <- .decrypt_data(encrypted_data, config$security$results_key)
+      encrypted_data <- readBin(result_file, "raw", n = file.info(result_file)$size)
+      decrypted_data <- .decrypt_with_password(encrypted_data, pwd)
       unserialize(decrypted_data)
     } else {
       readRDS(result_file)

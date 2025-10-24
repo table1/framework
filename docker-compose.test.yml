@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16
+  postgres:
+    image: postgres:16-alpine
+    container_name: framework_test_postgres
+    environment:
+      POSTGRES_DB: framework_test
+      POSTGRES_USER: framework
+      POSTGRES_PASSWORD: framework_test_pass
+    ports:
+      - "54329:5432"  # Weird port to avoid conflicts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./tests/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U framework"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # MySQL 8
+  mysql:
+    image: mysql:8.0
+    container_name: framework_test_mysql
+    environment:
+      MYSQL_DATABASE: framework_test
+      MYSQL_USER: framework
+      MYSQL_PASSWORD: framework_test_pass
+      MYSQL_ROOT_PASSWORD: root_test_pass
+    ports:
+      - "33069:3306"  # Weird port to avoid conflicts
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./tests/docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uframework", "-pframework_test_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
+  # MariaDB 11 (for testing MySQL compatibility)
+  mariadb:
+    image: mariadb:11
+    container_name: framework_test_mariadb
+    environment:
+      MARIADB_DATABASE: framework_test
+      MARIADB_USER: framework
+      MARIADB_PASSWORD: framework_test_pass
+      MARIADB_ROOT_PASSWORD: root_test_pass
+    ports:
+      - "33070:3306"  # Weird port to avoid conflicts
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./tests/docker/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # SQL Server 2022 (Linux) - DISABLED on ARM64 Macs
+  # Uncomment on x86_64/AMD64 systems only
+  # sqlserver:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   container_name: framework_test_sqlserver
+  #   platform: linux/amd64  # Force x86 platform
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     SA_PASSWORD: Framework_Test_Pass123!
+  #     MSSQL_PID: Developer
+  #   ports:
+  #     - "1433:1433"
+  #   volumes:
+  #     - sqlserver_data:/var/opt/mssql
+  #     - ./tests/docker/sqlserver/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Framework_Test_Pass123! -Q 'SELECT 1' || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+volumes:
+  postgres_data:
+  mysql_data:
+  mariadb_data:
+  sqlserver_data:
