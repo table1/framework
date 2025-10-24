@@ -36,7 +36,8 @@ IN_PROJECT=false
 find_project_root() {
   local dir="$PWD"
   while [ "$dir" != "/" ]; do
-    if [ -f "$dir/config.yml" ]; then
+    # Check for framework.db (always exists) or bin/framework (project marker)
+    if [ -f "$dir/framework.db" ] || [ -f "$dir/bin/framework" ]; then
       echo "$dir"
       return 0
     fi
