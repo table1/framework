@@ -104,3 +104,74 @@ get_connection <- function(name) {
               msg = "get_connection() is deprecated. Use connection_get() instead.")
   connection_get(name)
 }
+
+
+#' List all database connections from configuration
+#'
+#' Lists all database connections defined in the configuration, showing the
+#' connection name, driver, host, and database name (if applicable).
+#'
+#' @return Invisibly returns NULL after printing connection list
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # List all connections
+#' connections_list()
+#' }
+connections_list <- function() {
+  # Auto-discover settings file (settings.yml or config.yml)
+  settings_file <- if (file.exists("settings.yml")) {
+    "settings.yml"
+  } else if (file.exists("config.yml")) {
+    "config.yml"
+  } else {
+    stop("No settings file found. Looking for settings.yml or config.yml")
+  }
+
+  config <- read_config(settings_file)
+
+  if (is.null(config$connections) || length(config$connections) == 0) {
+    message("No database connections found in configuration")
+    return(invisible(NULL))
+  }
+
+  # Print formatted output
+  message(sprintf("\n%d %s found:\n",
+                  length(config$connections),
+                  if (length(config$connections) == 1) "connection" else "connections"))
+
+  for (name in names(config$connections)) {
+    conn <- config$connections[[name]]
+
+    # Connection name with driver badge
+    driver <- if (!is.null(conn$driver)) toupper(conn$driver) else "UNKNOWN"
+    message(sprintf("• %s [%s]", name, driver))
+
+    # Host (if available)
+    if (!is.null(conn$host)) {
+      port_info <- if (!is.null(conn$port)) sprintf(":%s", conn$port) else ""
+      message(sprintf("  Host: %s%s", conn$host, port_info))
+    }
+
+    # Database (if available)
+    if (!is.null(conn$database) || !is.null(conn$dbname)) {
+      db <- conn$database %||% conn$dbname
+      message(sprintf("  Database: %s", db))
+    }
+
+    # File path (for file-based databases like SQLite, DuckDB)
+    if (!is.null(conn$path)) {
+      message(sprintf("  Path: %s", conn$path))
+    }
+
+    # Pool info (if enabled)
+    if (isTRUE(conn$pool)) {
+      message("  Connection pooling: enabled")
+    }
+
+    message("")  # Blank line between connections
+  }
+
+  invisible(NULL)
+}

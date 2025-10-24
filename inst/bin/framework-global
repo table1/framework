@@ -434,7 +434,7 @@ case "$COMMAND" in
 
   connections:list)
     require_project
-    Rscript --quiet --no-save -e "library(framework); cat('Connections in config.yml:\n'); cfg <- config(); print(names(cfg\$connections))"
+    Rscript --quiet --no-save -e "library(framework); connections_list()"
     ;;
 
   connections:edit)
@@ -457,7 +457,7 @@ case "$COMMAND" in
 
   packages:list)
     require_project
-    Rscript --quiet --no-save -e "library(framework); cfg <- config(); cat('Packages:\n'); for(pkg in cfg\$packages) cat('  -', pkg, '\n')"
+    Rscript --quiet --no-save -e "library(framework); packages_list()"
     ;;
 
   packages:update)

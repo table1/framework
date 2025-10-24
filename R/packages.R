@@ -372,3 +372,174 @@ renv_update <- function(packages = NULL) {
 
   invisible(TRUE)
 }
+
+
+#' List all packages from configuration
+#'
+#' Lists all packages defined in the configuration, showing the package name,
+#' version pin (if specified), and source (CRAN or GitHub).
+#'
+#' @return Invisibly returns NULL after printing package list
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # List all packages
+#' packages_list()
+#' }
+
+
+#' Update packages from configuration
+#'
+#' Updates packages defined in the configuration. If renv is enabled, uses renv::update().
+#' Otherwise, reinstalls packages using standard installation methods.
+#'
+#' @param packages Character vector of specific packages to update, or NULL to update all
+#' @return Invisibly returns TRUE on success
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Update all packages
+#' packages_update()
+#'
+#' # Update specific packages
+#' packages_update(c("dplyr", "ggplot2"))
+#' }
+packages_update <- function(packages = NULL) {
+  # Check if renv is enabled
+  if (renv_enabled()) {
+    # Use renv for updates
+    renv_update(packages)
+  } else {
+    # Update without renv
+    if (is.null(packages)) {
+      message("Updating all configured packages...")
+
+      # Auto-discover settings file
+      settings_file <- if (file.exists("settings.yml")) {
+        "settings.yml"
+      } else if (file.exists("config.yml")) {
+        "config.yml"
+      } else {
+        stop("No settings file found. Looking for settings.yml or config.yml")
+      }
+
+      config <- read_config(settings_file)
+
+      if (is.null(config$packages) || length(config$packages) == 0) {
+        message("No packages found in configuration")
+        return(invisible(NULL))
+      }
+
+      # Update each package
+      for (pkg_spec in config$packages) {
+        if (is.list(pkg_spec)) {
+          pkg_string <- pkg_spec$name
+        } else {
+          pkg_string <- pkg_spec
+        }
+
+        spec <- .parse_package_spec(pkg_string)
+
+        # Update the package
+        tryCatch({
+          message("Updating ", spec$name, "...")
+          .install_package_base(spec)
+        }, error = function(e) {
+          warning("Failed to update ", spec$name, ": ", e$message)
+        })
+      }
+
+      message("\nPackages updated!")
+    } else {
+      # Update specific packages
+      message("Updating ", length(packages), " package(s)...")
+      for (pkg in packages) {
+        spec <- .parse_package_spec(pkg)
+        tryCatch({
+          message("Updating ", spec$name, "...")
+          .install_package_base(spec)
+        }, error = function(e) {
+          warning("Failed to update ", spec$name, ": ", e$message)
+        })
+      }
+      message("\nPackages updated!")
+    }
+  }
+
+  invisible(TRUE)
+}
+
+
+#' List all packages from configuration
+#'
+#' Lists all packages defined in the configuration, showing the package name,
+#' version pin (if specified), and source (CRAN or GitHub).
+#'
+#' @return Invisibly returns NULL after printing package list
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # List all packages
+#' packages_list()
+#' }
+packages_list <- function() {
+  # Auto-discover settings file (settings.yml or config.yml)
+  settings_file <- if (file.exists("settings.yml")) {
+    "settings.yml"
+  } else if (file.exists("config.yml")) {
+    "config.yml"
+  } else {
+    stop("No settings file found. Looking for settings.yml or config.yml")
+  }
+
+  config <- read_config(settings_file)
+
+  if (is.null(config$packages) || length(config$packages) == 0) {
+    message("No packages found in configuration")
+    return(invisible(NULL))
+  }
+
+  # Print formatted output
+  message(sprintf("\n%d %s found:\n",
+                  length(config$packages),
+                  if (length(config$packages) == 1) "package" else "packages"))
+
+  for (pkg_spec in config$packages) {
+    # Handle both string specs and list specs
+    if (is.list(pkg_spec)) {
+      pkg_string <- pkg_spec$name
+    } else {
+      pkg_string <- pkg_spec
+    }
+
+    # Parse the package spec
+    spec <- .parse_package_spec(pkg_string)
+
+    # Format output based on source
+    if (spec$source == "github") {
+      # GitHub package
+      ref_info <- if (!is.null(spec$ref) && spec$ref != "HEAD") {
+        sprintf(" [@%s]", spec$ref)
+      } else {
+        ""
+      }
+      message(sprintf("• %s [GITHUB]", spec$name))
+      message(sprintf("  Repository: %s%s", spec$repo, ref_info))
+    } else {
+      # CRAN package
+      version_info <- if (!is.null(spec$version)) {
+        sprintf(" [v%s]", spec$version)
+      } else {
+        ""
+      }
+      message(sprintf("• %s%s", spec$name, version_info))
+    }
+
+    message("")  # Blank line between packages
+  }
+
+  invisible(NULL)
+}

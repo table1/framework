@@ -343,7 +343,16 @@ load_data <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 #' list_data()
 #' }
 data_list <- function() {
-  config <- read_config()
+  # Auto-discover settings file (settings.yml or config.yml)
+  settings_file <- if (file.exists("settings.yml")) {
+    "settings.yml"
+  } else if (file.exists("config.yml")) {
+    "config.yml"
+  } else {
+    stop("No settings file found. Looking for settings.yml or config.yml")
+  }
+
+  config <- read_config(settings_file)
 
   if (is.null(config$data) || length(config$data) == 0) {
     message("No data entries found in configuration")
