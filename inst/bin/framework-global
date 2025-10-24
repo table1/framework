@@ -460,6 +460,11 @@ case "$COMMAND" in
     Rscript --quiet --no-save -e "library(framework); packages_list()"
     ;;
 
+  packages:install)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); packages_install()"
+    ;;
+
   packages:update)
     require_project
     Rscript --quiet --no-save -e "library(framework); packages_update()"
@@ -640,6 +645,7 @@ case "$COMMAND" in
       printf "${YELLOW}Packages:${NC}\n"
       printf "  framework packages:add                  Add package\n"
       printf "  framework packages:list                 List packages\n"
+      printf "  framework packages:install              Install all packages\n"
       printf "  framework packages:update               Update packages\n\n"
     fi
 

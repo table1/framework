@@ -389,6 +389,45 @@ renv_update <- function(packages = NULL) {
 #' }
 
 
+#' Install packages from configuration
+#'
+#' Installs all packages defined in the configuration that are not already installed.
+#' This is the same logic used by scaffold(), but exposed as a standalone function.
+#'
+#' @return Invisibly returns TRUE on success
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Install all configured packages
+#' packages_install()
+#' }
+packages_install <- function() {
+  # Auto-discover settings file
+  settings_file <- if (file.exists("settings.yml")) {
+    "settings.yml"
+  } else if (file.exists("config.yml")) {
+    "config.yml"
+  } else {
+    stop("No settings file found. Looking for settings.yml or config.yml")
+  }
+
+  config <- read_config(settings_file)
+
+  if (is.null(config$packages) || length(config$packages) == 0) {
+    message("No packages found in configuration")
+    return(invisible(TRUE))
+  }
+
+  # Use the same logic as scaffold()
+  message("Installing packages from configuration...")
+  .install_required_packages(config)
+  message("\nPackages installed!")
+
+  invisible(TRUE)
+}
+
+
 #' Update packages from configuration
 #'
 #' Updates packages defined in the configuration. If renv is enabled, uses renv::update().

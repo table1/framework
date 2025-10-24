@@ -2,7 +2,7 @@
 % Please edit documentation in R/packages.R
 \name{packages_update}
 \alias{packages_update}
-\title{List all packages from configuration}
+\title{Update packages from configuration}
 \usage{
 packages_update(packages = NULL)
 }
@@ -10,24 +10,13 @@ packages_update(packages = NULL)
 \item{packages}{Character vector of specific packages to update, or NULL to update all}
 }
 \value{
-Invisibly returns NULL after printing package list
-
 Invisibly returns TRUE on success
 }
 \description{
-Lists all packages defined in the configuration, showing the package name,
-version pin (if specified), and source (CRAN or GitHub).
-}
-\examples{
-\dontrun{
-# List all packages
-packages_list()
-}
-Update packages from configuration
-
 Updates packages defined in the configuration. If renv is enabled, uses renv::update().
 Otherwise, reinstalls packages using standard installation methods.
-
+}
+\examples{
 \dontrun{
 # Update all packages
 packages_update()
