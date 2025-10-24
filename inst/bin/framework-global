@@ -31,9 +31,21 @@ else
   NC=''
 fi
 
-# Detect if we're in a Framework project
+# Detect if we're in a Framework project (search upward)
 IN_PROJECT=false
-if [ -f "config.yml" ]; then
+find_project_root() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/config.yml" ]; then
+      echo "$dir"
+      return 0
+    fi
+    dir=$(dirname "$dir")
+  done
+  return 1
+}
+
+if find_project_root >/dev/null 2>&1; then
   IN_PROJECT=true
 fi
 
@@ -571,14 +583,8 @@ case "$COMMAND" in
     printf "${YELLOW}Create:${NC}\n"
     printf "  framework new [name] [type]             Create new project\n\n"
 
-    if [ "$IN_PROJECT" = false ]; then
-      printf "${YELLOW}Make:${NC} ${DIM}(requires project)${NC}\n"
-      printf "${DIM}  framework make:notebook [name]          Create notebook${NC}\n"
-      printf "${DIM}  framework make:quarto [name]            Create Quarto notebook${NC}\n"
-      printf "${DIM}  framework make:rmd [name]               Create RMarkdown notebook${NC}\n"
-      printf "${DIM}  framework make:script [name]            Create R script${NC}\n"
-      printf "${DIM}  framework make:presentation [name]      Create presentation${NC}\n\n"
-    else
+    # Only show project commands when IN a project
+    if [ "$IN_PROJECT" = true ]; then
       printf "${YELLOW}Make:${NC}\n"
       printf "  framework make:notebook [name]          Create notebook\n"
       printf "  framework make:quarto [name]            Create Quarto notebook\n"
@@ -588,31 +594,14 @@ case "$COMMAND" in
     fi
 
     printf "${YELLOW}Settings:${NC}\n"
-    printf "  framework settings:editor               Configure editor preferences ${DIM}(global)${NC}\n"
-    if [ "$IN_PROJECT" = false ]; then
-      printf "${DIM}  framework settings:author               Set author information (requires project)${NC}\n"
-      printf "${DIM}  framework settings:directories          Configure directories (requires project)${NC}\n\n"
-    else
+    printf "  framework settings:editor               Configure editor preferences\n"
+    if [ "$IN_PROJECT" = true ]; then
       printf "  framework settings:author               Set author information\n"
-      printf "  framework settings:directories          Configure directories\n\n"
+      printf "  framework settings:directories          Configure directories\n"
     fi
+    printf "\n"
 
-    if [ "$IN_PROJECT" = false ]; then
-      printf "${YELLOW}Data:${NC} ${DIM}(requires project)${NC}\n"
-      printf "${DIM}  framework data:add                      Add data source${NC}\n"
-      printf "${DIM}  framework data:list                     List data sources${NC}\n"
-      printf "${DIM}  framework data:edit <name>              Edit data source${NC}\n\n"
-
-      printf "${YELLOW}Connections:${NC} ${DIM}(requires project)${NC}\n"
-      printf "${DIM}  framework connections:add               Add database connection${NC}\n"
-      printf "${DIM}  framework connections:list              List connections${NC}\n"
-      printf "${DIM}  framework connections:edit <name>       Edit connection${NC}\n\n"
-
-      printf "${YELLOW}Packages:${NC} ${DIM}(requires project)${NC}\n"
-      printf "${DIM}  framework packages:add                  Add package${NC}\n"
-      printf "${DIM}  framework packages:list                 List packages${NC}\n"
-      printf "${DIM}  framework packages:update               Update packages${NC}\n\n"
-    else
+    if [ "$IN_PROJECT" = true ]; then
       printf "${YELLOW}Data:${NC}\n"
       printf "  framework data:add                      Add data source\n"
       printf "  framework data:list                     List data sources\n"
@@ -630,21 +619,13 @@ case "$COMMAND" in
     fi
 
     printf "${YELLOW}AI:${NC}\n"
-    printf "  framework ai:configure                  Configure AI assistants ${DIM}(global)${NC}\n"
-    if [ "$IN_PROJECT" = false ]; then
-      printf "${DIM}  framework ai:sync                       Sync AI context (requires project)${NC}\n\n"
-    else
-      printf "  framework ai:sync                       Sync AI context\n\n"
+    printf "  framework ai:configure                  Configure AI assistants\n"
+    if [ "$IN_PROJECT" = true ]; then
+      printf "  framework ai:sync                       Sync AI context\n"
     fi
+    printf "\n"
 
-    if [ "$IN_PROJECT" = false ]; then
-      printf "${YELLOW}Git Hooks:${NC} ${DIM}(requires project)${NC}\n"
-      printf "${DIM}  framework hooks:list                    Show hook status${NC}\n"
-      printf "${DIM}  framework hooks:install                 Install hooks${NC}\n"
-      printf "${DIM}  framework hooks:uninstall               Remove hooks${NC}\n"
-      printf "${DIM}  framework hooks:enable <name>           Enable hook${NC}\n"
-      printf "${DIM}  framework hooks:disable <name>          Disable hook${NC}\n\n"
-    else
+    if [ "$IN_PROJECT" = true ]; then
       printf "${YELLOW}Git Hooks:${NC}\n"
       printf "  framework hooks:list                    Show hook status\n"
       printf "  framework hooks:install                 Install hooks\n"
