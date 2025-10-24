@@ -221,34 +221,39 @@ case "$COMMAND" in
       export FW_AI_CANONICAL_DEFAULT=$(grep "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
     fi
 
-    # Ask about config directory
+    # Config directory preference - only ask if not already set
     global_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+
     if [ -z "$global_config_dir" ]; then
-      global_config_dir="settings"
-    fi
+      # Not set - ask user and save preference
+      printf "\n${YELLOW}Configuration Directory${NC}\n"
+      printf "Where should split config files be stored?\n"
+      printf "  1. settings/ (recommended)\n"
+      printf "  2. config/\n"
+      printf "Choice (1-2) [1]: "
+      read -r config_dir_choice
 
-    if [ "$global_config_dir" = "config" ]; then
-      default_choice="2"
-      default_display="2"
+      case "$config_dir_choice" in
+        2)
+          export FW_CONFIG_DIR="config"
+          # Save to frameworkrc
+          grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+          echo "FW_CONFIG_DIR=\"config\"" >> "$frameworkrc.tmp"
+          mv "$frameworkrc.tmp" "$frameworkrc"
+          ;;
+        *)
+          export FW_CONFIG_DIR="settings"
+          # Save to frameworkrc
+          grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
+          echo "FW_CONFIG_DIR=\"settings\"" >> "$frameworkrc.tmp"
+          mv "$frameworkrc.tmp" "$frameworkrc"
+          ;;
+      esac
+      printf "\n${GREEN}✓ Preference saved${NC}\n\n"
     else
-      default_choice="1"
-      default_display="1"
+      # Already set - use saved preference
+      export FW_CONFIG_DIR="$global_config_dir"
     fi
-
-    printf "\n${YELLOW}Configuration Directory${NC}\n"
-    printf "  1. settings/ (recommended)\n"
-    printf "  2. config/\n"
-    printf "Choice (1-2) [${default_display}]: "
-    read -r config_dir_choice
-
-    if [ -z "$config_dir_choice" ]; then
-      config_dir_choice="$default_choice"
-    fi
-
-    case "$config_dir_choice" in
-      2) export FW_CONFIG_DIR="config" ;;
-      *) export FW_CONFIG_DIR="settings" ;;
-    esac
 
     printf "\n"
 
@@ -571,6 +576,25 @@ case "$COMMAND" in
         R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
         ;;
     esac
+
+    # If inside a project, also update local bin/framework
+    if [ "$IN_PROJECT" = true ]; then
+      PROJECT_ROOT=$(find_project_root)
+      if [ -n "$PROJECT_ROOT" ] && [ -d "$PROJECT_ROOT/bin" ]; then
+        printf "\n${BLUE}Updating project-local CLI...${NC}\n"
+
+        # Fetch latest bin/framework from framework-project
+        FRAMEWORK_BIN_URL="https://raw.githubusercontent.com/table1/framework-project/main/bin/framework"
+
+        if curl -fsSL "$FRAMEWORK_BIN_URL" -o "$PROJECT_ROOT/bin/framework.tmp"; then
+          mv "$PROJECT_ROOT/bin/framework.tmp" "$PROJECT_ROOT/bin/framework"
+          chmod +x "$PROJECT_ROOT/bin/framework"
+          printf "${GREEN}✓ Updated $PROJECT_ROOT/bin/framework${NC}\n"
+        else
+          printf "${YELLOW}⚠ Could not update local bin/framework (continuing...)${NC}\n"
+        fi
+      fi
+    fi
 
     if ! check_settings_configured; then
       run_settings_checkin
