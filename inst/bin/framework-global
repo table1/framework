@@ -484,9 +484,7 @@ case "$COMMAND" in
     printf "  framework configure:data                Add data source to config\n"
     printf "  framework configure:connection          Add database connection\n"
     printf "  framework configure:packages            Add package dependency\n"
-    printf "  framework configure:directories         Configure project directories\n\n"
-
-    printf "${YELLOW}Configuration:${NC}\n"
+    printf "  framework configure:directories         Configure project directories\n"
     printf "  framework configure:ides                Configure IDE preferences\n"
     printf "  framework configure:ai-agents           Configure AI assistant support\n\n"
 
