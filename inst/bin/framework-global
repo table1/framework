@@ -1,53 +1,59 @@
 #!/usr/bin/env bash
-# Framework CLI - Global Implementation
+# Framework CLI - Unified Implementation (v0.6)
 #
-# This is the actual CLI implementation that handles all commands.
-# Called by the framework shim when no project-local bin/framework exists.
+# This is the unified CLI that works both globally and within projects.
+# Commands are context-aware: some only work in projects, but help shows all.
 #
-# Provides commands:
-#   new         - Create new Framework project
-#   version     - Show Framework package version
-#   update      - Update Framework from GitHub (alias: self-update)
-#   help        - Show help information
+# New command structure (v0.6):
+#   settings:*     - Configuration commands (replaces configure:*)
+#   ai:*           - AI assistant commands (replaces configure:ai-agents, sync:ai-context)
+#   data:*         - Data management (add, list, edit) - project-local
+#   connections:*  - Database connections (add, list, edit) - project-local
+#   packages:*     - Package management (add, list, update) - project-local
+#   make:*         - Create project artifacts - project-local
 
 set -e
 
-# URL to the canonical new-project.sh script
-# Add package version to URL to bypass GitHub CDN cache when package updates
-PACKAGE_VERSION=$(Rscript --quiet --no-save -e "cat(as.character(packageVersion('framework')))" 2>/dev/null || echo "dev")
-SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh?v=${PACKAGE_VERSION}"
-
 # Detect color support
 if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
-  BLUE='\033[1;34m'    # Bright blue - readable on both dark and light backgrounds
-  YELLOW='\033[1;33m'  # Bright yellow - readable on both dark and light backgrounds
-  GREEN='\033[1;32m'   # Bright green - readable on both dark and light backgrounds
-  RED='\033[1;31m'     # Bright red - readable on both dark and light backgrounds
+  BLUE='\033[1;34m'
+  YELLOW='\033[1;33m'
+  GREEN='\033[1;32m'
+  RED='\033[1;31m'
+  DIM='\033[2m'
   NC='\033[0m'
 else
   BLUE=''
   YELLOW=''
   GREEN=''
   RED=''
+  DIM=''
   NC=''
 fi
 
+# Detect if we're in a Framework project
+IN_PROJECT=false
+if [ -f "config.yml" ]; then
+  IN_PROJECT=true
+fi
+
 COMMAND="${1:-help}"
+
+# Package version for cache busting
+PACKAGE_VERSION=$(Rscript --quiet --no-save -e "cat(as.character(packageVersion('framework')))" 2>/dev/null || echo "dev")
+SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-project.sh?v=${PACKAGE_VERSION}"
 
 # Function to check if settings are configured
 check_settings_configured() {
   frameworkrc="$HOME/.frameworkrc"
 
-  # If frameworkrc doesn't exist, settings not configured
   if [ ! -f "$frameworkrc" ]; then
     return 1
   fi
 
-  # Check for required settings (FW_CONFIG_DIR is per-project, not required here)
   fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
   fw_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
 
-  # If any required setting is missing, not configured
   if [ -z "$fw_ides" ] || [ -z "$fw_ai" ]; then
     return 1
   fi
@@ -55,34 +61,31 @@ check_settings_configured() {
   return 0
 }
 
-# Function to run settings check-in
+# Function to run settings check-in (first-time setup)
 run_settings_checkin() {
   frameworkrc="$HOME/.frameworkrc"
 
-  # Create frameworkrc if it doesn't exist
   if [ ! -f "$frameworkrc" ]; then
     touch "$frameworkrc"
   fi
 
-  # Read existing settings
   existing_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
   existing_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
 
-  # Only show header if we need to ask questions
   if [ -z "$existing_ides" ] || [ -z "$existing_ai" ]; then
     printf "\n${BLUE}═══════════════════════════════════════════════${NC}\n"
     printf "${BLUE}Framework Settings Configuration${NC}\n"
     printf "${BLUE}═══════════════════════════════════════════════${NC}\n\n"
   fi
 
-  # Ask about IDE preferences (only if not set)
+  # IDE preferences
   if [ -z "$existing_ides" ]; then
-    printf "${YELLOW}IDE Preferences${NC}\n"
-    printf "Which IDE/editor do you primarily use?\n"
+    printf "${YELLOW}Editor Preferences${NC}\n"
+    printf "Which editor do you primarily use?\n"
     printf "  1. Positron / VS Code\n"
     printf "  2. RStudio\n"
     printf "  3. Both\n"
-    printf "  4. Neither (other editor)\n"
+    printf "  4. Other\n"
     printf "Choice (1-4): "
     read -r ide_choice
 
@@ -91,45 +94,36 @@ run_settings_checkin() {
       2) ides="rstudio" ;;
       3) ides="rstudio,vscode" ;;
       4) ides="none" ;;
-      *) ides="rstudio,vscode" ;;  # Default to both
+      *) ides="rstudio,vscode" ;;
     esac
 
-    # Update frameworkrc
     grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
     echo "FW_IDES=\"$ides\"" >> "$frameworkrc.tmp"
     mv "$frameworkrc.tmp" "$frameworkrc"
     printf "\n"
   fi
 
-  # Ask about AI support (only if not set)
+  # AI support
   if [ -z "$existing_ai" ]; then
     printf "${YELLOW}AI Assistant Support${NC}\n"
-    printf "Do you want Framework to create instruction files for AI coding assistants?\n"
-    printf "These files help assistants understand Framework conventions.\n"
-    printf "Enable AI assistant support? (y/n) [y]: "
+    printf "Enable AI assistant context files? (y/n) [y]: "
     read -r ai_response
 
     if [ "$ai_response" = "n" ] || [ "$ai_response" = "N" ]; then
-      # User doesn't want AI support
       grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
       grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
       echo "FW_AI_SUPPORT=\"never\"" >> "$frameworkrc.tmp2"
       mv "$frameworkrc.tmp2" "$frameworkrc"
       rm -f "$frameworkrc.tmp"
     else
-      # Ask about each assistant individually with yes/no
-      printf "\nWhich AI assistants do you use? (y/n for each)\n"
-
+      printf "\nWhich AI assistants? (y/n for each)\n"
       printf "  Claude Code? [y]: "
       read -r use_claude
-
       printf "  GitHub Copilot? [n]: "
       read -r use_copilot
-
-      printf "  AGENTS.md (OpenAI Codex and others)? [n]: "
+      printf "  AGENTS.md (OpenAI Codex)? [n]: "
       read -r use_agents
 
-      # Build assistants list
       assistants=""
       if [ "$use_claude" != "n" ] && [ "$use_claude" != "N" ]; then
         assistants="claude"
@@ -142,10 +136,9 @@ run_settings_checkin() {
       fi
 
       if [ -z "$assistants" ]; then
-        assistants="claude"  # Default to Claude if nothing selected
+        assistants="claude"
       fi
 
-      # Update frameworkrc
       grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
       grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
       echo "FW_AI_SUPPORT=\"yes\"" >> "$frameworkrc.tmp2"
@@ -153,11 +146,8 @@ run_settings_checkin() {
       mv "$frameworkrc.tmp2" "$frameworkrc"
       rm -f "$frameworkrc.tmp"
 
-      # Ask about canonical AI file preference
       printf "\n${YELLOW}Default Canonical AI File${NC}\n"
-      printf "Which AI file should be the default canonical source?\n"
-      printf "(You can override this per-project)\n"
-      printf "  1. AGENTS.md (recommended - supports most assistants)\n"
+      printf "  1. AGENTS.md (recommended)\n"
       printf "  2. CLAUDE.md\n"
       printf "  3. .github/copilot-instructions.md\n"
       printf "Choice (1-3) [1]: "
@@ -169,7 +159,6 @@ run_settings_checkin() {
         *) canonical_default="AGENTS.md" ;;
       esac
 
-      # Update frameworkrc with canonical default
       grep -v "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
       echo "FW_AI_CANONICAL_DEFAULT=\"$canonical_default\"" >> "$frameworkrc.tmp"
       mv "$frameworkrc.tmp" "$frameworkrc"
@@ -177,22 +166,41 @@ run_settings_checkin() {
     printf "\n"
   fi
 
-  # Only show completion message if we asked any questions
   if [ -z "$existing_ides" ] || [ -z "$existing_ai" ]; then
     printf "${GREEN}✓ Preferences saved!${NC}\n"
-    printf "Your settings will be used as defaults for new projects.\n\n"
+    printf "Settings stored in ~/.frameworkrc\n\n"
+  fi
+}
+
+# Function to require project context
+require_project() {
+  if [ "$IN_PROJECT" = false ]; then
+    printf "${RED}Error: This command requires a Framework project${NC}\n"
+    printf "Run this command from inside a project directory (with config.yml)\n"
+    exit 1
   fi
 }
 
 case "$COMMAND" in
   new)
-    # Check if settings are configured
+    # Warn if nested in existing project
+    if [ "$IN_PROJECT" = true ]; then
+      printf "${YELLOW}⚠ Warning: You are inside an existing Framework project${NC}\n"
+      printf "Creating a nested project is unusual. Continue? (y/n) [n]: "
+      read -r continue_response
+      if [ "$continue_response" != "y" ] && [ "$continue_response" != "Y" ]; then
+        printf "Cancelled.\n"
+        exit 0
+      fi
+      printf "\n"
+    fi
+
     if ! check_settings_configured; then
       printf "\n${YELLOW}Before we get started...${NC}\n\n"
       run_settings_checkin
     fi
 
-    # Export settings so R can see them
+    # Export settings
     frameworkrc="$HOME/.frameworkrc"
     if [ -f "$frameworkrc" ]; then
       export FW_IDES=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
@@ -201,14 +209,12 @@ case "$COMMAND" in
       export FW_AI_CANONICAL_DEFAULT=$(grep "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
     fi
 
-    # Ask about configuration directory preference for THIS project
-    # Use global setting as default if it exists
+    # Ask about config directory
     global_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
     if [ -z "$global_config_dir" ]; then
-      global_config_dir="settings"  # Default if not set
+      global_config_dir="settings"
     fi
 
-    # Show current default in the prompt
     if [ "$global_config_dir" = "config" ]; then
       default_choice="2"
       default_display="2"
@@ -218,13 +224,11 @@ case "$COMMAND" in
     fi
 
     printf "\n${YELLOW}Configuration Directory${NC}\n"
-    printf "Where should split configuration files be stored in this project?\n"
-    printf "  1. settings/ (recommended - descriptive, follows R conventions)\n"
-    printf "  2. config/ (compact, follows web framework conventions)\n"
+    printf "  1. settings/ (recommended)\n"
+    printf "  2. config/\n"
     printf "Choice (1-2) [${default_display}]: "
     read -r config_dir_choice
 
-    # Use default if user just hits enter
     if [ -z "$config_dir_choice" ]; then
       config_dir_choice="$default_choice"
     fi
@@ -236,10 +240,9 @@ case "$COMMAND" in
 
     printf "\n"
 
-    # Remove 'new' from arguments and check for --dev-mode
     shift
 
-    # Check if --dev-mode flag is present
+    # Check for dev mode
     DEV_MODE=false
     for arg in "$@"; do
       if [ "$arg" = "--dev-mode" ]; then
@@ -249,7 +252,6 @@ case "$COMMAND" in
     done
 
     if [ "$DEV_MODE" = true ]; then
-      # Dev mode: use local new-project.sh and set environment variable
       LOCAL_SCRIPT="$HOME/code/framework-project/new-project.sh"
       if [ ! -f "$LOCAL_SCRIPT" ]; then
         printf "${RED}Error: Dev mode requires framework-project at $HOME/code/framework-project${NC}\n"
@@ -259,246 +261,401 @@ case "$COMMAND" in
       export FW_DEV_PATH="$HOME/code/framework"
       bash "$LOCAL_SCRIPT" "$@"
     else
-      # Normal mode: fetch from GitHub
       curl -fsSL "$SCRIPT_URL" | bash -s "$@"
     fi
     ;;
 
+  # Settings namespace (global configuration)
+  settings:editor)
+    frameworkrc="$HOME/.frameworkrc"
+    fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+
+    printf "\n${BLUE}Editor Configuration${NC}\n"
+    printf "═══════════════════════════════════════════════\n\n"
+    if [ -n "$fw_ides" ]; then
+      printf "Current: $fw_ides\n\n"
+    else
+      printf "Current: not configured\n\n"
+    fi
+
+    printf "Which editor do you use?\n"
+    printf "  1. Positron / VS Code\n"
+    printf "  2. RStudio\n"
+    printf "  3. Both\n"
+    printf "  4. Other\n\n"
+    printf "Choice (1-4): "
+    read -r choice
+
+    case "$choice" in
+      1) ides="vscode" ;;
+      2) ides="rstudio" ;;
+      3) ides="rstudio,vscode" ;;
+      4) ides="none" ;;
+      *)
+        printf "\n${RED}Invalid choice${NC}\n"
+        exit 1
+        ;;
+    esac
+
+    if [ -f "$frameworkrc" ]; then
+      grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp"
+      mv "$frameworkrc.tmp" "$frameworkrc"
+    fi
+
+    echo "FW_IDES=\"$ides\"" >> "$frameworkrc"
+    printf "\n${GREEN}✓ Editor preferences saved${NC}\n"
+    printf "  Editor: $ides\n"
+    ;;
+
+  settings:author)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); configure_author()"
+    ;;
+
+  settings:directories)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); configure_directories()"
+    ;;
+
+  # AI namespace
+  ai:configure)
+    frameworkrc="$HOME/.frameworkrc"
+    fw_support=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+    fw_assistants=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+
+    printf "\n${BLUE}AI Assistant Configuration${NC}\n"
+    printf "═══════════════════════════════════════════════\n\n"
+    if [ "$fw_support" = "never" ]; then
+      printf "Current: disabled\n\n"
+    elif [ "$fw_support" = "yes" ]; then
+      printf "Current: enabled ($fw_assistants)\n\n"
+    else
+      printf "Current: not configured\n\n"
+    fi
+
+    printf "What would you like to do?\n"
+    printf "  1. Enable/change AI support\n"
+    printf "  2. Disable AI support\n"
+    printf "  3. Cancel\n\n"
+    printf "Choice (1-3): "
+    read -r choice
+
+    case "$choice" in
+      1)
+        printf "\nWhich assistants?\n"
+        printf "  1. Claude Code\n"
+        printf "  2. GitHub Copilot\n"
+        printf "  3. AGENTS.md\n"
+        printf "  4. All\n\n"
+        printf "Selection (e.g., 1,3 or 4): "
+        read -r selection
+
+        assistants=""
+        if [ "$selection" = "4" ]; then
+          assistants="claude,copilot,agents"
+        else
+          if echo "$selection" | grep -q "1"; then assistants="claude"; fi
+          if echo "$selection" | grep -q "2"; then
+            if [ -n "$assistants" ]; then assistants="$assistants,copilot"; else assistants="copilot"; fi
+          fi
+          if echo "$selection" | grep -q "3"; then
+            if [ -n "$assistants" ]; then assistants="$assistants,agents"; else assistants="agents"; fi
+          fi
+        fi
+
+        if [ -z "$assistants" ]; then
+          printf "\n${RED}No assistants selected${NC}\n"
+          exit 1
+        fi
+
+        R --quiet --no-save -e "framework::configure_ai_agents(support='yes', assistants=c($(echo $assistants | sed 's/,/\",\"/g' | sed 's/^/\"/' | sed 's/$/\"/'  )))"
+        ;;
+      2)
+        R --quiet --no-save -e "framework::configure_ai_agents(support='never')"
+        ;;
+      *)
+        printf "\n${YELLOW}Cancelled${NC}\n"
+        exit 0
+        ;;
+    esac
+    ;;
+
+  ai:sync)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); ai_sync_context()"
+    ;;
+
+  # Data namespace (project-local)
+  data:add)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); configure_data()"
+    ;;
+
+  data:list)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); data_list()"
+    ;;
+
+  data:edit)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      printf "${RED}Error: Data source name required${NC}\n"
+      printf "Usage: framework data:edit <name>\n"
+      exit 1
+    fi
+    Rscript --quiet --no-save -e "library(framework); configure_data(name='$NAME')"
+    ;;
+
+  # Connections namespace (project-local)
+  connections:add)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); configure_connection()"
+    ;;
+
+  connections:list)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); cat('Connections in config.yml:\n'); cfg <- config(); print(names(cfg\$connections))"
+    ;;
+
+  connections:edit)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      printf "${RED}Error: Connection name required${NC}\n"
+      printf "Usage: framework connections:edit <name>\n"
+      exit 1
+    fi
+    Rscript --quiet --no-save -e "library(framework); configure_connection(name='$NAME')"
+    ;;
+
+  # Packages namespace (project-local)
+  packages:add)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); configure_packages()"
+    ;;
+
+  packages:list)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); cfg <- config(); cat('Packages:\n'); for(pkg in cfg\$packages) cat('  -', pkg, '\n')"
+    ;;
+
+  packages:update)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); packages_update()"
+    ;;
+
+  # Make namespace (project-local)
+  make:notebook)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      Rscript --quiet --no-save -e "library(framework); make_notebook()"
+    else
+      Rscript --quiet --no-save -e "library(framework); make_notebook('$NAME')"
+    fi
+    ;;
+
+  make:quarto)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      Rscript --quiet --no-save -e "library(framework); make_qmd()"
+    else
+      Rscript --quiet --no-save -e "library(framework); make_qmd('$NAME')"
+    fi
+    ;;
+
+  make:rmd)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      Rscript --quiet --no-save -e "library(framework); make_rmd()"
+    else
+      Rscript --quiet --no-save -e "library(framework); make_rmd('$NAME')"
+    fi
+    ;;
+
+  make:script)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      Rscript --quiet --no-save -e "library(framework); make_script()"
+    else
+      Rscript --quiet --no-save -e "library(framework); make_script('$NAME')"
+    fi
+    ;;
+
+  make:presentation)
+    require_project
+    shift
+    NAME="${1}"
+    if [ -z "$NAME" ]; then
+      Rscript --quiet --no-save -e "library(framework); make_presentation()"
+    else
+      Rscript --quiet --no-save -e "library(framework); make_presentation('$NAME')"
+    fi
+    ;;
+
+  # Git Hooks
+  hooks:list)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); hooks_list()"
+    ;;
+
+  hooks:install)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); hooks_install()"
+    ;;
+
+  hooks:uninstall)
+    require_project
+    Rscript --quiet --no-save -e "library(framework); hooks_uninstall()"
+    ;;
+
+  hooks:enable)
+    require_project
+    HOOK_NAME="$2"
+    if [ -z "$HOOK_NAME" ]; then
+      printf "${RED}Error: Hook name required${NC}\n"
+      printf "Usage: framework hooks:enable <name>\n"
+      exit 1
+    fi
+    Rscript --quiet --no-save -e "library(framework); hooks_enable('$HOOK_NAME')"
+    ;;
+
+  hooks:disable)
+    require_project
+    HOOK_NAME="$2"
+    if [ -z "$HOOK_NAME" ]; then
+      printf "${RED}Error: Hook name required${NC}\n"
+      printf "Usage: framework hooks:disable <name>\n"
+      exit 1
+    fi
+    Rscript --quiet --no-save -e "library(framework); hooks_disable('$HOOK_NAME')"
+    ;;
+
+  # Maintenance
   version)
-    # Show Framework package version
     Rscript --quiet --no-save --slave -e "cat('Framework version', as.character(packageVersion('framework')), '\n')"
     ;;
 
   update|self-update)
-    # Update Framework package and CLI from GitHub first
-    printf "${BLUE}Updating Framework and CLI from GitHub...${NC}\n\n"
-    printf "Update dependencies to latest versions? [Y/n]: "
+    printf "${BLUE}Updating Framework from GitHub...${NC}\n\n"
+    printf "Update dependencies? [Y/n]: "
     read -r response
 
     case "$response" in
       [nN]|[nN][oO])
         R --quiet --no-save -e "framework::cli_update(upgrade_deps = FALSE)"
         ;;
-      [yY]|[yY][eE][sS]|"")
-        R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
-        ;;
       *)
-        printf "${RED}Invalid input. Please enter 'y' or 'n'.${NC}\n"
-        exit 1
+        R --quiet --no-save -e "framework::cli_update(upgrade_deps = TRUE)"
         ;;
     esac
 
-    # Check if settings are configured (after update)
     if ! check_settings_configured; then
       run_settings_checkin
     fi
     ;;
 
-  configure:ides)
-    # Configure IDE preferences
-        frameworkrc="$HOME/.frameworkrc"
-
-        # Read current settings
-        fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-
-        # Show status
-        printf "\n${BLUE}Framework IDE Configuration${NC}\n"
-        printf "═══════════════════════════════════════════════\n\n"
-        if [ -n "$fw_ides" ]; then
-          printf "Current IDEs: $fw_ides\n\n"
-        else
-          printf "Current IDEs: not configured (defaults to both)\n\n"
-        fi
-
-        # Ask which IDEs
-        printf "Which IDEs/editors do you use?\n"
-        printf "  1. Positron / VS Code\n"
-        printf "  2. RStudio\n"
-        printf "  3. Both\n"
-        printf "  4. Neither (other editor)\n\n"
-        printf "Enter choice (1-4): "
-        read -r choice
-
-        case "$choice" in
-          1)
-            ides="vscode"
-            ;;
-          2)
-            ides="rstudio"
-            ;;
-          3)
-            ides="rstudio,vscode"
-            ;;
-          4)
-            ides="none"
-            ;;
-          *)
-            printf "\n${RED}Invalid choice. Configuration unchanged.${NC}\n"
-            exit 1
-            ;;
-        esac
-
-        # Update frameworkrc
-        if [ -f "$frameworkrc" ]; then
-          # Remove existing line
-          grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp"
-          mv "$frameworkrc.tmp" "$frameworkrc"
-        fi
-
-        # Add new line
-        echo "FW_IDES=\"$ides\"" >> "$frameworkrc"
-
-        printf "\n${GREEN}✓ IDE preferences saved${NC}\n"
-        printf "  IDEs: $ides\n"
-        ;;
-
-  configure:ai-agents)
-    # Configure AI assistant support (bash prompting, no R readline)
-        frameworkrc="$HOME/.frameworkrc"
-
-        # Read current settings
-        fw_support=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-        fw_assistants=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-
-        # Show status
-        printf "\n${BLUE}Framework AI Assistant Support Configuration${NC}\n"
-        printf "═══════════════════════════════════════════════\n\n"
-        if [ "$fw_support" = "never" ]; then
-          printf "Current status: disabled\n\n"
-        elif [ "$fw_support" = "yes" ]; then
-          printf "Current status: enabled (assistants: $fw_assistants)\n\n"
-        else
-          printf "Current status: not configured\n\n"
-        fi
-
-        # Ask what to do
-        printf "What would you like to do?\n"
-        printf "  1. Enable/change AI assistant support\n"
-        printf "  2. Disable AI assistant support\n"
-        printf "  3. Cancel\n\n"
-        printf "Enter choice (1-3): "
-        read -r choice
-
-        case "$choice" in
-          1)
-            # Enable/change
-            printf "\nWhich AI assistants do you use? (Select all that apply)\n"
-            printf "  1. Claude Code (CLAUDE.md)\n"
-            printf "  2. GitHub Copilot (.github/copilot-instructions.md)\n"
-            printf "  3. AGENTS.md (OpenAI Codex and others)\n"
-            printf "  4. All of the above\n\n"
-            printf "Enter numbers (e.g., 1,3 or 4 for all): "
-            read -r selection
-
-            # Parse selection and convert to comma-separated list
-            assistants=""
-            if [ "$selection" = "4" ]; then
-              assistants="claude,copilot,agents"
-            else
-              # Parse comma-separated numbers
-              if echo "$selection" | grep -q "1"; then assistants="claude"; fi
-              if echo "$selection" | grep -q "2"; then
-                if [ -n "$assistants" ]; then assistants="$assistants,copilot"; else assistants="copilot"; fi
-              fi
-              if echo "$selection" | grep -q "3"; then
-                if [ -n "$assistants" ]; then assistants="$assistants,agents"; else assistants="agents"; fi
-              fi
-            fi
-
-            if [ -z "$assistants" ]; then
-              printf "\n${RED}No assistants selected. Configuration unchanged.${NC}\n"
-              exit 1
-            fi
-
-            # Call R to update frameworkrc
-            R --quiet --no-save -e "framework::configure_ai_agents(support='yes', assistants=c($(echo $assistants | sed 's/,/\",\"/g' | sed 's/^/\"/' | sed 's/$/\"/'  )))"
-            ;;
-          2)
-            # Disable
-            R --quiet --no-save -e "framework::configure_ai_agents(support='never')"
-            ;;
-          *)
-            printf "\n${YELLOW}Cancelled. No changes made.${NC}\n"
-            exit 0
-            ;;
-        esac
-        ;;
-
-  sync:ai-context)
-    # Sync AI assistant context files
-    R --quiet --no-save -e "library(framework); ai_sync_context()"
-    ;;
-
-  hooks:list)
-    # List git hook status
-    R --quiet --no-save -e "library(framework); hooks_list()"
-    ;;
-
-  hooks:install)
-    # Install git hooks
-    R --quiet --no-save -e "library(framework); hooks_install()"
-    ;;
-
-  hooks:uninstall)
-    # Uninstall git hooks
-    R --quiet --no-save -e "library(framework); hooks_uninstall()"
-    ;;
-
-  hooks:enable)
-    # Enable specific hook
-    HOOK_NAME="$2"
-    if [ -z "$HOOK_NAME" ]; then
-      printf "${RED}Error: Hook name required${NC}\n"
-      printf "Usage: framework hooks:enable <ai_sync|data_security>\n"
-      exit 1
-    fi
-    R --quiet --no-save -e "library(framework); hooks_enable('$HOOK_NAME')"
-    ;;
-
-  hooks:disable)
-    # Disable specific hook
-    HOOK_NAME="$2"
-    if [ -z "$HOOK_NAME" ]; then
-      printf "${RED}Error: Hook name required${NC}\n"
-      printf "Usage: framework hooks:disable <ai_sync|data_security>\n"
-      exit 1
-    fi
-    R --quiet --no-save -e "library(framework); hooks_disable('$HOOK_NAME')"
-    ;;
-
   help|--help|-h)
-    printf "${BLUE}Framework CLI - R Data Analysis Project Scaffolding${NC}\n\n"
+    printf "${BLUE}Framework CLI v0.6 - R Data Analysis Scaffolding${NC}\n\n"
 
     printf "${YELLOW}Create:${NC}\n"
     printf "  framework new [name] [type]             Create new project\n\n"
 
-    printf "${YELLOW}Make:${NC}\n"
-    printf "  framework make:notebook [name]          Create notebook (Quarto/RMarkdown)\n"
-    printf "  framework make:quarto [name]            Create Quarto notebook (.qmd)\n"
-    printf "  framework make:rmd [name]               Create RMarkdown notebook (.Rmd)\n"
-    printf "  framework make:script [name]            Create R script (.R)\n"
-    printf "  framework make:presentation [name]      Create reveal.js presentation\n\n"
+    if [ "$IN_PROJECT" = false ]; then
+      printf "${YELLOW}Make:${NC} ${DIM}(requires project)${NC}\n"
+      printf "${DIM}  framework make:notebook [name]          Create notebook${NC}\n"
+      printf "${DIM}  framework make:quarto [name]            Create Quarto notebook${NC}\n"
+      printf "${DIM}  framework make:rmd [name]               Create RMarkdown notebook${NC}\n"
+      printf "${DIM}  framework make:script [name]            Create R script${NC}\n"
+      printf "${DIM}  framework make:presentation [name]      Create presentation${NC}\n\n"
+    else
+      printf "${YELLOW}Make:${NC}\n"
+      printf "  framework make:notebook [name]          Create notebook\n"
+      printf "  framework make:quarto [name]            Create Quarto notebook\n"
+      printf "  framework make:rmd [name]               Create RMarkdown notebook\n"
+      printf "  framework make:script [name]            Create R script\n"
+      printf "  framework make:presentation [name]      Create presentation\n\n"
+    fi
 
-    printf "${YELLOW}Configure:${NC}\n"
-    printf "  framework configure:author              Set author information\n"
-    printf "  framework configure:data                Add data source to config\n"
-    printf "  framework configure:connection          Add database connection\n"
-    printf "  framework configure:packages            Add package dependency\n"
-    printf "  framework configure:directories         Configure project directories\n"
-    printf "  framework configure:ides                Configure IDE preferences\n"
-    printf "  framework configure:ai-agents           Configure AI assistant support\n\n"
+    printf "${YELLOW}Settings:${NC}\n"
+    printf "  framework settings:editor               Configure editor preferences ${DIM}(global)${NC}\n"
+    if [ "$IN_PROJECT" = false ]; then
+      printf "${DIM}  framework settings:author               Set author information (requires project)${NC}\n"
+      printf "${DIM}  framework settings:directories          Configure directories (requires project)${NC}\n\n"
+    else
+      printf "  framework settings:author               Set author information\n"
+      printf "  framework settings:directories          Configure directories\n\n"
+    fi
 
-    printf "${YELLOW}AI & Git Hooks:${NC}\n"
-    printf "  framework sync:ai-context               Sync AI assistant context files\n"
-    printf "  framework hooks:list                    Show git hook status\n"
-    printf "  framework hooks:install                 Install git hooks\n"
-    printf "  framework hooks:uninstall               Remove git hooks\n"
-    printf "  framework hooks:enable <name>           Enable specific hook\n"
-    printf "  framework hooks:disable <name>          Disable specific hook\n\n"
+    if [ "$IN_PROJECT" = false ]; then
+      printf "${YELLOW}Data:${NC} ${DIM}(requires project)${NC}\n"
+      printf "${DIM}  framework data:add                      Add data source${NC}\n"
+      printf "${DIM}  framework data:list                     List data sources${NC}\n"
+      printf "${DIM}  framework data:edit <name>              Edit data source${NC}\n\n"
+
+      printf "${YELLOW}Connections:${NC} ${DIM}(requires project)${NC}\n"
+      printf "${DIM}  framework connections:add               Add database connection${NC}\n"
+      printf "${DIM}  framework connections:list              List connections${NC}\n"
+      printf "${DIM}  framework connections:edit <name>       Edit connection${NC}\n\n"
+
+      printf "${YELLOW}Packages:${NC} ${DIM}(requires project)${NC}\n"
+      printf "${DIM}  framework packages:add                  Add package${NC}\n"
+      printf "${DIM}  framework packages:list                 List packages${NC}\n"
+      printf "${DIM}  framework packages:update               Update packages${NC}\n\n"
+    else
+      printf "${YELLOW}Data:${NC}\n"
+      printf "  framework data:add                      Add data source\n"
+      printf "  framework data:list                     List data sources\n"
+      printf "  framework data:edit <name>              Edit data source\n\n"
+
+      printf "${YELLOW}Connections:${NC}\n"
+      printf "  framework connections:add               Add database connection\n"
+      printf "  framework connections:list              List connections\n"
+      printf "  framework connections:edit <name>       Edit connection\n\n"
+
+      printf "${YELLOW}Packages:${NC}\n"
+      printf "  framework packages:add                  Add package\n"
+      printf "  framework packages:list                 List packages\n"
+      printf "  framework packages:update               Update packages\n\n"
+    fi
+
+    printf "${YELLOW}AI:${NC}\n"
+    printf "  framework ai:configure                  Configure AI assistants ${DIM}(global)${NC}\n"
+    if [ "$IN_PROJECT" = false ]; then
+      printf "${DIM}  framework ai:sync                       Sync AI context (requires project)${NC}\n\n"
+    else
+      printf "  framework ai:sync                       Sync AI context\n\n"
+    fi
+
+    if [ "$IN_PROJECT" = false ]; then
+      printf "${YELLOW}Git Hooks:${NC} ${DIM}(requires project)${NC}\n"
+      printf "${DIM}  framework hooks:list                    Show hook status${NC}\n"
+      printf "${DIM}  framework hooks:install                 Install hooks${NC}\n"
+      printf "${DIM}  framework hooks:uninstall               Remove hooks${NC}\n"
+      printf "${DIM}  framework hooks:enable <name>           Enable hook${NC}\n"
+      printf "${DIM}  framework hooks:disable <name>          Disable hook${NC}\n\n"
+    else
+      printf "${YELLOW}Git Hooks:${NC}\n"
+      printf "  framework hooks:list                    Show hook status\n"
+      printf "  framework hooks:install                 Install hooks\n"
+      printf "  framework hooks:uninstall               Remove hooks\n"
+      printf "  framework hooks:enable <name>           Enable hook\n"
+      printf "  framework hooks:disable <name>          Disable hook\n\n"
+    fi
 
     printf "${YELLOW}Maintenance:${NC}\n"
-    printf "  framework version                       Show Framework package version\n"
-    printf "  framework update                        Update Framework and CLI\n"
+    printf "  framework version                       Show version\n"
+    printf "  framework update                        Update Framework\n"
     printf "  framework help                          Show this help\n\n"
 
     printf "${YELLOW}Project Types:${NC}\n"
@@ -506,13 +663,13 @@ case "$COMMAND" in
     printf "  course        Teaching materials\n"
     printf "  presentation  Single talk/presentation\n\n"
 
-    printf "${YELLOW}More Information:${NC}\n"
+    printf "${YELLOW}More:${NC}\n"
     printf "  https://github.com/table1/framework\n"
     ;;
 
   *)
-    echo "Unknown command: $COMMAND"
-    echo "Run 'framework help' for usage information"
+    printf "${RED}Unknown command: ${NC}$COMMAND\n"
+    printf "Run '${GREEN}framework help${NC}' for usage\n"
     exit 1
     ;;
 esac
