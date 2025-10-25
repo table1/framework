@@ -27,7 +27,7 @@
 #' }
 #'
 #' @export
-hooks_install <- function(config_file = "config.yml",
+hooks_install <- function(config_file = NULL,
                          force = FALSE,
                          verbose = TRUE) {
 
@@ -37,6 +37,18 @@ hooks_install <- function(config_file = "config.yml",
       message("✗ Not a git repository")
     }
     return(invisible(FALSE))
+  }
+
+  # Auto-discover settings file if not specified
+  if (is.null(config_file)) {
+    tryCatch({
+      config_file <- .get_settings_file()
+    }, error = function(e) {
+      if (verbose) {
+        message("✗ Settings file not found")
+      }
+      return(invisible(FALSE))
+    })
   }
 
   # Check if config exists
@@ -153,10 +165,10 @@ hooks_uninstall <- function(verbose = TRUE) {
 
 #' Enable Specific Git Hook
 #'
-#' Enables a specific hook in config.yml and reinstalls the pre-commit hook.
+#' Enables a specific hook in settings and reinstalls the pre-commit hook.
 #'
 #' @param hook_name Name of hook: "ai_sync" or "data_security"
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
 #' @return Invisible TRUE on success
@@ -168,11 +180,20 @@ hooks_uninstall <- function(verbose = TRUE) {
 #' }
 #'
 #' @export
-hooks_enable <- function(hook_name, config_file = "config.yml", verbose = TRUE) {
+hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   valid_hooks <- c("ai_sync", "data_security")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
+  }
+
+  # Auto-discover settings file if not specified
+  if (is.null(config_file)) {
+    tryCatch({
+      config_file <- .get_settings_file()
+    }, error = function(e) {
+      stop("Settings file not found")
+    })
   }
 
   # Update config.yml
@@ -189,20 +210,29 @@ hooks_enable <- function(hook_name, config_file = "config.yml", verbose = TRUE) 
 
 #' Disable Specific Git Hook
 #'
-#' Disables a specific hook in config.yml and reinstalls the pre-commit hook.
+#' Disables a specific hook in settings and reinstalls the pre-commit hook.
 #'
 #' @param hook_name Name of hook: "ai_sync" or "data_security"
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
 #' @return Invisible TRUE on success
 #'
 #' @export
-hooks_disable <- function(hook_name, config_file = "config.yml", verbose = TRUE) {
+hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   valid_hooks <- c("ai_sync", "data_security")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
+  }
+
+  # Auto-discover settings file if not specified
+  if (is.null(config_file)) {
+    tryCatch({
+      config_file <- .get_settings_file()
+    }, error = function(e) {
+      stop("Settings file not found")
+    })
   }
 
   # Update config.yml
@@ -228,12 +258,22 @@ hooks_disable <- function(hook_name, config_file = "config.yml", verbose = TRUE)
 #'
 #' Shows which hooks are enabled and their current status.
 #'
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
 #'
 #' @return Data frame with hook information
 #'
 #' @export
-hooks_list <- function(config_file = "config.yml") {
+hooks_list <- function(config_file = NULL) {
+  # Auto-discover settings file if not specified
+  if (is.null(config_file)) {
+    tryCatch({
+      config_file <- .get_settings_file()
+    }, error = function(e) {
+      message("✗ Settings file not found")
+      return(invisible(NULL))
+    })
+  }
+
   if (!file.exists(config_file)) {
     message("✗ Config file not found: ", config_file)
     return(invisible(NULL))

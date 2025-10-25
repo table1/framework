@@ -4,7 +4,7 @@
 \alias{hooks_install}
 \title{Install Git Pre-commit Hook}
 \usage{
-hooks_install(config_file = "config.yml", force = FALSE, verbose = TRUE)
+hooks_install(config_file = NULL, force = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{config_file}{Path to configuration file (default: "config.yml")}

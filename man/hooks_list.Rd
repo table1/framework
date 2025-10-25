@@ -4,10 +4,10 @@
 \alias{hooks_list}
 \title{List Git Hook Status}
 \usage{
-hooks_list(config_file = "config.yml")
+hooks_list(config_file = NULL)
 }
 \arguments{
-\item{config_file}{Path to configuration file (default: "config.yml")}
+\item{config_file}{Path to configuration file (default: auto-discover settings.yml or config.yml)}
 }
 \value{
 Data frame with hook information

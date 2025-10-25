@@ -136,12 +136,13 @@
     return(invisible(FALSE))
   }
 
-  if (!file.exists("config.yml")) {
-    warning("config.yml not found")
+  # Check if settings file exists
+  tryCatch({
+    config <- read_config()
+  }, error = function(e) {
+    warning("Settings file not found")
     return(invisible(FALSE))
-  }
-
-  config <- read_config("config.yml")
+  })
 
   if (is.null(config$packages) || length(config$packages) == 0) {
     return(invisible(TRUE))
@@ -403,16 +404,7 @@ renv_update <- function(packages = NULL) {
 #' packages_install()
 #' }
 packages_install <- function() {
-  # Auto-discover settings file
-  settings_file <- if (file.exists("settings.yml")) {
-    "settings.yml"
-  } else if (file.exists("config.yml")) {
-    "config.yml"
-  } else {
-    stop("No settings file found. Looking for settings.yml or config.yml")
-  }
-
-  config <- read_config(settings_file)
+  config <- read_config()
 
   if (is.null(config$packages) || length(config$packages) == 0) {
     message("No packages found in configuration")
@@ -455,16 +447,7 @@ packages_update <- function(packages = NULL) {
     if (is.null(packages)) {
       message("Updating all configured packages...")
 
-      # Auto-discover settings file
-      settings_file <- if (file.exists("settings.yml")) {
-        "settings.yml"
-      } else if (file.exists("config.yml")) {
-        "config.yml"
-      } else {
-        stop("No settings file found. Looking for settings.yml or config.yml")
-      }
-
-      config <- read_config(settings_file)
+      config <- read_config()
 
       if (is.null(config$packages) || length(config$packages) == 0) {
         message("No packages found in configuration")
@@ -525,16 +508,7 @@ packages_update <- function(packages = NULL) {
 #' packages_list()
 #' }
 packages_list <- function() {
-  # Auto-discover settings file (settings.yml or config.yml)
-  settings_file <- if (file.exists("settings.yml")) {
-    "settings.yml"
-  } else if (file.exists("config.yml")) {
-    "config.yml"
-  } else {
-    stop("No settings file found. Looking for settings.yml or config.yml")
-  }
-
-  config <- read_config(settings_file)
+  config <- read_config()
 
   if (is.null(config$packages) || length(config$packages) == 0) {
     message("No packages found in configuration")

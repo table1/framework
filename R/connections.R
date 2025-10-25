@@ -120,16 +120,7 @@ get_connection <- function(name) {
 #' connections_list()
 #' }
 connections_list <- function() {
-  # Auto-discover settings file (settings.yml or config.yml)
-  settings_file <- if (file.exists("settings.yml")) {
-    "settings.yml"
-  } else if (file.exists("config.yml")) {
-    "config.yml"
-  } else {
-    stop("No settings file found. Looking for settings.yml or config.yml")
-  }
-
-  config <- read_config(settings_file)
+  config <- read_config()
 
   if (is.null(config$connections) || length(config$connections) == 0) {
     message("No database connections found in configuration")

@@ -25,11 +25,34 @@
     ),
     settings = list(
       # R-specific settings for better out-of-the-box experience
-      "r.bracketedPaste" = TRUE,
+      "r.bracketedPaste" = FALSE,  # Disable bracketed paste for cleaner terminal
       "r.plot.useHttpgd" = TRUE,
       "r.rterm.option" = c("--no-save", "--no-restore", "--quiet"),
+      "r.session.watchGlobalEnvironment" = FALSE,
       "r.session.watch" = FALSE,
-      "r.lintr.enabled" = TRUE
+      "r.lintr.enabled" = TRUE,
+      "r.alwaysUseActiveTerminal" = TRUE,
+
+      # Editor settings
+      "editor.tabSize" = 2,
+      "editor.insertSpaces" = TRUE,
+      "editor.rulers" = list(80, 120),
+      "files.trimTrailingWhitespace" = TRUE,
+      "files.insertFinalNewline" = TRUE,
+
+      # Terminal settings
+      "terminal.integrated.scrollback" = 10000,
+      "terminal.integrated.enableBell" = FALSE,
+
+      # Quarto settings
+      "quarto.render.previewType" = "internal",
+
+      # File associations
+      "files.associations" = list(
+        "*.Rmd" = "rmd",
+        "*.qmd" = "quarto",
+        ".frameworkrc" = "shellscript"
+      )
     ),
     extensions = list(
       recommendations = c(
@@ -72,25 +95,24 @@
 
   settings_file <- file.path(vscode_dir, "settings.json")
 
-  # Base settings
-  settings <- list(
-    "r.lintr.enabled" = TRUE,
-    "files.associations" = list(
-      "*.Rmd" = "rmd",
-      "*.qmd" = "quarto"
-    )
-  )
+  # Copy from template
+  template_file <- system.file("templates", "settings.fr.json", package = "framework")
+  if (!file.exists(template_file)) {
+    stop("Template settings.fr.json not found in package")
+  }
+
+  file.copy(template_file, settings_file, overwrite = TRUE)
 
   # Add Python settings if requested
   if (python) {
+    settings <- jsonlite::fromJSON(settings_file)
     settings$`python.defaultInterpreterPath` <- "${workspaceFolder}/.venv"
     settings$`python.linting.enabled` <- TRUE
     settings$`python.formatting.provider` <- "black"
-  }
 
-  # Write JSON file
-  json_content <- jsonlite::toJSON(settings, pretty = TRUE, auto_unbox = TRUE)
-  writeLines(json_content, settings_file)
+    json_content <- jsonlite::toJSON(settings, pretty = TRUE, auto_unbox = TRUE)
+    writeLines(json_content, settings_file)
+  }
 
   message(sprintf("Created %s", settings_file))
   invisible(settings_file)
@@ -109,15 +131,15 @@
   # Check user's IDE preferences from ~/.frameworkrc
   fw_ides <- Sys.getenv("FW_IDES", "")
 
-  # If not configured, default to both (backward compatibility)
+  # If not configured, don't create any IDE-specific configs
   if (fw_ides == "") {
-    ides <- c("vscode", "rstudio")
+    ides <- character()
   } else {
     ides <- strsplit(fw_ides, ",")[[1]]
     ides <- trimws(ides)
   }
 
-  # Create VS Code configs if selected
+  # Create VS Code configs if explicitly selected
   if ("vscode" %in% ides || "positron" %in% ides) {
     suppressMessages({
       .create_vscode_workspace(project_name, target_dir, python)

@@ -4,12 +4,12 @@
 \alias{hooks_enable}
 \title{Enable Specific Git Hook}
 \usage{
-hooks_enable(hook_name, config_file = "config.yml", verbose = TRUE)
+hooks_enable(hook_name, config_file = NULL, verbose = TRUE)
 }
 \arguments{
 \item{hook_name}{Name of hook: "ai_sync" or "data_security"}
 
-\item{config_file}{Path to configuration file (default: "config.yml")}
+\item{config_file}{Path to configuration file (default: auto-discover settings.yml or config.yml)}
 
 \item{verbose}{Logical; if TRUE (default), show messages}
 }
@@ -17,7 +17,7 @@ hooks_enable(hook_name, config_file = "config.yml", verbose = TRUE)
 Invisible TRUE on success
 }
 \description{
-Enables a specific hook in config.yml and reinstalls the pre-commit hook.
+Enables a specific hook in settings and reinstalls the pre-commit hook.
 }
 \examples{
 \dontrun{

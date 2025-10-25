@@ -87,11 +87,11 @@ renv_enable <- function(sync = TRUE) {
       }
 
       tryCatch({
-        config <- read_config("config.yml")
+        config <- read_config()
         pkg_count <- length(config$packages)
         .sync_packages_to_renv()
       }, error = function(e) {
-        warning("Could not sync packages from config.yml: ", e$message, "\n",
+        warning("Could not sync packages from settings: ", e$message, "\n",
                 "You can manually sync later with: renv_snapshot()")
       })
     }

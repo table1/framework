@@ -116,17 +116,39 @@ config <- function(key = NULL, default = NULL, config_file = NULL) {
 }
 
 
+#' Get the settings file path with auto-discovery
+#'
+#' Discovers the settings file by checking for settings.yml first, then config.yml.
+#' This ensures consistent behavior across all Framework functions.
+#'
+#' @return Character string with the settings file path
+#' @keywords internal
+.get_settings_file <- function() {
+  if (file.exists("settings.yml")) {
+    return("settings.yml")
+  } else if (file.exists("config.yml")) {
+    return("config.yml")
+  } else {
+    stop("No settings file found. Looking for settings.yml or config.yml")
+  }
+}
+
+
 #' Read project configuration
 #'
-#' Reads the project configuration from config.yml with environment-aware merging
-#' and split file resolution.
+#' Reads the project configuration from config.yml or settings.yml with environment-aware
+#' merging and split file resolution. Auto-discovers the settings file if not specified.
 #'
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
 #' @param environment Active environment name (default: R_CONFIG_ACTIVE or "default")
 #'
 #' @return The configuration as a list
 #' @export
-read_config <- function(config_file = "config.yml", environment = NULL) {
+read_config <- function(config_file = NULL, environment = NULL) {
+  # Auto-discover settings file if not specified
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file()
+  }
   # Validate arguments
   checkmate::assert_string(config_file, min.chars = 1)
   checkmate::assert_string(environment, null.ok = TRUE)
