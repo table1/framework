@@ -4,7 +4,7 @@
 \alias{.load_functions}
 \title{Load all R files from functions directories}
 \usage{
-.load_functions(config_file = NULL)
+.load_functions(config_file = NULL, project_root = NULL)
 }
 \description{
 Load all R files from functions directories

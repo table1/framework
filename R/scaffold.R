@@ -14,7 +14,9 @@ scaffold <- function(config_file = NULL) {
 
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
-    config_file <- .get_settings_file(".")
+    # Look in project root if we found it, otherwise current directory
+    search_dir <- if (!is.null(project_root)) project_root else "."
+    config_file <- .get_settings_file(search_dir)
     if (is.null(config_file)) {
       config_file <- NA  # Will trigger error below
     } else {
@@ -23,7 +25,7 @@ scaffold <- function(config_file = NULL) {
   }
 
   # Fail fast if not in a Framework project
-  if (is.null(project_root) || is.na(config_file) || !file.exists(config_file)) {
+  if (is.null(project_root) || is.na(config_file)) {
     stop(
       "Could not locate a Framework project.\n",
       "scaffold() searches for a project by looking for:\n",
@@ -35,13 +37,36 @@ scaffold <- function(config_file = NULL) {
     )
   }
 
+  # When running in knitr, working directory might still be nested
+  # so we need to check for config file relative to project root
+  if (!file.exists(config_file) && !is.null(project_root)) {
+    config_path_from_root <- file.path(project_root, config_file)
+    if (file.exists(config_path_from_root)) {
+      config_file <- config_path_from_root
+    }
+  }
+
+  # Final check that config file exists
+  if (!file.exists(config_file)) {
+    stop(
+      "Could not locate a Framework project.\n",
+      "scaffold() searches for a project by looking for:\n",
+      "  - settings.yml or config.yml in current or parent directories\n",
+      "  - .Rproj file with settings file nearby\n",
+      "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
+      "Current directory: ", getwd(), "\n",
+      "Project root found: ", if (!is.null(project_root)) project_root else "none", "\n",
+      "To create a new project, use: init()"
+    )
+  }
+
   # Only load package if not already loaded
   if (!"package:framework" %in% search()) {
     message("Loading framework package...")
     library(framework)
   }
 
-  .load_environment(config_file)
+  .load_environment(config_file, project_root)
 
   # Remove old config if it exists and unlock if needed
   if (exists("config", envir = .GlobalEnv)) {
@@ -68,11 +93,16 @@ scaffold <- function(config_file = NULL) {
 
   .install_required_packages(config_obj)
   .load_libraries(config_obj)
-  .load_functions(config_file)
+  .load_functions(config_file, project_root)
 
-  # Source scaffold.R if it exists
-  if (file.exists("scaffold.R")) {
-    source("scaffold.R")
+  # Source scaffold.R if it exists in project root
+  scaffold_r_path <- if (!is.null(project_root)) {
+    file.path(project_root, "scaffold.R")
+  } else {
+    "scaffold.R"
+  }
+  if (file.exists(scaffold_r_path)) {
+    source(scaffold_r_path)
   }
 
   # Create initial commit after first successful scaffold (if in git repo and no commits yet)
@@ -84,10 +114,11 @@ scaffold <- function(config_file = NULL) {
 
 #' Load environment variables from .env file
 #' @keywords internal
-.load_environment <- function(config_file = NULL) {
+.load_environment <- function(config_file = NULL, project_root = NULL) {
   # Auto-discover settings file if not provided
   if (is.null(config_file)) {
-    config_file <- .get_settings_file(".")
+    search_dir <- if (!is.null(project_root)) project_root else "."
+    config_file <- .get_settings_file(search_dir)
     if (!is.null(config_file)) {
       config_file <- basename(config_file)
     } else {
@@ -102,6 +133,11 @@ scaffold <- function(config_file = NULL) {
   if (!is.null(config$dotenv_location)) {
     dotenv_path <- config$dotenv_location
 
+    # Make path absolute relative to project root
+    if (!is.null(project_root) && !grepl("^(/|[A-Za-z]:)", dotenv_path)) {
+      dotenv_path <- file.path(project_root, dotenv_path)
+    }
+
     if (dir.exists(dotenv_path)) {
       dotenv_path <- file.path(dotenv_path, ".env")
     }
@@ -113,8 +149,15 @@ scaffold <- function(config_file = NULL) {
     dotenv::load_dot_env(dotenv_path)
   } else {
     # Only load .env if it exists (optional for projects without secrets)
-    if (file.exists(".env")) {
-      dotenv::load_dot_env()
+    # Look in project root if available
+    env_path <- if (!is.null(project_root)) {
+      file.path(project_root, ".env")
+    } else {
+      ".env"
+    }
+
+    if (file.exists(env_path)) {
+      dotenv::load_dot_env(env_path)
     }
   }
 }
@@ -231,17 +274,22 @@ scaffold <- function(config_file = NULL) {
 
 #' Load all R files from functions directories
 #' @keywords internal
-.load_functions <- function(config_file = NULL) {
+.load_functions <- function(config_file = NULL, project_root = NULL) {
   # Auto-discover settings file if not provided
   if (is.null(config_file)) {
-    config_file <- .get_settings_file(".")
+    search_dir <- if (!is.null(project_root)) project_root else "."
+    config_file <- .get_settings_file(search_dir)
     if (!is.null(config_file)) {
       config_file <- basename(config_file)
     } else {
       # No settings file, use default
-      func_dirs <- "functions"
-      if (dir.exists(func_dirs)) {
-        .source_dir(func_dirs)
+      func_dir_path <- if (!is.null(project_root)) {
+        file.path(project_root, "functions")
+      } else {
+        "functions"
+      }
+      if (dir.exists(func_dir_path)) {
+        .source_dir(func_dir_path)
       }
       return(invisible(NULL))
     }
@@ -267,6 +315,11 @@ scaffold <- function(config_file = NULL) {
 
   # Load functions from each directory
   for (func_dir in func_dirs) {
+    # Make path absolute relative to project root if needed
+    if (!is.null(project_root) && !grepl("^(/|[A-Za-z]:)", func_dir)) {
+      func_dir <- file.path(project_root, func_dir)
+    }
+
     if (dir.exists(func_dir)) {
       func_files <- list.files(func_dir, pattern = "\\.R$", full.names = TRUE)
       if (length(func_files) > 0) {

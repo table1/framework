@@ -1,6 +1,6 @@
 project:
   type: default
-  output-dir: results/public
+  output-dir: _rendered
 
 format:
   html:

@@ -50,6 +50,9 @@ renv/python/
 renv/sandbox/
 renv/staging/
 
+# Rendered outputs (development artifacts - notebooks, scripts, etc.)
+_rendered/
+
 # Cache directories
 *_cache/
 /cache/

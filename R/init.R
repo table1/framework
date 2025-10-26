@@ -555,6 +555,12 @@ init <- function(
     }
 
     target_path <- file.path(target_dir, rel_path)
+
+    # Process .fr template files (strip .fr extension)
+    if (grepl("\\.fr$", target_path)) {
+      target_path <- gsub("\\.fr$", "", target_path)
+    }
+
     file.copy(file, target_path, overwrite = TRUE)
   }
 

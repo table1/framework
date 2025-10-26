@@ -29,6 +29,35 @@
   }
 }
 
+#' Find project root by walking up directory tree
+#'
+#' @param start_dir Starting directory for search
+#' @return Path to project root, or NULL if not found
+#' @keywords internal
+.find_project_root <- function(start_dir) {
+  current <- normalizePath(start_dir, mustWork = FALSE)
+  max_depth <- 10  # Prevent infinite loops
+  depth <- 0
+
+  while (depth < max_depth) {
+    # Check if settings file exists in current directory
+    if (.has_settings_file(current)) {
+      return(current)
+    }
+
+    # Move up one directory
+    parent <- dirname(current)
+    if (parent == current) {
+      # Hit filesystem root
+      return(NULL)
+    }
+    current <- parent
+    depth <- depth + 1
+  }
+
+  return(NULL)
+}
+
 #' Standardize Working Directory for Framework Projects
 #'
 #' This function helps standardize the working directory when working with
@@ -61,61 +90,68 @@ standardize_wd <- function(project_root = NULL) {
   # If no project root specified, try to find it
   if (is.null(project_root)) {
     current <- getwd()
-    
-    # Check various patterns to find the R project directory
-    search_paths <- list(
-      # If we're in scratch or work subdirectory
-      list(
-        condition = basename(current) %in% c("scratch", "work", "analysis", "reports"),
-        path = dirname(current)
-      ),
-      # If settings file exists in current directory
-      list(
-        condition = .has_settings_file("."),
-        path = current
-      ),
-      # If settings file exists in parent
-      list(
-        condition = .has_settings_file(".."),
-        path = normalizePath("..")
-      ),
-      # If settings file exists in grandparent
-      list(
-        condition = .has_settings_file("../.."),
-        path = normalizePath("../..")
-      ),
-      # If we're in project root and R subdirectory exists
-      list(
-        condition = .has_settings_file("R"),
-        path = file.path(current, "R")
-      ),
-      # If we can find an .Rprofile in parent directories
-      list(
-        condition = file.exists("../.Rprofile") && .has_settings_file("../R"),
-        path = file.path(dirname(current), "R")
+
+    # First, try walking up the directory tree to find settings file
+    project_root <- .find_project_root(current)
+
+    # If not found by walking up, try other heuristics
+    if (is.null(project_root)) {
+      search_paths <- list(
+        # If we're in project root and R subdirectory exists
+        list(
+          condition = .has_settings_file("R"),
+          path = file.path(current, "R")
+        ),
+        # If we can find an .Rprofile in parent with R/settings
+        list(
+          condition = file.exists("../.Rprofile") && .has_settings_file("../R"),
+          path = file.path(dirname(current), "R")
+        )
       )
-    )
-    
-    # Try each search pattern
-    for (search in search_paths) {
-      if (search$condition) {
-        project_root <- search$path
-        break
+
+      # Try each search pattern
+      for (search in search_paths) {
+        if (search$condition) {
+          project_root <- search$path
+          break
+        }
       }
     }
-    
-    # If still not found, check for .Rproj files
+
+    # Last resort: check for .Rproj files in current and parent directories
     if (is.null(project_root)) {
-      rproj_files <- list.files(
-        path = c(".", "..", "../.."),
-        pattern = "\\.Rproj$",
-        full.names = TRUE,
-        recursive = FALSE
-      )
-      
-      if (length(rproj_files) > 0) {
-        # Use the directory containing the first .Rproj file found
-        project_root <- file.path(dirname(rproj_files[1]), "R")
+      # Walk up looking for .Rproj file
+      check_dir <- current
+      max_depth <- 10  # Prevent infinite loops
+      depth <- 0
+
+      while (depth < max_depth) {
+        rproj_files <- list.files(
+          path = check_dir,
+          pattern = "\\.Rproj$",
+          full.names = TRUE,
+          recursive = FALSE
+        )
+
+        if (length(rproj_files) > 0) {
+          # Found .Rproj - check if settings file is in R/ subdirectory
+          r_dir <- file.path(check_dir, "R")
+          if (dir.exists(r_dir) && .has_settings_file(r_dir)) {
+            project_root <- r_dir
+            break
+          }
+          # Or check if settings file is in same directory as .Rproj
+          if (.has_settings_file(check_dir)) {
+            project_root <- check_dir
+            break
+          }
+        }
+
+        # Move up one directory
+        parent <- dirname(check_dir)
+        if (parent == check_dir) break  # Hit filesystem root
+        check_dir <- parent
+        depth <- depth + 1
       }
     }
   }
@@ -124,24 +160,31 @@ standardize_wd <- function(project_root = NULL) {
   if (!is.null(project_root) && dir.exists(project_root)) {
     # Normalize the path
     project_root <- normalizePath(project_root, mustWork = TRUE)
-    
+
+    # Detect if we're running inside knitr/Quarto
+    in_knitr <- isTRUE(getOption('knitr.in.progress'))
+
     # Set knitr working directory if available
     if (requireNamespace("knitr", quietly = TRUE)) {
       knitr::opts_knit$set(root.dir = project_root)
     }
-    
-    # Set the actual working directory
-    old_wd <- setwd(project_root)
 
-    # Check for expected files
-    if (!.has_settings_file(".")) {
-      warning("settings.yml or config.yml not found in standardized directory")
+    # Only call setwd() if NOT in knitr (knitr manages its own working directory)
+    if (!in_knitr) {
+      old_wd <- setwd(project_root)
+    } else {
+      # In knitr, just verify we can access the settings file from project root
+      # The actual working directory will be managed by knitr
+      if (!file.exists(file.path(project_root, "settings.yml")) &&
+          !file.exists(file.path(project_root, "config.yml"))) {
+        warning("settings.yml or config.yml not found in project root: ", project_root)
+      }
     }
-    
+
   } else {
     # Return NULL silently - let calling function (scaffold) handle the error
     project_root <- NULL
   }
-  
+
   invisible(project_root)
 }

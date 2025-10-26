@@ -4,7 +4,7 @@
 \alias{.load_environment}
 \title{Load environment variables from .env file}
 \usage{
-.load_environment(config_file = NULL)
+.load_environment(config_file = NULL, project_root = NULL)
 }
 \description{
 Load environment variables from .env file
