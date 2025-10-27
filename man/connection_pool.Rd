@@ -14,7 +14,7 @@ connection_pool(
 )
 }
 \arguments{
-\item{name}{Character. Name of the connection in config.yml}
+\item{name}{Character. Name of the connection in settings.yml}
 
 \item{min_size}{Integer. Minimum number of connections to maintain (default: 1)}
 

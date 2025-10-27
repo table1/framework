@@ -27,7 +27,7 @@ configure_data(
 Invisibly returns updated config
 }
 \description{
-Interactively add a data source to config.yml. Data sources are defined
+Interactively add a data source to settings.yml (or settings.yml for legacy projects). Data sources are defined
 with dot-notation paths (e.g., "source.private.survey") and include metadata
 like file path, type, and whether the data is locked.
 }

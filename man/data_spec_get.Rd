@@ -23,7 +23,7 @@ A list with data specification including:
 }
 }
 \description{
-Gets the data specification for a given dot notation path from config.yml.
+Gets the data specification for a given dot notation path from settings.yml.
 Supports dot notation (e.g., "source.private.example"), relative paths, and
 absolute paths. Auto-detects file type from extension and applies intelligent
 defaults for common formats.

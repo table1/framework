@@ -177,7 +177,7 @@ drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
 #' Checks driver availability and configuration validity without actually
 #' connecting to the database.
 #'
-#' @param connection_name Character. Name of the connection in config.yml
+#' @param connection_name Character. Name of the connection in settings.yml
 #'
 #' @return A list with diagnostic information:
 #'   - ready: Logical. TRUE if connection appears ready
@@ -210,9 +210,9 @@ connection_check <- function(connection_name) {
 
   # 1. Check if connection exists in config
   cfg <- tryCatch(
-    config::get(file = "config.yml"),
+    read_config(),
     error = function(e) {
-      messages <<- c(messages, "Failed to read config.yml")
+      messages <<- c(messages, sprintf("Failed to read settings.yml/config.yml: %s", e$message))
       ready <<- FALSE
       NULL
     }
@@ -232,7 +232,7 @@ connection_check <- function(connection_name) {
   # 2. Check if connection is defined
   if (is.null(cfg$connections) || is.null(cfg$connections[[connection_name]])) {
     messages <- c(messages,
-                  sprintf("Connection '%s' not found in config.yml", connection_name))
+                  sprintf("Connection '%s' not found in settings.yml/config.yml", connection_name))
     return(list(
       ready = FALSE,
       driver = NA_character_,

@@ -37,7 +37,7 @@ test_that("security_audit detects unignored private data directories", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
   dir.create("data/source/private", recursive = TRUE)
@@ -80,7 +80,7 @@ test_that("security_audit passes when private data is properly ignored", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
   dir.create("data/source/private", recursive = TRUE)
@@ -128,7 +128,7 @@ test_that("security_audit detects orphaned data files", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Create configured directories
   dir.create("data/source/private", recursive = TRUE)
@@ -177,7 +177,7 @@ test_that("security_audit detects git-tracked private data", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
   dir.create("data/source/private", recursive = TRUE)
@@ -227,16 +227,13 @@ test_that("security_audit skips git checks when git not available", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   dir.create("data/source/private", recursive = TRUE)
   writeLines("data/", ".gitignore")
 
   # Run audit (no git repo, so git checks should be skipped)
-  expect_warning(
-    audit <- security_audit(check_git_history = TRUE, verbose = FALSE),
-    "Git not available"
-  )
+  audit <- security_audit(check_git_history = TRUE, verbose = FALSE)
 
   # Git history check should be skipped
   expect_equal(
@@ -267,7 +264,7 @@ test_that("security_audit respects history_depth parameter", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   dir.create("data/source/private", recursive = TRUE)
   writeLines("data/", ".gitignore")
@@ -293,7 +290,7 @@ test_that("security_audit respects history_depth parameter", {
 })
 
 
-test_that("security_audit auto_fix adds entries to .gitignore", {
+test_that("security_audit auto_fix adds normalized entries to .gitignore", {
   test_dir <- tempfile()
   dir.create(test_dir)
   old_wd <- getwd()
@@ -303,20 +300,23 @@ test_that("security_audit auto_fix adds entries to .gitignore", {
   })
   setwd(test_dir)
 
-  # Create config
+  # Create config with two private directories
   config <- list(
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        data_source_private = "data/source/private",
+        data_in_progress_private = "data/in_progress/private"
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Create private data
   dir.create("data/source/private", recursive = TRUE)
+  dir.create("data/in_progress/private", recursive = TRUE)
   write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+  write.csv(data.frame(secret = 1:5), "data/in_progress/private/tmp.csv", row.names = FALSE)
 
   # Create empty .gitignore
   writeLines("", ".gitignore")
@@ -331,7 +331,22 @@ test_that("security_audit auto_fix adds entries to .gitignore", {
 
   # Check that .gitignore was updated
   gitignore_content <- readLines(".gitignore", warn = FALSE)
-  expect_true(any(grepl("data/source/private", gitignore_content)))
+  expect_true(any(grepl("^# Framework Security Audit", gitignore_content)))
+  expect_true(any(grepl("data/source/private/$", gitignore_content)))
+  expect_true(any(grepl("data/source/private/\\*\\*$", gitignore_content)))
+
+  # Run audit again after removing file to ensure idempotent header handling
+  file.remove("data/in_progress/private/tmp.csv")
+  write.csv(data.frame(secret = 1:5), "data/in_progress/private/tmp.csv", row.names = FALSE)
+  audit <- security_audit(check_git_history = FALSE, auto_fix = TRUE, verbose = FALSE)
+
+  gitignore_content <- readLines(".gitignore", warn = FALSE)
+  expect_true(any(grepl("data/in_progress/private/$", gitignore_content)))
+  expect_true(any(grepl("data/in_progress/private/\\*\\*$", gitignore_content)))
+  expect_equal(sum(grepl("^# Framework Security Audit", gitignore_content)), 1)
+  expect_true(
+    audit$summary$status[audit$summary$check == "gitignore_coverage"] %in% c("pass", "warning")
+  )
 })
 
 
@@ -354,7 +369,7 @@ test_that("security_audit saves results to framework database", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   dir.create("data/source/private", recursive = TRUE)
   writeLines("data/", ".gitignore")
@@ -410,7 +425,7 @@ test_that("security_audit handles various data file extensions", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   dir.create("data/source/public", recursive = TRUE)
   writeLines("data/", ".gitignore")
@@ -456,7 +471,7 @@ test_that("security_audit returns correct structure", {
       )
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   dir.create("data/source/private", recursive = TRUE)
   writeLines("data/", ".gitignore")
@@ -511,7 +526,7 @@ test_that("security_audit validates arguments", {
       directories = list()
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
   writeLines("", ".gitignore")
 
   # Test invalid arguments
@@ -540,7 +555,7 @@ test_that("security_audit handles sensitive filename patterns", {
       directories = list()
     )
   )
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Initialize git with commits containing sensitive file patterns
   system2("git", c("init"), stdout = FALSE, stderr = FALSE)

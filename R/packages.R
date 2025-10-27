@@ -123,9 +123,9 @@
   invisible(TRUE)
 }
 
-#' Sync packages from config.yml to renv
+#' Sync packages from settings.yml to renv
 #'
-#' Reads the packages list from config.yml and installs them via renv,
+#' Reads the packages list from settings.yml and installs them via renv,
 #' then snapshots the result to renv.lock.
 #'
 #' @return Invisibly returns TRUE on success
@@ -438,57 +438,23 @@ packages_install <- function() {
 #' packages_update(c("dplyr", "ggplot2"))
 #' }
 packages_update <- function(packages = NULL) {
-  # Check if renv is enabled
-  if (renv_enabled()) {
-    # Use renv for updates
-    renv_update(packages)
-  } else {
-    # Update without renv
-    if (is.null(packages)) {
-      message("Updating all configured packages...")
-
-      config <- read_config()
-
-      if (is.null(config$packages) || length(config$packages) == 0) {
-        message("No packages found in configuration")
-        return(invisible(NULL))
-      }
-
-      # Update each package
-      for (pkg_spec in config$packages) {
-        if (is.list(pkg_spec)) {
-          pkg_string <- pkg_spec$name
-        } else {
-          pkg_string <- pkg_spec
-        }
-
-        spec <- .parse_package_spec(pkg_string)
-
-        # Update the package
-        tryCatch({
-          message("Updating ", spec$name, "...")
-          .install_package_base(spec)
-        }, error = function(e) {
-          warning("Failed to update ", spec$name, ": ", e$message)
-        })
-      }
-
-      message("\nPackages updated!")
-    } else {
-      # Update specific packages
-      message("Updating ", length(packages), " package(s)...")
-      for (pkg in packages) {
-        spec <- .parse_package_spec(pkg)
-        tryCatch({
-          message("Updating ", spec$name, "...")
-          .install_package_base(spec)
-        }, error = function(e) {
-          warning("Failed to update ", spec$name, ": ", e$message)
-        })
-      }
-      message("\nPackages updated!")
-    }
+  if (!renv_enabled()) {
+    stop("renv is not enabled. Use renv_enable() first.")
   }
+
+  if (!requireNamespace("renv", quietly = TRUE)) {
+    stop("renv package is required but not installed")
+  }
+
+  if (is.null(packages)) {
+    message("Updating all packages...")
+    renv::update()
+  } else {
+    message("Updating ", length(packages), " package(s)...")
+    renv::update(packages = packages)
+  }
+
+  message(cli::col_green(cli::symbol$tick), " Packages updated!")
 
   invisible(TRUE)
 }
@@ -555,4 +521,65 @@ packages_list <- function() {
   }
 
   invisible(NULL)
+}
+
+
+#' Snapshot current package library (renv)
+#'
+#' Wrapper around `renv::snapshot()` that requires Framework's renv integration
+#' to be enabled first.
+#'
+#' @param prompt Logical. If TRUE, renv prompts before writing the snapshot.
+#' @return Invisibly returns TRUE on success.
+#' @export
+packages_snapshot <- function(prompt = FALSE) {
+  if (!renv_enabled()) {
+    stop("renv is not enabled. Use renv_enable() first.")
+  }
+
+  if (!requireNamespace("renv", quietly = TRUE)) {
+    stop("renv package is required but not installed")
+  }
+
+  renv::snapshot(prompt = prompt)
+  invisible(TRUE)
+}
+
+#' Restore packages from renv.lock
+#'
+#' Wrapper around `renv::restore()` that requires Framework's renv integration
+#' to be enabled first.
+#'
+#' @param prompt Logical. If TRUE, renv prompts before restoring.
+#' @return Invisibly returns TRUE on success.
+#' @export
+packages_restore <- function(prompt = FALSE) {
+  if (!renv_enabled()) {
+    stop("renv is not enabled. Use renv_enable() first.")
+  }
+
+  if (!requireNamespace("renv", quietly = TRUE)) {
+    stop("renv package is required but not installed")
+  }
+
+  renv::restore(prompt = prompt)
+  invisible(TRUE)
+}
+
+#' Show renv package status
+#'
+#' Wrapper around `renv::status()` that requires Framework's renv integration.
+#'
+#' @return The status object returned by `renv::status()`.
+#' @export
+packages_status <- function() {
+  if (!renv_enabled()) {
+    stop("renv is not enabled. Use renv_enable() first.")
+  }
+
+  if (!requireNamespace("renv", quietly = TRUE)) {
+    stop("renv package is required but not installed")
+  }
+
+  renv::status()
 }

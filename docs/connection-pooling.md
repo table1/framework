@@ -50,7 +50,7 @@ posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
 install.packages("pool")
 ```
 
-### 2. Enable Pooling in config.yml
+### 2. Enable Pooling in settings.yml
 
 ```yaml
 connections:
@@ -89,7 +89,7 @@ That's it! Framework handles the rest automatically.
 
 ### Basic Pool Configuration
 
-Enable pooling by adding `pool: true` to any connection in `config.yml`:
+Enable pooling by adding `pool: true` to any connection in `settings.yml`:
 
 ```yaml
 connections:

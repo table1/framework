@@ -79,7 +79,7 @@ test_that("make_notebook slugifies filenames but preserves titles", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -92,7 +92,7 @@ test_that("make_notebook slugifies filenames but preserves titles", {
   directories:
     notebooks: notebooks
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Test 1: Name with spaces
@@ -120,7 +120,7 @@ test_that("make_notebook creates notebooks with author config reference", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -135,7 +135,7 @@ test_that("make_notebook creates notebooks with author config reference", {
   directories:
     notebooks: notebooks
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Create notebook
@@ -168,7 +168,7 @@ test_that("make_notebook respects default_notebook_format config", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -182,7 +182,7 @@ test_that("make_notebook respects default_notebook_format config", {
     notebooks: notebooks
   default_notebook_format: rmarkdown
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Create notebook without specifying type
@@ -199,7 +199,7 @@ test_that("make_notebook defaults to quarto when config missing format", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -212,7 +212,7 @@ test_that("make_notebook defaults to quarto when config missing format", {
   directories:
     notebooks: notebooks
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Create notebook without specifying type
@@ -229,7 +229,7 @@ test_that("make_qmd() always creates Quarto notebooks", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -243,7 +243,7 @@ test_that("make_qmd() always creates Quarto notebooks", {
     notebooks: notebooks
   default_notebook_format: rmarkdown
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Create notebook with make_qmd - should create .qmd despite config
@@ -260,7 +260,7 @@ test_that("make_rmd() always creates RMarkdown notebooks", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -274,7 +274,7 @@ test_that("make_rmd() always creates RMarkdown notebooks", {
     notebooks: notebooks
   default_notebook_format: quarto
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Create notebook with make_rmd - should create .Rmd despite config
@@ -291,7 +291,7 @@ test_that("aliases work with custom stubs and directories", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "work"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 
@@ -302,7 +302,7 @@ test_that("aliases work with custom stubs and directories", {
   author:
     name: Test User
 "
-  writeLines(config_content, "config.yml")
+  writeLines(config_content, "settings.yml")
   writeLines("", ".env")
 
   # Test make_qmd with explicit directory
@@ -322,7 +322,7 @@ test_that("make_notebook type parameter overrides config", {
   on.exit({
     setwd(old_wd)
     unlink(file.path(tmp, "notebooks"), recursive = TRUE)
-    unlink(file.path(tmp, "config.yml"))
+    unlink(file.path(tmp, "settings.yml"))
     unlink(file.path(tmp, ".env"))
   })
 

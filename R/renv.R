@@ -18,10 +18,10 @@ renv_enabled <- function() {
 #' Initializes renv integration for the current Framework project. This:
 #' - Creates `.framework_renv_enabled` marker file
 #' - Initializes renv if not already initialized
-#' - Syncs packages from config.yml to renv.lock
+#' - Syncs packages from settings.yml to renv.lock
 #' - Updates .gitignore to exclude renv cache
 #'
-#' @param sync Logical; if TRUE (default), sync packages from config.yml
+#' @param sync Logical; if TRUE (default), sync packages from settings.yml
 #' @return Invisibly returns TRUE on success
 #' @export
 #' @examples
@@ -72,15 +72,15 @@ renv_enable <- function(sync = TRUE) {
 
     # Always install rmarkdown when notebooks exist
     # Quarto uses rmarkdown's knitr engine for R code chunks
-    if (dir.exists("notebooks") || file.exists("config.yml")) {
+    if (dir.exists("notebooks") || .has_settings_file()) {
       if (!requireNamespace("rmarkdown", quietly = TRUE)) {
         renv::install("rmarkdown")
       }
     }
 
-    # Sync packages from config.yml if requested
+    # Sync packages from settings.yml if requested
     pkg_count <- 0
-    if (sync && file.exists("config.yml")) {
+    if (sync && .has_settings_file()) {
       # First ensure yaml package is available (needed to read config)
       if (!requireNamespace("yaml", quietly = TRUE)) {
         renv::install("yaml")

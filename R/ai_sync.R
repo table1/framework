@@ -3,14 +3,14 @@
 #' Copies content from the canonical AI assistant file to all other AI files,
 #' adding a warning header to non-canonical files.
 #'
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: auto-detect settings.yml/settings.yml)
 #' @param force Logical; if TRUE, overwrite even if target is newer (default: FALSE)
 #' @param verbose Logical; if TRUE (default), show sync messages
 #'
 #' @return Invisible list with sync results
 #'
 #' @details
-#' This function reads the `ai.canonical_file` setting from config.yml and
+#' This function reads the `ai.canonical_file` setting from settings.yml and
 #' copies its content to all other AI assistant instruction files that exist
 #' in the project.
 #'
@@ -37,14 +37,21 @@
 #' }
 #'
 #' @export
-ai_sync_context <- function(config_file = "config.yml",
+ai_sync_context <- function(config_file = NULL,
                             force = FALSE,
                             verbose = TRUE) {
 
   # Validate arguments
-  checkmate::assert_string(config_file, min.chars = 1)
+  checkmate::assert_string(config_file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_logical(force, len = 1)
   checkmate::assert_logical(verbose, len = 1)
+
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file()
+    if (is.null(config_file)) {
+      config_file <- "settings.yml"
+    }
+  }
 
   # Check if config exists
   if (!file.exists(config_file)) {
@@ -60,7 +67,7 @@ ai_sync_context <- function(config_file = "config.yml",
   if (canonical_file == "" || is.null(canonical_file)) {
     if (verbose) {
       message("ℹ No canonical AI file configured")
-      message("  Set ai.canonical_file in config.yml to enable sync")
+      message("  Set ai.canonical_file in settings.yml to enable sync")
     }
     return(invisible(list(success = FALSE, reason = "not_configured")))
   }

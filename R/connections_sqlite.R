@@ -1,6 +1,6 @@
 #' Connect to a SQLite database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return A SQLite database connection
 #' @keywords internal
 .connect_sqlite <- function(config) {
@@ -31,7 +31,7 @@
 
 #' Check if a SQLite database exists
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if database exists, FALSE otherwise
 #' @keywords internal
 .check_sqlite_exists <- function(config) {
@@ -45,7 +45,7 @@
 
 #' Create a new SQLite database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if successful
 #' @keywords internal
 .create_sqlite_db <- function(config) {

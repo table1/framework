@@ -8,7 +8,7 @@ test_that("read_config reads configuration from YAML file", {
 
   setwd(test_dir)
 
-  config <- read_config("config.yml")
+  config <- read_config()
 
   expect_type(config, "list")
   expect_true("data" %in% names(config))

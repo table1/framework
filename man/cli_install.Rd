@@ -29,8 +29,10 @@ command line. The CLI provides a convenient wrapper around new-project.sh.
 \if{html}{\out{<div class="sourceCode bash">}}\preformatted{curl -fsSL https://raw.githubusercontent.com/table1/framework/main/inst/bin/install-cli.sh | bash
 }\if{html}{\out{</div>}}
 
-This R function is a simpler alternative that just creates the symlink.
-You'll need to manually add \verb{~/.local/bin} to your PATH if needed.
+This R function is a simpler alternative that attempts to create the
+hybrid shim via symlink, falling back to copying the scripts when
+symlinks are unavailable. You'll need to manually add \verb{~/.local/bin}
+to your PATH if needed.
 
 The CLI tool provides three ways to create Framework projects:
 \enumerate{

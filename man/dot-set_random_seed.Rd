@@ -12,7 +12,7 @@
 \description{
 Sets the random seed for reproducibility. Checks for seed in this order:
 \enumerate{
-\item Project config.yml (seed: value)
+\item Project settings.yml (seed: value)
 \item Global ~/.frameworkrc (FW_SEED)
 \item Skip seeding if both are NULL or empty
 }

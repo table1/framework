@@ -1,10 +1,10 @@
 #' Get a database connection from config
 #'
-#' Gets a database connection based on the connection name in config.yml.
+#' Gets a database connection based on the connection name in settings.yml.
 #' If the connection is configured with `pool: true`, returns a connection pool
 #' instead of a single connection. Pools are automatically managed and reused.
 #'
-#' @param name Character. Name of the connection in config.yml (e.g., "postgres")
+#' @param name Character. Name of the connection in settings.yml (e.g., "postgres")
 #' @return A database connection object (DBIConnection) or pool object
 #'
 #' @examples
@@ -14,7 +14,7 @@
 #' DBI::dbListTables(conn)
 #' DBI::dbDisconnect(conn)  # Must disconnect
 #'
-#' # Pooled connection (pool: true in config.yml)
+#' # Pooled connection (pool: true in settings.yml)
 #' conn <- connection_get("postgres")
 #' DBI::dbListTables(conn)
 #' # No need to disconnect - pool handles it

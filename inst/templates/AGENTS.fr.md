@@ -27,7 +27,7 @@ This is a data analysis project built with **Framework**, an R package that prov
 ├── results/
 │   ├── public/             # Shareable outputs
 │   └── private/            # Sensitive outputs (gitignored)
-├── config.yml              # Project configuration
+├── settings.yml            # Project configuration (auto-discovered)
 ├── .env                    # Secrets (gitignored, never commit)
 └── framework.db            # Metadata database
 ```
@@ -89,7 +89,7 @@ cache_clear("name")     # Clear specific cache
 
 ## Configuration System
 
-Framework uses `config.yml` for settings:
+Framework uses `settings.yml` for settings (legacy `config.yml` projects remain compatible):
 
 ```yaml
 default:
@@ -109,9 +109,9 @@ default:
 
 Access in R:
 ```r
-config("notebooks")              # Smart lookup
-config("data.survey.path")       # Nested access
-config("api.key", default = "")  # With default
+settings("directories.notebooks")        # Smart lookup
+settings("data.survey.path")             # Nested access
+settings("api.key", default = "")        # With default
 ```
 
 ## Security - CRITICAL RULES
@@ -166,8 +166,9 @@ save_data(data, "confidential", encrypt = TRUE)  # Encrypted at rest
 - `query_get(name)` - Run saved query from queries/
 - `query_execute(sql, connection)` - Execute SQL
 
-### Config Function
-- `config(key)` - Access configuration (supports dot notation)
+### Settings Functions
+- `settings(key)` - Access configuration (supports dot notation)
+- `config(key)` - Legacy alias for `settings()`
 
 ## Common Code Patterns
 
@@ -185,7 +186,7 @@ standardize_wd()  # Important for reproducibility
 ```
 
 ### Data Catalog Pattern
-Instead of hardcoded paths, define in config.yml:
+Instead of hardcoded paths, define in settings.yml:
 ```yaml
 data:
   customer_survey:
@@ -227,7 +228,7 @@ When working with this Framework project:
 
 1. **Always use Framework functions** for data I/O (maintains integrity tracking)
 2. **Respect directory structure** - use correct public/private paths
-3. **Use config() for paths** - never hardcode directory paths
+3. **Use settings() for paths** - never hardcode directory paths
 4. **Suggest caching** for computations > 10 seconds
 5. **Recommend data catalog entries** for frequently-used data
 6. **Verify scaffold() called** before suggesting framework functions
@@ -257,7 +258,7 @@ packages_restore()          # Framework helper for renv::restore()
 
 **Packages missing:**
 ```r
-scaffold()  # Reinstalls from config.yml
+scaffold()  # Reinstalls packages from settings.yml (legacy config.yml supported)
 ```
 
 **Data integrity errors:**
@@ -302,6 +303,6 @@ DBI::dbGetQuery(con, "SELECT name, encrypted, created_at FROM data")
 This project follows Framework conventions for reproducible data analysis. When suggesting code:
 - Prioritize Framework functions over base R equivalents
 - Maintain security boundaries (public/private separation)
-- Use configuration-driven approaches (config.yml, data catalog)
+- Use configuration-driven approaches (settings.yml, data catalog)
 - Suggest appropriate caching for expensive operations
 - Follow the established patterns shown above

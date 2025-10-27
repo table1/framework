@@ -16,8 +16,8 @@
 #' }
 status <- function() {
   # Check if we're in a Framework project
-  if (!file.exists("config.yml")) {
-    stop("Not in a Framework project directory (config.yml not found)")
+  if (!.has_settings_file()) {
+    stop("Not in a Framework project directory (settings.yml or config.yml not found)")
   }
 
   cat("\n")

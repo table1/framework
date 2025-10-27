@@ -5,7 +5,7 @@
 
 ## Problem
 
-When `scaffold()` was called from a directory without a Framework project (no `config.yml`), users saw:
+When `scaffold()` was called from a directory without a Framework project (no `settings.yml`), users saw:
 
 ```
 Warning message:
@@ -13,7 +13,7 @@ In standardize_wd() :
   Could not determine project root directory. Current directory: /Users/erikwestlund/code
 Consider specifying project_root explicitly.
 
-Error in read_config() : Config file not found: config.yml
+Error in read_config() : Config file not found: settings.yml
 ```
 
 This was confusing because:
@@ -26,17 +26,17 @@ This was confusing because:
 Added **fail-fast guard** at the start of `scaffold()` after `standardize_wd()`:
 
 ```r
-scaffold <- function(config_file = "config.yml") {
+scaffold <- function(config_file = "settings.yml") {
   # Standardize working directory first (for notebooks in subdirectories)
   project_root <- standardize_wd()
 
   # Fail fast if not in a Framework project
-  if (is.null(project_root) || !file.exists("config.yml")) {
+  if (is.null(project_root) || !file.exists("settings.yml")) {
     stop(
       "Could not locate a Framework project.\n",
       "scaffold() searches for a project by looking for:\n",
-      "  - config.yml in current or parent directories\n",
-      "  - .Rproj file with config.yml nearby\n",
+      "  - settings.yml in current or parent directories\n",
+      "  - .Rproj file with settings.yml nearby\n",
       "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
       "Current directory: ", getwd(), "\n",
       "To create a new project, use: init()"
@@ -61,7 +61,7 @@ Also updated `standardize_wd()` to return `NULL` silently instead of warning, si
 Added comprehensive tests in `tests/testthat/test-scaffold.R`:
 
 - ✅ scaffold() fails fast with clear error outside project
-- ✅ scaffold() works when config.yml exists
+- ✅ scaffold() works when settings.yml exists
 - ✅ scaffold() works from subdirectories (notebooks/, scripts/)
 - ✅ standardize_wd() returns NULL when project not found
 - ✅ standardize_wd() finds and returns project root
@@ -82,15 +82,15 @@ Warning message:
 In standardize_wd() :
   Could not determine project root directory. Current directory: /Users/erikwestlund/code
 Consider specifying project_root explicitly.
-Error in read_config() : Config file not found: config.yml
+Error in read_config() : Config file not found: settings.yml
 ```
 
 **After:**
 ```
 Error in scaffold() : Could not locate a Framework project.
 scaffold() searches for a project by looking for:
-  - config.yml in current or parent directories
-  - .Rproj file with config.yml nearby
+  - settings.yml in current or parent directories
+  - .Rproj file with settings.yml nearby
   - Common subdirectories (notebooks/, scripts/, etc.)
 Current directory: /Users/erikwestlund/code
 To create a new project, use: init()

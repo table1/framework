@@ -94,7 +94,7 @@ The `connection_check()` function returns:
 
 ## Configuration
 
-Add database connections to `config.yml`:
+Add database connections to `settings.yml`:
 
 ### PostgreSQL
 
@@ -268,7 +268,7 @@ conn <- connection_get("production_db")
 ### 2. Use Environment Variables for Secrets
 
 ```yaml
-# config.yml
+# settings.yml
 connections:
   prod:
     host: ${DB_HOST}

@@ -2,11 +2,11 @@
 % Please edit documentation in R/init.R
 \name{.create_config_file}
 \alias{.create_config_file}
-\title{Create config.yml from template}
+\title{Create settings.yml from template}
 \usage{
 .create_config_file(type = "analysis", attach_defaults = TRUE, subdir = NULL)
 }
 \description{
-Create config.yml from template
+Create settings.yml from template
 }
 \keyword{internal}

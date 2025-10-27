@@ -11,7 +11,7 @@ test_that("init creates presentation project structure", {
   suppressMessages(init(project_name = "TestProject", type = "presentation"))
 
   # Check key files exist
-  expect_true(file.exists("config.yml"))
+  expect_true(file.exists("settings.yml"))
   expect_true(file.exists("framework.db"))
   expect_true(file.exists("TestProject.Rproj"))
   expect_true(file.exists(".gitignore"))
@@ -39,15 +39,17 @@ test_that("init creates project structure", {
   suppressMessages(init(project_name = "TestProject", type = "project"))
 
   # Check key files
-  expect_true(file.exists("config.yml"))
+  expect_true(file.exists("settings.yml"))
   expect_true(file.exists("framework.db"))
 
   # Check project structure directories
-  expect_true(dir.exists("data/source/private"))
-  expect_true(dir.exists("data/source/public"))
+  expect_true(dir.exists("data"))
+  expect_true(dir.exists("data/source"))
   expect_true(dir.exists("data/in_progress"))
-  expect_true(dir.exists("data/final/private"))
-  expect_true(dir.exists("data/final/public"))
+  expect_true(dir.exists("data/final"))
+  expect_true(dir.exists("results"))
+  expect_true(dir.exists("results/public"))
+  expect_true(dir.exists("results/private"))
   expect_true(dir.exists("notebooks"))
   expect_true(dir.exists("scripts"))
   expect_true(dir.exists("functions"))
@@ -68,11 +70,11 @@ test_that("init creates course project structure", {
   suppressMessages(init(project_name = "TestProject", type = "course"))
 
   # Check key files
-  expect_true(file.exists("config.yml"))
+  expect_true(file.exists("settings.yml"))
   expect_true(file.exists("framework.db"))
 
   # Check course structure directories
-  expect_true(dir.exists("data/cached"))
+  expect_true(dir.exists("data"))
   expect_true(dir.exists("presentations"))
   expect_true(dir.exists("notebooks"))
   expect_true(dir.exists("functions"))
@@ -187,8 +189,8 @@ test_that("init from empty directory creates all necessary files", {
   # Check that init.R was deleted after initialization
   expect_false(file.exists("init.R"))
 
-  # Check that config.yml was created (serves as initialization marker)
-  expect_true(file.exists("config.yml"))
+  # Check that settings.yml was created (serves as initialization marker)
+  expect_true(file.exists("settings.yml"))
 
   # Check that .env was NOT created (use make_env() instead)
   expect_false(file.exists(".env"))
@@ -196,7 +198,7 @@ test_that("init from empty directory creates all necessary files", {
   # Check project files created
   expect_true(file.exists("EmptyDirProject.Rproj"))
 
-  # Check that .initiated was NOT created (config.yml is the marker)
+  # Check that .initiated was NOT created (settings.yml is the marker)
   expect_false(file.exists(".initiated"))
 
   # Check directory structure
@@ -257,8 +259,8 @@ test_that("init detects template vs empty directory correctly", {
 
   # init.R should be deleted after initialization
   expect_false(file.exists("init.R"))
-  # But config.yml should exist (initialization marker)
-  expect_true(file.exists("config.yml"))
+  # But settings.yml should exist (initialization marker)
+  expect_true(file.exists("settings.yml"))
 
   setwd(old_wd)
 
@@ -280,8 +282,8 @@ test_that("init detects template vs empty directory correctly", {
 
   # init.R should be deleted after initialization (even from template)
   expect_false(file.exists("init.R"))
-  # config.yml should exist
-  expect_true(file.exists("config.yml"))
+  # settings.yml should exist
+  expect_true(file.exists("settings.yml"))
 
   setwd(old_wd)
 })
@@ -309,13 +311,13 @@ test_that("init with subdir creates files in subdirectory", {
   # Check files created in subdirectory
   # init.R should be deleted after initialization
   expect_false(file.exists("subproject/init.R"))
-  # config.yml should exist (initialization marker)
-  expect_true(file.exists("subproject/config.yml"))
+  # settings.yml should exist (initialization marker)
+  expect_true(file.exists("subproject/settings.yml"))
   # .env should NOT exist (use make_env() instead)
   expect_false(file.exists("subproject/.env"))
   # Project file should exist
   expect_true(file.exists("subproject/SubProject.Rproj"))
-  # .initiated should NOT exist (config.yml is the marker)
+  # .initiated should NOT exist (settings.yml is the marker)
   expect_false(file.exists("subproject/.initiated"))
 })
 

@@ -7,7 +7,7 @@
 .connect_sqlserver(config)
 }
 \arguments{
-\item{config}{Connection configuration from config.yml}
+\item{config}{Connection configuration from settings.yml}
 }
 \value{
 A SQL Server database connection via ODBC

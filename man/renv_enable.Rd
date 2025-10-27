@@ -7,7 +7,7 @@
 renv_enable(sync = TRUE)
 }
 \arguments{
-\item{sync}{Logical; if TRUE (default), sync packages from config.yml}
+\item{sync}{Logical; if TRUE (default), sync packages from settings.yml}
 }
 \value{
 Invisibly returns TRUE on success
@@ -17,7 +17,7 @@ Initializes renv integration for the current Framework project. This:
 \itemize{
 \item Creates \code{.framework_renv_enabled} marker file
 \item Initializes renv if not already initialized
-\item Syncs packages from config.yml to renv.lock
+\item Syncs packages from settings.yml to renv.lock
 \item Updates .gitignore to exclude renv cache
 }
 }

@@ -7,7 +7,7 @@
 connection_check(connection_name)
 }
 \arguments{
-\item{connection_name}{Character. Name of the connection in config.yml}
+\item{connection_name}{Character. Name of the connection in settings.yml}
 }
 \value{
 A list with diagnostic information:

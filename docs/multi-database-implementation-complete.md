@@ -167,7 +167,7 @@ Framework has successfully expanded from SQLite/PostgreSQL-only to full **6-data
 ### Multi-Database Configuration
 
 ```yaml
-# config.yml
+# settings.yml
 connections:
   # PostgreSQL
   my_postgres:
@@ -485,7 +485,7 @@ framework/
    make db-test
    ```
 
-3. **Update config.yml with new connections**
+3. **Update settings.yml with new connections**
 
 4. **Use new CRUD/transaction helpers in analysis workflows**
 

@@ -9,7 +9,11 @@
 
   # Get config
   config <- read_config()
-  cache_dir <- config$options$data$cache_dir
+  cache_dir <- config$directories$cache %||% config$options$data$cache_dir
+
+  if (is.null(cache_dir) || !nzchar(cache_dir)) {
+    stop("Cache directory not configured. Add 'directories: cache: data/cached' to settings.yml")
+  }
 
   # Determine cache file path
   cache_file <- if (is.null(file)) {
@@ -65,7 +69,11 @@ cache_forget <- function(name, file = NULL) {
 cache_flush <- function() {
   # Get config
   config <- read_config()
-  cache_dir <- config$options$data$cache_dir
+  cache_dir <- config$directories$cache %||% config$options$data$cache_dir
+
+  if (is.null(cache_dir) || !nzchar(cache_dir)) {
+    stop("Cache directory not configured. Add 'directories: cache: data/cached' to settings.yml")
+  }
 
   # Remove all RDS files
   if (dir.exists(cache_dir)) {

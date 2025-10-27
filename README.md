@@ -136,7 +136,7 @@ Or from R:
 framework::cli_install()
 ```
 
-This installs the `framework` command and adds it to your PATH.
+This installs the `framework` command and adds it to your PATH. The installer tries to create a symlinked shim but automatically copies the scripts when symlinks are not available (common on Windows or restricted filesystems).
 
 ### Project Commands
 

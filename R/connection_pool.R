@@ -9,7 +9,7 @@
 #' calls.** You don't need to manage pool lifecycle - Framework handles it
 #' automatically.
 #'
-#' @param name Character. Name of the connection in config.yml
+#' @param name Character. Name of the connection in settings.yml
 #' @param min_size Integer. Minimum number of connections to maintain (default: 1)
 #' @param max_size Integer. Maximum number of connections allowed (default: Inf)
 #' @param idle_timeout Integer. Seconds before idle connections are closed (default: 60)
@@ -241,7 +241,7 @@ connection_pool <- function(name,
 #' Convenience wrapper for working with connection pools. Gets or creates a pool
 #' and makes it available as `pool` within the code block.
 #'
-#' @param connection_name Character. Name of the connection in config.yml
+#' @param connection_name Character. Name of the connection in settings.yml
 #' @param code Expression to evaluate with the pool
 #' @param ... Additional arguments passed to `connection_pool()`
 #'

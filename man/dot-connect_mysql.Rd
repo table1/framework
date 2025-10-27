@@ -7,7 +7,7 @@
 .connect_mysql(config)
 }
 \arguments{
-\item{config}{Connection configuration from config.yml}
+\item{config}{Connection configuration from settings.yml}
 }
 \value{
 A MySQL/MariaDB database connection

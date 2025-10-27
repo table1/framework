@@ -3,8 +3,8 @@
 Status: IN PROGRESS (Unit 10)
 
 ## Configuration & Scaffold Tests
-- The majority of tests still assert on `config.yml` creation (`tests/testthat/test-init.R`, `test-scaffold.R`, `test-config*.R`, `test-make_notebook.R`). With 1.0, initialization now writes `settings.yml` + optional `settings/` split files. Update fixtures and expectations so tests reflect the new structure (and add explicit coverage for the `directories.*` schema).
-- Many helper configs are written inline via `writeLines(..., "config.yml")`. Introduce helpers to write either filename based on the detection logic—otherwise the test suite will keep drifting when templates change.
+- The majority of tests still assert on `settings.yml` creation (`tests/testthat/test-init.R`, `test-scaffold.R`, `test-config*.R`, `test-make_notebook.R`). With 1.0, initialization now writes `settings.yml` + optional `settings/` split files. Update fixtures and expectations so tests reflect the new structure (and add explicit coverage for the `directories.*` schema).
+- Many helper configs are written inline via `writeLines(..., "settings.yml")`. Introduce helpers to write either filename based on the detection logic—otherwise the test suite will keep drifting when templates change.
 
 ## Notebook & Stub Coverage
 - `test-make_notebook.R` has good coverage for extension handling but still assumes the default directory is `work/` and checks legacy `options.notebook_dir`. Add tests for the new `directories.notebooks` and `directories.scripts` fields, plus coverage for author placeholder substitution using `settings.yml`.
@@ -15,7 +15,7 @@ Status: IN PROGRESS (Unit 10)
 - The CLI’s `framework-global` command set (settings/data/packages subcommands) isn’t exercised; we rely solely on manual testing. Evaluate adding an integration test harness that runs key commands inside a temp project (with `Sys.which("bash")` guard).
 
 ## Security & Encryption
-- Security audit tests (`test-security_audit.R`) construct `config.yml` fixtures and expect `.gitignore` edits; once the audit is refactored for `settings.yml` they’ll need to be updated. Add cases for the “no git repo” path and non-interactive CLI hook usage.
+- Security audit tests (`test-security_audit.R`) construct `settings.yml` fixtures and expect `.gitignore` edits; once the audit is refactored for `settings.yml` they’ll need to be updated. Add cases for the “no git repo” path and non-interactive CLI hook usage.
 - Encryption tests (`test-encryption.R`) cover core functions, but there’s no coverage for CLI prompts or `view_detail()` encryption flows. Consider adding tests ensuring non-interactive password retrieval falls back correctly (set `ENCRYPTION_PASSWORD` env var).
 
 ## General Testing Gaps

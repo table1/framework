@@ -36,7 +36,7 @@ configure_connection(
 Invisibly returns updated config
 }
 \description{
-Interactively add a database connection to config.yml. Connections can be
+Interactively add a database connection to settings.yml (or settings.yml for legacy projects). Connections can be
 defined inline or in a split file (settings/connections.yml).
 }
 \examples{

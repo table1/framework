@@ -106,7 +106,7 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   # Create path to show where to add it
   path_to_add <- paste(c("data", parts[-length(parts)]), collapse = " -> ")
 
-  message("\nAdd this to your config.yml or settings/data.yml file under:")
+  message("\nAdd this to your settings.yml (or settings/data.yml) file under:")
   message("\n", path_to_add)
   message("\n", yaml_example, "\n")
 
@@ -249,7 +249,7 @@ save_data <- function(data, path, type = "csv", delimiter = "comma", locked = TR
 #' Update data spec in the correct YAML file
 #'
 #' Traverses a dot-notated key like "final.public.test" and updates or inserts
-#' the given spec in the corresponding YAML file (either embedded in config.yml
+#' the given spec in the corresponding YAML file (either embedded in settings.yml
 #' or in an external settings/data.yml file). Automatically handles nested paths
 #' and creates intermediate structures as needed.
 #'
@@ -280,39 +280,43 @@ data_spec_update <- function(path, spec) {
 
   parts <- strsplit(path, "\\.")[[1]]
 
-  # Check if config.yml exists
-  if (!file.exists("config.yml")) {
-    stop("Configuration file 'config.yml' not found")
+  # Discover settings file
+  config_path <- .get_settings_file()
+  if (is.null(config_path)) {
+    stop("Configuration file 'settings.yml' (or legacy config.yml) not found")
   }
 
-  # Load raw config.yml to determine where `data` is defined
+  # Load raw config to determine where `data` is defined
   raw_config <- tryCatch(
-    yaml::read_yaml("config.yml", eval.expr = FALSE),
+    yaml::read_yaml(config_path, eval.expr = FALSE),
     error = function(e) {
-      stop(sprintf("Failed to read config.yml: %s", e$message))
+      stop(sprintf("Failed to read %s: %s", config_path, e$message))
     }
   )
 
-  # Check if default section exists
-  if (is.null(raw_config$default)) {
-    stop("Config file missing 'default' section")
-  }
+  # Support both environment-scoped and flat configs
+  has_envs <- !is.null(raw_config$default) && is.list(raw_config$default)
+  env_key <- if (has_envs) "default" else NULL
+  env_config <- if (has_envs) raw_config$default else raw_config
 
-  data_source <- raw_config$default$data
+  data_source <- env_config$data
 
   # Determine if `data` is a path or inline
-  if (is.character(data_source) && length(data_source) == 1 && file.exists(data_source)) {
-    # Data is in external file
+  is_external <- is.character(data_source) && length(data_source) == 1
+  if (is_external) {
     data_path <- data_source
-    current <- tryCatch(
-      yaml::read_yaml(data_path, eval.expr = FALSE),
-      error = function(e) {
-        stop(sprintf("Failed to read data file '%s': %s", data_path, e$message))
-      }
-    )
+    current <- if (file.exists(data_path)) {
+      tryCatch(
+        yaml::read_yaml(data_path, eval.expr = FALSE),
+        error = function(e) {
+          stop(sprintf("Failed to read data file '%s': %s", data_path, e$message))
+        }
+      )
+    } else {
+      list()
+    }
   } else {
-    # Data is inline in config.yml
-    data_path <- "config.yml"
+    data_path <- config_path
     current <- if (is.null(data_source)) list() else data_source
   }
 
@@ -339,11 +343,17 @@ data_spec_update <- function(path, spec) {
 
   # Write back to the correct location
   tryCatch({
-    if (data_path != "config.yml") {
+    if (is_external) {
+      dir.create(dirname(data_path), recursive = TRUE, showWarnings = FALSE)
       yaml::write_yaml(current, data_path)
     } else {
-      raw_config$default$data <- current
-      yaml::write_yaml(raw_config, "config.yml")
+      env_config$data <- current
+      if (!is.null(env_key)) {
+        raw_config[[env_key]] <- env_config
+      } else {
+        raw_config <- env_config
+      }
+      yaml::write_yaml(raw_config, config_path)
     }
   }, error = function(e) {
     stop(sprintf("Failed to write configuration: %s", e$message))

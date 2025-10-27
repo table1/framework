@@ -15,14 +15,14 @@ Status: IN PROGRESS (Unit 04)
 - Locked datasets (`spec$locked = TRUE`) halt on hash mismatch without recovery guidance. Provide remediation instructions (refresh hash) or allow override.
 - `data_spec_get()` returns NULL for unconfigured dot paths without suggesting nearest match until later; consider integrating fuzzy search sooner.
 - `data_spec_get()` treats relative paths as relative to `getwd()` rather than project root; after `standardize_wd()` this is usually OK, but if invoked before scaffold it may resolve incorrectly. Use project root detection or config to anchor.
-- `data_spec_update()` (`R/data_write.R:139`) hard-requires `config.yml` and `default` section; fails entirely for `settings.yml`-only projects and in split configuration setups. Must auto-detect active config + environment.
+- `data_spec_update()` (`R/data_write.R:139`) hard-requires `settings.yml` and `default` section; fails entirely for `settings.yml`-only projects and in split configuration setups. Must auto-detect active config + environment.
 - `data_spec_update()` uses `eval(parse())` to mutate nested lists, risking code injection and brittle behavior with hyphenated keys. Refactor with iterative list assignment.
 
 ## Data Saving (`R/data_write.R`)
 - CSV writer always calls `readr::write_csv()` regardless of delimiter selection. For tabs/semicolons, must use `readr::write_delim()` with the resolved delimiter; current code silently writes commas even when `delimiter = "tab"`. Critical bug.
 - Directory resolution is hardcoded to `data/...` by splitting dot notation; ignores `directories` overrides in config (e.g., custom source paths). Should inspect configured `directories` for correct base path.
 - When encrypting CSVs, serialization uses `write_csv()` to temp file (same delimiter issue) before encrypting.
-- Added YAML snippet always references `config.yml`; needs update for `settings/data.yml` flow and to note environment scopes.
+- Added YAML snippet always references `settings.yml`; needs update for `settings/data.yml` flow and to note environment scopes.
 - Default `locked = TRUE` may be surprising for iterative workflows; consider documenting expectation or defaulting to `FALSE`.
 
 ## Data Catalog Tracking (`R/data_write.R` & `R/data_read.R`)

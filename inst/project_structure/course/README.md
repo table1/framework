@@ -12,7 +12,7 @@ Course materials built with the Framework R package.
 ├── docs/               # Documentation
 ├── resources/          # Course materials
 ├── functions/          # Custom R functions
-├── config.yml          # Project configuration
+├── settings.yml        # Project configuration
 └── scaffold.R          # Initialization script
 ```
 
@@ -26,7 +26,7 @@ make_notebook("topic")  # Create new notebook
 
 ## Configuration
 
-Edit `config.yml` to customize:
+Edit `settings.yml` to customize:
 - Data sources
 - Required packages
 - Directory paths

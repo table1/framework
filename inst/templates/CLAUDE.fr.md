@@ -30,7 +30,8 @@ Framework provides:
 - `results/private/` - Sensitive outputs (gitignored)
 
 ### Configuration Files
-- `config.yml` - Main project configuration (directories, packages, data catalog, connections)
+- `settings.yml` - Primary project configuration (directories, packages, data catalog, connections)
+- `config.yml` - Legacy configuration (auto-discovered for backward compatibility)
 - `settings/` - Optional split config files for complex projects (data.yml, connections.yml, etc.)
 - `.env` - Environment variables and secrets (ALWAYS gitignored, never commit)
 - `framework.db` - SQLite database tracking data integrity, cache, and results metadata
@@ -45,12 +46,12 @@ Framework provides:
 ### 1. Start Working Session
 ```r
 library(framework)
-scaffold()  # Loads environment, sources functions/, installs packages from config
+scaffold()  # Loads environment, sources functions/, installs packages from settings.yml
 ```
 
 The `scaffold()` function:
 - Loads all R files from `functions/` directory
-- Installs and loads packages listed in config.yml
+- Installs and loads packages listed in settings.yml (or legacy config.yml)
 - Sets up database connections
 - Prepares the working environment
 
@@ -72,7 +73,7 @@ Notebooks are created with:
 
 **From Data Catalog:**
 ```r
-# Data catalog defined in config.yml
+# Data catalog defined in settings.yml
 data <- load_data("my_dataset")
 ```
 
@@ -132,7 +133,7 @@ cache_list()
 - **NEVER commit sensitive data to git**
 - Use `data/source/private/`, `data/in_progress/private/`, `data/final/private/` for sensitive files
 - These directories have **nested .gitignore files** (defense-in-depth against accidental `git add -f`)
-- Store credentials and API keys in `.env`, **NEVER in code or config.yml**
+- Store credentials and API keys in `.env`, **NEVER in code or settings.yml**
 - Use `result_save(..., private = TRUE)` for sensitive outputs
 
 ### Encrypted Data
@@ -153,7 +154,7 @@ data <- load_data("confidential")
 - Prefer Quarto notebooks for analysis documentation
 
 ### Reproducibility Best Practices
-- Use data catalog in config.yml to document all data sources
+- Use data catalog in settings.yml to document all data sources
 - Include data descriptions and source information
 - Cache intermediate results to avoid re-running expensive steps
 - Use renv for package management (opt-in during init)
@@ -196,10 +197,9 @@ data <- load_data("confidential")
 - `query_execute(sql, connection)` - Run ad-hoc SQL query
 
 ### Configuration Access
-- `config(key, default)` - Access config values (supports dot notation)
-  - Example: `config("directories.notebooks")` returns "notebooks"
-  - Example: `config("notebooks")` smart lookup (checks multiple locations)
-  - Example: `config("connections.db.host")` returns nested value
+- `settings(key, default)` - Access configuration values (supports dot notation)
+  - Example: `settings("directories.notebooks")` returns "notebooks"
+- `config(key, default)` - Legacy alias for `settings()` (still supported for older projects)
 
 ### Scratch Files
 - `scratch_capture()` - Save current environment state for later restoration
@@ -207,7 +207,7 @@ data <- load_data("confidential")
 
 ## Working with Configuration
 
-### config.yml Structure
+### settings.yml Structure
 ```yaml
 default:
   project_type: project
@@ -228,7 +228,7 @@ default:
     - ggplot2
     - tidyr
 
-  # Data catalog
+  # Data catalog (can be split into settings/data.yml)
   data:
     my_dataset:
       path: data/source/public/dataset.csv
@@ -244,23 +244,23 @@ default:
 
 ### Accessing Configuration
 ```r
-# Smart lookups (checks multiple locations)
-notebook_dir <- config("notebooks")  # Returns "notebooks"
-cache_dir <- config("cache")  # Returns "data/cached"
+# Smart lookups (checks directories + legacy options)
+notebook_dir <- settings("directories.notebooks")  # Returns "notebooks"
+cache_dir <- settings("directories.cache")  # Returns "data/cached"
 
 # Explicit nested paths
-db_host <- config("connections.db.host")
-data_path <- config("data.my_dataset.path")
+db_host <- settings("connections.db.host")
+data_path <- settings("data.my_dataset.path")
 
 # With default value
-api_url <- config("api.endpoint", default = "https://default.com")
+api_url <- settings("api.endpoint", default = "https://default.com")
 ```
 
 ### Split Configuration Files
-For complex projects, you can split config.yml:
+For complex projects, you can split settings.yml:
 
 ```yaml
-# config.yml
+# settings.yml
 default:
   directories: { notebooks: notebooks, ... }
   data: settings/data.yml
@@ -269,7 +269,7 @@ default:
 
 Then create `settings/data.yml`, `settings/connections.yml` with detailed specifications.
 
-**Important**: Main config.yml ALWAYS takes precedence over split files.
+**Important**: Main settings.yml ALWAYS takes precedence over split files.
 
 ## Common Patterns and Examples
 
@@ -283,7 +283,7 @@ standardize_wd()
 ### Database Connections
 ```r
 # Framework includes built-in "framework" connection to framework.db
-con <- DBI::dbConnect(RSQLite::SQLite(), config("connections.framework.path"))
+con <- DBI::dbConnect(RSQLite::SQLite(), settings("connections.framework.path"))
 
 # Query the framework database to see tracked data
 DBI::dbGetQuery(con, "SELECT * FROM data")
@@ -291,8 +291,8 @@ DBI::dbGetQuery(con, "SELECT * FROM data")
 # Or use configured PostgreSQL connection
 con <- DBI::dbConnect(
   RPostgres::Postgres(),
-  host = config("connections.prod.host"),
-  dbname = config("connections.prod.database")
+  host = settings("connections.prod.host"),
+  dbname = settings("connections.prod.database")
 )
 ```
 
@@ -348,7 +348,7 @@ renv::status()
 # Install new package
 renv::install("package_name")
 
-# Update renv.lock after adding packages to config.yml
+# Update renv.lock after adding packages to settings.yml
 packages_snapshot()
 
 # Restore packages from renv.lock
@@ -442,7 +442,7 @@ When working with this Framework project:
 
 1. **Always use Framework functions** instead of base R for data/results (maintains integrity tracking)
 2. **Respect directory structure** - don't suggest moving files between public/private
-3. **Use config() for paths** - don't hardcode directory paths
+3. **Use settings() for paths** - don't hardcode directory paths (config() alias acceptable for legacy guidance)
 4. **Suggest data catalog entries** when user loads data frequently
 5. **Recommend caching** for expensive computations
 6. **Check scaffold() was called** before suggesting framework functions

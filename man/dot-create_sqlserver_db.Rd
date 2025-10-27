@@ -7,7 +7,7 @@
 .create_sqlserver_db(config)
 }
 \arguments{
-\item{config}{Connection configuration from config.yml}
+\item{config}{Connection configuration from settings.yml}
 }
 \value{
 TRUE if successful

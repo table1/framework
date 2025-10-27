@@ -4,7 +4,7 @@
 #' checking for unignored data files, git history leaks, and orphaned data files
 #' outside configured directories.
 #'
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: auto-detect settings.yml/settings.yml)
 #' @param check_git_history Logical; if TRUE (default), check git history for leaked data files
 #' @param history_depth Character or numeric. "all" for full history, "shallow" for recent 100 commits,
 #'   or numeric for specific commit count (default: "all")
@@ -54,12 +54,12 @@
 #' }
 #'
 #' @export
-security_audit <- function(config_file = "config.yml",
+security_audit <- function(config_file = NULL,
                            check_git_history = TRUE,
                            history_depth = "all",
                            auto_fix = FALSE,
                            verbose = TRUE,
-                           extensions = c("csv", "rds", "tsv", "txt", "dat",
+                            extensions = c("csv", "rds", "tsv", "txt", "dat",
                                         "xlsx", "xls", "sqlite", "db",
                                         "dta", "sav", "zsav", "por",
                                         "sas7bdat", "sas7bcat", "xpt",
@@ -67,7 +67,7 @@ security_audit <- function(config_file = "config.yml",
                                         "json", "xml", "h5", "hdf5")) {
 
   # Validate arguments
-  checkmate::assert_string(config_file, min.chars = 1)
+  checkmate::assert_string(config_file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_logical(check_git_history, len = 1)
   checkmate::assert(
     checkmate::check_string(history_depth),
@@ -110,26 +110,19 @@ security_audit <- function(config_file = "config.yml",
 
   recommendations <- character()
 
-  # Check if config exists
-  if (!file.exists(config_file)) {
-    stop(sprintf("Config file not found: %s", config_file))
+  # Auto-discover config file
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file()
   }
 
-  # Require git repository
+  if (is.null(config_file) || !file.exists(config_file)) {
+    stop("Config file not found (expected settings.yml or config.yml)")
+  }
+
+  # Check git availability
   git_available <- .check_git_available()
-  if (!git_available) {
-    if (verbose) {
-      message("\n=== Framework Security Audit ===\n")
-      message("✗ security_audit() requires a git repository\n")
-      message("This tool is designed to prevent accidentally committing")
-      message("and pushing sensitive data files to remote repositories.\n")
-      message("Without version control, there is no data leakage risk to audit.\n")
-      message("If you intended to use git, initialize it with:")
-      message("  git init")
-      message("  git add .")
-      message("  git commit -m 'Initial commit'\n")
-    }
-    return(invisible(NULL))
+  if (!git_available && verbose) {
+    message("Git not available. Skipping git-specific checks.")
   }
 
   if (verbose) {
@@ -187,7 +180,7 @@ security_audit <- function(config_file = "config.yml",
     status = c(
       if (nrow(findings$gitignore_issues) == 0) "pass" else if (any(findings$gitignore_issues$severity == "critical")) "fail" else "warning",
       if (nrow(findings$private_data_exposure) == 0) "pass" else "fail",
-      if (!check_git_history) "skipped" else if (nrow(findings$git_history_issues) == 0) "pass" else "fail",
+      if (!check_git_history || !git_available) "skipped" else if (nrow(findings$git_history_issues) == 0) "pass" else "fail",
       if (nrow(findings$orphaned_files) == 0) "pass" else "warning"
     ),
     count = c(
@@ -249,17 +242,22 @@ security_audit <- function(config_file = "config.yml",
     warning = function(w) FALSE
   )
 
-  # Check if we're in a git repository using git rev-parse
+  if (!git_check) {
+    return(FALSE)
+  }
+
+  git_dir_exists <- dir.exists(".git")
+
   in_git_repo <- tryCatch(
     {
-      result <- system2("git", c("rev-parse", "--git-dir"), stdout = TRUE, stderr = FALSE)
-      length(result) > 0
+      result <- system2("git", c("rev-parse", "--show-toplevel"), stdout = TRUE, stderr = FALSE)
+      is.null(attr(result, "status")) && length(result) > 0
     },
     error = function(e) FALSE,
     warning = function(w) FALSE
   )
 
-  git_check && in_git_repo
+  git_dir_exists || in_git_repo
 }
 
 
@@ -281,14 +279,11 @@ security_audit <- function(config_file = "config.yml",
   )
 
   dirs <- list()
-  for (key in dir_keys) {
-    # Try to get directory from config
-    dir_path <- tryCatch(
-      config(paste0("directories.", key), config_file = "config.yml"),
-      error = function(e) NULL
-    )
+  config_dirs <- config$directories %||% list()
 
-    if (!is.null(dir_path) && nchar(dir_path) > 0) {
+  for (key in dir_keys) {
+    dir_path <- config_dirs[[key]]
+    if (!is.null(dir_path) && nzchar(dir_path)) {
       dirs[[key]] <- dir_path
     }
   }
@@ -622,7 +617,7 @@ security_audit <- function(config_file = "config.yml",
       recommendations,
       sprintf("Found %d data file(s) outside configured directories", nrow(orphaned)),
       "Move orphaned files to appropriate data directories",
-      "Add data file locations to config.yml if they represent new data storage"
+      "Add data file locations to settings.yml if they represent new data storage"
     )
   }
 
@@ -700,45 +695,77 @@ security_audit <- function(config_file = "config.yml",
   }
 
   existing <- readLines(gitignore_path, warn = FALSE)
+  header_line <- "# Framework Security Audit - Auto-generated"
 
-  # Collect directories to add
+  normalize_relative <- function(paths) {
+    vapply(paths, function(path) {
+      if (is.na(path) || !nzchar(path)) {
+        return(NA_character_)
+      }
+
+      normalized <- normalizePath(path, winslash = "/", mustWork = FALSE)
+      cwd <- normalizePath(".", winslash = "/", mustWork = TRUE)
+
+      if (startsWith(normalized, paste0(cwd, "/"))) {
+        normalized <- substr(normalized, nchar(cwd) + 2, nchar(normalized))
+      }
+
+      normalized <- gsub("^\\./", "", normalized)
+      normalized <- gsub("/+", "/", normalized)
+      normalized <- gsub("/$", "", normalized)
+      normalized
+    }, character(1), USE.NAMES = FALSE)
+  }
+
   dirs_to_add <- character()
 
-  # Add any private directories not in gitignore
-  for (i in seq_len(nrow(findings$gitignore_issues))) {
-    issue <- findings$gitignore_issues[i, ]
-    if (issue$severity == "critical" && !issue$file %in% dirs_to_add) {
-      dirs_to_add <- c(dirs_to_add, issue$file)
+  if (nrow(findings$gitignore_issues) > 0) {
+    dirs_to_add <- c(dirs_to_add, findings$gitignore_issues$file)
+  }
+
+  if (nrow(findings$private_data_exposure) > 0) {
+    dirs_to_add <- c(dirs_to_add, dirname(findings$private_data_exposure$file))
+  }
+
+  dirs_to_add <- unique(na.omit(normalize_relative(dirs_to_add)))
+  dirs_to_add <- dirs_to_add[dirs_to_add != ""]
+
+  if (length(dirs_to_add) == 0) {
+    return(invisible(NULL))
+  }
+
+  new_lines <- character()
+  header_present <- any(trimws(existing) == header_line)
+
+  if (!header_present) {
+    new_lines <- c(new_lines, "", header_line)
+  }
+
+  for (dir_path in dirs_to_add) {
+    dir_entry <- paste0(dir_path, "/")
+    glob_entry <- paste0(dir_path, "/**")
+
+    if (!dir_entry %in% existing && !dir_entry %in% new_lines) {
+      new_lines <- c(new_lines, dir_entry)
+    }
+
+    if (!glob_entry %in% existing && !glob_entry %in% new_lines) {
+      new_lines <- c(new_lines, glob_entry)
     }
   }
 
-  # Add exposed private data directories
-  for (i in seq_len(nrow(findings$private_data_exposure))) {
-    issue <- findings$private_data_exposure[i, ]
-    dir_path <- dirname(issue$file)
-    if (!dir_path %in% dirs_to_add) {
-      dirs_to_add <- c(dirs_to_add, dir_path)
-    }
+  # If header was added but no patterns, avoid writing redundant lines
+  pattern_lines <- new_lines[nzchar(new_lines) & !startsWith(new_lines, "#")]
+  if (length(pattern_lines) == 0) {
+    return(invisible(NULL))
   }
 
-  if (length(dirs_to_add) > 0) {
-    # Add header if not present
-    if (!any(grepl("# Framework Security Audit", existing))) {
-      new_entries <- c(
-        "",
-        "# Framework Security Audit - Auto-generated",
-        paste0(dirs_to_add, "/"),
-        paste0(dirs_to_add, "/**")
-      )
+  writeLines(c(existing, new_lines), gitignore_path)
 
-      writeLines(c(existing, new_entries), gitignore_path)
-
-      if (verbose) {
-        message(sprintf("Added %d director%s to .gitignore",
-                       length(dirs_to_add),
-                       if (length(dirs_to_add) == 1) "y" else "ies"))
-      }
-    }
+  if (verbose) {
+    message(sprintf("Added %d director%s to .gitignore",
+                   length(dirs_to_add),
+                   if (length(dirs_to_add) == 1) "y" else "ies"))
   }
 
   invisible(NULL)

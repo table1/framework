@@ -44,6 +44,7 @@ framework.db
 .init.R.done
 
 # Project files (should not be in package repo)
+settings.yml
 config.yml
 *.Rproj
 *.code-workspace

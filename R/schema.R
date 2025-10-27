@@ -10,7 +10,8 @@
 #' @return Logical. TRUE if column exists, FALSE otherwise
 #' @keywords internal
 #' @export
-#'
+#' @name dot-has_column
+#' 
 #' @examples
 #' \dontrun{
 #' conn <- connection_get("my_db")
@@ -21,7 +22,7 @@
   UseMethod(".has_column")
 }
 
-#' @describeIn .has_column SQLite implementation using PRAGMA
+#' @describeIn dot-has_column SQLite implementation using PRAGMA
 #' @keywords internal
 #' @export
 #' @export
@@ -42,7 +43,7 @@
   })
 }
 
-#' @describeIn .has_column PostgreSQL implementation using information_schema
+#' @describeIn dot-has_column PostgreSQL implementation using information_schema
 #' @keywords internal
 #' @export
 .has_column.PqConnection <- function(conn, table_name, column_name) {
@@ -66,7 +67,7 @@
   })
 }
 
-#' @describeIn .has_column MySQL/MariaDB implementation using information_schema
+#' @describeIn dot-has_column MySQL/MariaDB implementation using information_schema
 #' @keywords internal
 #' @export
 .has_column.MariaDBConnection <- function(conn, table_name, column_name) {
@@ -93,7 +94,7 @@
   })
 }
 
-#' @describeIn .has_column SQL Server implementation using information_schema
+#' @describeIn dot-has_column SQL Server implementation using information_schema
 #' @keywords internal
 #' @export
 `.has_column.Microsoft SQL Server` <- function(conn, table_name, column_name) {
@@ -117,7 +118,7 @@
   })
 }
 
-#' @describeIn .has_column DuckDB implementation using information_schema
+#' @describeIn dot-has_column DuckDB implementation using information_schema
 #' @keywords internal
 #' @export
 .has_column.duckdb_connection <- function(conn, table_name, column_name) {
@@ -141,7 +142,7 @@
   })
 }
 
-#' @describeIn .has_column Default implementation for unknown database types
+#' @describeIn dot-has_column Default implementation for unknown database types
 #' @keywords internal
 #' @export
 .has_column.default <- function(conn, table_name, column_name) {
@@ -175,6 +176,7 @@
 #' @return Character vector of table names
 #' @keywords internal
 #' @export
+#' @name dot-list_tables
 #'
 #' @examples
 #' \dontrun{
@@ -186,7 +188,7 @@
   UseMethod(".list_tables")
 }
 
-#' @describeIn .list_tables Default implementation using DBI::dbListTables
+#' @describeIn dot-list_tables Default implementation using DBI::dbListTables
 #' @keywords internal
 #' @export
 .list_tables.default <- function(conn) {
@@ -211,6 +213,7 @@
 #' @return Character vector of column names
 #' @keywords internal
 #' @export
+#' @name dot-list_columns
 #'
 #' @examples
 #' \dontrun{
@@ -222,7 +225,7 @@
   UseMethod(".list_columns")
 }
 
-#' @describeIn .list_columns SQLite implementation using PRAGMA
+#' @describeIn dot-list_columns SQLite implementation using PRAGMA
 #' @keywords internal
 #' @export
 .list_columns.SQLiteConnection <- function(conn, table_name) {
@@ -241,7 +244,7 @@
   })
 }
 
-#' @describeIn .list_columns PostgreSQL implementation using information_schema
+#' @describeIn dot-list_columns PostgreSQL implementation using information_schema
 #' @keywords internal
 #' @export
 .list_columns.PqConnection <- function(conn, table_name) {
@@ -264,7 +267,7 @@
   })
 }
 
-#' @describeIn .list_columns MySQL/MariaDB implementation using information_schema
+#' @describeIn dot-list_columns MySQL/MariaDB implementation using information_schema
 #' @keywords internal
 #' @export
 .list_columns.MariaDBConnection <- function(conn, table_name) {
@@ -289,7 +292,7 @@
   })
 }
 
-#' @describeIn .list_columns SQL Server implementation using information_schema
+#' @describeIn dot-list_columns SQL Server implementation using information_schema
 #' @keywords internal
 #' @export
 `.list_columns.Microsoft SQL Server` <- function(conn, table_name) {
@@ -312,7 +315,7 @@
   })
 }
 
-#' @describeIn .list_columns DuckDB implementation using information_schema
+#' @describeIn dot-list_columns DuckDB implementation using information_schema
 #' @keywords internal
 #' @export
 .list_columns.duckdb_connection <- function(conn, table_name) {
@@ -335,7 +338,7 @@
   })
 }
 
-#' @describeIn .list_columns Default implementation using information_schema
+#' @describeIn dot-list_columns Default implementation using information_schema
 #' @keywords internal
 #' @export
 .list_columns.default <- function(conn, table_name) {

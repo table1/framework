@@ -9,12 +9,12 @@ Complete overhaul of Framework's configuration system, implementing a Laravel-in
 ### 1. Laravel-Inspired Hybrid Config System
 
 **Design Philosophy:**
-- **Simple by default**: Single `config.yml` file for most projects
+- **Simple by default**: Single `settings.yml` file for most projects
 - **Complex when needed**: Optional split files for domain-specific settings
 - **Discoverable**: Directory paths visible immediately in main file
 - **R conventions**: Follows R ecosystem pattern (like `_targets.R`, `_bookdown.yml`)
 
-**Key Decision**: After consulting Zen (Gemini), moved directory settings from separate `settings/options.yml` into main `config.yml` for better discoverability.
+**Key Decision**: After consulting Zen (Gemini), moved directory settings from separate `settings/options.yml` into main `settings.yml` for better discoverability.
 
 ### 2. New `config()` Helper Function
 
@@ -124,8 +124,8 @@ Fixed all tests to use correct function names after alias removal:
 - `inst/templates/config.project.fr.yml` - Inline directories, split file examples
 - `inst/templates/config.course.fr.yml` - Course-specific directories
 - `inst/templates/config.presentation.fr.yml` - Minimal presentation setup
-- `inst/project_structure/project/config.yml` - Updated split-file example
-- `inst/project_structure/course/config.yml` - Updated split-file example
+- `inst/project_structure/project/settings.yml` - Updated split-file example
+- `inst/project_structure/course/settings.yml` - Updated split-file example
 
 ### Tests
 - `tests/testthat/test-config.R` - Added 20+ comprehensive config tests
@@ -160,7 +160,7 @@ Based on consultation with Zen (Gemini 2.5 Pro), the decision was made to keep d
 
 ### What Goes in Split Files?
 
-**Keep in main `config.yml`:**
+**Keep in main `settings.yml`:**
 - Directory paths (most commonly changed)
 - Project metadata
 - Basic options
@@ -258,7 +258,7 @@ init(
   type = "project"
 )
 
-# Creates config.yml with:
+# Creates settings.yml with:
 # - Inline directories section
 # - Optional references to split files
 # - Comprehensive inline comments

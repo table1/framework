@@ -4,10 +4,10 @@
 \alias{ai_sync_context}
 \title{Sync AI Assistant Context Files}
 \usage{
-ai_sync_context(config_file = "config.yml", force = FALSE, verbose = TRUE)
+ai_sync_context(config_file = NULL, force = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{config_file}{Path to configuration file (default: "config.yml")}
+\item{config_file}{Path to configuration file (default: auto-detect settings.yml/settings.yml)}
 
 \item{force}{Logical; if TRUE, overwrite even if target is newer (default: FALSE)}
 
@@ -21,7 +21,7 @@ Copies content from the canonical AI assistant file to all other AI files,
 adding a warning header to non-canonical files.
 }
 \details{
-This function reads the \code{ai.canonical_file} setting from config.yml and
+This function reads the \code{ai.canonical_file} setting from settings.yml and
 copies its content to all other AI assistant instruction files that exist
 in the project.
 

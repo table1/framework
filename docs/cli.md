@@ -18,10 +18,12 @@ devtools::install_github("table1/framework")
 framework::cli_install()
 ```
 
+The installer prefers creating a symlinked shim but automatically falls back to copying the scripts when symlinks are not available (for example on default Windows sessions or constrained filesystems). When running in a non-interactive session it skips PATH prompts and simply prints the manual steps you can run later.
+
 By default, this installs to `~/.local/bin/framework` (user installation). To install system-wide:
 
 ```r
-framework::install_cli(location = "system")  # Requires sudo
+framework::cli_install(location = "system")  # Requires sudo
 ```
 
 ### PATH Setup
@@ -216,7 +218,7 @@ System installation requires sudo. If you get permission errors:
 
 ```r
 # Use user installation instead (recommended)
-framework::install_cli(location = "user")
+framework::cli_install(location = "user")
 ```
 
 ## Development
@@ -225,7 +227,7 @@ The CLI implementation consists of:
 
 1. **`inst/bin/framework`** - Bash script wrapper (in framework package)
 2. **`new-project.sh`** - Actual implementation (in framework-project repo)
-3. **`R/install_cli.R`** - Installation functions
+3. **`R/install_cli.R`** - Installation functions (supports symlink/copy fallback)
 
 To modify the CLI behavior, edit `new-project.sh` in the framework-project repository.
 To modify the CLI interface, edit `inst/bin/framework` in the framework package.

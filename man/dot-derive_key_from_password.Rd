@@ -15,8 +15,8 @@
 Raw vector (32 bytes) - encryption key
 }
 \description{
-Uses scrypt to derive a 32-byte key from a password.
+Uses libsodium's scrypt implementation to derive a 32-byte key from a password.
 Scrypt is memory-hard, making it resistant to hardware brute-force attacks.
-Uses sodium's default scrypt parameters (N=16384, r=8, p=1).
+Uses sodium's default parameters (N = 16384, r = 8, p = 1).
 }
 \keyword{internal}

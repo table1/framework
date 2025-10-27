@@ -127,7 +127,7 @@ config <- list(
   data = list(example = "data/example.csv"),
   packages = c("dplyr", "ggplot2")
 )
-write_config(config, "config.yml")
+write_config(config, "settings.yml")
 
 # File structure (with auto-wrapped "default" section):
 # default:
@@ -138,11 +138,11 @@ write_config(config, "config.yml")
 #     - ggplot2
 
 # Reading with read_config() (environment section resolved):
-cfg <- read_config("config.yml")
+cfg <- read_config("settings.yml")
 cfg$data$example  # "data/example.csv"
 
 # Reading with yaml::read_yaml() (raw structure with default wrapper):
-raw <- yaml::read_yaml("config.yml")
+raw <- yaml::read_yaml("settings.yml")
 raw$default$data$example  # "data/example.csv"
 ```
 

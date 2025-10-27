@@ -3,7 +3,7 @@
 #' This function initializes the project environment by:
 #' 1. Standardizing the working directory (for notebooks in subdirectories)
 #' 2. Loading environment variables from .env
-#' 3. Loading configuration from settings.yml (or config.yml)
+#' 3. Loading configuration from settings.yml (or settings.yml)
 #' 4. Installing required packages
 #' 5. Loading all functions from the functions directory
 #'
@@ -397,7 +397,7 @@ scaffold <- function(config_file = NULL) {
 #' @keywords internal
 #' @description
 #' Sets the random seed for reproducibility. Checks for seed in this order:
-#' 1. Project config.yml (seed: value)
+#' 1. Project settings.yml (seed: value)
 #' 2. Global ~/.frameworkrc (FW_SEED)
 #' 3. Skip seeding if both are NULL or empty
 .set_random_seed <- function(config) {

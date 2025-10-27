@@ -29,7 +29,7 @@ project/
 ├── results/
 │   ├── public/         # Shareable outputs (tracked in git)
 │   └── private/        # Sensitive outputs (gitignored)
-├── config.yml          # Main configuration file
+├── settings.yml          # Main configuration file
 ├── .env                # Environment variables and secrets (gitignored)
 └── framework.db        # SQLite database for metadata tracking
 ```
@@ -49,7 +49,7 @@ make_notebook("analysis-name")  # Creates notebooks/analysis-name.qmd
 
 ### Data Management
 ```r
-# Load from catalog (defined in config.yml)
+# Load from catalog (defined in settings.yml)
 data <- load_data("dataset_name")
 
 # Save data
@@ -82,7 +82,7 @@ result <- get_or_cache("cache_name", {
 
 ## Configuration Access
 
-Framework uses `config.yml` for project settings:
+Framework uses `settings.yml` for project settings:
 
 ```r
 # Smart lookups
@@ -101,7 +101,7 @@ config("api.endpoint", default = "https://default.com")
 ### Critical Security Rules
 1. **NEVER commit sensitive data to git**
 2. **Use private/ subdirectories** for all sensitive files
-3. **Store secrets in .env**, never in code or config.yml
+3. **Store secrets in .env**, never in code or settings.yml
 4. **Nested .gitignore files** provide defense-in-depth in private/ directories
 5. **Use encryption** for highly sensitive data: `save_data(data, "name", encrypt = TRUE)`
 
@@ -158,7 +158,7 @@ standardize_wd()  # Handle rendering from subdirectories
 ```
 
 ### Data Catalog Usage
-Define in `config.yml`:
+Define in `settings.yml`:
 ```yaml
 data:
   customer_survey:

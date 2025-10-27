@@ -7,7 +7,7 @@
 hooks_list(config_file = NULL)
 }
 \arguments{
-\item{config_file}{Path to configuration file (default: auto-discover settings.yml or config.yml)}
+\item{config_file}{Path to configuration file (default: auto-discover settings.yml or settings.yml)}
 }
 \value{
 Data frame with hook information

@@ -2,7 +2,7 @@
 % Please edit documentation in R/packages.R
 \name{.sync_packages_to_renv}
 \alias{.sync_packages_to_renv}
-\title{Sync packages from config.yml to renv}
+\title{Sync packages from settings.yml to renv}
 \usage{
 .sync_packages_to_renv()
 }
@@ -10,7 +10,7 @@
 Invisibly returns TRUE on success
 }
 \description{
-Reads the packages list from config.yml and installs them via renv,
+Reads the packages list from settings.yml and installs them via renv,
 then snapshots the result to renv.lock.
 }
 \keyword{internal}

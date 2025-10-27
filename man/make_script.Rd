@@ -11,7 +11,8 @@ make_script(name, dir = NULL, stub = "default", overwrite = FALSE)
 Examples: "process-data", "process-data.R"}
 
 \item{dir}{Character. Directory to create the script in. Reads from
-config \code{options$script_dir}, defaults to "scripts/" or current directory.}
+config \code{directories$scripts} (or legacy \code{options$script_dir}), defaults to
+"scripts/" or current directory.}
 
 \item{stub}{Character. Name of the stub template to use. Defaults to
 "default". User can create custom stubs in \verb{stubs/script-\{stub\}.R}.}

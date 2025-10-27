@@ -92,7 +92,7 @@ Updated root `CLAUDE.md` to reference docs directory.
 ### Templates
 - `inst/templates/test-notebook.fr.qmd` - Created (Quarto-first)
 - `inst/templates/test-notebook.fr.Rmd` - Fixed to use framework.db
-- `inst/project_structure/minimal/config.yml` - Added framework connection
+- `inst/project_structure/minimal/settings.yml` - Added framework connection
 
 ### Tests
 - `tests/testthat.R` - Created

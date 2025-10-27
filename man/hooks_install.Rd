@@ -7,7 +7,7 @@
 hooks_install(config_file = NULL, force = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{config_file}{Path to configuration file (default: "config.yml")}
+\item{config_file}{Path to configuration file (default: "settings.yml")}
 
 \item{force}{Logical; if TRUE, overwrite existing hook (default: FALSE)}
 
@@ -17,7 +17,7 @@ hooks_install(config_file = NULL, force = FALSE, verbose = TRUE)
 Invisible TRUE on success, FALSE on failure
 }
 \description{
-Creates a pre-commit hook that runs Framework checks based on config.yml settings.
+Creates a pre-commit hook that runs Framework checks based on settings.yml settings.
 }
 \details{
 Creates or updates \code{.git/hooks/pre-commit} to run enabled Framework hooks:
@@ -26,11 +26,11 @@ Creates or updates \code{.git/hooks/pre-commit} to run enabled Framework hooks:
 \item \strong{data_security}: Run security audit to catch data leaks
 }
 
-Hook behavior is controlled by \verb{git.hooks.*} settings in config.yml.
+Hook behavior is controlled by \verb{git.hooks.*} settings in settings.yml.
 }
 \examples{
 \dontrun{
-# Install hooks based on config.yml
+# Install hooks based on settings.yml
 hooks_install()
 
 # Force reinstall (overwrites existing hook)

@@ -7,7 +7,7 @@
 read_config(config_file = NULL, environment = NULL)
 }
 \arguments{
-\item{config_file}{Path to configuration file (default: auto-discover settings.yml or config.yml)}
+\item{config_file}{Path to configuration file (default: auto-discover settings.yml or settings.yml)}
 
 \item{environment}{Active environment name (default: R_CONFIG_ACTIVE or "default")}
 }
@@ -15,6 +15,6 @@ read_config(config_file = NULL, environment = NULL)
 The configuration as a list
 }
 \description{
-Reads the project configuration from config.yml or settings.yml with environment-aware
+Reads the project configuration from settings.yml or settings.yml with environment-aware
 merging and split file resolution. Auto-discovers the settings file if not specified.
 }

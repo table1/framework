@@ -17,7 +17,7 @@ configure_directories(directory = NULL, path = NULL, interactive = TRUE)
 Invisibly returns updated config
 }
 \description{
-Interactively configure project directory structure in config.yml.
+Interactively configure project directory structure in settings.yml (or settings.yml for legacy projects).
 Directories control where Framework creates and looks for files.
 }
 \details{

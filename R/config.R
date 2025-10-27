@@ -7,7 +7,7 @@
 #' @param key Character. Dot-notation key path (e.g., "notebooks" or
 #'   "directories.notebooks" or "connections.db.host"). If NULL, returns entire settings.
 #' @param default Optional default value if key is not found (default: NULL)
-#' @param settings_file Settings file path (default: checks "settings.yml" then "config.yml")
+#' @param settings_file Settings file path (default: checks "settings.yml" then "settings.yml")
 #'
 #' @return The settings value, or default if not found. In interactive sessions,
 #'   nested structures are pretty-printed and returned invisibly.
@@ -19,7 +19,7 @@
 #'
 #' **File Discovery:**
 #' - Checks `settings.yml` first (Framework's preferred convention)
-#' - Falls back to `config.yml` if settings.yml not found
+#' - Falls back to `settings.yml` if settings.yml not found
 #' - You can override with explicit `settings_file` parameter
 #'
 #' **Output Behavior:**
@@ -51,13 +51,11 @@
 settings <- function(key = NULL, default = NULL, settings_file = NULL) {
   # Discover settings file if not specified
   if (is.null(settings_file)) {
-    if (file.exists("settings.yml")) {
-      settings_file <- "settings.yml"
-    } else if (file.exists("config.yml")) {
-      settings_file <- "config.yml"
-    } else {
-      stop("No settings file found. Looking for settings.yml or config.yml")
-    }
+    settings_file <- .get_settings_file()
+  }
+
+  if (is.null(settings_file)) {
+    stop("No settings file found. Looking for settings.yml or config.yml")
   }
 
   # Read full config
@@ -115,31 +113,12 @@ config <- function(key = NULL, default = NULL, config_file = NULL) {
   settings(key = key, default = default, settings_file = config_file)
 }
 
-
-#' Get the settings file path with auto-discovery
-#'
-#' Discovers the settings file by checking for settings.yml first, then config.yml.
-#' This ensures consistent behavior across all Framework functions.
-#'
-#' @return Character string with the settings file path
-#' @keywords internal
-.get_settings_file <- function() {
-  if (file.exists("settings.yml")) {
-    return("settings.yml")
-  } else if (file.exists("config.yml")) {
-    return("config.yml")
-  } else {
-    stop("No settings file found. Looking for settings.yml or config.yml")
-  }
-}
-
-
 #' Read project configuration
 #'
-#' Reads the project configuration from config.yml or settings.yml with environment-aware
+#' Reads the project configuration from settings.yml or settings.yml with environment-aware
 #' merging and split file resolution. Auto-discovers the settings file if not specified.
 #'
-#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param environment Active environment name (default: R_CONFIG_ACTIVE or "default")
 #'
 #' @return The configuration as a list
@@ -148,6 +127,10 @@ read_config <- function(config_file = NULL, environment = NULL) {
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
     config_file <- .get_settings_file()
+  }
+
+  if (is.null(config_file)) {
+    stop("No settings file found. Looking for settings.yml or config.yml")
   }
   # Validate arguments
   checkmate::assert_string(config_file, min.chars = 1)
@@ -471,22 +454,31 @@ read_config <- function(config_file = NULL, environment = NULL) {
 
 #' Write project configuration
 #'
-#' Writes the project configuration to config.yml or settings files
+#' Writes the project configuration to settings.yml or settings files
 #' @param config The configuration list to write
-#' @param config_file The configuration file path (default: "config.yml")
+#' @param config_file The configuration file path (default: auto-detect settings.yml/settings.yml)
 #' @param section Optional section to update (e.g. "data")
 #' @export
-write_config <- function(config, config_file = "config.yml", section = NULL) {
+write_config <- function(config, config_file = NULL, section = NULL) {
   # Validate arguments
   checkmate::assert_list(config)
-  checkmate::assert_string(config_file, min.chars = 1)
+  checkmate::assert_string(config_file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(section, min.chars = 1, null.ok = TRUE)
+
+  # Auto-discover config file when not provided
+  if (is.null(config_file)) {
+    config_file <- .get_settings_file()
+    if (is.null(config_file)) {
+      # Default to creating settings.yml when none exist yet
+      config_file <- "settings.yml"
+    }
+  }
 
   if (!is.null(section)) {
 
     # Check if config file exists
     if (!file.exists(config_file)) {
-      stop(sprintf("Configuration file '%s' does not exist. Use write_config(config) to create it first.", config_file))
+      stop(sprintf("Configuration file '%s' does not exist. Use write_config(config) without 'section' to create it first.", config_file))
     }
 
     # Read current config
@@ -525,7 +517,7 @@ write_config <- function(config, config_file = "config.yml", section = NULL) {
         stop(sprintf("Settings file '%s' does not exist", settings_file))
       }
     } else {
-      # This is a direct section in config.yml
+      # This is a direct section in settings.yml/config.yml
       current[[env]][[section]] <- config
       tryCatch(
         yaml::write_yaml(current, config_file),

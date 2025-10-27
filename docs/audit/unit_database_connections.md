@@ -3,7 +3,7 @@
 Status: IN PROGRESS (Unit 05)
 
 ## Connection Discovery & Configuration
-- `R/connections.R:20-52` (`connection_get`) assumes connection metadata lives under `config$connections[[name]]`, but helper utilities like `connection_check()` still read raw `config.yml` via `config::get(file = "config.yml")` (`R/drivers.R:114`). Projects using `settings.yml` (the v1 default) or environment-scoped configs will fail that health check. Align all helpers to `read_config()` with auto-discovery.
+- `R/connections.R:20-52` (`connection_get`) assumes connection metadata lives under `config$connections[[name]]`, but helper utilities like `connection_check()` still read raw `settings.yml` via `config::get(file = "settings.yml")` (`R/drivers.R:114`). Projects using `settings.yml` (the v1 default) or environment-scoped configs will fail that health check. Align all helpers to `read_config()` with auto-discovery.
 - `R/drivers.R:114-206` hardcodes required fields per driver (host, database, user, password). Config templates often rely on `env()` defaults; when passwords resolve to empty string this validation still passes, but the connection functions later enforce the same fields, meaning SQLite/DuckDB configs without `password` hit unnecessary errors. Relax or document per-driver optional fields.
 - Empty stub `R/connections_cifs.R` ships with the package yet nothing references it. Decide whether CIFS/Samba support is being added; otherwise remove to avoid confusion.
 

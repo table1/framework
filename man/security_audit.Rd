@@ -5,7 +5,7 @@
 \title{Security audit for Framework projects}
 \usage{
 security_audit(
-  config_file = "config.yml",
+  config_file = NULL,
   check_git_history = TRUE,
   history_depth = "all",
   auto_fix = FALSE,
@@ -16,7 +16,7 @@ security_audit(
 )
 }
 \arguments{
-\item{config_file}{Path to configuration file (default: "config.yml")}
+\item{config_file}{Path to configuration file (default: auto-detect settings.yml/settings.yml)}
 
 \item{check_git_history}{Logical; if TRUE (default), check git history for leaked data files}
 

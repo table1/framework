@@ -1,21 +1,21 @@
 #' Encryption core functions for Framework
 #'
 #' Password-based encryption using libsodium (Ansible Vault style).
-#' Derives cryptographic keys from user passwords using PBKDF2.
+#' Derives cryptographic keys from user passwords using scrypt (memory-hard KDF).
 #'
 #' @keywords internal
 
 # Constants
 .MAGIC_BYTES <- charToRaw("FWENC1")
 .MAGIC_SIZE <- 6
-.SALT_SIZE <- 32  # For PBKDF2
+.SALT_SIZE <- 32  # For scrypt key derivation
 .NONCE_SIZE <- 24  # For sodium
 .HEADER_SIZE <- 63  # 6 (magic) + 32 (salt) + 24 (nonce) + 1 (reserved)
 #' Derive encryption key from password
 #'
-#' Uses scrypt to derive a 32-byte key from a password.
+#' Uses libsodium's scrypt implementation to derive a 32-byte key from a password.
 #' Scrypt is memory-hard, making it resistant to hardware brute-force attacks.
-#' Uses sodium's default scrypt parameters (N=16384, r=8, p=1).
+#' Uses sodium's default parameters (N = 16384, r = 8, p = 1).
 #'
 #' @param password Character string password
 #' @param salt Raw vector (32 bytes) for key derivation
@@ -81,8 +81,12 @@
 #'
 #' Encrypts raw data using password-derived key.
 #'
-#' File format:
-#' [MAGIC (6)] [SALT (32)] [NONCE (24)] [RESERVED (1)] [CIPHERTEXT (variable)]
+#' File format header (big endian, concatenated in order):
+#' - Magic bytes (`FWENC1`, 6 bytes) identify Framework-encrypted files
+#' - Salt (32 bytes) used for scrypt key derivation
+#' - Nonce (24 bytes) for libsodium's AEAD GCM
+#' - Reserved flag (1 byte, currently `0x00` for future use)
+#' - Followed by ciphertext of variable length
 #'
 #' @param data Raw vector to encrypt
 #' @param password Character string password

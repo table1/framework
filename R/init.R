@@ -20,7 +20,7 @@
   message(sprintf("Created %s", target_file))
 }
 
-#' Create config.yml from template
+#' Create settings.yml from template
 #' @keywords internal
 .create_config_file <- function(type = "analysis", attach_defaults = TRUE, subdir = NULL) {
   # Try type-specific template first, fall back to generic
@@ -318,11 +318,11 @@ init <- function(
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
-  # Check if already initialized (by checking for config.yml)
+  # Check if already initialized (by checking for settings file)
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
-  config_file <- file.path(target_dir, "config.yml")
-  if (file.exists(config_file) && !force) {
-    stop("Project already initialized (config.yml exists). Use force = TRUE to reinitialize.")
+  existing_settings <- .get_settings_file(target_dir)
+  if (!is.null(existing_settings) && !force) {
+    stop("Project already initialized (settings.yml or config.yml exists). Use force = TRUE to reinitialize.")
   }
 
   # Detect if running from template (has init.R) or empty directory
@@ -442,7 +442,7 @@ init <- function(
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(force)
 
-  # NOTE: init() already checked for config.yml, no need to check again here
+  # NOTE: init() already checked for existing settings file, no need to check again here
   target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
 
   # Derive project name
@@ -575,8 +575,12 @@ init <- function(
       to = file.path(target_dir, "config")
     )
 
-    # Update references in config.yml
-    config_path <- file.path(target_dir, "config.yml")
+    # Update references in settings file
+    config_path <- .get_settings_file(target_dir)
+    if (is.null(config_path)) {
+      config_path <- file.path(target_dir, "settings.yml")
+    }
+
     if (file.exists(config_path)) {
       config_content <- readLines(config_path, warn = FALSE)
       # Replace "settings/" with "config/" in references
@@ -593,13 +597,9 @@ init <- function(
 
   if (has_author_info || has_format_pref) {
     # Find settings file (prefer settings.yml, fallback to config.yml)
-    settings_path <- file.path(target_dir, "settings.yml")
-    config_path <- file.path(target_dir, "config.yml")
-
-    if (file.exists(settings_path)) {
-      config_path <- settings_path
-    } else if (!file.exists(config_path)) {
-      config_path <- settings_path  # Use settings.yml as default name
+    config_path <- .get_settings_file(target_dir)
+    if (is.null(config_path)) {
+      config_path <- file.path(target_dir, "settings.yml")
     }
 
     if (file.exists(config_path)) {
@@ -642,13 +642,13 @@ init <- function(
     }
   }
 
-  # Initialization complete (config.yml serves as marker)
+  # Initialization complete (settings.yml/config.yml serves as marker)
   message(sprintf("Project '%s' initialized successfully!", project_name))
 }
 
 #' Check if project is initialized
 #'
-#' Checks for existence of config.yml to determine initialization status.
+#' Checks for existence of settings.yml/settings.yml to determine initialization status.
 #'
 #' @param subdir Optional subdirectory to check.
 #' @return Logical indicating if project is initialized.
@@ -657,13 +657,13 @@ is_initialized <- function(subdir = NULL) {
   # Validate arguments
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
 
-  config_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, "config.yml") else "config.yml"
-  file.exists(config_file)
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  !is.null(.get_settings_file(target_dir))
 }
 
 #' Remove initialization
 #'
-#' Removes config.yml to mark project as uninitialized.
+#' Removes settings.yml/settings.yml to mark project as uninitialized.
 #' WARNING: This will delete your project configuration!
 #'
 #' @param subdir Optional subdirectory to check.
@@ -673,9 +673,10 @@ remove_init <- function(subdir = NULL) {
   # Validate arguments
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
 
-  config_file <- if (!is.null(subdir) && nzchar(subdir)) file.path(subdir, "config.yml") else "config.yml"
-  if (file.exists(config_file)) {
-    warning("Removing config.yml - your project configuration will be deleted!", call. = FALSE)
+  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
+  config_file <- .get_settings_file(target_dir)
+  if (!is.null(config_file) && file.exists(config_file)) {
+    warning("Removing settings file - your project configuration will be deleted!", call. = FALSE)
     unlink(config_file)
     TRUE
   } else {
@@ -820,8 +821,18 @@ make_init <- function(output_file = "init.R") {
   old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)
 
-  if (!is.null(target_dir) && target_dir != ".") {
-    setwd(target_dir)
+  if (!is.null(target_dir) && nzchar(target_dir) && target_dir != ".") {
+    if (dir.exists(target_dir)) {
+      setwd(target_dir)
+    } else {
+      target_path <- tryCatch(
+        normalizePath(target_dir, winslash = "/", mustWork = TRUE),
+        error = function(e) NULL
+      )
+      if (!is.null(target_path) && dir.exists(target_path)) {
+        setwd(target_path)
+      }
+    }
   }
 
   # Check if we're in a git repo
@@ -871,8 +882,12 @@ make_init <- function(output_file = "init.R") {
     return(invisible(NULL))
   }
 
-  # Update config.yml with hook settings using simple gsub (platform-safe)
-  config_path <- file.path(target_dir, "config.yml")
+  # Update settings file with hook settings using simple gsub (platform-safe)
+  config_path <- .get_settings_file(target_dir)
+  if (is.null(config_path)) {
+    config_path <- file.path(target_dir, "settings.yml")
+  }
+
   if (file.exists(config_path)) {
     tryCatch({
       config_content <- readLines(config_path, warn = FALSE)
@@ -902,7 +917,7 @@ make_init <- function(output_file = "init.R") {
 
       writeLines(config_content, config_path)
     }, error = function(e) {
-      warning("Could not update config.yml with hook settings: ", e$message)
+      warning("Could not update settings file with hook settings: ", e$message)
     })
   }
 
@@ -918,7 +933,7 @@ make_init <- function(output_file = "init.R") {
       }
 
       # Install hooks
-      hooks_install(config_file = "config.yml", force = TRUE, verbose = FALSE)
+      hooks_install(config_file = (.get_settings_file() %||% "settings.yml"), force = TRUE, verbose = FALSE)
 
       # Show message about what was installed
       hooks_msg <- character()

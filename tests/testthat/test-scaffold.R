@@ -1,4 +1,8 @@
 test_that("scaffold() fails fast when not in a Framework project", {
+  # Ensure tempdir has no leftover settings markers from other tests
+  unlink(file.path(tempdir(), "settings.yml"))
+  unlink(file.path(tempdir(), "config.yml"))
+
   # Create a temporary empty directory
   tmp_dir <- tempfile()
   dir.create(tmp_dir)
@@ -62,6 +66,9 @@ test_that("scaffold() works when config.yml exists", {
 })
 
 test_that("standardize_wd() returns NULL when project not found", {
+  unlink(file.path(tempdir(), "settings.yml"))
+  unlink(file.path(tempdir(), "config.yml"))
+
   # Create a temporary empty directory
   tmp_dir <- tempfile()
   dir.create(tmp_dir)

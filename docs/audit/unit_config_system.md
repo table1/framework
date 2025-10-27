@@ -7,7 +7,7 @@ Status: IN PROGRESS (Unit 03)
 - `R/config.R:55-87` — Single-key convenience fetch grabs `cfg$directories[[key]]` but doesn’t consider environment-scoped configs where directories may be under `default$directories`; confirm `read_config()` always flattens before this helper and add regression tests.
 - `R/config.R:146-218` — `.resolve_split_files()` warns on conflicts but still leaves string file refs in config when `split_config` introduces sibling keys; ensure final config has concrete structures only, otherwise downstream functions may re-trigger file resolution recursively.
 - `R/config.R:248-282` — `env()` parser only supports double-quoted arguments; broaden regex to accept single quotes and to escape embedded commas.
-- `R/config.R:297-338` — `write_config()` defaults to `config.yml`; align default with modern `settings.yml` and provide helper to auto-select active file when only `settings.yml` exists. Also, when writing sections, `current[[env]]` assumes environment-wrapped YAML, which fails for flat files (no `default:` key).
+- `R/config.R:297-338` — `write_config()` defaults to `settings.yml`; align default with modern `settings.yml` and provide helper to auto-select active file when only `settings.yml` exists. Also, when writing sections, `current[[env]]` assumes environment-wrapped YAML, which fails for flat files (no `default:` key).
 - `R/config.R:310-329` — Section update path only handles split files under `settings/`; allow custom directories and warn before overwriting.
 - `R/config.R:352-371` — `.pretty_print_config()` prints via `str()` but hardcodes label “Configuration”; consider returning tibble or JSON for automation. Mention in docs.
 
@@ -29,7 +29,7 @@ Status: IN PROGRESS (Unit 03)
 - `R/schema.R:146-205` — `.list_columns` duplicates query bodies; refactor to reduce copy/paste and ensure consistent ordering across databases (fallback uses `dbListFields` first leading to different case/ordering).
 
 ## R/status.R
-- `R/status.R:17-23` — Hard-stops if `config.yml` missing, ignoring projects using `settings.yml`. Switch to `.get_settings_file()` so command works with default layout.
+- `R/status.R:17-23` — Hard-stops if `settings.yml` missing, ignoring projects using `settings.yml`. Switch to `.get_settings_file()` so command works with default layout.
 - `R/status.R:28-40` — ANSI color codes are embedded directly; add detection (`crayon` or `cli`) with fallback to plain text for non-ANSI terminals.
 - `R/status.R:44-89` — Git status relies on `system("git …")`; on Windows this may require shell; use `system2` and capture exit statuses for reliability.
 - `R/status.R:112-142` — AI assistant reporting only lists file presence; consider validating canonical file alignment with config and summarizing sync status (e.g., staleness via modification timestamps).

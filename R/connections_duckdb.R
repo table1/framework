@@ -1,6 +1,6 @@
 #' Connect to a DuckDB database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return A DuckDB database connection
 #' @keywords internal
 .connect_duckdb <- function(config) {
@@ -66,7 +66,7 @@
 
 #' Check if a DuckDB database exists
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if database exists, FALSE otherwise
 #' @keywords internal
 .check_duckdb_exists <- function(config) {
@@ -80,7 +80,7 @@
 
 #' Create a new DuckDB database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if successful
 #' @keywords internal
 .create_duckdb_db <- function(config) {

@@ -171,7 +171,7 @@ init_from_empty <- function(project_name, project_structure, lintr, styler) {
   # 2. Create scaffold.R
   create_scaffold_file()
 
-  # 3. Create config.yml
+  # 3. Create settings.yml
   create_config_file(project_structure)
 
   # 4. Create .env template
@@ -206,7 +206,7 @@ display_next_steps <- function() {
   cat("\n")
   cat("✓ Framework project initialized successfully!\n\n")
   cat("Next steps:\n")
-  cat("  1. Review and edit config.yml\n")
+  cat("  1. Review and edit settings.yml\n")
   cat("  2. Add secrets to .env (gitignored)\n")
   cat("  3. Start a new R session:\n")
   cat("     library(framework)\n")
@@ -288,7 +288,7 @@ framework::init(
 3. **Test file creation:**
    - Verify init.R created with correct content
    - Verify scaffold.R created
-   - Verify config.yml created
+   - Verify settings.yml created
    - Verify .env template created
 
 4. **Test non-interactive mode:**
@@ -302,7 +302,7 @@ framework::init(
        interactive = FALSE
      )
      expect_true(file.exists("init.R"))
-     expect_true(file.exists("config.yml"))
+     expect_true(file.exists("settings.yml"))
    })
    ```
 

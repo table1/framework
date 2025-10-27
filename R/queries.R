@@ -6,7 +6,7 @@
 #' connection configuration.
 #'
 #' @param query SQL query to execute
-#' @param connection_name Name of the connection in config.yml
+#' @param connection_name Name of the connection in settings.yml
 #' @param ... Additional arguments passed to DBI::dbGetQuery
 #' @return A data frame with the query results
 #'
@@ -15,7 +15,7 @@
 #' # Default: creates new connection, auto-disconnects
 #' users <- query_get("SELECT * FROM users", "my_db")
 #'
-#' # To use pooling, configure in config.yml:
+#' # To use pooling, configure in settings.yml:
 #' # connections:
 #' #   my_db:
 #' #     driver: postgres
@@ -53,7 +53,7 @@ query_get <- function(query, connection_name, ...) {
 #' connection configuration.
 #'
 #' @param query SQL query to execute
-#' @param connection_name Name of the connection in config.yml
+#' @param connection_name Name of the connection in settings.yml
 #' @param ... Additional arguments passed to DBI::dbExecute
 #' @return Number of rows affected
 #'
@@ -62,7 +62,7 @@ query_get <- function(query, connection_name, ...) {
 #' # Default: creates new connection, auto-disconnects
 #' rows <- query_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
 #'
-#' # To use pooling, configure in config.yml:
+#' # To use pooling, configure in settings.yml:
 #' # connections:
 #' #   my_db:
 #' #     driver: postgres

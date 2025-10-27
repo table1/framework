@@ -9,7 +9,7 @@ hooks_disable(hook_name, config_file = NULL, verbose = TRUE)
 \arguments{
 \item{hook_name}{Name of hook: "ai_sync" or "data_security"}
 
-\item{config_file}{Path to configuration file (default: auto-discover settings.yml or config.yml)}
+\item{config_file}{Path to configuration file (default: auto-discover settings.yml or settings.yml)}
 
 \item{verbose}{Logical; if TRUE (default), show messages}
 }

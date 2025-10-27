@@ -31,7 +31,7 @@ test_that("renv_enabled() returns FALSE when marker doesn't exist", {
 })
 
 test_that(".parse_package_spec() handles simple package names", {
-  result <- .parse_package_spec("dplyr")
+  result <- framework:::.parse_package_spec("dplyr")
 
   expect_equal(result$name, "dplyr")
   expect_null(result$version)
@@ -41,7 +41,7 @@ test_that(".parse_package_spec() handles simple package names", {
 })
 
 test_that(".parse_package_spec() handles version pins", {
-  result <- .parse_package_spec("dplyr@1.1.0")
+  result <- framework:::.parse_package_spec("dplyr@1.1.0")
 
   expect_equal(result$name, "dplyr")
   expect_equal(result$version, "1.1.0")
@@ -49,7 +49,7 @@ test_that(".parse_package_spec() handles version pins", {
 })
 
 test_that(".parse_package_spec() handles GitHub repos without ref", {
-  result <- .parse_package_spec("tidyverse/dplyr")
+  result <- framework:::.parse_package_spec("tidyverse/dplyr")
 
   expect_equal(result$name, "dplyr")
   expect_equal(result$repo, "tidyverse/dplyr")
@@ -59,7 +59,7 @@ test_that(".parse_package_spec() handles GitHub repos without ref", {
 })
 
 test_that(".parse_package_spec() handles GitHub repos with ref", {
-  result <- .parse_package_spec("tidyverse/dplyr@main")
+  result <- framework:::.parse_package_spec("tidyverse/dplyr@main")
 
   expect_equal(result$name, "dplyr")
   expect_equal(result$repo, "tidyverse/dplyr")
@@ -68,7 +68,7 @@ test_that(".parse_package_spec() handles GitHub repos with ref", {
 })
 
 test_that(".parse_package_spec() handles GitHub repos with branch", {
-  result <- .parse_package_spec("user/repo@feature-branch")
+  result <- framework:::.parse_package_spec("user/repo@feature-branch")
 
   expect_equal(result$name, "repo")
   expect_equal(result$repo, "user/repo")
@@ -77,7 +77,7 @@ test_that(".parse_package_spec() handles GitHub repos with branch", {
 })
 
 test_that(".parse_package_spec() trims whitespace", {
-  result <- .parse_package_spec("  dplyr  ")
+  result <- framework:::.parse_package_spec("  dplyr  ")
 
   expect_equal(result$name, "dplyr")
   expect_equal(result$source, "cran")
@@ -93,7 +93,7 @@ test_that(".mark_scaffolded() creates marker on first run", {
     file.remove(".framework_scaffolded")
   }
 
-  .mark_scaffolded()
+  framework:::.mark_scaffolded()
 
   expect_true(file.exists(".framework_scaffolded"))
   content <- readLines(".framework_scaffolded")
@@ -113,13 +113,13 @@ test_that(".mark_scaffolded() appends on subsequent runs", {
   }
 
   # First run
-  .mark_scaffolded()
+  framework:::.mark_scaffolded()
   content1 <- readLines(".framework_scaffolded")
   expect_length(content1, 1)
 
   # Second run
   Sys.sleep(0.1) # Ensure different timestamp
-  .mark_scaffolded()
+  framework:::.mark_scaffolded()
   content2 <- readLines(".framework_scaffolded")
   expect_length(content2, 2)
   expect_true(grepl("^First scaffolded at:", content2[1]))
@@ -200,7 +200,7 @@ test_that(".update_gitignore_for_renv() creates .gitignore if missing", {
 
   if (file.exists(".gitignore")) file.remove(".gitignore")
 
-  .update_gitignore_for_renv()
+  framework:::.update_gitignore_for_renv()
 
   expect_true(file.exists(".gitignore"))
   content <- readLines(".gitignore")
@@ -219,7 +219,7 @@ test_that(".update_gitignore_for_renv() appends to existing .gitignore", {
   # Create existing .gitignore
   writeLines(c("*.Rproj", ".Rhistory"), ".gitignore")
 
-  .update_gitignore_for_renv()
+  framework:::.update_gitignore_for_renv()
 
   content <- readLines(".gitignore")
   expect_true(any(grepl("^\\*\\.Rproj$", content)))
@@ -238,7 +238,7 @@ test_that(".update_gitignore_for_renv() doesn't duplicate entries", {
   # Create .gitignore with renv entries already
   writeLines(c("*.Rproj", "# renv", "renv/library/"), ".gitignore")
 
-  .update_gitignore_for_renv()
+  framework:::.update_gitignore_for_renv()
 
   content <- readLines(".gitignore")
   renv_headers <- sum(grepl("^# renv$", content))

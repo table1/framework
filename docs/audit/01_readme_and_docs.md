@@ -42,7 +42,7 @@ Status: TODO
 
 ## Unit: inst/project_structure/*/README.md — Starter Templates
 Status: TODO
-- Review each template README to ensure terminology aligns with 1.0 (e.g., `config.yml` vs. `settings.yml`, `scaffold.R` vs. `init.R`).
+- Review each template README to ensure terminology aligns with 1.0 (e.g., `settings.yml` vs. `settings.yml`, `scaffold.R` vs. `init.R`).
 - Add one or two sentences about how each template differs so users choose the right starting point.
 - Include direct references to the main docs (Quick Start, workflow) for onboarding consistency.
 

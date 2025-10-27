@@ -7,7 +7,7 @@
 
 **Finding: Framework is MOSTLY directory-agnostic with 3 specific dependencies**
 
-The package can work with any directory structure as long as users configure paths correctly in config.yml. However, there are **3 hardcoded paths** that should be made configurable:
+The package can work with any directory structure as long as users configure paths correctly in settings.yml. However, there are **3 hardcoded paths** that should be made configurable:
 
 1. ✅ **Configurable (already):** `scratch_dir`, `cache_dir`
 2. ❌ **Hardcoded:** `functions/` directory (scaffold.R:154)
@@ -110,7 +110,7 @@ options:
 **Finding:** No hardcoded paths found in R/ code
 
 **Why it works:**
-- data_load() and data_save() use paths from config.yml data catalog
+- data_load() and data_save() use paths from settings.yml data catalog
 - Users specify full paths in config: `path: data/source/private/survey.csv`
 - Or use direct file paths: `data_load("any/path/file.csv")`
 
@@ -222,10 +222,10 @@ project/
 │   └── priv/          # Not "private"
 ├── my-data/
 │   └── temp/          # Not "scratch"
-└── config.yml
+└── settings.yml
 ```
 
-config.yml:
+settings.yml:
 ```yaml
 options:
   functions_dir: "my-functions"
@@ -244,7 +244,7 @@ Create project with:
 ```
 project/
 ├── notebooks/
-└── config.yml
+└── settings.yml
 ```
 
 **Expected:**
@@ -258,10 +258,10 @@ Create project with:
 project/
 ├── presentations/
 ├── helpers/           # Instead of "functions/"
-└── config.yml
+└── settings.yml
 ```
 
-config.yml:
+settings.yml:
 ```yaml
 options:
   functions_dir: "helpers"

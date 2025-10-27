@@ -57,7 +57,7 @@ drivers_install()  # Shows menu to select drivers
 
 ### Step 3: Configure Your Connection
 
-Add database connection to `config.yml`:
+Add database connection to `settings.yml`:
 
 ```yaml
 connections:
@@ -318,7 +318,7 @@ DB_PASSWORD=super_secret_password
 DB_USER=app_user
 ```
 
-**2. Reference in `config.yml`:**
+**2. Reference in `settings.yml`:**
 ```yaml
 connections:
   production:
@@ -385,7 +385,7 @@ odbcinst -q -d  # Should show "ODBC Driver 18 for SQL Server"
 
 **Checklist:**
 - Is the database server running?
-- Is the host/port correct in config.yml?
+- Is the host/port correct in settings.yml?
 - Are you using the right network (localhost vs 127.0.0.1)?
 - Is firewall blocking the connection?
 - For cloud databases, is your IP whitelisted?

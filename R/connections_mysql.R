@@ -1,6 +1,6 @@
 #' Connect to a MySQL or MariaDB database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return A MySQL/MariaDB database connection
 #' @keywords internal
 .connect_mysql <- function(config) {
@@ -48,7 +48,7 @@
 
 #' Check if a MySQL/MariaDB database exists
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if database exists, FALSE otherwise
 #' @keywords internal
 .check_mysql_exists <- function(config) {
@@ -77,7 +77,7 @@
 
 #' Create a new MySQL/MariaDB database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if successful
 #' @keywords internal
 .create_mysql_db <- function(config) {

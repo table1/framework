@@ -7,7 +7,7 @@
 get_connection(name)
 }
 \arguments{
-\item{name}{Character. Name of the connection in config.yml (e.g., "postgres")}
+\item{name}{Character. Name of the connection in settings.yml (e.g., "postgres")}
 }
 \value{
 A database connection object

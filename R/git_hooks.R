@@ -1,8 +1,8 @@
 #' Install Git Pre-commit Hook
 #'
-#' Creates a pre-commit hook that runs Framework checks based on config.yml settings.
+#' Creates a pre-commit hook that runs Framework checks based on settings.yml settings.
 #'
-#' @param config_file Path to configuration file (default: "config.yml")
+#' @param config_file Path to configuration file (default: "settings.yml")
 #' @param force Logical; if TRUE, overwrite existing hook (default: FALSE)
 #' @param verbose Logical; if TRUE (default), show installation messages
 #'
@@ -15,11 +15,11 @@
 #'   \item **data_security**: Run security audit to catch data leaks
 #' }
 #'
-#' Hook behavior is controlled by `git.hooks.*` settings in config.yml.
+#' Hook behavior is controlled by `git.hooks.*` settings in settings.yml.
 #'
 #' @examples
 #' \dontrun{
-#' # Install hooks based on config.yml
+#' # Install hooks based on settings.yml
 #' hooks_install()
 #'
 #' # Force reinstall (overwrites existing hook)
@@ -41,14 +41,14 @@ hooks_install <- function(config_file = NULL,
 
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
-    tryCatch({
-      config_file <- .get_settings_file()
-    }, error = function(e) {
-      if (verbose) {
-        message("✗ Settings file not found")
-      }
-      return(invisible(FALSE))
-    })
+    config_file <- .get_settings_file()
+  }
+
+  if (is.null(config_file)) {
+    if (verbose) {
+      message("✗ Settings file not found")
+    }
+    return(invisible(FALSE))
   }
 
   # Check if config exists
@@ -65,7 +65,7 @@ hooks_install <- function(config_file = NULL,
 
   if (!ai_sync_enabled && !data_security_enabled) {
     if (verbose) {
-      message("ℹ No hooks enabled in config.yml")
+      message("ℹ No hooks enabled in settings.yml/config.yml")
       message("  Enable with: config$git$hooks$ai_sync = TRUE")
     }
     return(invisible(FALSE))
@@ -168,7 +168,7 @@ hooks_uninstall <- function(verbose = TRUE) {
 #' Enables a specific hook in settings and reinstalls the pre-commit hook.
 #'
 #' @param hook_name Name of hook: "ai_sync" or "data_security"
-#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
 #' @return Invisible TRUE on success
@@ -189,14 +189,13 @@ hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
-    tryCatch({
-      config_file <- .get_settings_file()
-    }, error = function(e) {
+    config_file <- .get_settings_file()
+    if (is.null(config_file)) {
       stop("Settings file not found")
-    })
+    }
   }
 
-  # Update config.yml
+  # Update settings.yml/config.yml
   .update_hook_config(hook_name, TRUE, config_file)
 
   if (verbose) {
@@ -213,7 +212,7 @@ hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #' Disables a specific hook in settings and reinstalls the pre-commit hook.
 #'
 #' @param hook_name Name of hook: "ai_sync" or "data_security"
-#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
 #' @return Invisible TRUE on success
@@ -228,14 +227,13 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
-    tryCatch({
-      config_file <- .get_settings_file()
-    }, error = function(e) {
+    config_file <- .get_settings_file()
+    if (is.null(config_file)) {
       stop("Settings file not found")
-    })
+    }
   }
 
-  # Update config.yml
+  # Update settings.yml/config.yml
   .update_hook_config(hook_name, FALSE, config_file)
 
   if (verbose) {
@@ -258,7 +256,7 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #'
 #' Shows which hooks are enabled and their current status.
 #'
-#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #'
 #' @return Data frame with hook information
 #'
@@ -266,12 +264,12 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 hooks_list <- function(config_file = NULL) {
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
-    tryCatch({
-      config_file <- .get_settings_file()
-    }, error = function(e) {
-      message("✗ Settings file not found")
-      return(invisible(NULL))
-    })
+    config_file <- .get_settings_file()
+  }
+
+  if (is.null(config_file)) {
+    message("✗ Settings file not found")
+    return(invisible(NULL))
   }
 
   if (!file.exists(config_file)) {
@@ -362,7 +360,7 @@ hooks_list <- function(config_file = NULL) {
 }
 
 
-#' Update hook configuration in config.yml
+#' Update hook configuration in settings.yml/settings.yml
 #' @keywords internal
 .update_hook_config <- function(hook_name, enabled, config_file) {
   if (!file.exists(config_file)) {
@@ -370,18 +368,27 @@ hooks_list <- function(config_file = NULL) {
   }
 
   # Read config
-  config_content <- yaml::read_yaml(config_file)
+  config_content <- yaml::read_yaml(config_file, eval.expr = FALSE)
+
+  has_envs <- !is.null(config_content$default) && is.list(config_content$default)
+  env_config <- if (has_envs) config_content$default else config_content
 
   # Ensure structure exists
-  if (is.null(config_content$default$git)) {
-    config_content$default$git <- list()
+  if (is.null(env_config$git)) {
+    env_config$git <- list()
   }
-  if (is.null(config_content$default$git$hooks)) {
-    config_content$default$git$hooks <- list()
+  if (is.null(env_config$git$hooks)) {
+    env_config$git$hooks <- list()
   }
 
   # Update hook setting
-  config_content$default$git$hooks[[hook_name]] <- enabled
+  env_config$git$hooks[[hook_name]] <- enabled
+
+  if (has_envs) {
+    config_content$default <- env_config
+  } else {
+    config_content <- env_config
+  }
 
   # Write back
   yaml::write_yaml(config_content, config_file)

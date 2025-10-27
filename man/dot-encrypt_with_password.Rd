@@ -18,7 +18,13 @@ Raw vector with header and encrypted data
 Encrypts raw data using password-derived key.
 }
 \details{
-File format:
-\link{MAGIC (6)} \link{SALT (32)} \link{NONCE (24)} \link{RESERVED (1)} \link{CIPHERTEXT (variable)}
+File format header (big endian, concatenated in order):
+\itemize{
+\item Magic bytes (\code{FWENC1}, 6 bytes) identify Framework-encrypted files
+\item Salt (32 bytes) used for scrypt key derivation
+\item Nonce (24 bytes) for libsodium's AEAD GCM
+\item Reserved flag (1 byte, currently \code{0x00} for future use)
+\item Followed by ciphertext of variable length
+}
 }
 \keyword{internal}

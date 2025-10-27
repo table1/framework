@@ -12,7 +12,7 @@ settings(key = NULL, default = NULL, settings_file = NULL)
 
 \item{default}{Optional default value if key is not found (default: NULL)}
 
-\item{settings_file}{Settings file path (default: checks "settings.yml" then "config.yml")}
+\item{settings_file}{Settings file path (default: checks "settings.yml" then "settings.yml")}
 }
 \value{
 The settings value, or default if not found. In interactive sessions,
@@ -33,7 +33,7 @@ For directory settings, the function checks multiple locations:
 \strong{File Discovery:}
 \itemize{
 \item Checks \code{settings.yml} first (Framework's preferred convention)
-\item Falls back to \code{config.yml} if settings.yml not found
+\item Falls back to \code{settings.yml} if settings.yml not found
 \item You can override with explicit \code{settings_file} parameter
 }
 

@@ -1,6 +1,6 @@
 #' Check if settings file exists
 #'
-#' Checks for settings.yml (preferred) or config.yml (backward compatibility).
+#' Checks for settings.yml (preferred) or settings.yml (backward compatibility).
 #'
 #' @param path Optional path to check in (default: current directory)
 #' @return TRUE if either file exists, FALSE otherwise
@@ -11,7 +11,7 @@
 
 #' Get settings file path
 #'
-#' Returns path to settings.yml (preferred) or config.yml (backward compatibility).
+#' Returns path to settings.yml (preferred) or settings.yml (backward compatibility).
 #'
 #' @param path Optional path to check in (default: current directory)
 #' @return Path to settings file, or NULL if neither exists
@@ -71,7 +71,7 @@
 #'
 #' @details
 #' The function looks for common framework project indicators:
-#' - settings.yml or config.yml file
+#' - settings.yml or settings.yml file
 #' - .Rprofile file
 #' - Being in common subdirectories (scratch, work)
 #'

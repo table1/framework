@@ -13,6 +13,6 @@ remove_init(subdir = NULL)
 Logical indicating if removal was successful.
 }
 \description{
-Removes config.yml to mark project as uninitialized.
+Removes settings.yml/settings.yml to mark project as uninitialized.
 WARNING: This will delete your project configuration!
 }

@@ -23,9 +23,13 @@ result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
   # Get results directory from config
   config <- read_config()
   results_dir <- if (public) {
-    config$options$results$public_dir %||% "results/public"
+    config$directories$results_public %||%
+      config$options$results$public_dir %||%
+      "results/public"
   } else {
-    config$options$results$private_dir %||% "results/private"
+    config$directories$results_private %||%
+      config$options$results$private_dir %||%
+      "results/private"
   }
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -136,9 +140,13 @@ result_get <- function(name, password = NULL) {
   # Get result file from config
   config <- read_config()
   results_dir <- if (result$public) {
-    config$options$results$public_dir %||% "results/public"
+    config$directories$results_public %||%
+      config$options$results$public_dir %||%
+      "results/public"
   } else {
-    config$options$results$private_dir %||% "results/private"
+    config$directories$results_private %||%
+      config$options$results$private_dir %||%
+      "results/private"
   }
   result_file <- file.path(results_dir, paste0(name, ".rds"))
 
@@ -201,4 +209,3 @@ result_list <- function() {
 
   results
 }
-

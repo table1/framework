@@ -24,7 +24,8 @@ configure_author(
 Invisibly returns updated config
 }
 \description{
-Interactively set author information in config.yml. This information is
+Interactively set author information in settings.yml (or settings.yml for legacy projects).
+This information is
 used in notebooks, reports, and other documents.
 }
 \examples{

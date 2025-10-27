@@ -88,7 +88,7 @@ settings("missing", default = "x")  # Provide fallback for missing keys
 
 ### Settings Files
 ```r
-settings <- read_config()        # Read settings.yml (or config.yml)
+settings <- read_config()        # Read settings.yml (or settings.yml)
 write_config(settings)           # Write settings back
 ```
 
@@ -229,7 +229,7 @@ capture_output(expr)             # Capture console output
 
 ## Configuration File Examples
 
-### config.yml (Single File Approach)
+### settings.yml (Single File Approach)
 ```yaml
 default:
   project_name: "MyProject"
@@ -282,7 +282,7 @@ standardize_wd()
 ### Project Type (Default)
 ```
 project/
-  ├── config.yml              # Main configuration
+  ├── settings.yml              # Main configuration
   ├── .env                    # Environment variables (secrets)
   ├── framework.db            # Framework metadata database
   ├── data/                   # Data files
@@ -305,7 +305,7 @@ project/
 ### Course Type
 ```
 course/
-  ├── config.yml
+  ├── settings.yml
   ├── .env
   ├── framework.db
   ├── data/
@@ -320,7 +320,7 @@ course/
 ### Presentation Type
 ```
 presentation/
-  ├── config.yml
+  ├── settings.yml
   ├── .env
   ├── framework.db
   ├── presentation.qmd        # Main presentation file

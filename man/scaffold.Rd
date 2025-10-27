@@ -11,7 +11,7 @@ This function initializes the project environment by:
 \enumerate{
 \item Standardizing the working directory (for notebooks in subdirectories)
 \item Loading environment variables from .env
-\item Loading configuration from settings.yml (or config.yml)
+\item Loading configuration from settings.yml (or settings.yml)
 \item Installing required packages
 \item Loading all functions from the functions directory
 }

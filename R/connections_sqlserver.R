@@ -1,6 +1,6 @@
 #' Connect to a SQL Server database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return A SQL Server database connection via ODBC
 #' @keywords internal
 .connect_sqlserver <- function(config) {
@@ -84,7 +84,7 @@
 
 #' Check if a SQL Server database exists
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if database exists, FALSE otherwise
 #' @keywords internal
 .check_sqlserver_exists <- function(config) {
@@ -113,7 +113,7 @@
 
 #' Create a new SQL Server database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if successful
 #' @keywords internal
 .create_sqlserver_db <- function(config) {

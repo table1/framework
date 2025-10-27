@@ -9,7 +9,7 @@ query_execute(query, connection_name, ...)
 \arguments{
 \item{query}{SQL query to execute}
 
-\item{connection_name}{Name of the connection in config.yml}
+\item{connection_name}{Name of the connection in settings.yml}
 
 \item{...}{Additional arguments passed to DBI::dbExecute}
 }
@@ -27,7 +27,7 @@ connection configuration.
 # Default: creates new connection, auto-disconnects
 rows <- query_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
 
-# To use pooling, configure in config.yml:
+# To use pooling, configure in settings.yml:
 # connections:
 #   my_db:
 #     driver: postgres

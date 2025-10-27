@@ -1,6 +1,6 @@
 #' Connect to a PostgreSQL database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return A PostgreSQL database connection
 #' @keywords internal
 .connect_postgres <- function(config) {
@@ -55,7 +55,7 @@
 
 #' Check if a PostgreSQL database exists
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if database exists, FALSE otherwise
 #' @keywords internal
 .check_postgres_exists <- function(config) {
@@ -84,7 +84,7 @@
 
 #' Create a new PostgreSQL database
 #'
-#' @param config Connection configuration from config.yml
+#' @param config Connection configuration from settings.yml
 #' @return TRUE if successful
 #' @keywords internal
 .create_postgres_db <- function(config) {

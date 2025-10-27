@@ -153,13 +153,16 @@ make_notebook <- function(name,
   # Replace author placeholder with actual config value if available
   # Try to load config to get author info
   cfg <- tryCatch(read_config(), error = function(e) NULL)
-  if (!is.null(cfg$author$name)) {
-    # Replace !expr config$author$name with the actual name as a string
-    stub_content <- gsub("!expr config\\$author\\$name",
-                        sprintf("\"%s\"", cfg$author$name),
-                        stub_content,
-                        fixed = FALSE)
+  author_name <- cfg$author$name
+  if (is.null(author_name) || !nzchar(author_name)) {
+    author_name <- "Your Name"
   }
+
+  stub_content <- gsub(
+    'author:\\s*("Your Name"|!expr config\\$author\\$name|"`r config\\$author\\$name`")',
+    sprintf('author: "%s"', author_name),
+    stub_content
+  )
 
   # Write notebook
   writeLines(stub_content, target_path)

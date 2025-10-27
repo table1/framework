@@ -11,7 +11,7 @@ While renv provides excellent reproducibility guarantees, it adds complexity and
 1. **Opt-in, not forced**: Users choose when they need reproducibility
 2. **Educational, not prescriptive**: First scaffold shows a tip about renv, easily suppressible
 3. **Simple abstractions**: Wrap renv's complex CLI behind Framework's simple functions
-4. **config.yml as source of truth**: One-way sync from config to renv.lock
+4. **settings.yml as source of truth**: One-way sync from config to renv.lock
 
 ## Enabling renv
 
@@ -23,7 +23,7 @@ renv_enable()
 This will:
 - Initialize renv (if not already initialized)
 - Create `.framework_renv_enabled` marker file
-- Sync packages from `config.yml` to renv
+- Sync packages from `settings.yml` to renv
 - Update `.gitignore` with renv directories
 - Create snapshot in `renv.lock`
 
@@ -39,7 +39,7 @@ renv_disable(keep_renv = FALSE)
 
 ## Version Pinning Syntax
 
-Framework supports version pinning in `config.yml` whether or not renv is enabled:
+Framework supports version pinning in `settings.yml` whether or not renv is enabled:
 
 ```yaml
 packages:
@@ -106,11 +106,11 @@ Framework can manage your R package versions with renv for reproducibility.
 This ensures your project uses consistent package versions across environments.
 
 To enable: renv_enable()
-To disable this message: Set 'options: renv_nag: false' in config.yml
+To disable this message: Set 'options: renv_nag: false' in settings.yml
 Learn more: ?renv_enable
 ```
 
-Suppress this message by adding to `config.yml`:
+Suppress this message by adding to `settings.yml`:
 
 ```yaml
 options:
@@ -120,7 +120,7 @@ options:
 The message is automatically suppressed:
 - After the first scaffold (tracked via `.framework_scaffolded` marker)
 - When renv is already enabled
-- When `options: renv_nag: false` in config.yml
+- When `options: renv_nag: false` in settings.yml
 
 ## How It Works
 
@@ -136,7 +136,7 @@ renv_enabled()  # TRUE if marker exists, FALSE otherwise
 
 When you run `scaffold()`, Framework:
 
-1. Reads packages from `config.yml`
+1. Reads packages from `settings.yml`
 2. Checks if renv is enabled via `renv_enabled()`
 3. Routes installation through either:
    - `renv::install()` if renv enabled
@@ -144,13 +144,13 @@ When you run `scaffold()`, Framework:
 
 ### Sync Strategy
 
-Framework uses **one-way sync** from `config.yml` → `renv.lock`:
+Framework uses **one-way sync** from `settings.yml` → `renv.lock`:
 
-1. You edit `packages:` list in `config.yml`
+1. You edit `packages:` list in `settings.yml`
 2. Run `scaffold()` or `renv_enable()` to install packages
 3. Run `packages_snapshot()` to update `renv.lock`
 
-This keeps `config.yml` as the single source of truth and avoids bidirectional sync complexity.
+This keeps `settings.yml` as the single source of truth and avoids bidirectional sync complexity.
 
 ## Files and Markers
 
@@ -280,7 +280,7 @@ Your packages remain installed, but future installations will use standard `inst
 ### Sync Function
 
 `.sync_packages_to_renv()`:
-1. Reads `config.yml` packages list
+1. Reads `settings.yml` packages list
 2. Parses each package spec
 3. Installs via `renv::install()` if missing or version mismatch
 4. Calls `renv::snapshot()` to update renv.lock

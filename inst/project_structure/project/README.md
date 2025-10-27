@@ -17,7 +17,7 @@ A data analysis project built with the Framework R package.
 ├── results/            # Outputs (public/private)
 ├── docs/               # Documentation
 ├── resources/          # Additional materials
-├── config.yml          # Project configuration
+├── settings.yml        # Project configuration
 └── scaffold.R          # Initialization script
 ```
 
@@ -31,7 +31,7 @@ make_notebook("analysis")  # Create new notebook
 
 ## Configuration
 
-Edit `config.yml` to customize:
+Edit `settings.yml` to customize:
 - Data sources and connections
 - Required packages
 - Directory paths

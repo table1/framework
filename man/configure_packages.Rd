@@ -24,7 +24,7 @@ configure_packages(
 Invisibly returns updated config
 }
 \description{
-Interactively add package dependencies to config.yml. Packages can be
+Interactively add package dependencies to settings.yml (or settings.yml for legacy projects). Packages can be
 installed from CRAN, GitHub, or Bioconductor, with version pinning support.
 }
 \details{

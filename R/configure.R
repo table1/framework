@@ -1,6 +1,7 @@
 #' Configure Author Information
 #'
-#' Interactively set author information in config.yml. This information is
+#' Interactively set author information in settings.yml (or settings.yml for legacy projects).
+#' This information is
 #' used in notebooks, reports, and other documents.
 #'
 #' @param name Character. Author name (optional, prompts if not provided)
@@ -32,9 +33,9 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
   checkmate::assert_flag(interactive)
 
   # Read current config
-  config_path <- "config.yml"
-  if (!file.exists(config_path)) {
-    stop("config.yml not found. Run framework::init() first.")
+  config_path <- .get_settings_file()
+  if (is.null(config_path)) {
+    stop("settings.yml or config.yml not found. Run framework::init() first.")
   }
 
   config <- read_config(config_path)
@@ -76,7 +77,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
   # Write config
   write_config(config, config_path)
 
-  message("\u2713 Author information updated in config.yml")
+  message("\u2713 Author information updated in ", basename(config_path))
   if (!is.null(name)) message(sprintf("  Name: %s", name))
   if (!is.null(email)) message(sprintf("  Email: %s", email))
   if (!is.null(affiliation)) message(sprintf("  Affiliation: %s", affiliation))
@@ -87,7 +88,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
 
 #' Configure Data Source
 #'
-#' Interactively add a data source to config.yml. Data sources are defined
+#' Interactively add a data source to settings.yml (or settings.yml for legacy projects). Data sources are defined
 #' with dot-notation paths (e.g., "source.private.survey") and include metadata
 #' like file path, type, and whether the data is locked.
 #'
@@ -123,9 +124,9 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
   checkmate::assert_flag(interactive)
 
   # Read current config
-  config_path <- "config.yml"
-  if (!file.exists(config_path)) {
-    stop("config.yml not found. Run framework::init() first.")
+  config_path <- .get_settings_file()
+  if (is.null(config_path)) {
+    stop("settings.yml or config.yml not found. Run framework::init() first.")
   }
 
   config <- read_config(config_path)
@@ -216,7 +217,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
   # Write config
   write_config(config, config_path)
 
-  message(sprintf("\u2713 Data source '%s' added to config.yml", path))
+  message(sprintf("\u2713 Data source '%s' added to %s", path, basename(config_path)))
   message(sprintf("  File: %s", file))
   message(sprintf("  Type: %s", type))
   if (locked) message("  Locked: yes")
@@ -228,7 +229,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
 
 #' Configure Database Connection
 #'
-#' Interactively add a database connection to config.yml. Connections can be
+#' Interactively add a database connection to settings.yml (or settings.yml for legacy projects). Connections can be
 #' defined inline or in a split file (settings/connections.yml).
 #'
 #' @param name Character. Connection name (e.g., "db", "warehouse")
@@ -280,9 +281,9 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
   checkmate::assert_flag(interactive)
 
   # Read current config
-  config_path <- "config.yml"
-  if (!file.exists(config_path)) {
-    stop("config.yml not found. Run framework::init() first.")
+  config_path <- .get_settings_file()
+  if (is.null(config_path)) {
+    stop("settings.yml or config.yml not found. Run framework::init() first.")
   }
 
   config <- read_config(config_path)
@@ -372,7 +373,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
   # Write config
   write_config(config, config_path)
 
-  message(sprintf("\u2713 Connection '%s' added to config.yml", name))
+  message(sprintf("\u2713 Connection '%s' added to %s", name, basename(config_path)))
   message(sprintf("  Driver: %s", driver))
   if (driver == "sqlite") {
     message(sprintf("  Database: %s", database))
@@ -390,7 +391,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
 
 #' Configure Package Dependencies
 #'
-#' Interactively add package dependencies to config.yml. Packages can be
+#' Interactively add package dependencies to settings.yml (or settings.yml for legacy projects). Packages can be
 #' installed from CRAN, GitHub, or Bioconductor, with version pinning support.
 #'
 #' @param package Character. Package name (e.g., "dplyr", "tidyverse/dplyr")
@@ -435,9 +436,9 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
   checkmate::assert_flag(interactive)
 
   # Read current config
-  config_path <- "config.yml"
-  if (!file.exists(config_path)) {
-    stop("config.yml not found. Run framework::init() first.")
+  config_path <- .get_settings_file()
+  if (is.null(config_path)) {
+    stop("settings.yml or config.yml not found. Run framework::init() first.")
   }
 
   config <- read_config(config_path)
@@ -503,10 +504,10 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 
   if (!is.null(existing_idx)) {
     config$packages[[existing_idx]] <- pkg_entry
-    message(sprintf("\u2713 Updated package '%s' in config.yml", package))
+    message(sprintf("\u2713 Updated package '%s' in %s", package, basename(config_path)))
   } else {
     config$packages <- c(config$packages, list(pkg_entry))
-    message(sprintf("\u2713 Added package '%s' to config.yml", package))
+    message(sprintf("\u2713 Added package '%s' to %s", package, basename(config_path)))
   }
 
   message(sprintf("  Auto-attach: %s", if (auto_attach) "yes" else "no"))
@@ -521,7 +522,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 
 #' Configure Project Directories
 #'
-#' Interactively configure project directory structure in config.yml.
+#' Interactively configure project directory structure in settings.yml (or settings.yml for legacy projects).
 #' Directories control where Framework creates and looks for files.
 #'
 #' @param directory Character. Directory name to configure (e.g., "notebooks", "scripts")
@@ -561,9 +562,9 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   checkmate::assert_flag(interactive)
 
   # Read current config
-  config_path <- "config.yml"
-  if (!file.exists(config_path)) {
-    stop("config.yml not found. Run framework::init() first.")
+  config_path <- .get_settings_file()
+  if (is.null(config_path)) {
+    stop("settings.yml or config.yml not found. Run framework::init() first.")
   }
 
   config <- read_config(config_path)
@@ -609,7 +610,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   # Write config
   write_config(config, config_path)
 
-  message(sprintf("\u2713 Directory '%s' set to '%s' in config.yml", directory, path))
+  message(sprintf("\u2713 Directory '%s' set to '%s' in %s", directory, path, basename(config_path)))
 
   # Create directory if it doesn't exist
   if (!dir.exists(path)) {

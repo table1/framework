@@ -13,6 +13,6 @@
 TRUE if either file exists, FALSE otherwise
 }
 \description{
-Checks for settings.yml (preferred) or config.yml (backward compatibility).
+Checks for settings.yml (preferred) or settings.yml (backward compatibility).
 }
 \keyword{internal}

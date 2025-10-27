@@ -4,7 +4,7 @@
 
 **Both Claude Sonnet and GPT-4o agreed (9/10 confidence each):**
 - Connection pooling should be **OFF by default**
-- Enable via **per-connection config.yml** settings
+- Enable via **per-connection settings.yml** settings
 - Prioritizes simplicity and predictability for data analysts
 
 ## What We Built
@@ -16,7 +16,7 @@
 - **Graceful errors**: Clear messages when drivers missing
 
 ### 2. Connection Pooling (Opt-In)
-- **Configuration-driven**: Enable per connection in config.yml
+- **Configuration-driven**: Enable per connection in settings.yml
 - **Automatic management**: Pools created and reused transparently
 - **Smart defaults**: Off by default, easy to enable
 - **Granular control**: Pool different databases differently
@@ -31,7 +31,7 @@
 
 ### Default Behavior (No Pooling)
 
-**config.yml:**
+**settings.yml:**
 ```yaml
 connections:
   my_db:
@@ -61,7 +61,7 @@ posts <- query_get("SELECT * FROM posts", "my_db")
 
 ### With Pooling (Opt-In)
 
-**config.yml:**
+**settings.yml:**
 ```yaml
 connections:
   my_db:
@@ -111,7 +111,7 @@ posts <- query_get("SELECT * FROM posts", "my_db")
 - Pooling adds complexity without proportional benefits
 - Easier to add features than remove them
 
-### Why config.yml Instead of Global Option?
+### Why settings.yml Instead of Global Option?
 
 **Granular Control:**
 ```yaml
@@ -229,4 +229,4 @@ The system now provides:
 - ✅ **Simple by default** (no pooling, no surprises)
 - ✅ **Powerful when needed** (enable pooling per connection)
 - ✅ **Zero manual bookkeeping** (cleanup always automatic)
-- ✅ **Clear, reproducible config** (lives in config.yml)
+- ✅ **Clear, reproducible config** (lives in settings.yml)

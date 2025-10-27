@@ -7,7 +7,7 @@
 .check_duckdb_exists(config)
 }
 \arguments{
-\item{config}{Connection configuration from config.yml}
+\item{config}{Connection configuration from settings.yml}
 }
 \value{
 TRUE if database exists, FALSE otherwise

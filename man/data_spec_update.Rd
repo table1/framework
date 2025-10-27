@@ -19,7 +19,7 @@ updating the YAML configuration file.
 }
 \description{
 Traverses a dot-notated key like "final.public.test" and updates or inserts
-the given spec in the corresponding YAML file (either embedded in config.yml
+the given spec in the corresponding YAML file (either embedded in settings.yml
 or in an external settings/data.yml file). Automatically handles nested paths
 and creates intermediate structures as needed.
 }

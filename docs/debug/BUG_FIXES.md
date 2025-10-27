@@ -26,11 +26,11 @@ Comprehensive test suite created with 88 tests across all major functionality. T
 
 ---
 
-## ✅ Bug #2: write_config() assumes config.yml exists
+## ✅ Bug #2: write_config() assumes settings.yml exists
 
 **File:** `R/config.R`
 
-**Issue:** `write_config()` called `yaml::read_yaml("config.yml")` without checking if the file exists, causing errors in fresh directories.
+**Issue:** `write_config()` called `yaml::read_yaml("settings.yml")` without checking if the file exists, causing errors in fresh directories.
 
 **Fix:**
 - Added file existence check before attempting to read

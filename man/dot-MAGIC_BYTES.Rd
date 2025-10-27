@@ -12,6 +12,6 @@ An object of class \code{raw} of length 6.
 }
 \description{
 Password-based encryption using libsodium (Ansible Vault style).
-Derives cryptographic keys from user passwords using PBKDF2.
+Derives cryptographic keys from user passwords using scrypt (memory-hard KDF).
 }
 \keyword{internal}

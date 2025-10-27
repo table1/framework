@@ -1,4 +1,4 @@
-test_that("configure_author updates config.yml", {
+test_that("configure_author updates settings file", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -16,7 +16,7 @@ test_that("configure_author updates config.yml", {
     interactive = FALSE
   )
 
-  # Check config was updated
+  # Check settings were updated
   config <- read_config()
   expect_equal(config$author$name, "Jane Doe")
   expect_equal(config$author$email, "jane@example.com")
@@ -27,7 +27,7 @@ test_that("configure_author updates config.yml", {
 })
 
 
-test_that("configure_data adds data source to config", {
+test_that("configure_data adds data source to settings", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -46,7 +46,7 @@ test_that("configure_data adds data source to config", {
     interactive = FALSE
   )
 
-  # Check config was updated
+  # Check settings were updated
   config <- read_config()
   expect_equal(config$data$source$private$survey$path, "data/survey.csv")
   expect_equal(config$data$source$private$survey$type, "csv")
@@ -295,7 +295,7 @@ test_that("configure_directories creates new directory entry", {
 })
 
 
-test_that("configure functions require config.yml", {
+test_that("configure functions require settings file", {
   test_dir <- tempfile()
   dir.create(test_dir, recursive = TRUE)
   old_wd <- getwd()
@@ -306,29 +306,29 @@ test_that("configure functions require config.yml", {
 
   setwd(test_dir)
 
-  # All configure functions should fail without config.yml
+  # All configure functions should fail without settings file
   expect_error(
     configure_author(name = "Test", interactive = FALSE),
-    "config.yml not found"
+    "settings.yml or config.yml not found"
   )
 
   expect_error(
     configure_data(path = "test", file = "test.csv", type = "csv", interactive = FALSE),
-    "config.yml not found"
+    "settings.yml or config.yml not found"
   )
 
   expect_error(
     configure_connection(name = "db", driver = "sqlite", database = "test.db", interactive = FALSE),
-    "config.yml not found"
+    "settings.yml or config.yml not found"
   )
 
   expect_error(
     configure_packages(package = "dplyr", interactive = FALSE),
-    "config.yml not found"
+    "settings.yml or config.yml not found"
   )
 
   expect_error(
     configure_directories(directory = "notebooks", path = "analysis", interactive = FALSE),
-    "config.yml not found"
+    "settings.yml or config.yml not found"
   )
 })

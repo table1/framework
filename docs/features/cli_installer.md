@@ -12,7 +12,7 @@ Implemented a persistent CLI tool (`framework new`) that provides Laravel-style 
 
 1. **CLI Tool** (Persistent, installed once)
    ```bash
-   R -e "framework::install_cli()"
+  R -e "framework::cli_install()"
    framework new myproject
    ```
 
@@ -103,10 +103,10 @@ Thin bash wrapper with three commands:
 ### Installation Function (R/install_cli.R)
 
 Two functions:
-- `install_cli(location)` - Creates symlink to CLI script
+- `cli_install(location)` - Installs shim/global scripts (symlink when available, copies otherwise)
   - `location = "user"` → `~/.local/bin/framework` (default, no sudo)
   - `location = "system"` → `/usr/local/bin/framework` (requires sudo)
-- `uninstall_cli(location)` - Removes symlink
+- `uncli_install(location)` - Removes symlink
 
 ### Package Attach Hook (R/zzz.R)
 
@@ -115,7 +115,7 @@ Two functions:
 Framework loaded! 🎉
 
 Tip: Install the CLI for quick project creation:
-  framework::install_cli()
+  framework::cli_install()
 
 Then use: framework new myproject
 ```
@@ -129,7 +129,7 @@ Then use: framework new myproject
 devtools::install_github("table1/framework")
 
 # Install CLI (one-time)
-framework::install_cli()
+framework::cli_install()
 ```
 
 ### Creating Projects

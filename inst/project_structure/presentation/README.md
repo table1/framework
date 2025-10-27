@@ -9,7 +9,7 @@ A presentation built with the Framework R package.
 ├── data/               # Presentation data
 ├── functions/          # Custom R functions
 ├── presentation.qmd    # Main presentation file
-├── config.yml          # Project configuration
+├── settings.yml        # Project configuration
 └── scaffold.R          # Initialization script
 ```
 
@@ -22,7 +22,7 @@ scaffold()              # Load environment
 
 ## Configuration
 
-Edit `config.yml` to customize:
+Edit `settings.yml` to customize:
 - Data sources
 - Required packages
 - Directory paths

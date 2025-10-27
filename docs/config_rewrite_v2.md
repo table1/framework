@@ -30,7 +30,7 @@ Complete rewrite of Framework's configuration system, removing dependency on Pos
 
 **Architecture:**
 ```r
-read_config("config.yml", environment = "production")
+read_config("settings.yml", environment = "production")
   ↓
 1. Detect if file has environment sections (default:, production:, etc.)
 2. Load default environment as base
@@ -71,7 +71,7 @@ connections:
 
 **Pattern 1: Section Key Match**
 ```yaml
-# config.yml
+# settings.yml
 connections: settings/connections.yml
 
 # settings/connections.yml
@@ -82,7 +82,7 @@ connections:
 
 **Pattern 2: Flat Split File**
 ```yaml
-# config.yml
+# settings.yml
 data: settings/data.yml
 
 # settings/data.yml (no section wrapper)
@@ -93,7 +93,7 @@ data:
 
 **Pattern 3: Environment-Aware Split Files**
 ```yaml
-# config.yml
+# settings.yml
 default:
   connections: settings/connections.yml
 
@@ -112,7 +112,7 @@ production:
 
 **Main Config Wins:**
 ```yaml
-# config.yml
+# settings.yml
 default:
   connections: settings/connections.yml
   default_connection: from_main  # This wins
@@ -306,7 +306,7 @@ security:
 
 ### Nested Split Files
 ```yaml
-# config.yml
+# settings.yml
 default:
   data: settings/a.yml
 
@@ -381,24 +381,24 @@ default:
 
 **File Not Found:**
 ```
-Error: Config file not found: config.yml
-Error: settings/connections.yml not found (referenced from config.yml)
+Error: Config file not found: settings.yml
+Error: settings/connections.yml not found (referenced from settings.yml)
 ```
 
 **Invalid YAML:**
 ```
-Error: Failed to parse config file 'config.yml': <yaml parse error>
+Error: Failed to parse config file 'settings.yml': <yaml parse error>
 Error: Failed to parse split file 'settings/data.yml': <yaml parse error>
 ```
 
 **Missing Default Environment:**
 ```
-Error: Config file 'config.yml' has environment sections but no 'default' environment
+Error: Config file 'settings.yml' has environment sections but no 'default' environment
 ```
 
 **Circular Reference:**
 ```
-Error: Circular reference detected: config.yml -> settings/a.yml -> settings/b.yml -> settings/a.yml
+Error: Circular reference detected: settings.yml -> settings/a.yml -> settings/b.yml -> settings/a.yml
 ```
 
 **Unknown Environment (Warning):**
@@ -516,7 +516,7 @@ Both syntaxes work - choose whichever you prefer!
 - Invalid YAML
 
 **7. Backward Compatibility (1 test)**
-- Existing config.yml files still work
+- Existing settings.yml files still work
 
 ## Lessons Learned
 

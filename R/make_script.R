@@ -6,7 +6,8 @@
 #' @param name Character. The script name (with or without .R extension).
 #'   Examples: "process-data", "process-data.R"
 #' @param dir Character. Directory to create the script in. Reads from
-#'   config `options$script_dir`, defaults to "scripts/" or current directory.
+#'   config `directories$scripts` (or legacy `options$script_dir`), defaults to
+#'   "scripts/" or current directory.
 #' @param stub Character. Name of the stub template to use. Defaults to
 #'   "default". User can create custom stubs in `stubs/script-{stub}.R`.
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
@@ -63,7 +64,9 @@ make_script <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
   # Get script directory from config if not specified
   if (is.null(dir)) {
     config <- tryCatch(read_config(), error = function(e) NULL)
-    if (!is.null(config$options$script_dir)) {
+    if (!is.null(config$directories$scripts)) {
+      dir <- config$directories$scripts
+    } else if (!is.null(config$options$script_dir)) {
       dir <- config$options$script_dir
     } else if (dir.exists("scripts")) {
       dir <- "scripts"

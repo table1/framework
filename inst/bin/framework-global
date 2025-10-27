@@ -36,8 +36,11 @@ IN_PROJECT=false
 find_project_root() {
   local dir="$PWD"
   while [ "$dir" != "/" ]; do
-    # Check for framework.db (always exists) or bin/framework (project marker)
-    if [ -f "$dir/framework.db" ] || [ -f "$dir/bin/framework" ]; then
+    # Check for core project markers
+    if [ -f "$dir/framework.db" ] || \
+       [ -f "$dir/bin/framework" ] || \
+       [ -f "$dir/settings.yml" ] || \
+       [ -f "$dir/config.yml" ]; then
       echo "$dir"
       return 0
     fi
@@ -77,6 +80,11 @@ check_settings_configured() {
 # Function to run settings check-in (first-time setup)
 run_settings_checkin() {
   frameworkrc="$HOME/.frameworkrc"
+
+  # Skip interactive prompts when running non-interactively
+  if [ ! -t 0 ]; then
+    return 0
+  }
 
   if [ ! -f "$frameworkrc" ]; then
     touch "$frameworkrc"
@@ -189,7 +197,7 @@ run_settings_checkin() {
 require_project() {
   if [ "$IN_PROJECT" = false ]; then
     printf "${RED}Error: This command requires a Framework project${NC}\n"
-    printf "Run this command from inside a project directory (with config.yml)\n"
+    printf "Run this command from inside a project directory (settings.yml or legacy config.yml)\n"
     exit 1
   fi
 }

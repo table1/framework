@@ -47,7 +47,7 @@ data %>%
 
 **Project-specific heavy users** should also be attached:
 ```yaml
-# config.yml for a spatial analysis project
+# settings.yml for a spatial analysis project
 packages:
   - name: dplyr
     attached: true
@@ -75,13 +75,13 @@ dates <- lubridate::ymd("2024-01-15")
 spatial_join <- sf::st_join(points, polygons)
 ```
 
-These packages are still **declared in config.yml** and **installed by Framework**, but not attached to the namespace.
+These packages are still **declared in settings.yml** and **installed by Framework**, but not attached to the namespace.
 
 ### Why This Approach?
 
 **Benefits:**
 
-✅ **Single source of truth** - All dependencies tracked in `config.yml`
+✅ **Single source of truth** - All dependencies tracked in `settings.yml`
 ✅ **No scattered library() calls** - Clean, consistent scripts
 ✅ **Clear provenance** - Obvious where functions come from
 ✅ **Fewer namespace conflicts** - Only core packages in namespace
@@ -203,7 +203,7 @@ library(sf)  # Temporarily attach for console work
 # Before committing notebook, convert to:
 sf::st_read(...)
 sf::st_transform(...)
-# Or add to config.yml with attached: true
+# Or add to settings.yml with attached: true
 ```
 
 ### Reproducibility Script Generation
@@ -230,7 +230,7 @@ Framework's package philosophy works alongside renv:
 - Both are needed for full reproducibility
 
 ```yaml
-# config.yml
+# settings.yml
 packages:
   - name: dplyr
     attached: true
@@ -259,7 +259,7 @@ project/
 ├── scripts/         # Standalone R scripts
 ├── functions/       # Reusable project functions
 ├── results/         # Outputs, figures, tables
-└── config.yml       # Single source of configuration
+└── settings.yml       # Single source of configuration
 ```
 
 **Benefits:**
@@ -273,11 +273,11 @@ project/
 Framework uses a three-tier configuration system:
 
 1. **Package defaults** - Sensible starting points built into Framework
-2. **Project config.yml** - Project-specific overrides
+2. **Project settings.yml** - Project-specific overrides
 3. **Environment variables (.env)** - Secrets and credentials (gitignored)
 
 ```yaml
-# config.yml - Project configuration
+# settings.yml - Project configuration
 default:
   directories:
     notebooks: notebooks
@@ -303,7 +303,7 @@ New projects start from type-specific templates:
 - **course** - Teaching materials with lectures/assignments
 - **presentation** - Single presentation focus
 
-Each template provides pre-configured structure, README, and config.yml.
+Each template provides pre-configured structure, README, and settings.yml.
 
 ## Reproducibility First
 
@@ -311,7 +311,7 @@ Every Framework design decision considers reproducibility:
 
 ### Declarative Data Management
 
-Data files are declared in config.yml with integrity tracking:
+Data files are declared in settings.yml with integrity tracking:
 
 ```yaml
 data:
@@ -405,7 +405,7 @@ env_reset(keep = c("config"))
 
 ## Further Reading
 
-- [Configuration Guide](../readme-parts/6_rest.md) - Deep dive into config.yml
+- [Configuration Guide](../readme-parts/6_rest.md) - Deep dive into settings.yml
 - [Data Management](../readme-parts/5_usage_data.md) - Data loading and caching
 - [Package Management](../README.md#packages) - renv integration and version pinning
 - [Security](../README.md#security) - Handling sensitive data

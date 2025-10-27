@@ -11,7 +11,7 @@ Status: IN PROGRESS (Unit 08)
 - `scaffold.fr.R` ships as an empty file with only a comment. That’s fine, but project README still advertises `scaffold.R` as an “Initialization script” (see below). Either flesh out a basic example (e.g., loading custom packages) or adjust docs so expectations match reality.
 
 ## Project Skeletons (`inst/project_structure/**`)
-- Project README (`inst/project_structure/project/README.md`) instructs users to “Edit `config.yml`”, yet the generated project actually places configuration in `settings.yml` alongside a `settings/` directory. Update the guidance (and similar references in course/presentation variants) to avoid confusion.
+- Project README (`inst/project_structure/project/README.md`) instructs users to “Edit `settings.yml`”, yet the generated project actually places configuration in `settings.yml` alongside a `settings/` directory. Update the guidance (and similar references in course/presentation variants) to avoid confusion.
 - The CLI’s global script detects projects by checking for `framework.db` or `bin/framework`. Fresh scaffolds include neither (they only contain `settings.yml`). Add a lightweight marker (e.g., `bin/framework` wrapper) or align `framework-global` project detection with the files we actually ship.
 - `_quarto.yml.fr` lives beside `_rendered/` but the `.gitignore` template still ignores `_rendered/` wholesale. Confirm that freeze / render defaults match the recommended workflow (e.g., storing rendered notebooks under `_rendered/`).
 
@@ -24,7 +24,7 @@ Status: IN PROGRESS (Unit 08)
 - Script generator (`R/make_script.R`) still looks at `config$options$script_dir` for custom paths. The new settings template uses `directories.scripts`, so scripts default to `scripts/` even when the config says otherwise. Update `.get_notebook_dir_from_config()` / `make_script()` to prioritise `directories`.
 
 ## Miscellaneous
-- `framework-cheatsheet.fr.md` and README fragments still mention `config.yml` in several places. Sweep the docs to ensure references match the actual files (settings vs config, presence of `settings/` split files).
+- `framework-cheatsheet.fr.md` and README fragments still mention `settings.yml` in several places. Sweep the docs to ensure references match the actual files (settings vs config, presence of `settings/` split files).
 - Resources (`resources/`) and results seed directories are empty, which is fine, but consider adding `README.md` placeholders or `.gitkeep` so the purpose of each folder is clear when published.
 
 ---

@@ -13,7 +13,9 @@ test_that("scratch_capture saves data frame to scratch", {
   suppressMessages(scratch_capture(test_data, "test_scratch_capture"))
 
   # Check that file was created (default is TSV for data frames)
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
   expect_true(file.exists(file.path(scratch_dir, "test_scratch_capture.rds")) ||
               file.exists(file.path(scratch_dir, "test_scratch_capture.csv")) ||
               file.exists(file.path(scratch_dir, "test_scratch_capture.tsv")))
@@ -33,7 +35,9 @@ test_that("scratch_capture with to='csv' saves as CSV", {
 
   suppressMessages(scratch_capture(test_data, "csv_test", to = "csv"))
 
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
   expect_true(file.exists(file.path(scratch_dir, "csv_test.csv")))
 })
 
@@ -51,7 +55,9 @@ test_that("scratch_capture with to='rds' saves as RDS", {
 
   suppressMessages(scratch_capture(test_list, "rds_test", to = "rds"))
 
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
   expect_true(file.exists(file.path(scratch_dir, "rds_test.rds")))
 })
 
@@ -69,7 +75,9 @@ test_that("scratch_capture with to='text' saves as text", {
 
   suppressMessages(scratch_capture(test_vector, "text_test", to = "text"))
 
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
   expect_true(file.exists(file.path(scratch_dir, "text_test.txt")))
 })
 
@@ -87,7 +95,9 @@ test_that("scratch_capture with n limits rows", {
 
   suppressMessages(scratch_capture(large_data, "limited_test", to = "csv", n = 10))
 
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
   scratch_captured_file <- file.path(scratch_dir, "limited_test.csv")
 
   expect_true(file.exists(scratch_captured_file))
@@ -128,7 +138,9 @@ test_that("scratch_clean removes scratch files", {
   suppressMessages(scratch_capture(data.frame(x = 1), "file1"))
   suppressMessages(scratch_capture(data.frame(x = 2), "file2"))
 
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
 
   # Verify files exist
   files_before <- list.files(scratch_dir)
@@ -167,7 +179,9 @@ test_that("scratch_capture works without explicit name", {
   # Capture should auto-generate name from variable
   result <- suppressMessages(scratch_capture(my_test_data))
 
-  scratch_dir <- read_config()$options$data$scratch_dir
+  cfg <- read_config()
+  scratch_dir <- cfg$directories$scratch %||% cfg$options$data$scratch_dir %||% "data/scratch"
+  dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
   files <- list.files(scratch_dir)
 
   # Should have created some file

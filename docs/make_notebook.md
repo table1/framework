@@ -34,7 +34,7 @@ The function automatically detects the file type from the extension:
 
 ### Configuration-Aware Directory Placement
 
-By default, files are created in the `work/` directory. You can customize this in `config.yml`:
+By default, files are created in the `work/` directory. You can customize this in `settings.yml`:
 
 ```yaml
 options:
@@ -158,7 +158,7 @@ list_stubs(type = "script")
 
 ## Configuration Options
 
-### config.yml
+### settings.yml
 
 ```yaml
 options:

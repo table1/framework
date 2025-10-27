@@ -2,11 +2,11 @@
 % Please edit documentation in R/git_hooks.R
 \name{.update_hook_config}
 \alias{.update_hook_config}
-\title{Update hook configuration in config.yml}
+\title{Update hook configuration in settings.yml/settings.yml}
 \usage{
 .update_hook_config(hook_name, enabled, config_file)
 }
 \description{
-Update hook configuration in config.yml
+Update hook configuration in settings.yml/settings.yml
 }
 \keyword{internal}

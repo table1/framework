@@ -63,15 +63,29 @@ connection_transaction <- function(conn, code) {
   })
 
   if (isTRUE(in_transaction)) {
-    warning("Already in a transaction. Nested transactions are not supported by all databases.")
+    # Already inside a transaction - reuse outer transaction context
+    return(force(code))
   }
 
-  # Begin transaction
-  tryCatch({
+  started_transaction <- TRUE
+  begin_error <- tryCatch({
     DBI::dbBegin(conn)
+    NULL
   }, error = function(e) {
-    stop(sprintf("Failed to begin transaction: %s", e$message))
+    if (grepl("cannot start a transaction", e$message, ignore.case = TRUE)) {
+      started_transaction <<- FALSE
+      return(NULL)
+    }
+    e
   })
+
+  if (!is.null(begin_error)) {
+    stop(sprintf("Failed to begin transaction: %s", begin_error$message))
+  }
+
+  if (!started_transaction) {
+    return(force(code))
+  }
 
   # Execute code with rollback on error
   tryCatch({

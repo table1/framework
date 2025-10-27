@@ -98,7 +98,7 @@ default:
   # Simple approach: Define connections inline
   # Complex projects: Use split file (connections: settings/connections.yml)
   #
-  # ⚠️ PRECEDENCE RULE: Main config ALWAYS wins
+  # ⚠️ PRECEDENCE RULE: Main settings.yml ALWAYS wins
   # If you define 'default_connection' here AND in settings/connections.yml,
   # the value here takes precedence. Framework will warn about the conflict.
   # --------------------------------------------------------------------------
@@ -116,8 +116,8 @@ default:
   #   1. Create settings/connections.yml
   #   2. Replace the connections section above with:
   #      connections: settings/connections.yml
-  #   3. Keep top-level keys here in main config.yml:
-  #      default_connection: db  # ← Keep in main config, not split file!
+  #   3. Keep top-level keys here in main settings.yml:
+  #      default_connection: db  # ← Keep in main settings.yml, not split file!
 
   # Security settings
   security:

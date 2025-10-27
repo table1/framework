@@ -41,7 +41,7 @@
   # Get cache directory from config
   cache_dir <- config("cache")
   if (is.null(cache_dir)) {
-    stop("Cache directory not configured. Add 'directories: cache: data/cached' to config.yml")
+    stop("Cache directory not configured. Add 'directories: cache: data/cached' to settings.yml")
   }
 
   config_obj <- read_config()

@@ -11,11 +11,11 @@ test_that("functions_dir supports single directory", {
   # Create config with custom functions_dir
   writeLines(
     "default:\n  options:\n    functions_dir: my-functions",
-    "config.yml"
+    "settings.yml"
   )
 
   # Load functions
-  .load_functions()
+  framework:::.load_functions()
 
   # Verify function was loaded
   expect_true(exists("my_func"))
@@ -24,7 +24,7 @@ test_that("functions_dir supports single directory", {
   # Cleanup
   rm(my_func, envir = .GlobalEnv)
   unlink("my-functions", recursive = TRUE)
-  file.remove("config.yml")
+  file.remove("settings.yml")
 })
 
 test_that("functions_dir supports multiple directories", {
@@ -43,11 +43,11 @@ test_that("functions_dir supports multiple directories", {
   # Create config with list of directories
   writeLines(
     "default:\n  options:\n    functions_dir:\n      - functions\n      - helpers",
-    "config.yml"
+    "settings.yml"
   )
 
   # Load functions
-  suppressMessages(.load_functions())
+  suppressMessages(framework:::.load_functions())
 
   # Verify both functions were loaded
   expect_true(exists("func1"))
@@ -58,7 +58,7 @@ test_that("functions_dir supports multiple directories", {
   # Cleanup
   rm(func1, func2, envir = .GlobalEnv)
   unlink(c("functions", "helpers"), recursive = TRUE)
-  file.remove("config.yml")
+  file.remove("settings.yml")
 })
 
 test_that("functions_dir defaults to 'functions' if not configured", {
@@ -72,10 +72,10 @@ test_that("functions_dir defaults to 'functions' if not configured", {
   writeLines("default_func <- function() 'default'", "functions/test.R")
 
   # Create config WITHOUT functions_dir option
-  writeLines("default:\n  packages:\n    - dplyr", "config.yml")
+  writeLines("default:\n  packages:\n    - dplyr", "settings.yml")
 
   # Load functions - should use default "functions" dir
-  suppressMessages(.load_functions())
+  suppressMessages(framework:::.load_functions())
 
   # Verify function was loaded
   expect_true(exists("default_func"))
@@ -83,7 +83,7 @@ test_that("functions_dir defaults to 'functions' if not configured", {
   # Cleanup
   rm(default_func, envir = .GlobalEnv)
   unlink("functions", recursive = TRUE)
-  file.remove("config.yml")
+  file.remove("settings.yml")
 })
 
 test_that("functions_dir silent when default dir doesn't exist", {
@@ -93,12 +93,12 @@ test_that("functions_dir silent when default dir doesn't exist", {
   on.exit(setwd(orig_wd))
 
   # Create config without functions_dir (uses default)
-  writeLines("default:\n  packages:\n    - dplyr", "config.yml")
+  writeLines("default:\n  packages:\n    - dplyr", "settings.yml")
 
   # No functions directory exists - should be silent (not warning)
-  expect_silent(.load_functions())
+  expect_silent(framework:::.load_functions())
 
-  file.remove("config.yml")
+  file.remove("settings.yml")
 })
 
 test_that("functions_dir warns when custom dir doesn't exist", {
@@ -110,13 +110,13 @@ test_that("functions_dir warns when custom dir doesn't exist", {
   # Create config with custom dir that doesn't exist
   writeLines(
     "default:\n  options:\n    functions_dir: my-custom-dir",
-    "config.yml"
+    "settings.yml"
   )
 
   # Should warn because user explicitly configured it
-  expect_warning(.load_functions(), "No function directories found")
+  expect_warning(framework:::.load_functions(), "No function directories found")
 
-  file.remove("config.yml")
+  file.remove("settings.yml")
 })
 
 test_that("results directories can be customized", {
@@ -134,7 +134,7 @@ test_that("results directories can be customized", {
   # Update config with custom results dirs
   writeLines(
     "default:\n  options:\n    results:\n      public_dir: my-results/pub\n      private_dir: my-results/priv",
-    "config.yml"
+    "settings.yml"
   )
 
   # Save result - should use custom directories
@@ -180,7 +180,7 @@ test_that("result_get uses custom directories", {
   # Update config with custom results dirs
   writeLines(
     "default:\n  options:\n    results:\n      public_dir: custom/pub\n      private_dir: custom/priv",
-    "config.yml"
+    "settings.yml"
   )
 
   # Save and retrieve result

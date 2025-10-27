@@ -7,13 +7,13 @@
 connection_get(name)
 }
 \arguments{
-\item{name}{Character. Name of the connection in config.yml (e.g., "postgres")}
+\item{name}{Character. Name of the connection in settings.yml (e.g., "postgres")}
 }
 \value{
 A database connection object (DBIConnection) or pool object
 }
 \description{
-Gets a database connection based on the connection name in config.yml.
+Gets a database connection based on the connection name in settings.yml.
 If the connection is configured with \code{pool: true}, returns a connection pool
 instead of a single connection. Pools are automatically managed and reused.
 }
@@ -24,7 +24,7 @@ conn <- connection_get("postgres")
 DBI::dbListTables(conn)
 DBI::dbDisconnect(conn)  # Must disconnect
 
-# Pooled connection (pool: true in config.yml)
+# Pooled connection (pool: true in settings.yml)
 conn <- connection_get("postgres")
 DBI::dbListTables(conn)
 # No need to disconnect - pool handles it
