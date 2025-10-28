@@ -2,22 +2,28 @@
 % Please edit documentation in R/packages.R
 \name{.parse_package_spec}
 \alias{.parse_package_spec}
-\title{Parse package specification with version pinning}
+\title{Parse package specification with source detection}
 \usage{
 .parse_package_spec(spec)
 }
 \arguments{
-\item{spec}{Character string with package specification}
+\item{spec}{Character or list describing the package}
 }
 \value{
-List with parsed components (name, version, source, repo, ref)
+List with normalized components (name, source, version, repo, ref, auto_attach)
 }
 \description{
-Parses package specifications that may include version pins or GitHub references:
+Parses package specifications that may include explicit sources, version pins,
+or GitHub/Bioconductor references. Supports both scalar strings and list-style
+entries from \code{settings.yml}.
+}
+\details{
+Examples:
 \itemize{
-\item "dplyr" -> list(name = "dplyr", version = NULL, source = "cran")
+\item "dplyr" -> list(name = "dplyr", source = "cran")
 \item "dplyr@1.1.0" -> list(name = "dplyr", version = "1.1.0", source = "cran")
 \item "tidyverse/dplyr@main" -> list(name = "dplyr", repo = "tidyverse/dplyr", ref = "main", source = "github")
+\item list(name = "DESeq2", source = "bioc") -> list(name = "DESeq2", source = "bioc")
 }
 }
 \examples{
@@ -25,6 +31,7 @@ Parses package specifications that may include version pins or GitHub references
 .parse_package_spec("dplyr")
 .parse_package_spec("dplyr@1.1.0")
 .parse_package_spec("tidyverse/dplyr@main")
+.parse_package_spec(list(name = "DESeq2", source = "bioc", auto_attach = FALSE))
 }
 }
 \keyword{internal}

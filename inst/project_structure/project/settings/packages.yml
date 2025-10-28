@@ -1,5 +1,5 @@
 packages:
-  # Auto-attached packages (available without library() calls)
+  # Auto-attached packages (source defaults to CRAN when omitted)
   - name: dplyr
     auto_attach: true
   - name: tidyr
@@ -14,3 +14,10 @@ packages:
     auto_attach: false
   - name: scales
     auto_attach: false
+
+  # Examples for alternate sources:
+  # - name: tidyverse/dplyr
+  #   source: github
+  #   ref: main
+  # - name: DESeq2
+  #   source: bioc

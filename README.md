@@ -663,19 +663,33 @@ packages_update()
 renv_disable()  # Keeps renv.lock for future use
 ```
 
-### Version Pinning in settings.yml
+### Package Sources in settings.yml
 
-Control exact package versions in your config:
+Control package sources (CRAN, GitHub, Bioconductor) and version pins directly in config:
 
 ```yaml
 packages:
-  - dplyr                    # Latest from CRAN
-  - ggplot2@3.4.0           # Specific CRAN version
-  - tidyverse/dplyr@main    # GitHub repo with branch/tag
-  - user/package@v1.2.3     # GitHub with specific tag
+  # CRAN packages (source defaults to cran)
+  - name: dplyr
+    auto_attach: true
+
+  # Pin a specific CRAN version
+  - name: ggplot2
+    version: 3.4.0
+
+  # GitHub packages
+  - name: tidyverse/dplyr
+    source: github
+    ref: main
+
+  # Bioconductor packages
+  - name: DESeq2
+    source: bioc
 ```
 
-When you run `renv_enable()` or `packages_snapshot()`, Framework installs these exact versions and records them in `renv.lock`.
+Prefer the structured form above for readability, but legacy shorthand strings still work (`"ggplot2@3.4.0"`, `"tidyverse/dplyr@main"`, `"bioc::DESeq2"`).
+
+When you run `renv_enable()` or `packages_snapshot()`, Framework installs these exact versions and records them in `renv.lock` using the right installer for each source.
 
 Package management should come almost for free, so Framework aims to handle all the messy details of `renv` so you can focus on your work.
 

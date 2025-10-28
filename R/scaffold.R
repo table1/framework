@@ -188,19 +188,23 @@ scaffold <- function(config_file = NULL) {
 
   # Extract package names and their loading behavior
   packages <- lapply(config$packages, function(pkg) {
-    if (is.character(pkg)) {
-      # Simple string - just ensure installed
-      list(name = pkg, load = FALSE)
-    } else if (is.list(pkg)) {
-      # List with loading behavior
-      # Support: auto_attach (preferred), attached (backward compat), load, scaffold
-      list(
-        name = pkg$name,
-        load = isTRUE(pkg$auto_attach) || isTRUE(pkg$attached) || isTRUE(pkg$load) || isTRUE(pkg$scaffold)
-      )
-    } else {
-      NULL
+    spec <- tryCatch(
+      .parse_package_spec(pkg),
+      error = function(e) {
+        warning("Failed to parse package specification: ", conditionMessage(e))
+        return(NULL)
+      }
+    )
+
+    if (is.null(spec)) {
+      return(NULL)
     }
+
+    list(
+      name = spec$name,
+      load = isTRUE(spec$auto_attach),
+      spec = spec
+    )
   })
 
   # Filter out NULLs and return
@@ -247,7 +251,7 @@ scaffold <- function(config_file = NULL) {
 .install_required_packages <- function(config) {
   packages <- .get_package_requirements(config)
   for (pkg in packages) {
-    .install_package(pkg$name)
+    .install_package(pkg$spec)
   }
 }
 

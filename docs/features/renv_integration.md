@@ -37,19 +37,39 @@ renv_disable()
 renv_disable(keep_renv = FALSE)
 ```
 
-## Version Pinning Syntax
+## Package Sources and Version Pins
 
-Framework supports version pinning in `settings.yml` whether or not renv is enabled:
+Framework supports explicit package sources in `settings.yml` while keeping the
+string shorthand working for quick edits. The `source` field defaults to `cran`
+when omitted.
 
 ```yaml
 packages:
-  - dplyr              # Latest from CRAN
-  - ggplot2@3.4.0     # Specific CRAN version
-  - tidyverse/dplyr    # GitHub repo (default branch)
-  - tidyverse/dplyr@main  # GitHub repo with specific ref
+  # CRAN packages (source defaults to cran)
+  - name: dplyr
+    auto_attach: true
+
+  # Pin a specific CRAN version
+  - name: ggplot2
+    version: 3.4.0
+
+  # GitHub packages
+  - name: tidyverse/dplyr
+    source: github
+    ref: main
+
+  # Bioconductor packages
+  - name: DESeq2
+    source: bioc
 ```
 
-When renv is enabled, Framework routes package installations through `renv::install()`. When disabled, it uses `install.packages()` and `remotes::install_version()` / `remotes::install_github()`.
+Prefer the structured form above for readability, but the legacy strings still
+work (`"ggplot2@3.4.0"`, `"tidyverse/dplyr@main"`, `"bioc::DESeq2"`).
+
+When renv is enabled, Framework routes installations through `renv::install()`,
+including Bioconductor packages via `BiocManager`. When renv is disabled, it
+falls back to `install.packages()`, `remotes::install_*()`, and
+`BiocManager::install()` as appropriate.
 
 ## Helper Functions
 

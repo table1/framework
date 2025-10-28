@@ -317,13 +317,24 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
 }
 
 #' Alias for backward compatibility
-#' @param path Dot notation path (e.g. "source.private.example") or direct file path
-#' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
-#' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
-#' @param ... Additional arguments passed to read functions
+#' @inheritParams data_load
 #' @export
-load_data <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
-  data_load(path, delim, keep_attributes, ...)
+load_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
+  data_load(path, delim, keep_attributes, password, ...)
+}
+
+#' Alias for readability
+#' @inheritParams data_load
+#' @export
+data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
+  data_load(path, delim, keep_attributes, password, ...)
+}
+
+#' Alias for readability
+#' @inheritParams data_load
+#' @export
+read_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
+  data_load(path, delim, keep_attributes, password, ...)
 }
 
 #' List all data entries from config

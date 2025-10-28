@@ -1,50 +1,215 @@
-#' Parse package specification with version pinning
+#' Parse package specification with source detection
 #'
-#' Parses package specifications that may include version pins or GitHub references:
-#' - "dplyr" -> list(name = "dplyr", version = NULL, source = "cran")
+#' Parses package specifications that may include explicit sources, version pins,
+#' or GitHub/Bioconductor references. Supports both scalar strings and list-style
+#' entries from `settings.yml`.
+#'
+#' Examples:
+#' - "dplyr" -> list(name = "dplyr", source = "cran")
 #' - "dplyr@1.1.0" -> list(name = "dplyr", version = "1.1.0", source = "cran")
 #' - "tidyverse/dplyr@main" -> list(name = "dplyr", repo = "tidyverse/dplyr", ref = "main", source = "github")
+#' - list(name = "DESeq2", source = "bioc") -> list(name = "DESeq2", source = "bioc")
 #'
-#' @param spec Character string with package specification
-#' @return List with parsed components (name, version, source, repo, ref)
+#' @param spec Character or list describing the package
+#' @return List with normalized components (name, source, version, repo, ref, auto_attach)
 #' @keywords internal
 #' @examples
 #' \dontrun{
 #' .parse_package_spec("dplyr")
 #' .parse_package_spec("dplyr@1.1.0")
 #' .parse_package_spec("tidyverse/dplyr@main")
+#' .parse_package_spec(list(name = "DESeq2", source = "bioc", auto_attach = FALSE))
 #' }
 .parse_package_spec <- function(spec) {
-  spec <- trimws(spec)
+  .normalize_package_spec(spec)
+}
 
-  # Check for GitHub pattern: user/repo@ref or user/repo
-  if (grepl("/", spec)) {
-    parts <- strsplit(spec, "@")[[1]]
-    repo <- parts[1]
-    ref <- if (length(parts) > 1) parts[2] else "HEAD"
+#' Normalize package specification from config
+#'
+#' Converts the various package representations supported in settings.yml into a
+#' consistent structure that downstream helpers can rely on.
+#'
+#' @param spec Character string or list describing a package dependency
+#' @return List with fields: name, source, version, repo, ref, auto_attach
+#' @keywords internal
+.normalize_package_spec <- function(spec) {
+  if (is.null(spec)) {
+    return(NULL)
+  }
+
+  if (is.list(spec)) {
+    return(.normalize_package_list_spec(spec))
+  }
+
+  if (is.character(spec) && length(spec) == 1) {
+    return(.normalize_package_string_spec(spec))
+  }
+
+  stop("Unsupported package specification type: ", class(spec)[1])
+}
+
+.normalize_package_string_spec <- function(spec) {
+  spec <- trimws(spec)
+  if (identical(spec, "")) {
+    stop("Package specification cannot be empty")
+  }
+
+  auto_attach <- FALSE
+
+  # Bioconductor shorthand: bioc::pkg
+  if (grepl("^bioc::", spec, ignore.case = TRUE)) {
+    pkg_name <- sub("^bioc::", "", spec, ignore.case = TRUE)
+    return(list(
+      name = pkg_name,
+      source = "bioc",
+      version = NULL,
+      repo = NULL,
+      ref = NULL,
+      auto_attach = auto_attach
+    ))
+  }
+
+  # GitHub shorthand: user/repo@ref or user/repo
+  if (grepl("/", spec, fixed = TRUE)) {
+    parts <- strsplit(spec, "@", fixed = TRUE)[[1]]
+    repo <- trimws(parts[1])
+    ref <- if (length(parts) > 1) trimws(parts[2]) else "HEAD"
     pkg_name <- basename(repo)
 
     return(list(
       name = pkg_name,
+      source = "github",
+      version = NULL,
       repo = repo,
       ref = ref,
-      source = "github",
-      version = NULL
+      auto_attach = auto_attach
     ))
   }
 
-  # Check for CRAN pattern: package@version or package
-  parts <- strsplit(spec, "@")[[1]]
-  pkg_name <- parts[1]
-  version <- if (length(parts) > 1) parts[2] else NULL
+  # CRAN shorthand: package or package@version
+  parts <- strsplit(spec, "@", fixed = TRUE)[[1]]
+  pkg_name <- trimws(parts[1])
+  version <- if (length(parts) > 1) trimws(parts[2]) else NULL
 
   list(
     name = pkg_name,
-    version = version,
     source = "cran",
+    version = version,
+    repo = NULL,
+    ref = NULL,
+    auto_attach = auto_attach
+  )
+}
+
+.normalize_package_list_spec <- function(spec) {
+  auto_attach <- isTRUE(spec$auto_attach) ||
+    isTRUE(spec$attached) ||
+    isTRUE(spec$load) ||
+    isTRUE(spec$scaffold)
+
+  pkg_name_raw <- spec$name %||% spec$package
+
+  base_spec <- list(
+    name = NULL,
+    source = NULL,
+    version = NULL,
     repo = NULL,
     ref = NULL
   )
+
+  if (!is.null(pkg_name_raw)) {
+    base_spec <- tryCatch(
+      .normalize_package_string_spec(pkg_name_raw),
+      error = function(e) {
+        list(
+          name = pkg_name_raw,
+          source = NULL,
+          version = NULL,
+          repo = NULL,
+          ref = NULL,
+          auto_attach = FALSE
+        )
+      }
+    )
+  }
+
+  source <- spec$source
+  if (!is.null(source)) {
+    source <- tolower(as.character(source))
+    if (source %in% c("bioconductor", "bioc", "bio")) {
+      source <- "bioc"
+    }
+  }
+  source <- source %||% base_spec$source %||% "cran"
+
+  repo <- spec$repo %||% spec$source_repo %||% base_spec$repo
+  ref <- spec$ref %||% spec$branch %||% spec$tag %||% base_spec$ref
+  version <- spec$version %||% spec$ver %||% base_spec$version
+
+  name <- base_spec$name %||% pkg_name_raw
+
+  if (source == "github") {
+    if (is.null(repo)) {
+      if (!is.null(pkg_name_raw) && grepl("/", pkg_name_raw, fixed = TRUE)) {
+        repo <- sub("@.*$", "", pkg_name_raw)
+        ref <- ref %||% sub("^.*@", "", pkg_name_raw)
+        if (identical(repo, ref)) {
+          ref <- NULL
+        }
+      }
+    }
+
+    if (is.null(repo)) {
+      stop("GitHub package requires a 'repo' field or a 'name' containing 'owner/repo'")
+    }
+
+    name <- basename(repo)
+    if (is.null(ref) || identical(ref, repo)) {
+      ref <- base_spec$ref %||% "HEAD"
+    }
+    if (identical(ref, "")) {
+      ref <- "HEAD"
+    }
+    version <- NULL
+  } else if (source == "bioc") {
+    name <- name %||% pkg_name_raw
+    if (is.null(name)) {
+      stop("Bioconductor package requires a 'name' field")
+    }
+    repo <- NULL
+    ref <- NULL
+  } else if (source == "cran") {
+    name <- name %||% pkg_name_raw
+    if (is.null(name)) {
+      stop("CRAN package requires a 'name' field")
+    }
+    repo <- NULL
+    ref <- NULL
+  }
+
+  list(
+    name = name,
+    source = source,
+    version = version,
+    repo = repo,
+    ref = ref,
+    auto_attach = auto_attach
+  )
+}
+
+.ensure_biocmanager_installed <- function(use_renv = FALSE) {
+  if (requireNamespace("BiocManager", quietly = TRUE)) {
+    return(invisible(TRUE))
+  }
+
+  if (use_renv) {
+    renv::install("BiocManager")
+  } else {
+    message("Installing BiocManager from CRAN...")
+    install.packages("BiocManager")
+  }
+
+  invisible(TRUE)
 }
 
 #' Install package via renv
@@ -59,7 +224,9 @@
     stop("renv package is required but not installed")
   }
 
-  if (spec$source == "github") {
+  source <- spec$source %||% "cran"
+
+  if (identical(source, "github")) {
     # Install from GitHub
     pkg_ref <- if (!is.null(spec$ref) && spec$ref != "HEAD") {
       paste0(spec$repo, "@", spec$ref)
@@ -67,7 +234,10 @@
       spec$repo
     }
     renv::install(pkg_ref)
-  } else {
+  } else if (identical(source, "bioc")) {
+    .ensure_biocmanager_installed(use_renv = TRUE)
+    renv::install(paste0("bioc::", spec$name))
+  } else if (identical(source, "cran")) {
     # Install from CRAN
     if (!is.null(spec$version)) {
       pkg_ref <- paste0(spec$name, "@", spec$version)
@@ -75,6 +245,8 @@
     } else {
       renv::install(spec$name)
     }
+  } else {
+    stop("Unsupported package source: ", source)
   }
 
   invisible(TRUE)
@@ -88,7 +260,9 @@
 #' @return Invisibly returns TRUE on success
 #' @keywords internal
 .install_package_base <- function(spec) {
-  if (spec$source == "github") {
+  source <- spec$source %||% "cran"
+
+  if (identical(source, "github")) {
     # Install from GitHub using remotes
     if (!requireNamespace("remotes", quietly = TRUE)) {
       install.packages("remotes")
@@ -101,7 +275,11 @@
     }
     message("Installing ", spec$name, " from GitHub (", pkg_ref, ")...")
     remotes::install_github(pkg_ref)
-  } else {
+  } else if (identical(source, "bioc")) {
+    .ensure_biocmanager_installed(use_renv = FALSE)
+    message("Installing ", spec$name, " from Bioconductor...")
+    BiocManager::install(spec$name, update = FALSE, ask = FALSE)
+  } else if (identical(source, "cran")) {
     # Install from CRAN
     if (!is.null(spec$version)) {
       # For version pinning without renv, use remotes::install_version
@@ -118,6 +296,8 @@
       message("Installing ", spec$name, " from CRAN...")
       install.packages(spec$name)
     }
+  } else {
+    stop("Unsupported package source: ", source)
   }
 
   invisible(TRUE)
@@ -150,14 +330,17 @@
 
   # Install each package via renv
   for (pkg_spec in config$packages) {
-    # Extract package name from list or string
-    if (is.list(pkg_spec)) {
-      pkg_name <- pkg_spec$name
-    } else {
-      pkg_name <- pkg_spec
-    }
+    spec <- tryCatch(
+      .parse_package_spec(pkg_spec),
+      error = function(e) {
+        warning("Failed to parse package specification: ", conditionMessage(e))
+        return(NULL)
+      }
+    )
 
-    spec <- .parse_package_spec(pkg_name)
+    if (is.null(spec)) {
+      next
+    }
 
     # Check if package is already installed at correct version
     if (requireNamespace(spec$name, quietly = TRUE)) {
@@ -487,37 +670,34 @@ packages_list <- function() {
                   if (length(config$packages) == 1) "package" else "packages"))
 
   for (pkg_spec in config$packages) {
-    # Handle both string specs and list specs
-    if (is.list(pkg_spec)) {
-      pkg_string <- pkg_spec$name
-    } else {
-      pkg_string <- pkg_spec
+    spec <- tryCatch(
+      .parse_package_spec(pkg_spec),
+      error = function(e) {
+        warning("Failed to parse package specification: ", conditionMessage(e))
+        return(NULL)
+      }
+    )
+
+    if (is.null(spec)) {
+      next
     }
 
-    # Parse the package spec
-    spec <- .parse_package_spec(pkg_string)
+    source_label <- switch(
+      spec$source,
+      github = sprintf("GitHub: %s%s",
+        spec$repo,
+        if (!is.null(spec$ref) && spec$ref != "HEAD") paste0("@", spec$ref) else ""
+      ),
+      bioc = "Bioconductor",
+      cran = "CRAN",
+      toupper(spec$source)
+    )
 
-    # Format output based on source
-    if (spec$source == "github") {
-      # GitHub package
-      ref_info <- if (!is.null(spec$ref) && spec$ref != "HEAD") {
-        sprintf(" [@%s]", spec$ref)
-      } else {
-        ""
-      }
-      message(sprintf("• %s [GITHUB]", spec$name))
-      message(sprintf("  Repository: %s%s", spec$repo, ref_info))
-    } else {
-      # CRAN package
-      version_info <- if (!is.null(spec$version)) {
-        sprintf(" [v%s]", spec$version)
-      } else {
-        ""
-      }
-      message(sprintf("• %s%s", spec$name, version_info))
-    }
+    version_label <- if (!is.null(spec$version)) sprintf(" (v%s)", spec$version) else ""
 
-    message("")  # Blank line between packages
+    message(sprintf("• %s [%s]%s", spec$name, source_label, version_label))
+    message(sprintf("  Auto-attach: %s", if (isTRUE(spec$auto_attach)) "yes" else "no"))
+    message("")
   }
 
   invisible(NULL)
