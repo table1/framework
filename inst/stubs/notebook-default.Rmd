@@ -1,6 +1,6 @@
 ---
 title: "{filename}"
-author: "`r config$author$name`"
+author: "Your Name"
 date: "{date}"
 output:
   html_document:

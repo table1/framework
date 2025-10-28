@@ -1,0 +1,3 @@
+notebook:
+  dir: notebooks
+  output_dir: notebooks/_rendered

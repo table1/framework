@@ -90,15 +90,7 @@ make_notebook <- function(name,
   if (is.null(type)) {
     cfg <- tryCatch(read_config(), error = function(e) NULL)
 
-    # Check new location first, then old location (backward compat)
-    default_format <- cfg$default_notebook_format
-    if (is.null(default_format)) {
-      default_format <- cfg$options$default_notebook_format
-      if (!is.null(default_format)) {
-        warning("config$options$default_notebook_format is deprecated. ",
-                "Move to config$default_notebook_format (root level)")
-      }
-    }
+    default_format <- cfg$options$default_notebook_format %||% cfg$default_notebook_format
 
     if (!is.null(default_format)) {
       type <- match.arg(default_format, c("quarto", "rmarkdown", "script"))
@@ -449,6 +441,11 @@ list_stubs <- function(type = NULL) {
   # Check for notebook directory in config (new directories structure)
   if (!is.null(config$directories$notebooks)) {
     return(config$directories$notebooks)
+  }
+
+  notebook_opts <- config$options$notebook
+  if (is.list(notebook_opts) && !is.null(notebook_opts$dir)) {
+    return(notebook_opts$dir)
   }
 
   # Legacy: check options$notebook_dir for backward compatibility

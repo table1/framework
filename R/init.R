@@ -752,6 +752,7 @@ init <- function(
 
   # Ensure author placeholders in starter notebooks use resolved name
   .replace_author_placeholders(target_dir)
+  .initialize_framework_db(target_dir)
 
   # Initialization complete (settings.yml/config.yml serves as marker)
   message(sprintf("Project '%s' initialized successfully!", project_name))
@@ -1116,6 +1117,134 @@ make_init <- function(output_file = "init.R") {
     }, error = function(e) {
       message("Note: Could not install git hooks. You can run 'framework hooks:install' later")
     })
+  }
+
+  invisible(NULL)
+}
+
+.resolve_project_author <- function(target_dir = ".") {
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+
+  if (!is.null(target_dir) && nzchar(target_dir) && target_dir != ".") {
+    if (dir.exists(target_dir)) {
+      setwd(target_dir)
+    }
+  }
+
+  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  author_name <- cfg$author$name
+  if (is.null(author_name) || !nzchar(author_name)) {
+    author_name <- "Your Name"
+  }
+  author_name
+}
+
+.replace_author_placeholders <- function(target_dir = ".") {
+  author_name <- .resolve_project_author(target_dir)
+
+  notebook_files <- list.files(
+    path = target_dir,
+    pattern = "\\.(qmd|QMD|Rmd|rmd)$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  pattern <- 'author:\\s*("Your Name"|!expr config\\$author\\$name|"`r config\\$author\\$name`")'
+  replacement <- sprintf('author: "%s"', author_name)
+
+  for (file in notebook_files) {
+    lines <- readLines(file, warn = FALSE)
+    new_lines <- gsub(pattern, replacement, lines)
+    if (!identical(lines, new_lines)) {
+      writeLines(new_lines, file)
+    }
+  }
+
+  .ensure_notebook_output_dir(target_dir, author_name = author_name)
+
+  invisible(NULL)
+}
+
+.ensure_notebook_output_dir <- function(target_dir = ".", author_name = NULL) {
+  config_path <- .get_settings_file(target_dir)
+  if (is.null(config_path)) {
+    config_path = file.path(target_dir, "settings.yml")
+  }
+
+  if (!file.exists(config_path)) {
+    return(invisible(NULL))
+  }
+
+  cfg <- tryCatch(read_config(config_path), error = function(e) NULL)
+  if (is.null(cfg)) {
+    return(invisible(NULL))
+  }
+
+  notebook_conf <- cfg$notebook
+  if (is.null(notebook_conf)) {
+    notebook_conf <- cfg$options$notebook
+  }
+  directories_conf <- cfg$directories
+
+  notebooks_dir <- directories_conf$notebooks
+  if (is.null(notebooks_dir) && is.list(cfg$options$notebook) && !is.null(cfg$options$notebook$dir)) {
+    notebooks_dir <- cfg$options$notebook$dir
+  }
+
+  desired_output <- "_rendered"
+  if (is.list(notebook_conf) && !is.null(notebook_conf$output_dir) && nzchar(notebook_conf$output_dir)) {
+    desired_output <- notebook_conf$output_dir
+  }
+
+  if (!is.null(notebooks_dir) && nzchar(notebooks_dir) && notebooks_dir != "." && notebooks_dir != "./") {
+    if (!startsWith(desired_output, notebooks_dir)) {
+      desired_output <- file.path(notebooks_dir, basename(desired_output))
+    }
+  }
+
+  .update_quarto_output_dir(target_dir, desired_output)
+
+  invisible(NULL)
+}
+
+.update_quarto_output_dir <- function(target_dir = ".", output_dir) {
+  quarto_file <- file.path(target_dir, "_quarto.yml")
+  if (!file.exists(quarto_file)) {
+    return(invisible(NULL))
+  }
+
+  lines <- readLines(quarto_file, warn = FALSE)
+  pattern <- '^\\s*output-dir:\\s*(.*)$'
+  replacement <- sprintf('output-dir: %s', output_dir)
+  new_lines <- sub(pattern, replacement, lines)
+
+  if (!identical(lines, new_lines)) {
+    writeLines(new_lines, quarto_file)
+  }
+
+  invisible(NULL)
+}
+
+.initialize_framework_db <- function(target_dir = ".") {
+  template_db <- system.file("templates", "framework.fr.db", package = "framework")
+  if (!nzchar(template_db) || !file.exists(template_db)) {
+    return(invisible(NULL))
+  }
+
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+
+  if (!is.null(target_dir) && nzchar(target_dir) && target_dir != ".") {
+    if (dir.exists(target_dir)) {
+      setwd(target_dir)
+    }
+  }
+
+  if (!file.exists("framework.db")) {
+    if (file.copy(template_db, "framework.db", overwrite = FALSE)) {
+      message("\u2713 Initialized framework.db")
+    }
   }
 
   invisible(NULL)

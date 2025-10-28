@@ -1,4 +1,9 @@
 git:
+  hooks:
+    ai_sync: false
+    data_security: false
+
+  # Optional remote metadata
   url: env("GIT_REPO_URL")
   author: env("GIT_REPO_AUTHOR")
   email: env("GIT_REPO_EMAIL")

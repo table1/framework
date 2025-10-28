@@ -115,7 +115,9 @@ test_that(".mark_scaffolded() appends on subsequent runs", {
   # First run
   framework:::.mark_scaffolded()
   content1 <- readLines(".framework_scaffolded")
-  expect_length(content1, 1)
+  expect_length(content1, 2)
+  expect_true(grepl("^First scaffolded at:", content1[1]))
+  expect_true(grepl("^Last scaffolded at:", content1[2]))
 
   # Second run
   Sys.sleep(0.1) # Ensure different timestamp
@@ -123,7 +125,7 @@ test_that(".mark_scaffolded() appends on subsequent runs", {
   content2 <- readLines(".framework_scaffolded")
   expect_length(content2, 2)
   expect_true(grepl("^First scaffolded at:", content2[1]))
-  expect_true(grepl("^Scaffolded at:", content2[2]))
+  expect_true(grepl("^Last scaffolded at:", content2[2]))
 
   file.remove(".framework_scaffolded")
 })

@@ -51,8 +51,9 @@ status <- function() {
       cat(sprintf("  Author: %s\n", config$author$name))
     }
 
-    if (!is.null(config$default_notebook_format)) {
-      cat(sprintf("  Notebook format: %s\n", config$default_notebook_format))
+    notebook_format <- config$default_notebook_format %||% config$options$default_notebook_format
+    if (!is.null(notebook_format)) {
+      cat(sprintf("  Notebook format: %s\n", notebook_format))
     }
 
     cat("\n")

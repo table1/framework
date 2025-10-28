@@ -350,16 +350,23 @@ scaffold <- function(config_file = NULL) {
 #' @keywords internal
 .mark_scaffolded <- function() {
   if (!file.exists(".framework_scaffolded")) {
-    # First scaffold - create marker with timestamp
+    timestamp <- Sys.time()
     writeLines(
-      paste("First scaffolded at:", Sys.time()),
+      c(
+        paste("First scaffolded at:", timestamp),
+        paste("Last scaffolded at:", timestamp)
+      ),
       ".framework_scaffolded"
     )
   } else {
-    # Update timestamp
     existing <- readLines(".framework_scaffolded", warn = FALSE)
+    first_line <- existing[grepl("^First scaffolded at:", existing)][1]
+    if (is.na(first_line)) {
+      first_line <- paste("First scaffolded at:", Sys.time())
+    }
+
     writeLines(
-      c(existing, paste("Scaffolded at:", Sys.time())),
+      c(first_line, paste("Last scaffolded at:", Sys.time())),
       ".framework_scaffolded"
     )
   }
@@ -370,26 +377,44 @@ scaffold <- function(config_file = NULL) {
 #' Ensure framework database exists
 #' @keywords internal
 .ensure_framework_db <- function() {
-  if (!file.exists("framework.db")) {
-    message(
-      "\u26A0 Framework database not found. Creating framework.db...\n",
-      "  This database tracks data integrity, cache, and results.\n",
-      "  It's already in .gitignore and safe to commit the schema."
-    )
+  project_root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+  db_path <- if (!is.null(project_root)) file.path(project_root, "framework.db") else "framework.db"
 
-    # Initialize the database
-    tryCatch(
-      {
-        .init_db()
-        message("\u2713 Framework database created successfully")
-      },
-      error = function(e) {
-        warning(
-          "Could not create framework.db: ", e$message, "\n",
-          "Some Framework features (data tracking, caching, results) may not work.\n",
-          "You can manually create it by running: framework:::.init_db()"
-        )
-      }
+  if (file.exists(db_path)) {
+    return(invisible(NULL))
+  }
+
+  template_db <- system.file("templates", "framework.fr.db", package = "framework")
+  if (!nzchar(template_db) || !file.exists(template_db)) {
+    warning(
+      "Framework template database not found. Some features may not work until scaffold() creates framework.db.\n",
+      "You can generate the template by reinstalling the framework package."
+    )
+    return(invisible(NULL))
+  }
+
+  message(
+    "\u26A0 Framework database not found. Creating framework.db...\n",
+    "  This database tracks data integrity, cache, and results.\n",
+    "  It's already in .gitignore and safe to commit the schema."
+  )
+
+  success <- tryCatch(
+    file.copy(template_db, db_path, overwrite = FALSE),
+    warning = function(w) FALSE,
+    error = function(e) {
+      warning(
+        "Could not create framework.db: ", e$message, "\n",
+        "Some Framework features (data tracking, caching, results) may not work.\n",
+        "You can manually create it by running scaffold() from the project root."
+      )
+      FALSE
+    }
+  )
+
+  if (isTRUE(success)) {
+    message(
+      "\u2713 Framework database created successfully"
     )
   }
 
@@ -406,7 +431,7 @@ scaffold <- function(config_file = NULL) {
 #' 3. Skip seeding if both are NULL or empty
 .set_random_seed <- function(config) {
   # Try project config first
-  seed_value <- config$seed
+  seed_value <- config$seed %||% config$options$seed
 
   # Fall back to global frameworkrc if project seed not specified
   if (is.null(seed_value)) {

@@ -180,6 +180,28 @@ test_that("dotenv loads from parent directory when dotenv_location set", {
   expect_equal(Sys.getenv("TEST_VAR"), "parent_dir")
 })
 
+test_that(".ensure_framework_db respects project root", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  }, add = TRUE)
+
+  setwd(test_dir)
+  expect_true(file.exists("framework.db"))
+
+  # No message when framework.db already exists
+  expect_silent(framework:::.ensure_framework_db())
+
+  # Remove database and ensure it is recreated from subdirectory
+  unlink("framework.db")
+  dir.create(file.path(test_dir, "notebooks"), showWarnings = FALSE)
+  setwd(file.path(test_dir, "notebooks"))
+  expect_message(framework:::.ensure_framework_db(), "Framework database not found")
+  expect_true(file.exists(file.path(test_dir, "framework.db")))
+})
+
 test_that("dotenv_location errors when file not found", {
   # Create a temporary directory
   tmp_dir <- tempfile()
