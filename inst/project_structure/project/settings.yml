@@ -1,119 +1,14 @@
 default:
-  # --------------------------------------------------------------------------
-  # Project Metadata
-  # --------------------------------------------------------------------------
-  project_type: project  # Type: project, course, or presentation
+  # Core metadata stays inline for quick reference
+  project_type: project
 
-  # Project author information (used in notebooks, reports, etc.)
-  author:
-    name: "Your Name"
-    email: "your.email@example.com"
-    affiliation: "Your Institution"
-
-  # --------------------------------------------------------------------------
-  # Package Dependencies
-  # --------------------------------------------------------------------------
-  # Packages to install and optionally auto-load during scaffold()
-  # Use auto_attach: true to load automatically, false to install only
-  # Version pinning: dplyr@1.1.0, user/repo@branch
-  # --------------------------------------------------------------------------
-  packages:
-    # Tidyverse packages for data manipulation and visualization
-    - name: dplyr
-      auto_attach: true
-    - name: tidyr
-      auto_attach: true
-    - name: ggplot2
-      auto_attach: true
-    - name: readr
-      auto_attach: false
-    # Note: framework, styler, and rmarkdown are installed automatically
-    # when you enable renv based on your project configuration
-
-  # --------------------------------------------------------------------------
-  # Project Directories
-  # --------------------------------------------------------------------------
-  # Define the core directory structure for your project.
-  # Most users can leave these as defaults.
-  # All paths are relative to the project root.
-  # --------------------------------------------------------------------------
-  directories:
-    # Source code and notebooks
-    notebooks: notebooks          # Where make_notebook() creates files
-    scripts: scripts              # Where make_script() creates files
-    functions: functions          # Single dir or list: [functions, helpers]
-
-    # Analysis outputs
-    results_public: results/public    # Shareable outputs (plots, reports)
-    results_private: results/private  # Private outputs (internal reports)
-
-    # Data and caching
-    cache: data/cached            # Cached computation results
-    scratch: data/scratch         # Temporary workspace
-
-  # --------------------------------------------------------------------------
-  # Project Behavior
-  # --------------------------------------------------------------------------
-  # Default notebook format for make_notebook() (quarto or rmarkdown)
-  default_notebook_format: quarto
-
-  # Random seed for reproducibility
-  # Set during scaffold() to ensure consistent random operations
-  # Use YYYYMMDD format (e.g., 20241016) or any integer
-  # Set to null to disable automatic seeding
-  # Falls back to global ~/.frameworkrc FW_SEED if not specified
-  seed: 20241016
-
-  # --------------------------------------------------------------------------
-  # Data Catalog
-  # --------------------------------------------------------------------------
-  # Simple approach: Define data sources inline
-  # Complex projects: Use split file (data: settings/data.yml)
-  # --------------------------------------------------------------------------
-  data: settings/data.yml  # Data catalog lives in settings/data.yml
-
-  # --------------------------------------------------------------------------
-  # Database Connections
-  # --------------------------------------------------------------------------
-  # Simple approach: Define connections inline
-  # Complex projects: Use split file (connections: settings/connections.yml)
-  #
-  # ⚠️ PRECEDENCE RULE: Main settings file ALWAYS wins
-  # If you define 'default_connection' here AND in settings/connections.yml,
-  # the value here takes precedence. Framework will warn about the conflict.
-  # --------------------------------------------------------------------------
-  connections:
-    # Example: Uncomment and modify
-    # db:
-    #   driver: postgresql
-    #   host: !expr Sys.getenv("DB_HOST")
-    #   database: !expr Sys.getenv("DB_NAME")
-    #   user: !expr Sys.getenv("DB_USER")
-    #   password: !expr Sys.getenv("DB_PASS")
-
-  # Split File Example:
-  # To use split files for complex configurations:
-  #   1. Create settings/connections.yml
-  #   2. Replace the connections section above with:
-  #      connections: settings/connections.yml
-  #   3. Keep top-level keys here in the main settings.yml:
-  #      default_connection: db  # ← Keep in main config, not split file!
-
-  # Security settings
-  security:
-    data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY", "")
-    results_key: !expr Sys.getenv("RESULTS_ENCRYPTION_KEY", "")
-
-  # --------------------------------------------------------------------------
-  # AI Assistant Configuration
-  # --------------------------------------------------------------------------
-  ai:
-    canonical_file: ""
-
-  # --------------------------------------------------------------------------
-  # Git Hooks
-  # --------------------------------------------------------------------------
-  git:
-    hooks:
-      ai_sync: false
-      data_security: false
+  # Delegated configuration files (edit these under settings/)
+  author: settings/author.yml
+  packages: settings/packages.yml
+  directories: settings/directories.yml
+  options: settings/options.yml
+  data: settings/data.yml
+  connections: settings/connections.yml
+  security: settings/security.yml
+  ai: settings/ai.yml
+  git: settings/git.yml

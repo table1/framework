@@ -1,0 +1,23 @@
+packages:
+  # Auto-attached packages (source defaults to CRAN when omitted)
+  - name: dplyr
+    auto_attach: true
+  - name: tidyr
+    auto_attach: true
+  - name: ggplot2
+    auto_attach: true
+
+  # Installed but not auto-attached (use library() when needed)
+  - name: readr
+    auto_attach: false
+  - name: stringr
+    auto_attach: false
+  - name: scales
+    auto_attach: false
+
+  # Examples for alternate sources:
+  # - name: tidyverse/dplyr
+  #   source: github
+  #   ref: main
+  # - name: DESeq2
+  #   source: bioc

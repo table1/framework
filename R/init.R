@@ -631,43 +631,127 @@ init <- function(
 
     if (file.exists(config_path)) {
       config_content <- readLines(config_path, warn = FALSE)
+      config_modified <- FALSE
+
+      update_author_split <- function(author_file) {
+        author_path <- file.path(dirname(config_path), author_file)
+        if (!file.exists(author_path)) {
+          return(FALSE)
+        }
+
+        author_yaml <- tryCatch(yaml::read_yaml(author_path), error = function(e) NULL)
+        if (is.null(author_yaml)) {
+          return(FALSE)
+        }
+
+        if (is.null(author_yaml$author) || !is.list(author_yaml$author)) {
+          author_yaml$author <- list()
+        }
+
+        if (!is.null(author_name) && nzchar(author_name)) {
+          author_yaml$author$name <- author_name
+        }
+        if (!is.null(author_email) && nzchar(author_email)) {
+          author_yaml$author$email <- author_email
+        }
+        if (!is.null(author_affiliation) && nzchar(author_affiliation)) {
+          author_yaml$author$affiliation <- author_affiliation
+        }
+
+        yaml::write_yaml(author_yaml, author_path)
+        TRUE
+      }
+
+      update_options_split <- function(options_file) {
+        options_path <- file.path(dirname(config_path), options_file)
+        if (!file.exists(options_path)) {
+          return(FALSE)
+        }
+
+        options_yaml <- tryCatch(yaml::read_yaml(options_path), error = function(e) NULL)
+        if (is.null(options_yaml)) {
+          return(FALSE)
+        }
+
+        if (is.null(options_yaml$options) || !is.list(options_yaml$options)) {
+          options_yaml$options <- list()
+        }
+
+        if (!is.null(default_notebook_format) && nzchar(default_notebook_format)) {
+          options_yaml$options$default_notebook_format <- default_notebook_format
+        }
+
+        yaml::write_yaml(options_yaml, options_path)
+        TRUE
+      }
 
       # Update author section if provided
       if (has_author_info) {
         author_start <- grep("^  author:", config_content)
         if (length(author_start) > 0) {
-          # Find where author section ends (next section at same indent level: "  <name>:")
-          next_section_pattern <- "^  [a-z_]+:"
-          all_sections <- grep(next_section_pattern, config_content)
-          next_section <- all_sections[all_sections > author_start[1]]
-          author_end <- if (length(next_section) > 0) next_section[1] - 1 else length(config_content)
+        author_entry <- config_content[author_start[1]]
+        author_file <- trimws(sub("^  author:\\s*", "", author_entry))
 
-          # Update author fields (looking for "    name:" - four spaces)
-          for (i in author_start:author_end) {
-            if (!is.null(author_name) && nzchar(author_name) && grepl("^    name:", config_content[i])) {
-              config_content[i] <- sprintf("    name: \"%s\"", author_name)
-            }
-            if (!is.null(author_email) && nzchar(author_email) && grepl("^    email:", config_content[i])) {
-              config_content[i] <- sprintf("    email: \"%s\"", author_email)
-            }
-            if (!is.null(author_affiliation) && nzchar(author_affiliation) && grepl("^    affiliation:", config_content[i])) {
-              config_content[i] <- sprintf("    affiliation: \"%s\"", author_affiliation)
+          updated_split <- FALSE
+          if (nzchar(author_file) && grepl("\\.ya?ml$", author_file, ignore.case = TRUE)) {
+            updated_split <- update_author_split(author_file)
+          }
+
+          if (!updated_split) {
+            # Inline fallback
+            next_section_pattern <- "^  [a-z_]+:"
+            all_sections <- grep(next_section_pattern, config_content)
+            next_section <- all_sections[all_sections > author_start[1]]
+            author_end <- if (length(next_section) > 0) next_section[1] - 1 else length(config_content)
+
+            for (i in author_start:author_end) {
+              if (!is.null(author_name) && nzchar(author_name) && grepl("^    name:", config_content[i])) {
+                config_content[i] <- sprintf("    name: \"%s\"", author_name)
+                config_modified <- TRUE
+              }
+              if (!is.null(author_email) && nzchar(author_email) && grepl("^    email:", config_content[i])) {
+                config_content[i] <- sprintf("    email: \"%s\"", author_email)
+                config_modified <- TRUE
+              }
+              if (!is.null(author_affiliation) && nzchar(author_affiliation) && grepl("^    affiliation:", config_content[i])) {
+                config_content[i] <- sprintf("    affiliation: \"%s\"", author_affiliation)
+                config_modified <- TRUE
+              }
             }
           }
         }
       }
 
-      # Update default_notebook_format if provided (root level)
+      # Update default_notebook_format if provided
       if (has_format_pref) {
-        format_line <- grep("^  default_notebook_format:", config_content)
-        if (length(format_line) > 0) {
-          config_content[format_line[1]] <- sprintf("  default_notebook_format: %s", default_notebook_format)
+        options_line <- grep("^  options:", config_content)
+        updated_split <- FALSE
+
+        if (length(options_line) > 0) {
+        options_entry <- config_content[options_line[1]]
+        options_file <- trimws(sub("^  options:\\s*", "", options_entry))
+          if (nzchar(options_file) && grepl("\\.ya?ml$", options_file, ignore.case = TRUE)) {
+            updated_split <- update_options_split(options_file)
+          }
+        }
+
+        if (!updated_split) {
+          format_line <- grep("^  default_notebook_format:", config_content)
+          if (length(format_line) > 0) {
+            config_content[format_line[1]] <- sprintf("  default_notebook_format: %s", default_notebook_format)
+            config_modified <- TRUE
+          }
         }
       }
 
-      writeLines(config_content, config_path)
+      if (config_modified) {
+        writeLines(config_content, config_path)
+      }
     }
   }
+
+  # Ensure author placeholders in starter notebooks use resolved name
+  .replace_author_placeholders(target_dir)
 
   # Initialization complete (settings.yml/config.yml serves as marker)
   message(sprintf("Project '%s' initialized successfully!", project_name))
@@ -909,7 +993,6 @@ make_init <- function(output_file = "init.R") {
     return(invisible(NULL))
   }
 
-  # Update settings file with hook settings using simple gsub (platform-safe)
   config_path <- .get_settings_file(target_dir)
   if (is.null(config_path)) {
     config_path <- file.path(target_dir, "settings.yml")
@@ -918,31 +1001,93 @@ make_init <- function(output_file = "init.R") {
   if (file.exists(config_path)) {
     tryCatch({
       config_content <- readLines(config_path, warn = FALSE)
+      config_modified <- FALSE
 
-      # Update ai_sync hook setting (matches any spacing/comments)
-      config_content <- gsub(
-        "^(\\s*ai_sync:\\s*)false(\\s*.*)?$",
-        sprintf("\\1%s\\2", tolower(ai_sync_enabled)),
-        config_content
-      )
+      update_git_split <- function(git_file) {
+        git_path <- file.path(dirname(config_path), git_file)
+        if (!file.exists(git_path)) {
+          return(FALSE)
+        }
+        git_yaml <- tryCatch(yaml::read_yaml(git_path), error = function(e) NULL)
+        if (is.null(git_yaml)) {
+          return(FALSE)
+        }
+        if (is.null(git_yaml$git) || !is.list(git_yaml$git)) {
+          git_yaml$git <- list()
+        }
+        if (is.null(git_yaml$git$hooks) || !is.list(git_yaml$git$hooks)) {
+          git_yaml$git$hooks <- list()
+        }
+        git_yaml$git$hooks$ai_sync <- ai_sync_enabled
+        git_yaml$git$hooks$data_security <- data_security_enabled
+        yaml::write_yaml(git_yaml, git_path)
+        TRUE
+      }
 
-      # Update data_security hook setting
-      config_content <- gsub(
-        "^(\\s*data_security:\\s*)false(\\s*.*)?$",
-        sprintf("\\1%s\\2", tolower(data_security_enabled)),
-        config_content
-      )
+      update_ai_split <- function(ai_file) {
+        if (!nzchar(ai_canonical)) {
+          return(FALSE)
+        }
+        ai_path <- file.path(dirname(config_path), ai_file)
+        if (!file.exists(ai_path)) {
+          return(FALSE)
+        }
+        ai_yaml <- tryCatch(yaml::read_yaml(ai_path), error = function(e) NULL)
+        if (is.null(ai_yaml)) {
+          return(FALSE)
+        }
+        if (is.null(ai_yaml$ai) || !is.list(ai_yaml$ai)) {
+          ai_yaml$ai <- list()
+        }
+        ai_yaml$ai$canonical_file <- ai_canonical
+        yaml::write_yaml(ai_yaml, ai_path)
+        TRUE
+      }
 
-      # Update canonical_file setting if provided
-      if (nzchar(ai_canonical)) {
+      git_line <- grep("^  git:", config_content)
+      git_updated <- FALSE
+      if (length(git_line) > 0) {
+        git_entry <- config_content[git_line[1]]
+        git_file <- trimws(sub("^  git:\\s*", "", git_entry))
+        if (nzchar(git_file) && grepl("\\.ya?ml$", git_file, ignore.case = TRUE)) {
+          git_updated <- update_git_split(git_file)
+        }
+      }
+      if (!git_updated) {
+        config_content <- gsub(
+          "^(\\s*ai_sync:\\s*)false(\\s*.*)?$",
+          sprintf("\\1%s\\2", tolower(ai_sync_enabled)),
+          config_content
+        )
+        config_content <- gsub(
+          "^(\\s*data_security:\\s*)false(\\s*.*)?$",
+          sprintf("\\1%s\\2", tolower(data_security_enabled)),
+          config_content
+        )
+        config_modified <- TRUE
+      }
+
+      ai_line <- grep("^  ai:", config_content)
+      ai_updated <- FALSE
+      if (length(ai_line) > 0) {
+        ai_entry <- config_content[ai_line[1]]
+        ai_file <- trimws(sub("^  ai:\\s*", "", ai_entry))
+        if (nzchar(ai_file) && grepl("\\.ya?ml$", ai_file, ignore.case = TRUE)) {
+          ai_updated <- update_ai_split(ai_file)
+        }
+      }
+      if (!ai_updated && nzchar(ai_canonical)) {
         config_content <- gsub(
           "^(\\s*canonical_file:\\s*)\"\"(\\s*.*)?$",
           sprintf("\\1\"%s\"\\2", ai_canonical),
           config_content
         )
+        config_modified <- TRUE
       }
 
-      writeLines(config_content, config_path)
+      if (config_modified) {
+        writeLines(config_content, config_path)
+      }
     }, error = function(e) {
       warning("Could not update settings file with hook settings: ", e$message)
     })

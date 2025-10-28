@@ -1,16 +1,16 @@
 # Framework
 
-# Data directories (only in root, not in inst/project_structure templates)
-/data/*
-!/data/*/.gitkeep
-!/data/source/public/
-!/data/source/public/**
-!/data/in_progress/public/
-!/data/in_progress/public/**
-!/data/final/public/
-!/data/final/public/**
-/data/cached*
-/data/scratch*
+# Data directories (all types)
+data/*
+!data/*/.gitkeep
+!data/source/public/
+!data/source/public/**
+!data/in_progress/public/
+!data/in_progress/public/**
+!data/final/public/
+!data/final/public/**
+data/cached*
+data/scratch*
 
 # Results directories (analysis only - private by default)
 results/private/
@@ -22,11 +22,6 @@ results/private/**
 .RData
 .Ruserdata
 .Rapp.history
-
-# R package build artifacts
-*.tar.gz
-*.Rcheck/
-.Rbuildignore
 
 # OS specific
 .DS_Store
@@ -41,14 +36,6 @@ framework.db
 .initiated
 .framework_renv_enabled
 .framework_scaffolded
-.init.R.done
-
-# Project files (should not be in package repo)
-settings.yml
-config.yml
-*.Rproj
-*.code-workspace
-functions/
 
 # Credentials
 .env
@@ -63,6 +50,9 @@ renv/python/
 renv/sandbox/
 renv/staging/
 
+# Rendered outputs (development artifacts - notebooks, scripts, etc.)
+_rendered/
+
 # Cache directories
 *_cache/
 /cache/
@@ -71,12 +61,8 @@ renv/staging/
 # IDE specific files
 .idea
 .vscode
-.claude/settings.local.json
 
 # Config directories
 .history
 .aws
-.config.claude/
-
-# Auto-generated VS Code tasks (managed by ~/code/projects/tools/gen_tasks.sh)
-.vscode/tasks.json
+.config
