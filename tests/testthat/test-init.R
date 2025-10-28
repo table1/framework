@@ -19,6 +19,7 @@ test_that("init creates presentation project structure", {
   # Check key directories exist
   expect_true(dir.exists("data"))
   expect_true(dir.exists("functions"))
+  expect_false(dir.exists("notebooks"))
   # Presentation projects should NOT have results directory
   expect_false(dir.exists("results"))
 

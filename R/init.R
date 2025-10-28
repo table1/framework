@@ -589,6 +589,33 @@ init <- function(
     }
   }
 
+  # Remove template directories when config maps them to project root (".")
+  config_path_for_dirs <- .get_settings_file(target_dir)
+  if (!is.null(config_path_for_dirs) && file.exists(config_path_for_dirs)) {
+    config_for_dirs <- tryCatch(
+      read_config(config_path_for_dirs),
+      error = function(e) NULL
+    )
+
+    if (!is.null(config_for_dirs) && !is.null(config_for_dirs$directories)) {
+      for (dir_name in names(config_for_dirs$directories)) {
+        dir_value <- config_for_dirs$directories[[dir_name]]
+        if (is.character(dir_value) && length(dir_value) == 1) {
+          dir_value_trim <- trimws(dir_value)
+          if (dir_value_trim %in% c(".", "./", "")) {
+            candidate_path <- file.path(target_dir, dir_name)
+            if (dir.exists(candidate_path)) {
+              contents <- list.files(candidate_path, all.files = TRUE, no.. = TRUE)
+              if (length(contents) == 0) {
+                unlink(candidate_path, recursive = TRUE)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   # Update settings.yml (or config.yml) with author information and notebook format if provided
   has_author_info <- (!is.null(author_name) && nzchar(author_name)) ||
                       (!is.null(author_email) && nzchar(author_email)) ||
