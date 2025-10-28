@@ -479,11 +479,7 @@ scaffold <- function(config_file = NULL) {
   n_changes <- length(status_result)
 
   if (n_changes > 0) {
-    message(sprintf(
-      "\n\u26A0 Git: %d uncommitted file%s. Remember to commit your work!",
-      n_changes,
-      if (n_changes == 1) "" else "s"
-    ))
+    invisible(NULL)
   }
 
   invisible(NULL)

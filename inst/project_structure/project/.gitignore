@@ -52,6 +52,7 @@ renv/staging/
 
 # Rendered outputs (development artifacts - notebooks, scripts, etc.)
 _rendered/
+_freeze/
 
 # Cache directories
 *_cache/
