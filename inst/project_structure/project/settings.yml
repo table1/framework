@@ -70,14 +70,7 @@ default:
   # Simple approach: Define data sources inline
   # Complex projects: Use split file (data: settings/data.yml)
   # --------------------------------------------------------------------------
-  data:
-    # Example: Uncomment and modify
-    # source:
-    #   private:
-    #     example:
-    #       path: data/source/private/example.csv
-    #       type: csv
-    #       locked: true
+  data: settings/data.yml  # Data catalog lives in settings/data.yml
 
   # --------------------------------------------------------------------------
   # Database Connections

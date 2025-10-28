@@ -46,6 +46,9 @@ test_that("init creates project structure", {
   # Check project structure directories
   expect_true(dir.exists("data"))
   expect_true(dir.exists("data/source"))
+  raw_settings <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
+  expect_equal(raw_settings$default$data, "settings/data.yml")
+  expect_true(file.exists("settings/data.yml"))
   expect_true(dir.exists("data/in_progress"))
   expect_true(dir.exists("data/final"))
   expect_true(dir.exists("results"))
