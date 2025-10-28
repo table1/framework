@@ -84,7 +84,7 @@ run_settings_checkin() {
   # Skip interactive prompts when running non-interactively
   if [ ! -t 0 ]; then
     return 0
-  }
+  fi
 
   if [ ! -f "$frameworkrc" ]; then
     touch "$frameworkrc"
