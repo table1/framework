@@ -1,6 +1,7 @@
 options:
   default_notebook_format: quarto
-  seed: 20241016
+  seed: 1234
+  seed_on_scaffold: true
   notebook:
     dir: notebooks
     output_dir: _rendered

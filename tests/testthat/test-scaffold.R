@@ -202,6 +202,23 @@ test_that(".ensure_framework_db respects project root", {
   expect_true(file.exists(file.path(test_dir, "framework.db")))
 })
 
+test_that(".set_random_seed honours seed_on_scaffold flag", {
+  withr::local_seed(42)
+  config <- list(
+    seed = NULL,
+    options = list(
+      seed = 9876,
+      seed_on_scaffold = TRUE
+    )
+  )
+
+  expect_message(framework:::.set_random_seed(config), 'Random seed set to 9876.', fixed = TRUE)
+
+  withr::local_seed(42)
+  config$options$seed_on_scaffold <- FALSE
+  expect_silent(framework:::.set_random_seed(config))
+})
+
 test_that("dotenv_location errors when file not found", {
   # Create a temporary directory
   tmp_dir <- tempfile()

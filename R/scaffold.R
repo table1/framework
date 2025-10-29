@@ -430,25 +430,29 @@ scaffold <- function(config_file = NULL) {
 #' 2. Global ~/.frameworkrc (FW_SEED)
 #' 3. Skip seeding if both are NULL or empty
 .set_random_seed <- function(config) {
-  # Try project config first
-  seed_value <- config$seed %||% config$options$seed
+  seed_on <- config$options$seed_on_scaffold %||% config$seed_on_scaffold %||% FALSE
+  seed_value <- NULL
 
-  # Fall back to global frameworkrc if project seed not specified
-  if (is.null(seed_value)) {
-    global_seed <- Sys.getenv("FW_SEED", "")
-    if (nzchar(global_seed)) {
-      seed_value <- as.integer(global_seed)
-    }
+  global_seed <- Sys.getenv("FW_SEED", "")
+  if (nzchar(global_seed)) {
+    seed_on <- TRUE
+    seed_value <- suppressWarnings(as.integer(global_seed))
   }
 
-  # Set seed if we have a valid value
-  if (!is.null(seed_value) && !is.na(seed_value)) {
-    set.seed(seed_value)
-    message(sprintf(
-      "\u2713 Random seed set to %s (for reproducibility). Override with set.seed() if needed.",
-      seed_value
-    ))
+  if (!isTRUE(seed_on)) {
+    return(invisible(NULL))
   }
+
+  if (is.null(seed_value) || is.na(seed_value)) {
+    seed_value <- config$seed %||% config$options$seed
+  }
+
+  if (is.null(seed_value) || is.na(seed_value)) {
+    seed_value <- 1234L
+  }
+
+  set.seed(seed_value)
+  message(sprintf("Random seed set to %s.", seed_value))
 
   invisible(NULL)
 }
