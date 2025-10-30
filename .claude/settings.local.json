@@ -51,7 +51,8 @@
       "Bash(tree:*)",
       "Bash(rm:*)",
       "Bash(mkdir:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(FW_AUTHOR_NAME=\"Test User\" framework new:*)"
     ],
     "deny": [],
     "ask": []
