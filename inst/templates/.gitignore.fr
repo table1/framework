@@ -1,26 +1,14 @@
 # Framework
 
-# Data directories - Private data (NEVER commit these!)
-data/source/private/
-data/source/private/**
-data/in_progress/private/
-data/in_progress/private/**
-data/final/private/
-data/final/private/**
+# Input directories - Private data (NEVER commit these!)
+inputs/raw/
+inputs/raw/**
+inputs/intermediate/
+inputs/intermediate/**
 
-# Data directories - Cache and scratch
-data/cached*
-data/cached/**
-data/scratch*
-data/scratch/**
-
-# Results directories (private by default)
-results/private/
-results/private/**
-
-# Keep directory structure but ignore contents
-data/*/.gitkeep
-!data/*/.gitkeep
+# Output directories - Private outputs (gitignored by default)
+outputs/private/
+outputs/private/**
 
 # R specific
 .Rproj.user

@@ -5,9 +5,9 @@ directories:
   functions: functions
 
   # Input data paths (read-only in code)
-  inputs_raw: inputs/private/raw
-  inputs_intermediate: inputs/private/intermediate
-  inputs_examples: inputs/public/examples
+  inputs_raw: inputs/raw
+  inputs_intermediate: inputs/intermediate
+  inputs_examples: inputs/examples
 
   # Output paths (write-only, all derived artifacts)
   outputs_tables: outputs/private/tables

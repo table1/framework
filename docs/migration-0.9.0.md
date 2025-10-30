@@ -26,17 +26,17 @@ results/
 **New Structure (>= 0.9.0):**
 ```
 inputs/
-├── private/raw/            # Raw data (read-only in code)
-├── private/intermediate/   # Processed data
-└── public/examples/        # Public example data
+├── raw/                    # Raw data (gitignored)
+├── intermediate/           # Processed data (gitignored)
+└── examples/               # Public example data
 
 outputs/
-├── private/tables/         # Analysis outputs
-├── private/figures/        # Visualizations
-├── private/models/         # Saved models
-├── private/notebooks/      # Rendered notebooks
-├── private/cache/          # Computation cache
-├── private/scratch/        # Temporary files
+├── private/tables/         # Analysis outputs (gitignored)
+├── private/figures/        # Visualizations (gitignored)
+├── private/models/         # Saved models (gitignored)
+├── private/notebooks/      # Rendered notebooks (gitignored)
+├── private/cache/          # Computation cache (gitignored)
+├── private/scratch/        # Temporary files (gitignored)
 └── public/                 # Public outputs
 ```
 
@@ -63,7 +63,7 @@ data:
   inputs:
     raw:
       survey:
-        path: inputs/private/raw/survey.csv
+        path: inputs/raw/survey.csv
 ```
 
 **Dot notation has changed:**
@@ -93,8 +93,7 @@ If you want to adopt the new structure:
 
 1. **Create new directories:**
    ```bash
-   mkdir -p inputs/private/{raw,intermediate}
-   mkdir -p inputs/public/examples
+   mkdir -p inputs/{raw,intermediate,examples}
    mkdir -p outputs/private/{tables,figures,models,notebooks,cache,scratch}
    mkdir -p outputs/public
    ```
@@ -102,7 +101,7 @@ If you want to adopt the new structure:
 2. **Move your data (optional):**
    ```bash
    # Example: Move raw data
-   mv data/source/private/* inputs/private/raw/
+   mv data/source/private/* inputs/raw/
 
    # Example: Move results
    mv results/private/* outputs/private/tables/

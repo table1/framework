@@ -1,10 +1,11 @@
 # Framework
 
-# Inputs (private only - public inputs can be versioned)
-/inputs/private/
+# Input directories - Private data (NEVER commit these!)
+/inputs/raw/
+/inputs/intermediate/
 
-# Outputs (all outputs gitignored by default)
-/outputs/
+# Output directories - Private outputs (gitignored by default)
+/outputs/private/
 
 # Allow structure documentation
 !/inputs/**/README.md
@@ -12,8 +13,8 @@
 !/outputs/**/README.md
 !/outputs/**/.gitkeep
 
-# Allow public examples to be versioned if desired
-!/inputs/public/examples/
+# Allow public examples to be versioned
+!/inputs/examples/
 
 # R specific
 .Rproj.user

@@ -83,9 +83,9 @@ project/
 ├── notebooks/              # Exploratory analysis
 ├── scripts/                # Production pipelines
 ├── inputs/
-│   ├── private/raw/        # Raw data (gitignored)
-│   ├── private/intermediate/ # Processed data (gitignored)
-│   └── public/examples/    # Public example data
+│   ├── raw/                # Raw data (gitignored)
+│   ├── intermediate/       # Processed data (gitignored)
+│   └── examples/           # Public example data
 ├── outputs/
 │   ├── private/tables/     # Analysis outputs (gitignored)
 │   ├── private/figures/    # Visualizations (gitignored)
@@ -95,7 +95,7 @@ project/
 │   └── public/             # Public outputs
 ├── functions/              # Custom functions
 ├── docs/                   # Documentation
-├── settings.yml              # Project configuration
+├── settings.yml            # Project configuration
 ├── framework.db            # Metadata/tracking database
 └── .env                    # Secrets (gitignored)
 ```
