@@ -88,17 +88,14 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   message(sprintf("Data saved to: %s", file_path))
 
   # Create example YAML for the spec
-  spec_indent <- "  "
   yaml_lines <- c(
-    sprintf("%s%s:", spec_indent, parts[length(parts)]),
-    sprintf("%s  path: %s", spec_indent, file_path),
-    sprintf("%s  type: %s", spec_indent, type),
-    sprintf("%s  locked: %s", spec_indent, tolower(as.character(locked))),
-    sprintf("%s  encrypted: %s", spec_indent, tolower(as.character(encrypted)))
+    sprintf("  %s:", parts[length(parts)]),
+    sprintf("    path: %s", file_path),
+    sprintf("    type: %s", type)
   )
 
   if (type == "csv") {
-    yaml_lines <- c(yaml_lines, sprintf("%s  delimiter: %s", spec_indent, delimiter))
+    yaml_lines <- c(yaml_lines, sprintf("    delimiter: %s", delimiter))
   }
 
   yaml_example <- paste(yaml_lines, collapse = "\n")
@@ -106,7 +103,7 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
   # Create path to show where to add it
   path_to_add <- paste(c("data", parts[-length(parts)]), collapse = " -> ")
 
-  message("\nAdd this to your settings.yml (or settings/data.yml) file under:")
+  message("\nIf you want Framework to manage this file, add it to your settings.yml (or settings/data.yml) under:")
   message("\n", path_to_add)
   message("\n", yaml_example, "\n")
 
@@ -132,7 +129,7 @@ data_save <- function(data, path, type = "csv", delimiter = "comma", locked = TR
       stop(sprintf("Failed to update database record for '%s': %s", path, e$message))
     }
   )
-  message(sprintf("Data record updated for: %s", path))
+  message("\u2713 File catalog updated")
 
   invisible(data)
 }

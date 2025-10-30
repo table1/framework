@@ -1,8 +1,24 @@
 directories:
-  notebooks: notebooks          # Where make_notebook() creates files
-  scripts: scripts              # Where make_script() creates files
-  functions: functions          # Helper functions
-  results_public: results/public    # Shareable outputs (plots, reports)
-  results_private: results/private  # Private outputs (internal reports)
-  cache: data/cached            # Cached computation results
-  scratch: data/scratch         # Temporary workspace
+  # Source code locations
+  notebooks: notebooks
+  scripts: scripts
+  functions: functions
+
+  # Input data paths (read-only in code)
+  inputs_raw: inputs/private/raw
+  inputs_intermediate: inputs/private/intermediate
+  inputs_examples: inputs/public/examples
+
+  # Output paths (write-only, all derived artifacts)
+  outputs_tables: outputs/private/tables
+  outputs_figures: outputs/private/figures
+  outputs_models: outputs/private/models
+  outputs_notebooks: outputs/private/notebooks
+  outputs_tables_public: outputs/public/tables
+  outputs_figures_public: outputs/public/figures
+  outputs_models_public: outputs/public/models
+  outputs_notebooks_public: outputs/public/notebooks
+
+  # Legacy/convenience paths (map to outputs for backward compat)
+  cache: outputs/private/cache
+  scratch: outputs/private/scratch

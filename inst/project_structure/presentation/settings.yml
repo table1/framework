@@ -26,9 +26,9 @@ default:
   # Project Directories
   # --------------------------------------------------------------------------
   directories:
-    notebooks: "."                # Presentation files in root (with presentation.qmd)
+    presentation: "."             # Presentation file in root (presentation.qmd)
     functions: functions          # Helper functions
-    cache: data/cached            # Cached computation results
+    outputs: outputs              # Where Quarto renders the presentation
 
   # --------------------------------------------------------------------------
   # Project Behavior

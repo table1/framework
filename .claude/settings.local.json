@@ -46,7 +46,11 @@
       "Bash(FW_IDES=\"vscode\" FW_AUTHOR_NAME=\"Test\" R:*)",
       "Bash(cat:*)",
       "Bash(quarto render:*)",
-      "Bash(tree -L 2 -a:*)"
+      "Bash(tree -L 2 -a:*)",
+      "Bash(git checkout:*)",
+      "Bash(tree:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

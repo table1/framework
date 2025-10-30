@@ -1,20 +1,19 @@
 # Framework
 
-# Data directories (all types)
-data/*
-!data/*/.gitkeep
-!data/source/public/
-!data/source/public/**
-!data/in_progress/public/
-!data/in_progress/public/**
-!data/final/public/
-!data/final/public/**
-data/cached*
-data/scratch*
+# Inputs (private only - public inputs can be versioned)
+/inputs/private/
 
-# Results directories (analysis only - private by default)
-results/private/
-results/private/**
+# Outputs (all outputs gitignored by default)
+/outputs/
+
+# Allow structure documentation
+!/inputs/**/README.md
+!/inputs/**/.gitkeep
+!/outputs/**/README.md
+!/outputs/**/.gitkeep
+
+# Allow public examples to be versioned if desired
+!/inputs/public/examples/
 
 # R specific
 .Rproj.user
@@ -50,14 +49,10 @@ renv/python/
 renv/sandbox/
 renv/staging/
 
-# Rendered outputs (development artifacts - notebooks, scripts, etc.)
-_rendered/
+# Quarto/RMarkdown artifacts
 _freeze/
-
-# Cache directories
 *_cache/
-/cache/
-/*_files/
+*_files/
 
 # IDE specific files
 .idea

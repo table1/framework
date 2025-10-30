@@ -32,11 +32,11 @@ default:
   # Project Directories
   # --------------------------------------------------------------------------
   directories:
+    slides: slides                    # Where course slides are created
     notebooks: notebooks              # Where make_notebook() creates files
     scripts: scripts                  # Where make_script() creates files
-    presentations: presentations      # Where presentation stubs go
     functions: functions              # Helper functions directory
-    cache: data/cached                # Cached computation results
+    outputs: outputs                  # Where Quarto renders slides
 
   # --------------------------------------------------------------------------
   # Project Behavior

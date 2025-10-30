@@ -1,20 +1,11 @@
-# Framework
+# Framework - Presentation Project
 
-# Data directories (all types)
-data/*
-!data/*/.gitkeep
-!data/source/public/
-!data/source/public/**
-!data/in_progress/public/
-!data/in_progress/public/**
-!data/final/public/
-!data/final/public/**
-data/cached*
-data/scratch*
+# Outputs (all rendered presentations gitignored by default)
+/outputs/
 
-# Results directories (analysis only - private by default)
-results/private/
-results/private/**
+# Allow structure documentation
+!/outputs/**/README.md
+!/outputs/**/.gitkeep
 
 # R specific
 .Rproj.user
@@ -50,13 +41,10 @@ renv/python/
 renv/sandbox/
 renv/staging/
 
-# Rendered outputs (development artifacts - notebooks, scripts, etc.)
-_rendered/
-
-# Cache directories
+# Quarto/RMarkdown artifacts
+_freeze/
 *_cache/
-/cache/
-/*_files/
+*_files/
 
 # IDE specific files
 .idea
