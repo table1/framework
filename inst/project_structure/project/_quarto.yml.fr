@@ -1,6 +1,6 @@
 project:
   type: default
-  output-dir: _rendered
+  output-dir: outputs/private/notebooks
 
 format:
   html:

@@ -4,4 +4,4 @@ options:
   seed_on_scaffold: true
   notebook:
     dir: notebooks
-    output_dir: _rendered
+    output_dir: outputs/private/notebooks
