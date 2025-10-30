@@ -156,19 +156,21 @@ test_that("data_spec_get retrieves data specification from config", {
   setwd(test_dir)
 
   config <- read_config()
-  config$data$source <- list(
-    test = list(
-      path = "data/test.csv",
-      type = "csv",
-      delimiter = "comma"
+  config$data$inputs <- list(
+    raw = list(
+      test = list(
+        path = "inputs/private/raw/test.csv",
+        type = "csv",
+        delimiter = "comma"
+      )
     )
   )
   write_config(config)
 
-  spec <- data_spec_get("source.test")
+  spec <- data_spec_get("inputs.raw.test")
 
   expect_type(spec, "list")
-  expect_equal(spec$path, "data/test.csv")
+  expect_equal(spec$path, "inputs/private/raw/test.csv")
   expect_equal(spec$type, "csv")
   expect_equal(spec$delimiter, "comma")
 })
@@ -185,16 +187,16 @@ test_that("data_spec_update updates configuration", {
 
   # Update spec
   new_spec <- list(
-    path = "data/new_test.csv",
+    path = "inputs/private/raw/new_test.csv",
     type = "csv",
     delimiter = "tab"
   )
 
-  data_spec_update("source.new_test", new_spec)
+  data_spec_update("inputs.raw.new_test", new_spec)
 
   # Read back
-  spec <- data_spec_get("source.new_test")
-  expect_equal(spec$path, "data/new_test.csv")
+  spec <- data_spec_get("inputs.raw.new_test")
+  expect_equal(spec$path, "inputs/private/raw/new_test.csv")
   expect_equal(spec$delimiter, "tab")
 })
 
@@ -239,24 +241,26 @@ test_that("load_data reads Excel files from config", {
   setwd(test_dir)
 
   # Create an Excel file
-  dir.create("data/excel", recursive = TRUE)
+  dir.create("inputs/private/raw", recursive = TRUE)
   test_data <- data.frame(name = c("Alice", "Bob"), age = c(25, 30))
-  writexl::write_xlsx(test_data, "data/excel/people.xlsx")
+  writexl::write_xlsx(test_data, "inputs/private/raw/people.xlsx")
 
   # Add to config
   config <- read_config()
-  config$data$source <- list(
-    people = list(
-      path = "data/excel/people.xlsx",
-      type = "excel",
-      locked = FALSE,
-      encrypted = FALSE
+  config$data$inputs <- list(
+    raw = list(
+      people = list(
+        path = "inputs/private/raw/people.xlsx",
+        type = "excel",
+        locked = FALSE,
+        encrypted = FALSE
+      )
     )
   )
   write_config(config)
 
   # Load it back
-  loaded <- suppressWarnings(load_data("source.people"))
+  loaded <- suppressWarnings(load_data("inputs.raw.people"))
 
   expect_equal(nrow(loaded), 2)
   expect_equal(loaded$name, c("Alice", "Bob"))

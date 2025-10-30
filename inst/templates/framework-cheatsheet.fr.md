@@ -285,19 +285,26 @@ project/
   ├── settings.yml              # Main configuration
   ├── .env                    # Environment variables (secrets)
   ├── framework.db            # Framework metadata database
-  ├── data/                   # Data files
-  │   ├── source/            #   Source data
-  │   │   ├── public/        #     Public data
-  │   │   └── private/       #     Private data (gitignored)
-  │   └── results/           #   Result data
+  ├── inputs/                 # Input data (read-only)
+  │   ├── private/           #   Private inputs (gitignored)
+  │   │   ├── raw/           #     Raw data
+  │   │   └── intermediate/  #     Processed data
+  │   └── public/            #   Public inputs
+  │       └── examples/      #     Example data
+  ├── outputs/                # Output data (write-only, gitignored)
+  │   ├── private/           #   Private outputs
+  │   │   ├── tables/        #     Analysis tables
+  │   │   ├── figures/       #     Visualizations
+  │   │   ├── models/        #     Saved models
+  │   │   ├── notebooks/     #     Rendered notebooks
+  │   │   ├── cache/         #     Computation cache
+  │   │   └── scratch/       #     Temporary files
+  │   └── public/            #   Public outputs
   ├── notebooks/              # Quarto/RMarkdown notebooks
   ├── scripts/                # R scripts
   ├── functions/              # Custom R functions
   ├── docs/                   # Documentation
   ├── resources/              # Static resources
-  ├── results/                # Analysis output
-  │   ├── public/            #   Shareable results
-  │   └── private/           #   Private results
   ├── stubs/                  # Custom templates (optional)
   └── settings/               # Config files (optional)
 ```
@@ -308,12 +315,12 @@ course/
   ├── settings.yml
   ├── .env
   ├── framework.db
-  ├── data/
-  ├── notebooks/              # Lesson notebooks
-  ├── presentations/          # Slide decks
-  ├── functions/
-  ├── docs/
-  ├── resources/
+  ├── slides/                 # Lecture slides (source .qmd)
+  ├── assignments/            # Assignment templates (source .qmd)
+  ├── outputs/                # Rendered PDFs/HTML (gitignored)
+  ├── functions/              # Helper code for demos
+  ├── docs/                   # Course documentation
+  ├── resources/              # Datasets, readings to distribute
   └── settings/
 ```
 
@@ -324,10 +331,8 @@ presentation/
   ├── .env
   ├── framework.db
   ├── presentation.qmd        # Main presentation file
-  ├── build.R                 # Build script
-  ├── data/
-  ├── functions/
-  └── results/
+  ├── outputs/                # Rendered outputs (gitignored)
+  └── functions/
 ```
 
 ---

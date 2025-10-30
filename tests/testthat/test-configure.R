@@ -39,8 +39,8 @@ test_that("configure_data adds data source to settings", {
 
   # Non-interactive mode
   result <- configure_data(
-    path = "source.private.survey",
-    file = "data/survey.csv",
+    path = "inputs.raw.survey",
+    file = "inputs/private/raw/survey.csv",
     type = "csv",
     locked = TRUE,
     interactive = FALSE
@@ -48,9 +48,9 @@ test_that("configure_data adds data source to settings", {
 
   # Check settings were updated
   config <- read_config()
-  expect_equal(config$data$source$private$survey$path, "data/survey.csv")
-  expect_equal(config$data$source$private$survey$type, "csv")
-  expect_true(config$data$source$private$survey$locked)
+  expect_equal(config$data$inputs$raw$survey$path, "inputs/private/raw/survey.csv")
+  expect_equal(config$data$inputs$raw$survey$type, "csv")
+  expect_true(config$data$inputs$raw$survey$locked)
 
   # Check return value
   expect_true(is.list(result))

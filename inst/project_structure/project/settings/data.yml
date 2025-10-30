@@ -1,11 +1,13 @@
 data:
-  cache_dir: data/cached
-  scratch_dir: data/scratch
+  # Cache and scratch are now in outputs/private/
+  cache_dir: outputs/private/cache
+  scratch_dir: outputs/private/scratch
 
-  source:
-    private:
+  # Input data catalog (read-only in code)
+  inputs:
+    raw:
       # example:
-      #   path: data/source/private/example.csv
+      #   path: inputs/private/raw/example.csv
       #   type: csv
       #   delimiter: comma
       #   locked: true
@@ -18,10 +20,11 @@ data:
       #       type: integer
       #       min: 1
       #       max: 100
-    public:
-  in_progress:
-    private:
-    public:
-  final:
-    private:
-    public:
+    intermediate:
+    examples:
+
+  # Output data catalog (write-only, derived artifacts)
+  outputs:
+    tables:
+    figures:
+    models:

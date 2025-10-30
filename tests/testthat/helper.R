@@ -15,7 +15,7 @@ cleanup_test_dir <- function(dir) {
 }
 
 # Create a minimal test project structure
-create_test_project <- function(dir = create_test_dir(), type = "presentation") {
+create_test_project <- function(dir = create_test_dir(), type = "project") {
   old_wd <- getwd()
   on.exit(setwd(old_wd))
 

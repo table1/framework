@@ -15,10 +15,10 @@ Use `data_load()` to read data with automatic integrity tracking. Every read is 
 
 ```yaml
 data:
-  source:
-    private:
+  inputs:
+    raw:
       survey:
-        path: data/source/private/survey.csv
+        path: inputs/private/raw/survey.csv
         type: csv
         locked: true  # Errors if file changes
 ```
@@ -26,7 +26,7 @@ data:
 **Then load with dot notation:**
 
 ```r
-df <- data_load("source.private.survey")
+df <- data_load("inputs.raw.survey")
 ```
 
 **Or point directly to a file:**

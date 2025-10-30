@@ -303,12 +303,18 @@ data_spec_update <- function(path, spec) {
   if (is_external) {
     data_path <- data_source
     current <- if (file.exists(data_path)) {
-      tryCatch(
-        yaml::read_yaml(data_path, eval.expr = FALSE),
-        error = function(e) {
-          stop(sprintf("Failed to read data file '%s': %s", data_path, e$message))
+      tryCatch({
+        external_content <- yaml::read_yaml(data_path, eval.expr = FALSE)
+        # External data files have a 'data' wrapper, extract it
+        if (!is.null(external_content$data)) {
+          external_content$data
+        } else {
+          external_content
         }
-      )
+      },
+      error = function(e) {
+        stop(sprintf("Failed to read data file '%s': %s", data_path, e$message))
+      })
     } else {
       list()
     }
@@ -342,7 +348,8 @@ data_spec_update <- function(path, spec) {
   tryCatch({
     if (is_external) {
       dir.create(dirname(data_path), recursive = TRUE, showWarnings = FALSE)
-      yaml::write_yaml(current, data_path)
+      # Wrap in 'data' key when writing to external file
+      yaml::write_yaml(list(data = current), data_path)
     } else {
       env_config$data <- current
       if (!is.null(env_key)) {

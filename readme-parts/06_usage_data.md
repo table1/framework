@@ -4,25 +4,25 @@
 ```yaml
 # settings.yml or settings/data.yml
 data:
-  source:
-    private:
-      import:
-        survey:
-          path: data/source/private/survey.dta
-          type: stata
-          locked: true
+  inputs:
+    raw:
+      survey:
+        path: inputs/private/raw/survey.dta
+        type: stata
+        locked: true
 ```
 
 ```r
 # Load using dot notation (follows YAML structure exactly)
-df <- data_load("source.private.import.survey")
+df <- data_load("inputs.raw.survey")
 
 # If data_load() fails, it suggests available paths:
-# Error: No data specification found for path: source.private.survey
+# Error: No data specification found for path: inputs.survey
 #
 # Available data paths:
-#   source.private.import.survey
-#   source.private.import.companies
+#   inputs.raw.survey
+#   inputs.raw.companies
+#   inputs.intermediate.processed
 #   ...
 ```
 

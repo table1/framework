@@ -76,13 +76,18 @@ source("init.R")
 project/
 ├── notebooks/              # Exploratory analysis
 ├── scripts/                # Production pipelines
-├── data/
-│   ├── source/private/     # Raw data (gitignored)
-│   ├── source/public/      # Public raw data
-│   ├── cached/             # Computation cache (gitignored)
-│   └── final/private/      # Results (gitignored)
+├── inputs/
+│   ├── private/raw/        # Raw data (gitignored)
+│   ├── private/intermediate/ # Processed data (gitignored)
+│   └── public/examples/    # Public example data
+├── outputs/
+│   ├── private/tables/     # Analysis outputs (gitignored)
+│   ├── private/figures/    # Visualizations (gitignored)
+│   ├── private/models/     # Saved models (gitignored)
+│   ├── private/notebooks/  # Rendered notebooks (gitignored)
+│   ├── private/cache/      # Computation cache (gitignored)
+│   └── public/             # Public outputs
 ├── functions/              # Custom functions
-├── results/private/        # Analysis outputs (gitignored)
 ├── docs/                   # Documentation
 ├── settings.yml              # Project configuration
 ├── framework.db            # Metadata/tracking database
