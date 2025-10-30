@@ -6,7 +6,6 @@ default:
   author: settings/author.yml
   packages: settings/packages.yml
   directories: settings/directories.yml
-  notebook: settings/notebook.yml
   options: settings/options.yml
   data: settings/data.yml
   connections: settings/connections.yml

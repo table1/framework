@@ -1,3 +1,6 @@
 options:
   default_notebook_format: quarto
   seed: 20241016
+  notebook:
+    dir: notebooks
+    output_dir: _rendered

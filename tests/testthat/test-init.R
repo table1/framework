@@ -17,11 +17,11 @@ test_that("init creates presentation project structure", {
   expect_true(file.exists(".gitignore"))
 
   # Check key directories exist
-  expect_true(dir.exists("data"))
+  expect_true(dir.exists("outputs"))
   expect_true(dir.exists("functions"))
   expect_false(dir.exists("notebooks"))
-  # Presentation projects should NOT have results directory
-  expect_false(dir.exists("results"))
+  # Presentation projects should NOT have inputs directory
+  expect_false(dir.exists("inputs"))
 
   # Check that init.R was deleted after initialization
   expect_false(file.exists("init.R"))
@@ -43,9 +43,17 @@ test_that("init creates project structure", {
   expect_true(file.exists("settings.yml"))
   expect_true(file.exists("framework.db"))
 
-  # Check project structure directories
-  expect_true(dir.exists("data"))
-  expect_true(dir.exists("data/source"))
+  # Check project structure directories - NEW inputs/outputs structure
+  expect_true(dir.exists("inputs"))
+  expect_true(dir.exists("inputs/private"))
+  expect_true(dir.exists("inputs/private/raw"))
+  expect_true(dir.exists("inputs/private/intermediate"))
+  expect_true(dir.exists("inputs/public"))
+  expect_true(dir.exists("inputs/public/examples"))
+  expect_true(dir.exists("outputs"))
+  expect_true(dir.exists("outputs/private"))
+  expect_true(dir.exists("outputs/public"))
+
   raw_settings <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
   expect_equal(raw_settings$default$author, "settings/author.yml")
   expect_true(file.exists("settings/author.yml"))
@@ -65,11 +73,6 @@ test_that("init creates project structure", {
   expect_true(file.exists("settings/ai.yml"))
   expect_equal(raw_settings$default$git, "settings/git.yml")
   expect_true(file.exists("settings/git.yml"))
-  expect_true(dir.exists("data/in_progress"))
-  expect_true(dir.exists("data/final"))
-  expect_true(dir.exists("results"))
-  expect_true(dir.exists("results/public"))
-  expect_true(dir.exists("results/private"))
   expect_true(dir.exists("notebooks"))
   expect_true(dir.exists("scripts"))
   expect_true(dir.exists("functions"))
@@ -93,18 +96,16 @@ test_that("init creates course project structure", {
   expect_true(file.exists("settings.yml"))
   expect_true(file.exists("framework.db"))
 
-  # Check course structure directories
-  expect_true(dir.exists("data"))
-  expect_true(dir.exists("presentations"))
+  # Check course structure directories - minimal structure
+  expect_true(dir.exists("slides"))
+  expect_true(dir.exists("outputs"))
   expect_true(dir.exists("notebooks"))
+  expect_true(dir.exists("scripts"))
   expect_true(dir.exists("functions"))
   expect_true(dir.exists("docs"))
 
-  # Course type should NOT have results directory
-  expect_false(dir.exists("results"))
-
-  # Should not have public/private data splits
-  expect_false(dir.exists("data/source/private"))
+  # Course type should NOT have inputs directory (lightweight)
+  expect_false(dir.exists("inputs"))
 })
 
 test_that("init creates framework database with correct tables", {
@@ -222,10 +223,10 @@ test_that("init from empty directory creates all necessary files", {
   expect_false(file.exists(".initiated"))
 
   # Check directory structure
-  expect_true(dir.exists("data"))
+  expect_true(dir.exists("outputs"))
   expect_true(dir.exists("functions"))
-  # Presentation projects should NOT have results directory
-  expect_false(dir.exists("results"))
+  # Presentation projects should NOT have inputs directory
+  expect_false(dir.exists("inputs"))
 })
 
 test_that("make_init() recreates init.R for reference", {
@@ -379,7 +380,7 @@ test_that("deprecated project_structure parameter still works", {
   )
 
   # Should map to presentation type
-  expect_true(dir.exists("data"))
+  expect_true(dir.exists("outputs"))
   expect_true(dir.exists("functions"))
 })
 
@@ -402,5 +403,5 @@ test_that("deprecated 'analysis' type shows warning and maps to 'project'", {
   # Should create project structure (same as type = "project")
   expect_true(dir.exists("notebooks"))
   expect_true(dir.exists("scripts"))
-  expect_true(dir.exists("data/source/private"))
+  expect_true(dir.exists("inputs/private/raw"))
 })
