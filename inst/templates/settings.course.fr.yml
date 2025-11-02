@@ -4,7 +4,7 @@ default:
   # --------------------------------------------------------------------------
   project_type: course  # Type: project, course, or presentation
 
-  # Instructor information (used in course materials, notebooks, etc.)
+  # Instructor information (used in course materials, slides, etc.)
   author:
     name: "Instructor Name"
     email: "instructor@university.edu"
@@ -32,16 +32,16 @@ default:
   # Project Directories
   # --------------------------------------------------------------------------
   directories:
-    notebooks: notebooks              # Where make_notebook() creates files
-    presentations: presentations      # Where presentation stubs go
-    functions: functions              # Helper functions directory
-    cache: data/cached                # Cached computation results
+    data: data                        # Shared datasets for the course
+    slides: slides                    # Lecture slide sources
+    assignments: assignments          # Homework and lab materials
+    course_docs: course_docs          # Syllabus, policies, grading guides
+    readings: readings                # Assigned readings and references
 
   # --------------------------------------------------------------------------
   # Project Behavior
-  # --------------------------------------------------------------------------
-  # Default notebook format for make_notebook() (quarto or rmarkdown)
-  default_notebook_format: quarto
+  seed: 1234
+  seed_on_scaffold: true
 
   # --------------------------------------------------------------------------
   # AI Assistant Configuration
@@ -62,7 +62,7 @@ default:
   # --------------------------------------------------------------------------
   # Data Catalog
   # --------------------------------------------------------------------------
-  # For complex data catalogs, use split file: data: settings/data.yml
+  # For larger catalogs, organize entries in a separate data.yml if you prefer.
   # --------------------------------------------------------------------------
   data:
     # Example: Uncomment and modify
@@ -74,7 +74,7 @@ default:
   # --------------------------------------------------------------------------
   # Database Connections
   # --------------------------------------------------------------------------
-  # ⚠️ PRECEDENCE: Main config ALWAYS wins over split files
+  # ⚠️ PRECEDENCE: Values defined here override any external connection files.
   # --------------------------------------------------------------------------
   connections:
     # Example: Uncomment and modify

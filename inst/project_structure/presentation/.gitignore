@@ -1,12 +1,5 @@
 # Framework - Presentation Project
 
-# Outputs (all rendered presentations gitignored by default)
-/outputs/
-
-# Allow structure documentation
-!/outputs/**/README.md
-!/outputs/**/.gitkeep
-
 # R specific
 .Rproj.user
 .Rhistory

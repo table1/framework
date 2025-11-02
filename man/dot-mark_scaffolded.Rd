@@ -4,7 +4,11 @@
 \alias{.mark_scaffolded}
 \title{Mark project as scaffolded}
 \usage{
-.mark_scaffolded()
+.mark_scaffolded(project_root = NULL)
+}
+\arguments{
+\item{project_root}{Optional project root where the scaffold marker should
+be written. Falls back to the current working directory when NULL.}
 }
 \description{
 Mark project as scaffolded

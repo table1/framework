@@ -3,4 +3,4 @@ options:
   seed: 20241016
   notebook:
     dir: notebooks
-    output_dir: _rendered
+    output_dir: outputs/private/notebooks

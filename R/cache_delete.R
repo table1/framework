@@ -12,7 +12,7 @@
   cache_dir <- config$directories$cache %||% config$options$data$cache_dir
 
   if (is.null(cache_dir) || !nzchar(cache_dir)) {
-    stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
+  stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
   }
 
   # Determine cache file path
@@ -72,7 +72,7 @@ cache_flush <- function() {
   cache_dir <- config$directories$cache %||% config$options$data$cache_dir
 
   if (is.null(cache_dir) || !nzchar(cache_dir)) {
-    stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
+  stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
   }
 
   # Remove all RDS files

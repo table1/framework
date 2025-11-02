@@ -1,0 +1,41 @@
+directories:
+  # Source code locations
+  notebooks: notebooks
+  scripts: scripts
+  functions: functions
+
+  # Private input data paths (sensitive, gitignored)
+  inputs_private_raw: inputs/private/raw
+  inputs_private_intermediate: inputs/private/intermediate
+  inputs_private_final: inputs/private/final
+
+  # Public input data paths (safe to commit)
+  inputs_public_raw: inputs/public/raw
+  inputs_public_intermediate: inputs/public/intermediate
+  inputs_public_final: inputs/public/final
+
+  # Private reference materials (gitignored)
+  reference_private: reference/private
+
+  # Public reference materials (safe to commit)
+  reference_public: reference/public
+
+  # Private output paths (sensitive, gitignored)
+  outputs_private_tables: outputs/private/tables
+  outputs_private_figures: outputs/private/figures
+  outputs_private_models: outputs/private/models
+  outputs_private_notebooks: outputs/private/notebooks
+  outputs_private_docs: outputs/private/docs
+  outputs_private_data_final: outputs/private/data_final
+
+  # Public output paths (safe to commit after review)
+  outputs_public_tables: outputs/public/tables
+  outputs_public_figures: outputs/public/figures
+  outputs_public_models: outputs/public/models
+  outputs_public_notebooks: outputs/public/notebooks
+  outputs_public_docs: outputs/public/docs
+  outputs_public_data_final: outputs/public/data_final
+
+  # Legacy/convenience paths (map to private by default for safety)
+  cache: outputs/private/cache
+  scratch: outputs/private/scratch

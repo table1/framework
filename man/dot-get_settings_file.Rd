@@ -13,6 +13,7 @@
 Path to settings file, or NULL if neither exists
 }
 \description{
-Returns path to settings.yml (preferred) or settings.yml (backward compatibility).
+Returns path to settings.yml (preferred) or config.yml (backward compatibility).
+Walks up directory tree to find project root if not found in current directory.
 }
 \keyword{internal}

@@ -61,8 +61,59 @@ test_that("scaffold() works when config.yml exists", {
   # scaffold() should succeed (may issue warnings about missing dirs, but shouldn't error)
   expect_no_error(scaffold())
 
-  # Should have created the scaffolded marker
-  expect_true(file.exists(".framework_scaffolded"))
+  # Should have recorded scaffold history in the database
+  history <- framework:::.get_scaffold_history(tmp_dir)
+  expect_true(inherits(history$first, "POSIXct"))
+  expect_true(inherits(history$last, "POSIXct"))
+})
+
+test_that(".mark_scaffolded() stores history in the project database", {
+  tmp_dir <- tempfile()
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE))
+
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(tmp_dir)
+
+  if (file.exists("framework.db")) {
+    unlink("framework.db")
+  }
+
+  framework:::.mark_scaffolded(tmp_dir)
+
+  history <- framework:::.get_scaffold_history(tmp_dir)
+  expect_true(inherits(history$first, "POSIXct"))
+  expect_true(inherits(history$last, "POSIXct"))
+  expect_true(file.exists(file.path(tmp_dir, "framework.db")))
+  expect_false(file.exists(".framework_scaffolded"))
+})
+
+test_that(".mark_scaffolded() migrates legacy marker files", {
+  tmp_dir <- tempfile()
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE))
+
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(tmp_dir)
+
+  legacy_path <- ".framework_scaffolded"
+  legacy_lines <- c(
+    "First scaffolded at: 2024-01-01 12:00:00",
+    "Last scaffolded at: 2024-01-02 08:30:00"
+  )
+  writeLines(legacy_lines, legacy_path)
+
+  framework:::.mark_scaffolded(tmp_dir)
+  history <- framework:::.get_scaffold_history(tmp_dir)
+
+  expect_false(file.exists(legacy_path))
+  expect_equal(
+    lubridate::ymd_hms("2024-01-01 12:00:00", tz = "UTC"),
+    history$first
+  )
+  expect_true(history$last >= history$first)
 })
 
 test_that("standardize_wd() returns NULL when project not found", {

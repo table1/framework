@@ -11,7 +11,7 @@ The package can work with any directory structure as long as users configure pat
 
 1. ✅ **Configurable (already):** `scratch_dir`, `cache_dir`
 2. ❌ **Hardcoded:** `functions/` directory (scaffold.R:154)
-3. ❌ **Hardcoded:** `results/public` and `results/private` (results.R:22)
+3. ❌ **Hardcoded:** `outputs/public` and `outputs/private` (results.R:22)
 
 ## Detailed Analysis
 
@@ -46,27 +46,27 @@ options:
 
 ---
 
-### 2. Results Directories (`results/public`, `results/private`)
+### 2. Results Directories (`outputs/public`, `outputs/private`)
 
 **Location:** R/results.R:22, 125
 
 ```r
 result_save <- function(..., public = FALSE) {
-  results_dir <- if (public) "results/public" else "results/private"  # HARDCODED
+  results_dir <- if (public) "outputs/public" else "outputs/private"  # HARDCODED
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
   # ...
 }
 
 result_get <- function(name) {
   # ...
-  results_dir <- if (result$public) "results/public" else "results/private"  # HARDCODED
+  results_dir <- if (result$public) "outputs/public" else "outputs/private"  # HARDCODED
   result_file <- file.path(results_dir, paste0(name, ".rds"))
   # ...
 }
 ```
 
 **Impact:**
-- result_save() and result_get() always use `results/public` or `results/private`
+- result_save() and result_get() always use `outputs/public` or `outputs/private`
 - Cannot customize results location
 - Auto-creates directories if missing (graceful)
 
@@ -74,8 +74,8 @@ result_get <- function(name) {
 ```yaml
 options:
   results:
-    public_dir: "results/public"
-    private_dir: "results/private"
+    public_dir: "outputs/public"
+    private_dir: "outputs/private"
 ```
 
 ---
@@ -87,8 +87,8 @@ options:
 ```yaml
 options:
   data:
-    cache_dir: data/cached
-    scratch_dir: data/scratch
+    cache_dir: outputs/private/cache
+    scratch_dir: outputs/private/scratch
 ```
 
 **Used by:**
@@ -102,16 +102,16 @@ options:
 ### 4. Data Directories (NO DEPENDENCIES)
 
 **Analysis:** Searched for hardcoded references to:
-- `data/source/private/`
-- `data/source/public/`
-- `data/output/`
-- `data/cached/`
+- `inputs/raw/`
+- `inputs/intermediate/`
+- `inputs/final/`
+- `outputs/private/`
 
 **Finding:** No hardcoded paths found in R/ code
 
 **Why it works:**
 - data_load() and data_save() use paths from settings.yml data catalog
-- Users specify full paths in config: `path: data/source/private/survey.csv`
+- Users specify full paths in config: `path: inputs/raw/survey.csv`
 - Or use direct file paths: `data_load("any/path/file.csv")`
 
 **Conclusion:** Data directory structure is pure convention - no dependencies
@@ -157,8 +157,8 @@ Add to config_skeleton.yml:
 ```yaml
 options:
   results:
-    public_dir: "results/public"
-    private_dir: "results/private"
+    public_dir: "outputs/public"
+    private_dir: "outputs/private"
 ```
 
 Update R/results.R:
@@ -166,9 +166,9 @@ Update R/results.R:
 result_save <- function(..., public = FALSE) {
   config <- read_config()
   results_dir <- if (public) {
-    config$options$results$public_dir %||% "results/public"
+    config$options$results$public_dir %||% "outputs/public"
   } else {
-    config$options$results$private_dir %||% "results/private"
+    config$options$results$private_dir %||% "outputs/private"
   }
   # ... rest unchanged
 }
@@ -184,11 +184,11 @@ Each project type can ship different config defaults:
 options:
   functions_dir: "functions"
   results:
-    public_dir: "results/public"
-    private_dir: "results/private"
+    public_dir: "outputs/public"
+    private_dir: "outputs/private"
   data:
-    cache_dir: "data/cached"
-    scratch_dir: "data/scratch"
+    cache_dir: "outputs/private/cache"
+    scratch_dir: "outputs/private/scratch"
 
 # config.course.fr.yml
 options:
@@ -249,7 +249,7 @@ project/
 
 **Expected:**
 - scaffold() warns "Functions directory not found" but continues
-- result_save() auto-creates results/private/ when needed
+- result_save() auto-creates outputs/private/ when needed
 
 ### Test 3: Course structure with flat directories
 
@@ -277,7 +277,7 @@ options:
 
 **Hard dependencies (must fix for flexibility):**
 1. `functions/` directory - fixable via config
-2. `results/public` and `results/private` - fixable via config
+2. `outputs/public` and `outputs/private` - fixable via config
 
 **Soft dependencies (already configurable):**
 1. `scratch_dir` - ✅ already in config

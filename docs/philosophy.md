@@ -65,8 +65,8 @@ Specialized or occasionally-used packages should be called with explicit namespa
 
 ```r
 # Read specialized formats
-excel_data <- readxl::read_excel("data/source/file.xlsx")
-stata_data <- haven::read_stata("data/source/file.dta")
+excel_data <- readxl::read_excel("inputs/raw/file.xlsx")
+stata_data <- haven::read_stata("inputs/raw/file.dta")
 
 # Parse dates
 dates <- lubridate::ymd("2024-01-15")
@@ -282,7 +282,7 @@ default:
   directories:
     notebooks: notebooks
     scripts: scripts
-    cache: data/cached
+    cache: outputs/private/cache
 
   packages:
     - name: dplyr
@@ -316,13 +316,13 @@ Data files are declared in settings.yml with integrity tracking:
 ```yaml
 data:
   demographics:
-    path: data/source/demographics.csv
+    path: inputs/raw/demographics.csv
     type: csv
     locked: true  # Integrity checking via digest
     description: "Population demographics from 2020 census"
 
   outcomes:
-    path: data/source/private/patient_outcomes.csv
+    path: inputs/raw/patient_outcomes.csv
     type: csv
     encrypted: true  # Encrypted at rest
     locked: true
@@ -340,12 +340,12 @@ Framework enforces immutability:
 
 ```r
 # ✓ GOOD: Load, transform, save to new location
-source_data <- data_load("source.raw_data")
+source_data <- data_load("inputs.raw.population")
 clean_data <- source_data %>% clean_transform()
-data_save(clean_data, "final.clean_data")
+data_save(clean_data, "outputs.tables.clean_data")
 
 # ✗ BAD: Framework prevents overwriting source data
-data_save(clean_data, "source.raw_data")  # Error: locked
+data_save(clean_data, "inputs.raw.population")  # Error: locked
 ```
 
 ### Environment Isolation
@@ -426,7 +426,7 @@ init(project_name = "MyAnalysis", type = "project")
 scaffold()  # Loads environment, attaches core packages
 
 # Start analyzing with confidence
-data <- readxl::read_excel("data/source/raw.xlsx")
+data <- readxl::read_excel("inputs/raw/raw.xlsx")
 clean_data <- data %>% filter(!is.na(outcome))
 data_save(clean_data, "final.clean")
 ```

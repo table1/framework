@@ -58,10 +58,18 @@ default:
     notebooks: notebooks
     scripts: scripts
     functions: functions
-    results_public: results/public
-    results_private: results/private
-    cache: data/cached
-    scratch: data/scratch
+    inputs_raw: inputs/raw
+    inputs_intermediate: inputs/intermediate
+    inputs_final: inputs/final
+    inputs_reference: inputs/reference
+    outputs_private: outputs/private
+    outputs_public: outputs/public
+    outputs_docs: outputs/private/docs
+    outputs_docs_public: outputs/public/docs
+    outputs_final: outputs/private/final
+    outputs_final_public: outputs/public/final
+    cache: outputs/private/cache
+    scratch: outputs/private/scratch
 
   # --------------------------------------------------------------------------
   # Domain-Specific Settings (optional split files)
@@ -125,7 +133,7 @@ Fixed all tests to use correct function names after alias removal:
 - `inst/templates/config.course.fr.yml` - Course-specific directories
 - `inst/templates/config.presentation.fr.yml` - Minimal presentation setup
 - `inst/project_structure/project/settings.yml` - Updated split-file example
-- `inst/project_structure/course/settings.yml` - Updated split-file example
+- `inst/project_structure/course/settings.yml` - Simplified course config (inline only)
 
 ### Tests
 - `tests/testthat/test-config.R` - Added 20+ comprehensive config tests

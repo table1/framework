@@ -615,6 +615,110 @@ case "$COMMAND" in
     fi
     ;;
 
+  # GUI namespace
+  gui)
+    shift
+    PORT="${1:-8080}"
+    BROWSE="TRUE"
+
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --port=*)
+          PORT="${1#*=}"
+          shift
+          ;;
+        --port)
+          PORT="$2"
+          shift 2
+          ;;
+        --no-browse)
+          BROWSE="FALSE"
+          shift
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+
+    printf "\n${BLUE}Launching Framework GUI...${NC}\n\n"
+    Rscript --quiet --no-save -e "library(framework); framework_gui(port = $PORT, browse = $BROWSE)"
+    ;;
+
+  gui:start)
+    shift
+    PORT="${1:-8080}"
+    BROWSE="TRUE"
+
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --port=*)
+          PORT="${1#*=}"
+          shift
+          ;;
+        --port)
+          PORT="$2"
+          shift 2
+          ;;
+        --no-browse)
+          BROWSE="FALSE"
+          shift
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+
+    printf "\n${BLUE}Starting Framework GUI...${NC}\n\n"
+    Rscript --quiet --no-save -e "library(framework); framework_gui(port = $PORT, browse = $BROWSE)"
+    ;;
+
+  gui:stop)
+    shift
+    if [ "$1" = "--all" ] || [ "$1" = "-a" ]; then
+      Rscript --quiet --no-save -e "library(framework); gui_stop(all = TRUE)"
+    elif [ -n "$1" ]; then
+      PORT="$1"
+      Rscript --quiet --no-save -e "library(framework); gui_stop(port = $PORT)"
+    else
+      Rscript --quiet --no-save -e "library(framework); gui_stop(all = TRUE)"
+    fi
+    ;;
+
+  gui:restart)
+    shift
+    PORT="${1:-8080}"
+    BROWSE="TRUE"
+
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --port=*)
+          PORT="${1#*=}"
+          shift
+          ;;
+        --port)
+          PORT="$2"
+          shift 2
+          ;;
+        --no-browse)
+          BROWSE="FALSE"
+          shift
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+
+    printf "\n${BLUE}Restarting Framework GUI...${NC}\n\n"
+    Rscript --quiet --no-save -e "library(framework); gui_restart(port = $PORT, browse = $BROWSE)"
+    ;;
+
+  gui:list)
+    Rscript --quiet --no-save -e "library(framework); gui_list()"
+    ;;
+
   help|--help|-h)
     printf "${BLUE}Framework CLI v0.6 - R Data Analysis Scaffolding${NC}\n\n"
 
@@ -656,6 +760,16 @@ case "$COMMAND" in
       printf "  framework packages:install              Install all packages\n"
       printf "  framework packages:update               Update packages\n\n"
     fi
+
+    printf "${YELLOW}GUI:${NC}\n"
+    printf "  framework gui [options]                 Launch GUI interface\n"
+    printf "  framework gui:start [options]           Start GUI server\n"
+    printf "  framework gui:stop [--all | port]       Stop GUI server(s)\n"
+    printf "  framework gui:restart [options]         Restart GUI server\n"
+    printf "  framework gui:list                      List running servers\n\n"
+    printf "  ${DIM}GUI Options:${NC}\n"
+    printf "    --port=<port>                         Custom port (default: 8080)\n"
+    printf "    --no-browse                           Don't open browser\n\n"
 
     printf "${YELLOW}AI:${NC}\n"
     printf "  framework ai:configure                  Configure AI assistants\n"

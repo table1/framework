@@ -13,7 +13,7 @@ test_that("result_save stores result and creates database record", {
   suppressMessages(result_save("test_result", test_result, type = "analysis", public = TRUE))
 
   # Check file exists
-  expect_true(file.exists("results/public/test_result.rds"))
+  expect_true(file.exists("outputs/public/docs/test_result.rds"))
 
   # Check database record
   conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
@@ -41,7 +41,7 @@ test_that("result_save stores private results", {
   suppressMessages(result_save("private_result", test_result, type = "model", public = FALSE))
 
   # Check file in private directory
-  expect_true(file.exists("results/private/private_result.rds"))
+  expect_true(file.exists("outputs/private/docs/private_result.rds"))
 })
 
 test_that("result_get retrieves saved result", {

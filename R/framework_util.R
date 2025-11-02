@@ -11,14 +11,33 @@
 
 #' Get settings file path
 #'
-#' Returns path to settings.yml (preferred) or settings.yml (backward compatibility).
+#' Returns path to settings.yml (preferred) or config.yml (backward compatibility).
+#' Walks up directory tree to find project root if not found in current directory.
 #'
 #' @param path Optional path to check in (default: current directory)
 #' @return Path to settings file, or NULL if neither exists
 #' @keywords internal
 .get_settings_file <- function(path = ".") {
+  # Try current directory first
   settings_path <- file.path(path, "settings.yml")
   config_path <- file.path(path, "config.yml")
+
+  if (file.exists(settings_path)) {
+    return(settings_path)
+  } else if (file.exists(config_path)) {
+    return(config_path)
+  }
+
+  # Not in current directory - walk up the tree to find project root
+  project_root <- .find_project_root(path)
+
+  if (is.null(project_root)) {
+    return(NULL)
+  }
+
+  # Return the settings file from project root
+  settings_path <- file.path(project_root, "settings.yml")
+  config_path <- file.path(project_root, "config.yml")
 
   if (file.exists(settings_path)) {
     return(settings_path)
@@ -161,20 +180,25 @@ standardize_wd <- function(project_root = NULL) {
     # Normalize the path
     project_root <- normalizePath(project_root, mustWork = TRUE)
 
-    # Detect if we're running inside knitr/Quarto
-    in_knitr <- isTRUE(getOption('knitr.in.progress'))
+    # Detect if we're running inside document rendering engines (knitr/Quarto/etc.)
+    in_knitr <- isTRUE(getOption("knitr.in.progress"))
+    in_quarto <- nzchar(Sys.getenv("QUARTO_RENDER")) ||
+      nzchar(Sys.getenv("QUARTO_PROJECT_DIR")) ||
+      isTRUE(getOption("quarto.is_rendering"))
+    in_rstudio_notebook <- isTRUE(getOption("rstudio.notebook.executing"))
+    in_render_context <- in_knitr || in_quarto || in_rstudio_notebook
 
     # Set knitr working directory if available
     if (requireNamespace("knitr", quietly = TRUE)) {
       knitr::opts_knit$set(root.dir = project_root)
     }
 
-    # Only call setwd() if NOT in knitr (knitr manages its own working directory)
-    if (!in_knitr) {
+    # Only call setwd() if NOT in a render context (knitr/Quarto/RStudio notebook)
+    if (!in_render_context) {
       old_wd <- setwd(project_root)
     } else {
-      # In knitr, just verify we can access the settings file from project root
-      # The actual working directory will be managed by knitr
+      # In rendering contexts, just verify we can access the settings file from
+      # the project root. Engines will manage the working directory themselves.
       if (!file.exists(file.path(project_root, "settings.yml")) &&
           !file.exists(file.path(project_root, "config.yml"))) {
         warning("settings.yml or config.yml not found in project root: ", project_root)

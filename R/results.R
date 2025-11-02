@@ -23,13 +23,11 @@ result_save <- function(name, value = NULL, type, blind = FALSE, public = FALSE,
   # Get results directory from config
   config <- read_config()
   results_dir <- if (public) {
-    config$directories$results_public %||%
-      config$options$results$public_dir %||%
-      "results/public"
+    config$directories$outputs_docs_public %||%
+      file.path(config$directories$outputs_public %||% "outputs/public", "docs")
   } else {
-    config$directories$results_private %||%
-      config$options$results$private_dir %||%
-      "results/private"
+    config$directories$outputs_docs %||%
+      file.path(config$directories$outputs_private %||% "outputs/private", "docs")
   }
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -140,13 +138,11 @@ result_get <- function(name, password = NULL) {
   # Get result file from config
   config <- read_config()
   results_dir <- if (result$public) {
-    config$directories$results_public %||%
-      config$options$results$public_dir %||%
-      "results/public"
+    config$directories$outputs_docs_public %||%
+      file.path(config$directories$outputs_public %||% "outputs/public", "docs")
   } else {
-    config$directories$results_private %||%
-      config$options$results$private_dir %||%
-      "results/private"
+    config$directories$outputs_docs %||%
+      file.path(config$directories$outputs_private %||% "outputs/private", "docs")
   }
   result_file <- file.path(results_dir, paste0(name, ".rds"))
 

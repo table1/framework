@@ -138,7 +138,7 @@ options:
 ```
 
 The message is automatically suppressed:
-- After the first scaffold (tracked via `.framework_scaffolded` marker)
+- After the first scaffold (tracked via metadata stored in `framework.db`)
 - When renv is already enabled
 - When `options: renv_nag: false` in settings.yml
 
@@ -180,11 +180,9 @@ Marker file indicating renv is enabled for this project. Contains timestamp of w
 
 **Gitignored by default** - each developer chooses whether to use renv.
 
-### .framework_scaffolded
+### framework.db metadata
 
-Tracks scaffold history. First line contains "First scaffolded at: [timestamp]", used to suppress educational messaging after initial scaffold.
-
-**Gitignored by default** - local state, not shared.
+The Framework SQLite database stores scaffold history (first/last scaffold timestamps) in the `meta` table. This replaces the legacy `.framework_scaffolded` marker file while keeping the information project-local.
 
 ### renv.lock
 

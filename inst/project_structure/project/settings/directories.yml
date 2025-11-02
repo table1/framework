@@ -7,17 +7,24 @@ directories:
   # Input data paths (read-only in code)
   inputs_raw: inputs/raw
   inputs_intermediate: inputs/intermediate
-  inputs_examples: inputs/examples
+  inputs_final: inputs/final
+
+  # Reference materials (codebooks, data dictionaries, background docs)
+  reference: reference
 
   # Output paths (write-only, all derived artifacts)
   outputs_tables: outputs/private/tables
   outputs_figures: outputs/private/figures
   outputs_models: outputs/private/models
   outputs_notebooks: outputs/private/notebooks
+  outputs_docs: outputs/private/docs
+  outputs_final: outputs/private/final
   outputs_tables_public: outputs/public/tables
   outputs_figures_public: outputs/public/figures
   outputs_models_public: outputs/public/models
   outputs_notebooks_public: outputs/public/notebooks
+  outputs_docs_public: outputs/public/docs
+  outputs_final_public: outputs/public/final
 
   # Legacy/convenience paths (map to outputs for backward compat)
   cache: outputs/private/cache

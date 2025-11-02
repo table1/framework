@@ -62,15 +62,15 @@ Comprehensive test suite created with 88 tests across all major functionality. T
 
 ---
 
-## ✅ Bug #4: Default project structure missing data/final directories
+## ✅ Bug #4: Default project structure missing inputs/final directories
 
 **File:** `inst/project_structure/default/`
 
-**Issue:** The default project structure template was missing `data/final/public` and `data/final/private` directories documented in README.
+**Issue:** The default project structure template was missing `inputs/final/public` and `inputs/final/private` directories documented in README.
 
 **Fix:**
-- Created missing directories: `inst/project_structure/default/data/final/public`
-- Created missing directories: `inst/project_structure/default/data/final/private`
+- Created missing directories: `inst/project_structure/default/inputs/final/public`
+- Created missing directories: `inst/project_structure/default/inputs/final/private`
 - Added `.gitkeep` files to preserve empty directories in git
 
 **Benefits:**

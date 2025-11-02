@@ -209,9 +209,9 @@ message("Framework dev mode active - will load from: %s")
   # Additional context based on project type
   if (type == "course") {
     cat("Course-specific features:\n")
-    cat("  • lectures/ - For lecture materials and slides\n")
-    cat("  • assignments/ - For student assignments\n")
-    cat("  • Use make_notebook() to create student notebooks\n\n")
+    cat("  • slides/ - Author lecture decks (render to slides/_rendered/{{ slug }}.html)\n")
+    cat("  • assignments/ - Organize homework and lab materials\n")
+    cat("  • data/ - Store shared datasets for demonstrations\n\n")
   } else if (type == "presentation") {
     cat("Presentation tips:\n")
     cat("  • Use make_notebook() to create your presentation\n")
@@ -228,6 +228,9 @@ message("Framework dev mode active - will load from: %s")
 #' @param project_name The name of the project (used for .Rproj file). Required when initializing from empty directory.
 #' @param type The project type: "project" (default), "course", or "presentation".
 #'   Replaces deprecated project_structure parameter.
+#' @param sensitive If TRUE and type is "project", uses privacy-first structure with symmetric
+#'   public/private directories for inputs, reference, and outputs. Default FALSE.
+#'   Only applies to "project" type - ignored for "course" and "presentation".
 #' @param project_structure DEPRECATED. Use 'type' parameter instead.
 #'   For backward compatibility: "default"/"minimal" map to "project"/"presentation".
 #' @param lintr The lintr style to use.
@@ -241,12 +244,19 @@ message("Framework dev mode active - will load from: %s")
 #'
 #' @examples
 #' \dontrun{
-#' # Initialize with explicit parameters
+#' # Standard project (public-friendly)
 #' init(
 #'   project_name = "MyProject",
 #'   type = "project",
 #'   use_renv = FALSE,
 #'   attach_defaults = TRUE
+#' )
+#'
+#' # Privacy-first project with PHI/sensitive data
+#' init(
+#'   project_name = "HealthcareStudy",
+#'   type = "project",
+#'   sensitive = TRUE
 #' )
 #'
 #' # Course project with renv enabled
@@ -264,6 +274,7 @@ message("Framework dev mode active - will load from: %s")
 init <- function(
     project_name = NULL,
     type = NULL,
+    sensitive = FALSE,
     project_structure = NULL,
     lintr = NULL,
     use_renv = FALSE,
@@ -298,9 +309,28 @@ init <- function(
     type <- "project"
   }
 
+  # Handle sensitive parameter - only applies to "project" type
+  if (sensitive) {
+    # Default to "project" if type is NULL
+    if (is.null(type)) {
+      type <- "project_sensitive"
+    } else if (type == "project") {
+      type <- "project_sensitive"
+    } else if (type %in% c("course", "presentation")) {
+      warning(
+        "Parameter 'sensitive' is ignored for type '", type, "'.\n",
+        "  Privacy-first structure only applies to 'project' type."
+      )
+    } else {
+      # Unknown type, let it fail in validation below
+      type <- "project_sensitive"
+    }
+  }
+
   # Validate arguments
   checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(type, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_flag(sensitive)
   checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(use_renv)
@@ -422,6 +452,59 @@ init <- function(
   }
 }
 
+#' Customize project files with user-specific substitutions
+#' @keywords internal
+.customize_project_files <- function(target_dir, author_name = NULL, author_email = NULL, author_affiliation = NULL) {
+  # Get author info from environment if not provided
+  if (is.null(author_name)) author_name <- Sys.getenv("FW_AUTHOR_NAME", "Your Name")
+  if (is.null(author_email)) author_email <- Sys.getenv("FW_AUTHOR_EMAIL", "")
+  if (is.null(author_affiliation)) author_affiliation <- Sys.getenv("FW_AUTHOR_AFFILIATION", "")
+
+  # Find all .qmd and .Rmd files that might have author placeholders
+  notebook_files <- c(
+    list.files(file.path(target_dir, "notebooks"), pattern = "\\.(qmd|Rmd)$", full.names = TRUE, recursive = TRUE),
+    list.files(file.path(target_dir, "slides"), pattern = "\\.(qmd|Rmd)$", full.names = TRUE, recursive = TRUE),
+    list.files(file.path(target_dir, "assignments"), pattern = "\\.(qmd|Rmd)$", full.names = TRUE, recursive = TRUE),
+    list.files(file.path(target_dir, "course_docs"), pattern = "\\.(qmd|Rmd)$", full.names = TRUE, recursive = TRUE)
+  )
+
+  # Remove non-existent paths
+  notebook_files <- notebook_files[file.exists(notebook_files)]
+
+  # Apply substitutions to each file
+  for (file_path in notebook_files) {
+    if (file.exists(file_path)) {
+      content <- readLines(file_path, warn = FALSE)
+
+      # Replace author placeholder patterns
+      # Pattern 1: "author: Your Name" or "author: [AUTHOR]"
+      content <- gsub('author:\\s*"?Your Name"?', paste0('author: "', author_name, '"'), content)
+      content <- gsub('author:\\s*"?\\[AUTHOR\\]"?', paste0('author: "', author_name, '"'), content)
+
+      # Pattern 2: Just "Your Name" in author field
+      content <- gsub('author:\\s+Your Name', paste0('author: ', author_name), content)
+
+      writeLines(content, file_path)
+    }
+  }
+
+  # Also update settings/author.yml if it exists
+  author_yml <- file.path(target_dir, "settings", "author.yml")
+  if (file.exists(author_yml)) {
+    content <- readLines(author_yml, warn = FALSE)
+    if (!is.null(author_name) && nzchar(author_name) && author_name != "Your Name") {
+      content <- gsub('name:\\s*"?Your Name"?', paste0('name: "', author_name, '"'), content)
+    }
+    if (!is.null(author_email) && nzchar(author_email)) {
+      content <- gsub('email:\\s*"?"?', paste0('email: "', author_email, '"'), content)
+    }
+    if (!is.null(author_affiliation) && nzchar(author_affiliation)) {
+      content <- gsub('affiliation:\\s*"?"?', paste0('affiliation: "', author_affiliation, '"'), content)
+    }
+    writeLines(content, author_yml)
+  }
+}
+
 #' Standard initialization process (shared by both paths)
 #' @keywords internal
 .init_standard <- function(project_name, type, lintr, author_name = NULL, author_email = NULL, author_affiliation = NULL, default_notebook_format = NULL, subdir, force, use_git = TRUE) {
@@ -463,7 +546,7 @@ init <- function(
   }
 
   # Validate template style files
-  lintr_template <- system.file("templates", paste0(".lintr.", lintr, ".fr"), package = "framework")
+  lintr_template <- system.file("templates", paste0(".lintr.", lintr), package = "framework")
   if (!file.exists(lintr_template)) stop(sprintf("Lintr style '%s' not found", lintr))
 
   # Remove existing *.Rproj file (only one per project)
@@ -556,15 +639,19 @@ init <- function(
 
     target_path <- file.path(target_dir, rel_path)
 
-    # Process .fr template files (strip .fr extension)
-    if (grepl("\\.fr$", target_path)) {
-      target_path <- gsub("\\.fr$", "", target_path)
-    }
-
+    # Copy file as-is (project_structure files don't use .fr extension)
     file.copy(file, target_path, overwrite = TRUE)
   }
 
   # README.md is now part of project_structure and copied above
+
+  # Post-copy customization hook: Apply user-specific substitutions
+  .customize_project_files(
+    target_dir = target_dir,
+    author_name = author_name,
+    author_email = author_email,
+    author_affiliation = author_affiliation
+  )
 
   # Rename settings/ directory based on user preference
   config_dir_pref <- Sys.getenv("FW_CONFIG_DIR", "settings")
@@ -907,10 +994,11 @@ make_init <- function(output_file = "init.R") {
 
     # Force-add .gitignore files in private directories (defense-in-depth)
     private_gitignores <- c(
-      "data/source/private/.gitignore",
-      "data/in_progress/private/.gitignore",
-      "data/final/private/.gitignore",
-      "results/private/.gitignore"
+      "inputs/raw/.gitignore",
+      "inputs/intermediate/.gitignore",
+      "inputs/final/.gitignore",
+      "inputs/reference/.gitignore",
+      "outputs/private/.gitignore"
     )
     for (gitignore_path in private_gitignores) {
       if (file.exists(gitignore_path)) {

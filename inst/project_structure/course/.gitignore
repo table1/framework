@@ -1,11 +1,10 @@
 # Framework - Course Project
 
-# Outputs (all rendered slides gitignored by default)
-/outputs/
+# Rendered slide artifacts
+/slides/_rendered/
 
 # Allow structure documentation
-!/outputs/**/README.md
-!/outputs/**/.gitkeep
+!/slides/_rendered/**/README.md
 
 # R specific
 .Rproj.user

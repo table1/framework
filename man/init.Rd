@@ -7,6 +7,7 @@
 init(
   project_name = NULL,
   type = NULL,
+  sensitive = FALSE,
   project_structure = NULL,
   lintr = NULL,
   use_renv = FALSE,
@@ -26,6 +27,10 @@ init(
 
 \item{type}{The project type: "project" (default), "course", or "presentation".
 Replaces deprecated project_structure parameter.}
+
+\item{sensitive}{If TRUE and type is "project", uses privacy-first structure with symmetric
+public/private directories for inputs, reference, and outputs. Default FALSE.
+Only applies to "project" type - ignored for "course" and "presentation".}
 
 \item{project_structure}{DEPRECATED. Use 'type' parameter instead.
 For backward compatibility: "default"/"minimal" map to "project"/"presentation".}
@@ -51,12 +56,19 @@ When run from an empty directory, requires project_name and type parameters.
 }
 \examples{
 \dontrun{
-# Initialize with explicit parameters
+# Standard project (public-friendly)
 init(
   project_name = "MyProject",
   type = "project",
   use_renv = FALSE,
   attach_defaults = TRUE
+)
+
+# Privacy-first project with PHI/sensitive data
+init(
+  project_name = "HealthcareStudy",
+  type = "project",
+  sensitive = TRUE
 )
 
 # Course project with renv enabled

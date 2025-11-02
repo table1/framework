@@ -7,7 +7,7 @@ data:
   inputs:
     raw:
       survey:
-        path: inputs/private/raw/survey.dta
+        path: inputs/raw/survey.dta
         type: stata
         locked: true
 ```
@@ -22,15 +22,15 @@ df <- data_load("inputs.raw.survey")
 # Available data paths:
 #   inputs.raw.survey
 #   inputs.raw.companies
-#   inputs.intermediate.processed
+#   inputs.intermediate.table1
 #   ...
 ```
 
 **Direct path:**
 ```r
-df <- data_load("data/my_file.csv")       # CSV
-df <- data_load("data/stata_file.dta")    # Stata
-df <- data_load("data/spss_file.sav")     # SPSS
+df <- data_load("inputs/raw/my_file.csv")       # CSV
+df <- data_load("inputs/raw/stata_file.dta")    # Stata
+df <- data_load("inputs/raw/spss_file.sav")     # SPSS
 ```
 
 **Important:** Dot notation paths must match your YAML structure exactly. Each level in the YAML becomes a dot-separated part of the path. Use underscores for multi-word keys (e.g., `modeling_data`, not `modeling.data`).
@@ -48,8 +48,8 @@ model <- get_or_cache("model_v1", {
 ### 5. Save Results
 
 ```r
-# Save data
-data_save(processed_df, "final.private.clean", type = "csv")
+# Save data (adds catalog entry if missing, maps to outputs/private/tables/)
+data_save(processed_df, "outputs.tables.clean", type = "csv")
 
 # Save analysis output
 result_save("regression_model", model, type = "model")
@@ -75,4 +75,3 @@ connections:
 ```r
 df <- query_get("SELECT * FROM users WHERE active = true", "db")
 ```
-

@@ -6,12 +6,11 @@ Course materials built with the Framework R package.
 
 ```
 .
-├── data/               # Course datasets
-├── notebooks/          # Student notebooks
-├── presentations/      # Lecture slides
-├── docs/               # Documentation
-├── resources/          # Course materials
-├── functions/          # Custom R functions
+├── assignments/        # Homework and lab materials
+├── course_docs/        # Syllabus, policies, grading references
+├── data/               # Shared datasets for the course
+├── readings/           # Assigned articles, PDFs, external links
+├── slides/             # Lecture slide sources (render to slides/_rendered/{{ slug }}.html)
 ├── settings.yml        # Project configuration
 └── scaffold.R          # Initialization script
 ```
@@ -21,7 +20,8 @@ Course materials built with the Framework R package.
 ```r
 library(framework)
 scaffold()              # Load environment
-make_notebook("topic")  # Create new notebook
+# Render slides
+quarto render slides/01-intro.qmd
 ```
 
 ## Configuration
@@ -31,4 +31,4 @@ Edit `settings.yml` to customize:
 - Required packages
 - Directory paths
 
-Cache directory (`data/cached/`) is created automatically on first use.
+Cache directory (`outputs/private/cache/`) is created automatically on first use.

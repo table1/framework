@@ -223,8 +223,7 @@ renv_disable <- function(keep_renv = TRUE) {
     ".Rproj.user",
     "",
     "# Framework markers",
-    ".framework_renv_enabled",
-    ".framework_scaffolded"
+    ".framework_renv_enabled"
   )
 
   writeLines(renvignore_content, renvignore_path)

@@ -8,7 +8,7 @@ Status: IN PROGRESS (Unit 02)
 - `R/scaffold.R:121-173` — `.load_functions()` treats `config$options$functions_dir` as list/string, but config template stores `directories$functions`; revisit to avoid duplication and respect multiple directories defined under `directories.functions`.
 - `R/scaffold.R:194-234` — Package install loop ignores version pins when `packages` entries are stored as lists with `name`/`auto_attach`; confirm `.get_package_requirements()` preserves `@version` suffix and add tests.
 - `R/scaffold.R:279-314` — Function loader `source()`s into global env with `local = FALSE`; consider using package env or providing option to avoid polluting global namespace, document behavior explicitly for 1.0.
-- `R/scaffold.R:318-366` — Markers and git helpers create `.framework_scaffolded`, run `git` commands blindly; add `withr::with_dir(project_root, …)` and guard against non-git environments to reduce noise.
+- `R/scaffold.R:318-366` — Scaffold history now writes to `framework.db`; ensure git helpers still run from `project_root` and add `withr::with_dir(project_root, …)` plus non-git guards to reduce noise.
 - `R/scaffold.R:374-435` — `.check_git_status()` and `.commit_after_scaffold()` duplicate git detection logic; consolidate and ensure commands work on Windows (use `system2` consistently).
 
 ## R/init.R

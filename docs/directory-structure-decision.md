@@ -10,9 +10,10 @@ Framework adopts **flat input directory structure** for new projects:
 
 ```
 inputs/
-├── raw/                  # Raw data files (gitignored)
-├── intermediate/         # Processed data (gitignored)
-└── examples/             # Public example data
+├── raw/                  # Raw hand-offs (gitignored)
+├── intermediate/         # Cleaned but still input datasets (gitignored)
+├── final/                # Curated analytic datasets (gitignored)
+└── reference/            # External documentation/codebooks (gitignored)
 ```
 
 ## Rationale
@@ -31,13 +32,13 @@ Both **Claude Sonnet 4** and **GPT-4o** recommended the flat structure with **8/
 
 ### Comparison
 
-| Aspect | Nested (inputs/private/raw/) | Flat (inputs/raw/) |
+| Aspect | Nested (inputs/public/raw/) | Flat (inputs/raw/) |
 |--------|------------------------------|---------------------|
 | **Depth** | 3 levels | 2 levels ✅ |
 | **Common case** | Extra `private/` for 90% of data | No wrapper ✅ |
 | **Navigation** | More cd commands | Faster ✅ |
-| **Gitignore** | Single pattern: `inputs/private/**` | Two patterns: `inputs/raw/`, `inputs/intermediate/` |
-| **Symmetry with outputs/** | Matches (outputs/private/tables/) | Different (but acceptable) |
+| **Gitignore** | Multiple patterns | Single pattern per namespace: `inputs/raw/**`, etc. |
+| **Symmetry with outputs/** | Matches (outputs/private/tables/) | Matches |
 | **Industry precedent** | Less common | Cookiecutter Data Science ✅ |
 
 ## Implementation
@@ -60,7 +61,8 @@ directories:
   # Input data paths (read-only in code)
   inputs_raw: inputs/raw
   inputs_intermediate: inputs/intermediate
-  inputs_examples: inputs/examples
+  inputs_final: inputs/final
+  inputs_reference: inputs/reference
 ```
 
 **.gitignore:**
@@ -70,6 +72,10 @@ inputs/raw/
 inputs/raw/**
 inputs/intermediate/
 inputs/intermediate/**
+inputs/final/
+inputs/final/**
+inputs/reference/
+inputs/reference/**
 ```
 
 ## Migration Impact

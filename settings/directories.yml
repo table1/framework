@@ -2,7 +2,11 @@ directories:
   notebooks: notebooks          # Where make_notebook() creates files
   scripts: scripts              # Where make_script() creates files
   functions: functions          # Helper functions
-  results_public: results/public    # Shareable outputs (plots, reports)
-  results_private: results/private  # Private outputs (internal reports)
-  cache: data/cached            # Cached computation results
-  scratch: data/scratch         # Temporary workspace
+  inputs_raw: inputs/raw
+  inputs_intermediate: inputs/intermediate
+  inputs_final: inputs/final
+  inputs_reference: inputs/reference
+  outputs_private: outputs/private
+  outputs_public: outputs/public
+  cache: outputs/private/cache
+  scratch: outputs/private/scratch

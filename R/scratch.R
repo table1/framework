@@ -39,7 +39,7 @@ scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf)
     config <- read_config()
     location <- config$directories$scratch %||%
       config$options$data$scratch_dir %||%
-      "data/scratch"
+      "outputs/private/scratch"
   }
 
   # Create directory if it doesn't exist
@@ -187,7 +187,7 @@ scratch_clean <- function() {
   config <- read_config()
   scratch_dir <- config$directories$scratch %||%
     config$options$data$scratch_dir %||%
-    "data/scratch"
+    "outputs/private/scratch"
 
   if (dir.exists(scratch_dir)) {
     files <- list.files(scratch_dir, full.names = TRUE)

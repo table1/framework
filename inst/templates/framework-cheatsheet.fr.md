@@ -245,8 +245,8 @@ default:
       database: framework.db
 
   data:
-    source.public.raw:
-      path: data/public/raw.csv
+    inputs.reference.example:
+      path: inputs/reference/example.csv
       type: csv
 ```
 
@@ -285,28 +285,20 @@ project/
   ├── settings.yml              # Main configuration
   ├── .env                    # Environment variables (secrets)
   ├── framework.db            # Framework metadata database
-  ├── inputs/                 # Input data (read-only)
-  │   ├── private/           #   Private inputs (gitignored)
-  │   │   ├── raw/           #     Raw data
-  │   │   └── intermediate/  #     Processed data
-  │   └── public/            #   Public inputs
-  │       └── examples/      #     Example data
-  ├── outputs/                # Output data (write-only, gitignored)
-  │   ├── private/           #   Private outputs
-  │   │   ├── tables/        #     Analysis tables
-  │   │   ├── figures/       #     Visualizations
-  │   │   ├── models/        #     Saved models
-  │   │   ├── notebooks/     #     Rendered notebooks
-  │   │   ├── cache/         #     Computation cache
-  │   │   └── scratch/       #     Temporary files
-  │   └── public/            #   Public outputs
+  ├── inputs/
+  │   ├── raw/
+  │   ├── intermediate/
+  │   ├── final/
+  │   └── reference/
+  ├── outputs/
+  │   ├── private/            # Résultats internes (tables, figures, cache)
+  │   └── public/             # Livrables validés
   ├── notebooks/              # Quarto/RMarkdown notebooks
-  ├── scripts/                # R scripts
-  ├── functions/              # Custom R functions
+  ├── scripts/                # Scripts R
+  ├── functions/              # Fonctions personnalisées
   ├── docs/                   # Documentation
-  ├── resources/              # Static resources
-  ├── stubs/                  # Custom templates (optional)
-  └── settings/               # Config files (optional)
+  ├── stubs/                  # Modèles personnalisés (optionnel)
+  └── settings/               # Fichiers de configuration (optionnel)
 ```
 
 ### Course Type
@@ -315,13 +307,11 @@ course/
   ├── settings.yml
   ├── .env
   ├── framework.db
-  ├── slides/                 # Lecture slides (source .qmd)
-  ├── assignments/            # Assignment templates (source .qmd)
-  ├── outputs/                # Rendered PDFs/HTML (gitignored)
-  ├── functions/              # Helper code for demos
-  ├── docs/                   # Course documentation
-  ├── resources/              # Datasets, readings to distribute
-  └── settings/
+  ├── assignments/
+  ├── course_docs/
+  ├── data/
+  ├── readings/
+  └── slides/
 ```
 
 ### Presentation Type
@@ -330,9 +320,7 @@ presentation/
   ├── settings.yml
   ├── .env
   ├── framework.db
-  ├── presentation.qmd        # Main presentation file
-  ├── outputs/                # Rendered outputs (gitignored)
-  └── functions/
+  └── presentation.qmd
 ```
 
 ---

@@ -4,10 +4,12 @@
 \alias{.remove_metadata}
 \title{Remove a metadata value}
 \usage{
-.remove_metadata(key)
+.remove_metadata(key, project_root = NULL)
 }
 \arguments{
 \item{key}{The metadata key to remove}
+
+\item{project_root}{Optional project root for database resolution}
 }
 \description{
 Remove a metadata value

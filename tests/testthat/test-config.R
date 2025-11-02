@@ -162,7 +162,7 @@ test_that("read_config() merges directories correctly", {
   directories:
     notebooks: notebooks
     scripts: scripts
-    cache: data/cached
+    cache: outputs/private/cache
 "
   writeLines(config_content, "config.yml")
 
@@ -172,7 +172,7 @@ test_that("read_config() merges directories correctly", {
   expect_true(!is.null(cfg$directories))
   expect_equal(cfg$directories$notebooks, "notebooks")
   expect_equal(cfg$directories$scripts, "scripts")
-  expect_equal(cfg$directories$cache, "data/cached")
+  expect_equal(cfg$directories$cache, "outputs/private/cache")
 
   unlink("config.yml")
 })
@@ -193,7 +193,7 @@ test_that("split file config with inline directories works", {
   directories:
     notebooks: notebooks
     scripts: scripts
-    cache: data/cached
+    cache: outputs/private/cache
 
   data: settings/data.yml
 "
@@ -342,7 +342,7 @@ test_that("config system handles all three project types", {
   directories:
     notebooks: notebooks
     scripts: scripts
-    results_public: results/public
+    outputs_public: outputs/public
 "
   writeLines(config_content, "config.yml")
   expect_equal(config("project_type"), "project")
@@ -366,11 +366,11 @@ test_that("config system handles all three project types", {
   project_type: presentation
   directories:
     functions: functions
-    cache: data/cached
+    cache: outputs/private/cache
 "
   writeLines(config_content, "config.yml")
   expect_equal(config("project_type"), "presentation")
-  expect_equal(config("cache"), "data/cached")
+  expect_equal(config("cache"), "outputs/private/cache")
   unlink("config.yml")
 })
 

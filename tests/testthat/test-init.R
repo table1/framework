@@ -15,10 +15,11 @@ test_that("init creates presentation project structure", {
   expect_true(file.exists("framework.db"))
   expect_true(file.exists("TestProject.Rproj"))
   expect_true(file.exists(".gitignore"))
+  expect_true(file.exists("presentation.qmd"))
 
-  # Check key directories exist
-  expect_true(dir.exists("outputs"))
-  expect_true(dir.exists("functions"))
+  # Presentation scaffold stays minimal
+  expect_false(dir.exists("outputs"))
+  expect_false(dir.exists("functions"))
   expect_false(dir.exists("notebooks"))
   # Presentation projects should NOT have inputs directory
   expect_false(dir.exists("inputs"))
@@ -45,13 +46,15 @@ test_that("init creates project structure", {
 
   # Check project structure directories - NEW inputs/outputs structure
   expect_true(dir.exists("inputs"))
-  expect_true(dir.exists("inputs/private"))
-  expect_true(dir.exists("inputs/private/raw"))
-  expect_true(dir.exists("inputs/private/intermediate"))
-  expect_true(dir.exists("inputs/public"))
-  expect_true(dir.exists("inputs/public/examples"))
+  expect_true(dir.exists("inputs/raw"))
+  expect_true(dir.exists("inputs/intermediate"))
+  expect_true(dir.exists("inputs/final"))
+  expect_true(dir.exists("reference"))  # Top-level reference directory
   expect_true(dir.exists("outputs"))
   expect_true(dir.exists("outputs/private"))
+  expect_true(dir.exists("outputs/private/notebooks"))
+  expect_true(dir.exists("outputs/private/tables"))
+  expect_true(dir.exists("outputs/private/cache"))
   expect_true(dir.exists("outputs/public"))
 
   raw_settings <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
@@ -98,11 +101,10 @@ test_that("init creates course project structure", {
 
   # Check course structure directories - minimal structure
   expect_true(dir.exists("slides"))
-  expect_true(dir.exists("outputs"))
-  expect_true(dir.exists("notebooks"))
-  expect_true(dir.exists("scripts"))
-  expect_true(dir.exists("functions"))
-  expect_true(dir.exists("docs"))
+  expect_true(dir.exists("assignments"))
+  expect_true(dir.exists("course_docs"))
+  expect_true(dir.exists("data"))
+  expect_true(dir.exists("readings"))
 
   # Course type should NOT have inputs directory (lightweight)
   expect_false(dir.exists("inputs"))
@@ -222,9 +224,9 @@ test_that("init from empty directory creates all necessary files", {
   # Check that .initiated was NOT created (settings.yml is the marker)
   expect_false(file.exists(".initiated"))
 
-  # Check directory structure
-  expect_true(dir.exists("outputs"))
-  expect_true(dir.exists("functions"))
+  # Check directory structure stays minimal
+  expect_false(dir.exists("outputs"))
+  expect_false(dir.exists("functions"))
   # Presentation projects should NOT have inputs directory
   expect_false(dir.exists("inputs"))
 })
@@ -379,9 +381,9 @@ test_that("deprecated project_structure parameter still works", {
     "Parameter 'project_structure' is deprecated"
   )
 
-  # Should map to presentation type
-  expect_true(dir.exists("outputs"))
-  expect_true(dir.exists("functions"))
+  # Should map to presentation type (minimal scaffold)
+  expect_false(dir.exists("outputs"))
+  expect_false(dir.exists("functions"))
 })
 
 test_that("deprecated 'analysis' type shows warning and maps to 'project'", {
@@ -403,5 +405,117 @@ test_that("deprecated 'analysis' type shows warning and maps to 'project'", {
   # Should create project structure (same as type = "project")
   expect_true(dir.exists("notebooks"))
   expect_true(dir.exists("scripts"))
+  expect_true(dir.exists("inputs/raw"))
+})
+
+test_that("init with sensitive=TRUE creates privacy-first structure", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Initialize with sensitive mode
+  suppressMessages(init(
+    project_name = "SensitiveProject",
+    type = "project",
+    sensitive = TRUE,
+    lintr = "default"
+  ))
+
+  # Check key files
+  expect_true(file.exists("settings.yml"))
+  expect_true(file.exists("SensitiveProject.Rproj"))
+
+  # Check symmetric public/private structure for inputs
   expect_true(dir.exists("inputs/private/raw"))
+  expect_true(dir.exists("inputs/private/intermediate"))
+  expect_true(dir.exists("inputs/private/final"))
+  expect_true(dir.exists("inputs/public/raw"))
+  expect_true(dir.exists("inputs/public/intermediate"))
+  expect_true(dir.exists("inputs/public/final"))
+
+  # Check symmetric public/private structure for reference
+  expect_true(dir.exists("reference/private"))
+  expect_true(dir.exists("reference/public"))
+
+  # Check symmetric public/private structure for outputs
+  expect_true(dir.exists("outputs/private/cache"))
+  expect_true(dir.exists("outputs/private/scratch"))
+  expect_true(dir.exists("outputs/private/tables"))
+  expect_true(dir.exists("outputs/private/figures"))
+  expect_true(dir.exists("outputs/private/docs"))
+  expect_true(dir.exists("outputs/public/tables"))
+  expect_true(dir.exists("outputs/public/figures"))
+  expect_true(dir.exists("outputs/public/docs"))
+
+  # Check that .gitignore properly excludes private directories
+  gitignore <- readLines(".gitignore")
+  expect_true(any(grepl("/inputs/private/", gitignore, fixed = TRUE)))
+  expect_true(any(grepl("/reference/private/", gitignore, fixed = TRUE)))
+  expect_true(any(grepl("/outputs/private/", gitignore, fixed = TRUE)))
+
+  # Check README files exist to document privacy model
+  expect_true(file.exists("inputs/private/raw/README.md"))
+  expect_true(file.exists("inputs/public/raw/README.md"))
+  expect_true(file.exists("reference/private/README.md"))
+  expect_true(file.exists("reference/public/README.md"))
+
+  # Check settings.yml has correct project_type
+  settings <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
+  expect_equal(settings$default$project_type, "project_sensitive")
+})
+
+test_that("init with sensitive=TRUE and wrong type shows warning", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Test that sensitive=TRUE with course type triggers warning
+  expect_warning(
+    suppressMessages(init(
+      project_name = "TestCourse",
+      type = "course",
+      sensitive = TRUE
+    )),
+    "Parameter 'sensitive' is ignored"
+  )
+
+  # Should create normal course structure (not privacy-first)
+  expect_true(dir.exists("slides"))
+  expect_false(dir.exists("inputs/private"))
+})
+
+test_that("init with sensitive=TRUE defaults to project type", {
+  test_dir <- create_test_dir()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Initialize with sensitive=TRUE but no type specified
+  suppressMessages(init(
+    project_name = "AutoProject",
+    sensitive = TRUE,
+    lintr = "default"
+  ))
+
+  # Should create privacy-first project structure
+  expect_true(dir.exists("inputs/private/raw"))
+  expect_true(dir.exists("reference/private"))
+  expect_true(dir.exists("outputs/private"))
+
+  settings <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
+  expect_equal(settings$default$project_type, "project_sensitive")
 })

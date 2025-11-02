@@ -4,10 +4,12 @@
 \alias{.get_metadata}
 \title{Get a metadata value}
 \usage{
-.get_metadata(key)
+.get_metadata(key, project_root = NULL)
 }
 \arguments{
 \item{key}{The metadata key}
+
+\item{project_root}{Optional project root for database resolution}
 }
 \value{
 The metadata value, or NULL if not found

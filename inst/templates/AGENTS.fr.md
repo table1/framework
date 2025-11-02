@@ -63,9 +63,9 @@ data <- load_data("confidential")  # Prompts for passphrase
 ### Results Management
 ```r
 # Save outputs with automatic organization
-result_save(plot, "figure-1", type = "plot")        # → results/public/
-result_save(table, "table-1", type = "table")       # → results/public/
-result_save(sensitive, "private-fig", type = "plot", private = TRUE)  # → results/private/
+result_save(plot, "figure-1", type = "plot")        # → outputs/public/
+result_save(table, "table-1", type = "table")       # → outputs/public/
+result_save(sensitive, "private-fig", type = "plot", private = TRUE)  # → outputs/private/
 
 # Blind results for unbiased analysis
 result_save(data, "blinded-data", blind = TRUE)
@@ -103,7 +103,7 @@ default:
 
   data:
     survey:
-      path: data/source/public/survey.csv
+      path: inputs/reference/survey.csv
       type: csv
 ```
 
@@ -119,15 +119,15 @@ settings("api.key", default = "")        # With default
 ### Never Commit These Files
 - `.env` - Contains secrets
 - `data/*/private/` - Sensitive data directories
-- `results/private/` - Sensitive outputs
+- `outputs/private/` - Sensitive outputs
 - `framework.db` - May contain sensitive paths
 
 ### Defense-in-Depth Pattern
 All private/ directories have **nested .gitignore files** containing `*`:
-- `data/source/private/.gitignore`
-- `data/in_progress/private/.gitignore`
-- `data/final/private/.gitignore`
-- `results/private/.gitignore`
+- `inputs/raw/.gitignore`
+- `inputs/intermediate/.gitignore`
+- `inputs/final/.gitignore`
+- `outputs/private/.gitignore`
 
 This protects against accidental `git add -f` commands.
 
@@ -190,7 +190,7 @@ Instead of hardcoded paths, define in settings.yml:
 ```yaml
 data:
   customer_survey:
-    path: data/source/public/survey_2024.csv
+    path: inputs/reference/survey_2024.csv
     type: csv
     description: "Annual customer satisfaction survey"
 ```

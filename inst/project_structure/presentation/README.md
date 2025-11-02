@@ -6,8 +6,6 @@ A presentation built with the Framework R package.
 
 ```
 .
-├── data/               # Presentation data
-├── functions/          # Custom R functions
 ├── presentation.qmd    # Main presentation file
 ├── settings.yml        # Project configuration
 └── scaffold.R          # Initialization script
@@ -18,6 +16,8 @@ A presentation built with the Framework R package.
 ```r
 library(framework)
 scaffold()              # Load environment
+# Render presentation
+quarto render presentation.qmd
 ```
 
 ## Configuration
@@ -27,4 +27,4 @@ Edit `settings.yml` to customize:
 - Required packages
 - Directory paths
 
-Cache directory (`data/cached/`) is created automatically on first use.
+Cache directory (`outputs/private/cache/`) is created automatically on first use.

@@ -25,17 +25,10 @@ default:
       auto_attach: false
 
   # --------------------------------------------------------------------------
-  # Project Directories
-  # --------------------------------------------------------------------------
-  directories:
-    functions: functions          # Helper functions
-    cache: data/cached            # Cached computation results
-
-  # --------------------------------------------------------------------------
   # Project Behavior
   # --------------------------------------------------------------------------
-  # Default notebook format for make_notebook() (quarto or rmarkdown)
-  default_notebook_format: quarto
+  seed: 1234
+  seed_on_scaffold: true
 
   # --------------------------------------------------------------------------
   # AI Assistant Configuration
@@ -60,9 +53,9 @@ default:
   # Large catalogs: use split file (data: settings/data.yml)
   # ⚠️ Main config ALWAYS wins over split files
   # --------------------------------------------------------------------------
-  data:
-    # Example: Uncomment and modify
-    # example:
-    #   path: data/example.csv
-    #   type: csv
-    #   locked: true
+  data: {}
+
+  # --------------------------------------------------------------------------
+  # Database Connections
+  # --------------------------------------------------------------------------
+  connections: {}

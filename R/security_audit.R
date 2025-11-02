@@ -264,41 +264,58 @@ security_audit <- function(config_file = NULL,
 #' Get data directories from config
 #' @keywords internal
 .get_data_directories <- function(config, verbose) {
-  # Standard directory keys to check
-  dir_keys <- c(
-    "data_source_public",
-    "data_source_private",
-    "data_in_progress_public",
-    "data_in_progress_private",
-    "data_final_public",
-    "data_final_private",
-    "results_public",
-    "results_private",
-    "cache",
-    "scratch"
-  )
-
   dirs <- list()
   config_dirs <- config$directories %||% list()
 
-  for (key in dir_keys) {
+  # Include any configured directories that represent inputs/outputs/cache/scratch
+  for (key in names(config_dirs)) {
     dir_path <- config_dirs[[key]]
-    if (!is.null(dir_path) && nzchar(dir_path)) {
+    if (is.null(dir_path) || !nzchar(dir_path)) {
+      next
+    }
+
+    if (grepl("^(inputs|outputs)_", key) || key %in% c("cache", "scratch")) {
       dirs[[key]] <- dir_path
     }
   }
 
-  # Add common fallback directories if not in config
-  fallback_dirs <- list(
-    data_source_private = "data/source/private",
-    data_in_progress_private = "data/in_progress/private",
-    data_final_private = "data/final/private",
-    results_private = "results/private"
-  )
+  # Add common fallback directories if not explicitly configured
+  fallback_inputs <- c("raw", "intermediate", "final", "reference")
+  for (name in fallback_inputs) {
+    key <- paste0("inputs_", name)
+    path <- file.path("inputs", name)
+    if (!key %in% names(dirs) && dir.exists(path)) {
+      dirs[[key]] <- path
+    }
+  }
 
-  for (key in names(fallback_dirs)) {
-    if (!key %in% names(dirs) && dir.exists(fallback_dirs[[key]])) {
-      dirs[[key]] <- fallback_dirs[[key]]
+  fallback_outputs <- c("", "tables", "figures", "models", "notebooks", "docs", "final", "cache", "scratch")
+  for (name in fallback_outputs) {
+    if (identical(name, "")) {
+      key <- "outputs_private"
+      path <- "outputs/private"
+    } else {
+      key <- paste0("outputs_", name)
+      path <- file.path("outputs", "private", name)
+    }
+
+    if (!key %in% names(dirs) && dir.exists(path)) {
+      dirs[[key]] <- path
+    }
+  }
+
+  fallback_public <- c("", "tables", "figures", "models", "notebooks", "docs", "final")
+  for (name in fallback_public) {
+    if (identical(name, "")) {
+      key <- "outputs_public"
+      path <- "outputs/public"
+    } else {
+      key <- paste0("outputs_", name, "_public")
+      path <- file.path("outputs", "public", name)
+    }
+
+    if (!key %in% names(dirs) && dir.exists(path)) {
+      dirs[[key]] <- path
     }
   }
 
@@ -307,6 +324,28 @@ security_audit <- function(config_file = NULL,
   }
 
   dirs
+}
+
+
+#' Identify directories that should be treated as private/sensitive
+#' @keywords internal
+.identify_private_dirs <- function(data_dirs) {
+  if (length(data_dirs) == 0) {
+    return(data_dirs)
+  }
+
+  keep <- vapply(names(data_dirs), function(name) {
+    if (grepl("_public", name)) {
+      return(FALSE)
+    }
+
+    startsWith(name, "inputs_") ||
+      grepl("private", name) ||
+      (startsWith(name, "outputs_") && !grepl("_public", name)) ||
+      name %in% c("cache", "scratch")
+  }, logical(1))
+
+  data_dirs[keep]
 }
 
 
@@ -332,7 +371,7 @@ security_audit <- function(config_file = NULL,
   gitignore_patterns <- readLines(".gitignore", warn = FALSE)
 
   # Check each private data directory
-  private_dirs <- data_dirs[grepl("private", names(data_dirs))]
+  private_dirs <- .identify_private_dirs(data_dirs)
 
   for (dir_name in names(private_dirs)) {
     dir_path <- private_dirs[[dir_name]]
@@ -410,7 +449,7 @@ security_audit <- function(config_file = NULL,
   }
 
   # Check each private directory
-  private_dirs <- data_dirs[grepl("private", names(data_dirs))]
+  private_dirs <- .identify_private_dirs(data_dirs)
 
   for (dir_name in names(private_dirs)) {
     dir_path <- private_dirs[[dir_name]]
@@ -495,6 +534,8 @@ security_audit <- function(config_file = NULL,
   current_commit <- NULL
   current_date <- NULL
 
+  private_dirs <- .identify_private_dirs(data_dirs)
+
   for (line in log_output) {
     # Check if this is a commit line
     if (grepl("^[a-f0-9]{40}\\|", line)) {
@@ -510,9 +551,9 @@ security_audit <- function(config_file = NULL,
       # Check if it's a data file in a private directory
       if (grepl(ext_pattern, file, ignore.case = TRUE)) {
         # Check if file is in any private directory
-        is_private <- any(sapply(names(data_dirs)[grepl("private", names(data_dirs))], function(dir_name) {
-          startsWith(file, data_dirs[[dir_name]])
-        }))
+        is_private <- any(vapply(names(private_dirs), function(dir_name) {
+          startsWith(file, private_dirs[[dir_name]])
+        }, logical(1)))
 
         if (is_private || grepl("(private|secret|confidential)", file, ignore.case = TRUE)) {
           issues <- rbind(issues, data.frame(
@@ -570,7 +611,7 @@ security_audit <- function(config_file = NULL,
   exclude_files <- c(
     "framework.db",           # Framework database
     ".framework_renv_enabled", # renv marker
-    ".framework_scaffolded",   # scaffold marker
+    ".framework_scaffolded",   # legacy scaffold marker
     ".initiated"               # init marker
   )
 

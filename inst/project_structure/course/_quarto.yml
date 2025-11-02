@@ -1,0 +1,11 @@
+project:
+  type: default
+
+# Root-level defaults for course project
+# Subdirectories (slides/, assignments/, etc.) have their own _quarto.yml
+
+execute:
+  freeze: auto
+  cache: true
+  warning: false
+  message: false

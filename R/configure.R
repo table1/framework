@@ -108,7 +108,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
 #' # Provide values directly
 #' configure_data(
 #'   path = "source.private.survey",
-#'   file = "data/source/private/survey.csv",
+#'   file = "inputs/raw/survey.csv",
 #'   type = "csv",
 #'   locked = TRUE
 #' )
@@ -140,7 +140,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
     }
 
     if (is.null(file)) {
-      cat("File path (e.g., 'data/source/private/survey.csv'): ")
+      cat("File path (e.g., 'inputs/raw/survey.csv'): ")
       file <- readline()
       if (!nzchar(file)) stop("File path is required")
     }
@@ -537,8 +537,14 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 #' - `notebooks` - Where make_notebook() creates files
 #' - `scripts` - Where make_script() creates files
 #' - `functions` - Where scaffold() looks for custom functions
-#' - `results_public` - Public results/outputs
-#' - `results_private` - Private results/outputs
+#' - `inputs_raw` - Source data (gitignored)
+#' - `inputs_intermediate` - Cleaned-but-input datasets
+#' - `inputs_final` - Curated analytic datasets
+#' - `inputs_reference` - External documentation/codebooks
+#' - `outputs_private` - Working artifacts (tables/figures/models)
+#' - `outputs_public` - Share-ready artifacts
+#' - `outputs_docs` - Narrative/report outputs (private)
+#' - `outputs_docs_public` - Narrative/report outputs (public)
 #' - `cache` - Cached computation results
 #' - `scratch` - Temporary workspace
 #'
@@ -572,7 +578,10 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   # Standard directory names
   standard_dirs <- c(
     "notebooks", "scripts", "functions",
-    "results_public", "results_private",
+    "inputs_raw", "inputs_intermediate", "inputs_final",
+    "inputs_reference",
+    "outputs_private", "outputs_public",
+    "outputs_docs", "outputs_docs_public",
     "cache", "scratch"
   )
 

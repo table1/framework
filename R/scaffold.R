@@ -83,10 +83,10 @@ scaffold <- function(config_file = NULL) {
   assign("config", config_obj, envir = .GlobalEnv)
 
   # Mark as scaffolded with timestamp
-  .mark_scaffolded()
+  .mark_scaffolded(project_root)
 
   # Ensure framework database exists
-  .ensure_framework_db()
+  .ensure_framework_db(project_root)
 
   # Set random seed for reproducibility (if configured)
   .set_random_seed(config_obj)
@@ -347,37 +347,127 @@ scaffold <- function(config_file = NULL) {
 }
 
 #' Mark project as scaffolded
+#' @param project_root Optional project root where the scaffold marker should
+#'   be written. Falls back to the current working directory when NULL.
 #' @keywords internal
-.mark_scaffolded <- function() {
-  if (!file.exists(".framework_scaffolded")) {
-    timestamp <- Sys.time()
-    writeLines(
-      c(
-        paste("First scaffolded at:", timestamp),
-        paste("Last scaffolded at:", timestamp)
-      ),
-      ".framework_scaffolded"
-    )
-  } else {
-    existing <- readLines(".framework_scaffolded", warn = FALSE)
-    first_line <- existing[grepl("^First scaffolded at:", existing)][1]
-    if (is.na(first_line)) {
-      first_line <- paste("First scaffolded at:", Sys.time())
-    }
-
-    writeLines(
-      c(first_line, paste("Last scaffolded at:", Sys.time())),
-      ".framework_scaffolded"
-    )
+.mark_scaffolded <- function(project_root = NULL) {
+  marker_path <- ".framework_scaffolded"
+  if (!is.null(project_root)) {
+    marker_path <- file.path(project_root, ".framework_scaffolded")
   }
 
-  invisible(NULL)
+  timestamp <- lubridate::now(tzone = "UTC")
+
+  # Migrate legacy marker file if it exists (either at explicit root or CWD)
+  legacy_history <- NULL
+  legacy_paths <- unique(c(marker_path, ".framework_scaffolded"))
+
+  for (legacy_path in legacy_paths) {
+    if (file.exists(legacy_path)) {
+      legacy_lines <- readLines(legacy_path, warn = FALSE)
+      legacy_history <- .parse_scaffold_marker_lines(legacy_lines)
+      # Remove the legacy marker once captured so we stop littering directories
+      tryCatch(file.remove(legacy_path), warning = function(...) NULL, error = function(...) NULL)
+      break
+    }
+  }
+
+  # Ensure the Framework database exists before we persist metadata
+  .ensure_framework_db(project_root)
+
+  existing_history <- .get_scaffold_history(project_root)
+
+  first_scaffold <- if (!is.null(existing_history$first)) {
+    existing_history$first
+  } else if (!is.null(legacy_history$first)) {
+    legacy_history$first
+  } else {
+    timestamp
+  }
+
+  history <- list(
+    first = .format_scaffold_timestamp(first_scaffold),
+    last = .format_scaffold_timestamp(timestamp)
+  )
+
+  .set_metadata("scaffold_history", jsonlite::toJSON(history, auto_unbox = TRUE), project_root)
+
+  invisible(history)
+}
+
+#' Retrieve scaffold metadata from the database
+#' @keywords internal
+.get_scaffold_history <- function(project_root = NULL) {
+  raw <- .get_metadata("scaffold_history", project_root)
+  if (is.null(raw) || is.na(raw) || trimws(raw) == "") {
+    return(list())
+  }
+
+  parsed <- tryCatch(
+    jsonlite::fromJSON(raw),
+    error = function(...) NULL
+  )
+
+  if (is.null(parsed)) {
+    return(list())
+  }
+
+  # Parse timestamps back to POSIXct when possible
+  parsed$first <- .parse_scaffold_timestamp(parsed$first)
+  parsed$last <- .parse_scaffold_timestamp(parsed$last)
+
+  parsed
+}
+
+#' @keywords internal
+.parse_scaffold_marker_lines <- function(lines) {
+  if (length(lines) == 0) {
+    return(list())
+  }
+
+  first_line <- lines[grepl("^First scaffolded at:", lines)][1]
+  last_line <- lines[grepl("^Last scaffolded at:", lines)][1]
+
+  list(
+    first = .parse_scaffold_timestamp(sub("^First scaffolded at:\\s*", "", first_line)),
+    last = .parse_scaffold_timestamp(sub("^Last scaffolded at:\\s*", "", last_line))
+  )
+}
+
+#' @keywords internal
+.parse_scaffold_timestamp <- function(value) {
+  if (is.null(value) || is.na(value) || trimws(value) == "") {
+    return(NULL)
+  }
+
+  parsed <- suppressWarnings(lubridate::ymd_hms(value, tz = "UTC"))
+  if (is.na(parsed)) {
+    parsed <- suppressWarnings(lubridate::ymd_hms(value))
+  }
+  if (is.na(parsed)) {
+    return(NULL)
+  }
+
+  parsed
+}
+
+#' @keywords internal
+.format_scaffold_timestamp <- function(value) {
+  if (is.null(value) || is.na(value)) {
+    return(NA_character_)
+  }
+
+  value_utc <- lubridate::with_tz(value, tzone = "UTC")
+  format(value_utc, "%Y-%m-%dT%H:%M:%OSZ")
 }
 
 #' Ensure framework database exists
+#' @param project_root Optional project root used to resolve the database path.
 #' @keywords internal
-.ensure_framework_db <- function() {
-  project_root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+.ensure_framework_db <- function(project_root = NULL) {
+  if (is.null(project_root)) {
+    project_root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+  }
   db_path <- if (!is.null(project_root)) file.path(project_root, "framework.db") else "framework.db"
 
   if (file.exists(db_path)) {

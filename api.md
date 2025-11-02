@@ -111,7 +111,7 @@ Writes configuration data to a YAML file.
 Loads data from configured data specifications or direct file paths using dot notation.
 
 **Parameters:**
-- `path` (character): Dot notation path (e.g., "source.private.example") or direct file path
+- `path` (character): Dot notation path (e.g., "inputs.raw.example") or direct file path
 - `delim` (character, optional): Delimiter for CSV files ("comma", "tab", "semicolon", "space")
 - `...`: Additional arguments passed to readr::read_delim
 
@@ -127,10 +127,10 @@ Loads data from configured data specifications or direct file paths using dot no
 **Examples:**
 ```r
 # Load using dot notation
-data <- load_data("source.private.my_data")
+data <- load_data("inputs.raw.my_data")
 
 # Load direct file with custom delimiter
-data <- load_data("data/file.csv", delim = "tab", na = c("", "NA"))
+data <- load_data("inputs/raw/file.csv", delim = "tab", na = c("", "NA"))
 ```
 
 ### `save_data()`
@@ -138,7 +138,7 @@ Saves data using dot notation path with automatic directory creation and integri
 
 **Parameters:**
 - `data` (data frame): Data to save
-- `path` (character): Dot notation path (e.g., "in_progress.processed_data")
+- `path` (character): Dot notation path (e.g., "inputs.intermediate")
 - `type` (character, default: "csv"): File type ("csv" or "rds")
 - `delimiter` (character, default: "comma"): Delimiter for CSV files
 - `locked` (logical, default: TRUE): Whether file should be locked after saving
@@ -156,10 +156,10 @@ Saves data using dot notation path with automatic directory creation and integri
 **Examples:**
 ```r
 # Save as CSV
-save_data(processed_data, "in_progress.cleaned_data", type = "csv")
+save_data(processed_data, "inputs.intermediate.cleaned_data", type = "csv")
 
 # Save encrypted data
-save_data(sensitive_data, "final.private.results", type = "rds", encrypted = TRUE)
+save_data(sensitive_data, "outputs.final.results", type = "rds", encrypted = TRUE)
 ```
 
 ### `load_data_or_cache()`
@@ -261,7 +261,7 @@ result <- get_or_cache("expensive_calc", {
 result <- get_or_cache("data_processing", {
   process_data()
 }, refresh = function() {
-  file.mtime("source/data.csv") > get_last_update_time()
+  file.mtime("inputs/raw/data.csv") > get_last_update_time()
 })
 ```
 
@@ -414,7 +414,7 @@ capture(my_data)
 capture(large_dataset, "sample", to = "csv", n = 100)
 
 # Pipe operation
-my_data |> capture("processed_data")
+my_data |> capture("inputs.intermediate.snapshot")
 
 # Save as RDS
 capture(complex_object, to = "rds")
@@ -508,15 +508,15 @@ The Framework uses a hierarchical YAML configuration structure:
 ```yaml
 default:
   options:
-    cache_dir: data/cached
-    scratch_dir: data/scratch
+    cache_dir: outputs/private/cache
+    scratch_dir: outputs/private/scratch
     cache_default_expire: 1440  # hours
 
   data:
     source:
       private:
         sensitive_data:
-          path: data/source/private/sensitive.csv
+          path: inputs/raw/sensitive.csv
           type: csv
           locked: true
           encrypted: true

@@ -1,0 +1,102 @@
+name: cache_get
+title: Retrieve Cached Computation
+category: Caching
+slug: cache-get
+description: |
+  Retrieve a previously cached computation result. Works with cache_write()
+  and get_or_cache() to provide fast access to expensive computations.
+
+usage: cache_get(name, default = NULL)
+
+params:
+  - name: name
+    type: character
+    required: true
+    description: Name of the cached item to retrieve
+
+  - name: default
+    type: any
+    default: NULL
+    description: Value to return if cache miss or expired
+
+returns: |
+  The cached object if found and valid, otherwise the default value.
+  Returns NULL if cache miss and no default specified.
+
+details: |
+  cache_get() is part of Framework's caching system for expensive computations:
+
+  **How it works:**
+  - Looks up cache entry in framework.db
+  - Checks if cache is expired (if expiration set)
+  - Verifies cache file integrity via hash
+  - Loads and returns cached object
+  - Updates last_read_at timestamp
+
+  **Cache expiration:**
+  - Respects expire_at timestamp from cache_write()
+  - Returns default if expired
+  - Use cache = Inf for never-expiring cache
+
+  **Performance:**
+  - Fast lookup via SQLite index
+  - Hash verification prevents corruption
+  - Updates access time for cache management
+
+  **Common patterns:**
+  - Check cache first, compute if missing
+  - Use get_or_cache() for automatic pattern
+  - Pair with cache_delete() for invalidation
+
+examples:
+  - code: |
+      # Try to get cached result
+      result <- cache_get("expensive_analysis")
+      if (is.null(result)) {
+        result <- expensive_function()
+        cache_write("expensive_analysis", result)
+      }
+    description: Manual cache check pattern
+
+  - code: |
+      # Provide default value for cache miss
+      result <- cache_get("analysis", default = data.frame())
+    description: Cache with fallback default
+
+  - code: |
+      # Better: use get_or_cache() for automatic pattern
+      result <- get_or_cache("expensive_analysis", {
+        expensive_function()
+      })
+    description: Recommended approach using get_or_cache()
+
+  - code: |
+      # Check what's in cache
+      cache_list()  # See all cached items
+      cache_get("my_cache")  # Retrieve specific item
+    description: Exploring cached items
+
+related:
+  - cache_write
+  - cache_delete
+  - get_or_cache
+  - cache_list
+
+see_also:
+  - name: cache_write
+    description: Store computation result in cache
+  - name: get_or_cache
+    description: Get cached value or compute and cache
+  - name: cache_delete
+    description: Remove item from cache
+
+tags:
+  - caching
+  - performance
+  - memoization
+
+notes:
+  - Cache files stored in directory specified by config("cache")
+  - Default cache directory is data/cached/
+  - Use cache_list() to see all cached items and expiration
+  - Cache integrity verified via MD5 hash

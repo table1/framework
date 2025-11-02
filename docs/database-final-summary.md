@@ -146,7 +146,7 @@ connections:
 
 **Templates:**
 1. `inst/project_structure/project/settings/connections.yml` - Added pool examples
-2. `inst/project_structure/course/settings/connections.yml` - Added pool examples
+2. `inst/project_structure/course/settings.yml` - Inline example references pooling
 
 **Documentation:**
 1. `docs/database-getting-started.md` - Complete user guide

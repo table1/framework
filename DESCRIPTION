@@ -1,7 +1,7 @@
 Package: framework
 Type: Package
 Title: A Framework for Data Management
-Version: 0.9.1
+Version: 0.10.0
 Authors@R: 
     person("Erik", "Westlund", , "ewestlund@jhu.edu", role = c("aut", "cre"))
 Maintainer: Erik Westlund <ewestlund@jhu.edu>
@@ -20,12 +20,15 @@ Imports:
     readr,
     dotenv,
     openssl,
-    lubridate
+    lubridate,
+    httpuv,
+    jsonlite,
+    config
 Suggests:
     testthat (>= 3.0.0),
     cyclocomp,
     usethis,
-    languageserver,
+    languageserver,tm
     devtools,
     sodium,
     httpgd,

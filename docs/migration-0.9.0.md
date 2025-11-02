@@ -26,18 +26,28 @@ results/
 **New Structure (>= 0.9.0):**
 ```
 inputs/
-├── raw/                    # Raw data (gitignored)
-├── intermediate/           # Processed data (gitignored)
-└── examples/               # Public example data
+├── raw/                    # Raw hand-offs (gitignored)
+├── intermediate/           # Cleaned-but-input datasets (gitignored)
+├── final/                  # Curated analytical datasets (gitignored)
+└── reference/              # External documentation/codebooks (gitignored)
 
 outputs/
-├── private/tables/         # Analysis outputs (gitignored)
-├── private/figures/        # Visualizations (gitignored)
-├── private/models/         # Saved models (gitignored)
-├── private/notebooks/      # Rendered notebooks (gitignored)
-├── private/cache/          # Computation cache (gitignored)
-├── private/scratch/        # Temporary files (gitignored)
-└── public/                 # Public outputs
+├── private/                # Working artifacts (gitignored)
+│   ├── tables/
+│   ├── figures/
+│   ├── models/
+│   ├── notebooks/
+│   ├── final/
+│   ├── docs/
+│   ├── cache/
+│   └── scratch/
+└── public/                 # Approved deliverables (tracked opt-in)
+    ├── tables/
+    ├── figures/
+    ├── models/
+    ├── notebooks/
+    ├── final/
+    └── docs/
 ```
 
 ### Configuration Changes
@@ -47,12 +57,12 @@ outputs/
 **Old (settings/data.yml):**
 ```yaml
 data:
-  cache_dir: data/cached
-  scratch_dir: data/scratch
+  cache_dir: outputs/private/cache
+  scratch_dir: outputs/private/scratch
   source:
     private:
       survey:
-        path: data/source/private/survey.csv
+        path: inputs/raw/survey.csv
 ```
 
 **New (settings/data.yml):**
@@ -64,6 +74,9 @@ data:
     raw:
       survey:
         path: inputs/raw/survey.csv
+    intermediate:
+    final:
+    reference:
 ```
 
 **Dot notation has changed:**
@@ -93,25 +106,26 @@ If you want to adopt the new structure:
 
 1. **Create new directories:**
    ```bash
-   mkdir -p inputs/{raw,intermediate,examples}
-   mkdir -p outputs/private/{tables,figures,models,notebooks,cache,scratch}
-   mkdir -p outputs/public
+   mkdir -p inputs/{raw,intermediate,final,reference}
+   mkdir -p outputs/private/{tables,figures,models,notebooks,final,docs,cache,scratch}
+   mkdir -p outputs/public/{tables,figures,models,notebooks,final,docs}
    ```
 
 2. **Move your data (optional):**
    ```bash
    # Example: Move raw data
-   mv data/source/private/* inputs/raw/
+   mv inputs/raw/* inputs/raw/
 
    # Example: Move results
-   mv results/private/* outputs/private/tables/
+   mv outputs/private/* outputs/private/tables/
    ```
 
 3. **Update settings/directories.yml:**
    ```yaml
    directories:
      # Update these paths
-     inputs_raw: inputs/private/raw
+     inputs_raw: inputs/raw
+     inputs_reference: inputs/reference
      outputs_tables: outputs/private/tables
      outputs_figures: outputs/private/figures
      # ... etc

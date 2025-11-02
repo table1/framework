@@ -107,10 +107,10 @@ config("api.endpoint", default = "https://default.com")
 
 ### Private Directory Pattern
 ```
-data/source/private/      # Has nested .gitignore with "*"
-data/in_progress/private/ # Has nested .gitignore with "*"
-data/final/private/       # Has nested .gitignore with "*"
-results/private/          # Has nested .gitignore with "*"
+inputs/raw/      # Has nested .gitignore with "*"
+inputs/intermediate/ # Has nested .gitignore with "*"
+inputs/final/       # Has nested .gitignore with "*"
+outputs/private/          # Has nested .gitignore with "*"
 ```
 
 These directories are protected even if someone uses `git add -f`.
@@ -162,7 +162,7 @@ Define in `settings.yml`:
 ```yaml
 data:
   customer_survey:
-    path: data/source/public/survey.csv
+    path: inputs/reference/survey.csv
     type: csv
     description: "2024 customer satisfaction survey"
 ```

@@ -15,18 +15,49 @@ This document captures the exact directory and file structure for each Framework
 .
 ├── docs/
 │   └── .gitkeep
-├── functions/                       # Empty directory for user functions
-├── inputs/
-│   ├── public/
-│   │   ├── examples/
-│   │   │   └── .gitkeep
-│   │   └── .gitkeep
+├── functions/
 │   └── .gitkeep
+├── inputs/
+│   ├── final/
+│   │   └── README.md
+│   ├── intermediate/
+│   │   └── README.md
+│   ├── raw/
+│   │   └── README.md
+│   └── reference/
+│       └── README.md
 ├── notebooks/
 │   ├── .gitkeep
 │   └── example-notebook.qmd
-├── resources/
-│   └── .gitkeep
+├── outputs/
+│   ├── private/
+│   │   ├── cache/
+│   │   │   └── .gitkeep
+│   │   ├── final/
+│   │   │   └── .gitkeep
+│   │   ├── docs/
+│   │   │   └── .gitkeep
+│   │   ├── figures/
+│   │   │   └── .gitkeep
+│   │   ├── models/
+│   │   │   └── .gitkeep
+│   │   ├── notebooks/
+│   │   │   └── .gitkeep
+│   │   └── tables/
+│   │       └── .gitkeep
+│   └── public/
+│       ├── final/
+│       │   └── .gitkeep
+│       ├── docs/
+│       │   └── .gitkeep
+│       ├── figures/
+│       │   └── .gitkeep
+│       ├── models/
+│       │   └── .gitkeep
+│       ├── notebooks/
+│       │   └── .gitkeep
+│       └── tables/
+│           └── .gitkeep
 ├── scripts/
 │   ├── .gitkeep
 │   └── example-script.R
@@ -55,7 +86,7 @@ This document captures the exact directory and file structure for each Framework
 └── {project-name}.Rproj
 ```
 
-**Total**: 10 directories, 30 files
+**Total**: 29 directories, 41 files
 
 ### Configuration Structure
 
@@ -85,19 +116,24 @@ directories:
   functions: functions
 
   # Inputs (read-only)
-  inputs_raw: inputs/private/raw
-  inputs_intermediate: inputs/private/intermediate
-  inputs_examples: inputs/public/examples
+  inputs_raw: inputs/raw
+  inputs_intermediate: inputs/intermediate
+  inputs_final: inputs/final
+  inputs_reference: inputs/reference
 
   # Outputs (write-only)
   outputs_tables: outputs/private/tables
   outputs_figures: outputs/private/figures
   outputs_models: outputs/private/models
   outputs_notebooks: outputs/private/notebooks
+  outputs_docs: outputs/private/docs
+  outputs_final: outputs/private/final
   outputs_tables_public: outputs/public/tables
   outputs_figures_public: outputs/public/figures
   outputs_models_public: outputs/public/models
   outputs_notebooks_public: outputs/public/notebooks
+  outputs_docs_public: outputs/public/docs
+  outputs_final_public: outputs/public/final
 
   # Legacy paths
   cache: outputs/private/cache
@@ -118,20 +154,17 @@ directories:
 ### Directory Tree
 ```
 .
-├── docs/
-│   └── .gitkeep
-├── functions/                       # Empty directory for course functions
-├── resources/
-│   └── .gitkeep
-├── settings/                        # Minimal split files (not all 10)
-│   ├── connections.yml
-│   ├── data.yml
-│   ├── git.yml
-│   ├── packages.yml
-│   └── security.yml
+├── assignments/
+│   └── README.md
+├── course_docs/
+│   └── README.md
+├── data/
+│   └── README.md
+├── readings/
+│   └── README.md
 ├── slides/
-│   ├── .gitkeep
-│   └── 01-intro.qmd                 # Example intro slide
+│   ├── 01-intro.qmd                 # Example intro slide
+│   └── README.md
 ├── _quarto.yml
 ├── .editorconfig
 ├── .git/
@@ -146,7 +179,7 @@ directories:
 └── {project-name}.Rproj
 ```
 
-**Total**: 6 directories, 20 files
+**Total**: 7 directories, 21 files
 
 ### Configuration Structure
 
@@ -176,14 +209,13 @@ default:
 
   # Inline directories
   directories:
+    data: data
     slides: slides
-    notebooks: notebooks
-    scripts: scripts
-    functions: functions
-    outputs: outputs
+    assignments: assignments
+    course_docs: course_docs
+    readings: readings
 
   # Behavior
-  default_notebook_format: quarto
   seed: 1234
   seed_on_scaffold: true
 
@@ -214,8 +246,9 @@ default:
 ✅ `scaffold()` - Loads successfully
 ✅ `config("slides")` → `"slides"`
 ✅ `config("project_type")` → `"course"`
-✅ `make_notebook("lecture-02")` → Creates `notebooks/lecture-02.qmd`
-⚠️  Note: Course doesn't have a dedicated slides directory by default, uses notebooks/
+✅ Course slides render via `quarto render slides/01-intro.qmd`
+   → outputs land in `slides/_rendered/{{ slug }}.html`
+⚠️  Note: No notebooks/ or scripts/ directories are scaffolded by default; instructors can add them if needed.
 
 ---
 
@@ -224,10 +257,6 @@ default:
 ### Directory Tree
 ```
 .
-├── functions/                       # Empty directory for helper functions
-├── resources/
-│   └── images/
-│       └── .gitkeep
 ├── _quarto.yml
 ├── .editorconfig
 ├── .git/
@@ -243,7 +272,7 @@ default:
 └── {project-name}.Rproj
 ```
 
-**Total**: 4 directories, 13 files
+**Total**: 1 directory, 10 files
 
 ### Configuration Structure
 
@@ -265,25 +294,15 @@ default:
     - name: dplyr
       auto_attach: true
 
-  # Minimal directories
-  directories:
-    presentation: "."
-    functions: functions
-    outputs: outputs
-
   # Behavior
-  default_notebook_format: quarto
   seed: 1234
   seed_on_scaffold: true
 
   # Inline data
   data: {}
 
-  # Framework connection
-  connections:
-    framework:
-      driver: "sqlite"
-      database: "framework.db"
+  # Connections
+  connections: {}
 
   # AI config
   ai:
@@ -310,10 +329,10 @@ default:
 |---------|---------|--------|--------------|
 | **Config Style** | Delegated (split files) | Flat (inline) | Flat (inline) |
 | **Settings Files** | 10 split YAML files | 5 minimal split files | 0 split files |
-| **Directories** | 10 (inputs/outputs separated) | 6 (slides focus) | 4 (minimal) |
+| **Directories** | 10 (inputs/outputs separated) | 7 (course-specific buckets) | 1 (minimal) |
 | **Main File** | None | None | `presentation.qmd` |
 | **Example Content** | `example-notebook.qmd`, `example-script.R` | `01-intro.qmd` | None |
-| **Total Files** | 30 | 20 | 13 |
+| **Total Files** | 30 | 21 | 10 |
 | **Focus** | Data analysis pipeline | Teaching materials | Single presentation |
 
 ---

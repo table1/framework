@@ -30,7 +30,7 @@ Status: IN PROGRESS (Unit 04)
 - `.remove_data()` never called; consider exposing cleanup helper or prune unused record entries during deletes.
 
 ## Results System (`R/results*.R`)
-- `result_save()` pulls directories from `config$options$results$public_dir/private_dir`, but new settings place paths under `directories.results_public` / `results_private`. Currently falls back to hardcoded defaults, ignoring user overrides.
+- `result_save()` pulls directories from `directories.outputs_docs_public` / `outputs_docs`; verify fallbacks and documentation mention the new keys so user overrides are honoured.
 - Saving a file via `result_save(name, file=...)` copies with original extension, but `result_get()` always looks for `name.rds`; retrieving non-R objects fails outright. Need a path metadata column and retrieval fallback.
 - Result encryption relies on `.is_encrypted_file()` magic bytes; ensure saved encrypted files include the prefix (verify via tests).
 - Supporting scripts `results_read.R`, `results_write.R`, `results_delete.R` are empty placeholders; either implement utilities (list/read/delete) or remove to avoid confusion.

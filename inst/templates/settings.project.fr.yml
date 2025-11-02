@@ -43,19 +43,25 @@ default:
     scripts: scripts              # Where make_script() creates files
     functions: functions          # Single dir or list: [functions, helpers]
 
-    # Analysis outputs
-    results_public: results/public    # Shareable outputs (plots, reports)
-    results_private: results/private  # Private outputs (internal reports)
+    # Input data (read-only)
+    inputs_raw: inputs/raw
+    inputs_intermediate: inputs/intermediate
+    inputs_final: inputs/final
+    inputs_reference: inputs/reference
 
-    # Data and caching
-    cache: data/cached            # Cached computation results
-    scratch: data/scratch         # Temporary workspace
+    # Derived outputs (write-only)
+    outputs_private: outputs/private
+    outputs_public: outputs/public
+
+    # Cache and scratch space
+    cache: outputs/private/cache
+    scratch: outputs/private/scratch
 
   # --------------------------------------------------------------------------
   # Project Behavior
   # --------------------------------------------------------------------------
-  # Default notebook format for make_notebook() (quarto or rmarkdown)
-  default_notebook_format: quarto
+  seed: 1234
+  seed_on_scaffold: true
 
   # --------------------------------------------------------------------------
   # AI Assistant Configuration
@@ -85,12 +91,13 @@ default:
   # --------------------------------------------------------------------------
   data:
     # Example: Uncomment and modify
-    # source:
-    #   private:
-    #     example:
-    #       path: data/source/private/example.csv
-    #       type: csv
-    #       locked: true
+    # raw:
+    #   example:
+    #     path: inputs/raw/example.csv
+    #     type: csv
+    # intermediate:
+    # final:
+    # reference:
 
   # --------------------------------------------------------------------------
   # Database Connections

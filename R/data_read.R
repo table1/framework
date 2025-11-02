@@ -532,6 +532,15 @@ data_spec_get <- function(path) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
 
+  # Get config file path to resolve relative paths correctly
+  config_file <- .get_settings_file()
+  config_dir <- if (!is.null(config_file)) {
+    # Normalize config_file to get absolute path, then take dirname
+    dirname(normalizePath(config_file, winslash = "/", mustWork = TRUE))
+  } else {
+    getwd()
+  }
+
   config <- read_config()
 
   # Get file type info
@@ -598,10 +607,20 @@ data_spec_get <- function(path) {
 
   # Create spec with optional existing spec
   create_spec <- function(path, existing_spec = NULL) {
+    # Normalize relative paths against config directory
+    # (paths from config are relative to config file, not current directory)
+    if (!grepl("^/", path)) {
+      # Relative path - resolve against config directory
+      full_path <- file.path(config_dir, path)
+      # Normalize to handle .. and . in path
+      path <- normalizePath(full_path, winslash = "/", mustWork = FALSE)
+    }
+
     spec <- create_base_spec(path)
     if (!is.null(existing_spec)) {
       for (key in names(existing_spec)) {
-        if (!is.null(existing_spec[[key]])) {
+        # Skip 'path' key - use the normalized path we calculated
+        if (key != "path" && !is.null(existing_spec[[key]])) {
           spec[[key]] <- existing_spec[[key]]
         }
       }

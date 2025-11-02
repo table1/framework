@@ -1,20 +1,14 @@
 # Framework
 
 # Input directories - Private data (NEVER commit these!)
-/inputs/raw/
-/inputs/intermediate/
+inputs/raw/
+inputs/raw/**
+inputs/intermediate/
+inputs/intermediate/**
 
 # Output directories - Private outputs (gitignored by default)
-/outputs/private/
-
-# Allow structure documentation
-!/inputs/**/README.md
-!/inputs/**/.gitkeep
-!/outputs/**/README.md
-!/outputs/**/.gitkeep
-
-# Allow public examples to be versioned
-!/inputs/examples/
+outputs/private/
+outputs/private/**
 
 # R specific
 .Rproj.user
@@ -50,14 +44,20 @@ renv/python/
 renv/sandbox/
 renv/staging/
 
-# Quarto/RMarkdown artifacts
-_freeze/
+# Rendered outputs (development artifacts - notebooks, scripts, etc.)
+_rendered/
+
+# Cache directories
 *_cache/
-*_files/
+/cache/
+/*_files/
 
 # IDE specific files
 .idea
 .vscode
+
+# AI Assistant contexts
+.claude/settings.local.json
 
 # Config directories
 .history

@@ -39,7 +39,7 @@ configure_data()
 # Provide values directly
 configure_data(
   path = "source.private.survey",
-  file = "data/source/private/survey.csv",
+  file = "inputs/raw/survey.csv",
   type = "csv",
   locked = TRUE
 )

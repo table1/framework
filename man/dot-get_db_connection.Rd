@@ -4,7 +4,10 @@
 \alias{.get_db_connection}
 \title{Get a connection to the framework database}
 \usage{
-.get_db_connection()
+.get_db_connection(project_root = NULL)
+}
+\arguments{
+\item{project_root}{Optional project root used to resolve the database path.}
 }
 \description{
 Get a connection to the framework database

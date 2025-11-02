@@ -120,6 +120,7 @@ test_that("functions_dir warns when custom dir doesn't exist", {
 })
 
 test_that("results directories can be customized", {
+  skip_if_not_installed("yaml")
   test_dir <- create_test_dir()
   orig_wd <- getwd()
   on.exit({
@@ -132,10 +133,10 @@ test_that("results directories can be customized", {
   suppressMessages(init(project_name = "TestProject", type = "presentation", force = TRUE))
 
   # Update config with custom results dirs
-  writeLines(
-    "default:\n  options:\n    results:\n      public_dir: my-results/pub\n      private_dir: my-results/priv",
-    "settings.yml"
-  )
+  cfg <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
+  cfg$default$directories$outputs_docs_public <- "my-results/pub"
+  cfg$default$directories$outputs_docs <- "my-results/priv"
+  writeLines(yaml::as.yaml(cfg), "settings.yml")
 
   # Save result - should use custom directories
   result_save("test", value = list(a = 1), type = "test", public = FALSE)
@@ -161,11 +162,12 @@ test_that("results directories default correctly", {
   result_save("test_pub", value = list(b = 2), type = "test", public = TRUE)
 
   # Verify files were saved to default locations
-  expect_true(file.exists("results/private/test.rds"))
-  expect_true(file.exists("results/public/test_pub.rds"))
+  expect_true(file.exists("outputs/private/docs/test.rds"))
+  expect_true(file.exists("outputs/public/docs/test_pub.rds"))
 })
 
 test_that("result_get uses custom directories", {
+  skip_if_not_installed("yaml")
   test_dir <- create_test_dir()
   orig_wd <- getwd()
   on.exit({
@@ -178,10 +180,10 @@ test_that("result_get uses custom directories", {
   suppressMessages(init(project_name = "TestProject", type = "presentation", force = TRUE))
 
   # Update config with custom results dirs
-  writeLines(
-    "default:\n  options:\n    results:\n      public_dir: custom/pub\n      private_dir: custom/priv",
-    "settings.yml"
-  )
+  cfg <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
+  cfg$default$directories$outputs_docs_public <- "custom/pub"
+  cfg$default$directories$outputs_docs <- "custom/priv"
+  writeLines(yaml::as.yaml(cfg), "settings.yml")
 
   # Save and retrieve result
   test_value <- list(x = 42, y = "hello")

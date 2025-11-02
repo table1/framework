@@ -33,15 +33,15 @@ test_that("security_audit detects unignored private data directories", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
-  dir.create("data/source/private", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+  dir.create("inputs/raw", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
 
   # Create empty .gitignore (no private data protection)
   writeLines("", ".gitignore")
@@ -76,20 +76,20 @@ test_that("security_audit passes when private data is properly ignored", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
-  dir.create("data/source/private", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+  dir.create("inputs/raw", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
 
   # Create .gitignore with proper protection
   writeLines(c(
-    "data/source/private/",
-    "data/source/private/**"
+    "inputs/raw/",
+    "inputs/raw/**"
   ), ".gitignore")
 
   # Initialize git
@@ -123,22 +123,22 @@ test_that("security_audit detects orphaned data files", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private",
-        data_source_public = "data/source/public"
+        inputs_raw = "inputs/raw",
+        inputs_reference = "inputs/reference"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create configured directories
-  dir.create("data/source/private", recursive = TRUE)
-  dir.create("data/source/public", recursive = TRUE)
+  dir.create("inputs/raw", recursive = TRUE)
+  dir.create("inputs/reference", recursive = TRUE)
 
   # Create orphaned data file outside configured directories
   write.csv(data.frame(orphaned = 1:5), "random_data.csv", row.names = FALSE)
 
   # Create .gitignore
-  writeLines("data/", ".gitignore")
+  writeLines("inputs/", ".gitignore")
 
   # Initialize git
   system2("git", c("init"), stdout = FALSE, stderr = FALSE)
@@ -173,26 +173,26 @@ test_that("security_audit detects git-tracked private data", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
-  dir.create("data/source/private", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
+  dir.create("inputs/raw", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
 
   # Initialize git and accidentally commit private data
   system2("git", c("init"), stdout = FALSE, stderr = FALSE)
   system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
   system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
-  system2("git", c("add", "data/source/private/secrets.csv"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("add", "inputs/raw/secrets.csv"), stdout = FALSE, stderr = FALSE)
 
   # Create .gitignore AFTER accidentally tracking file
   writeLines(c(
-    "data/source/private/",
-    "data/source/private/**"
+    "inputs/raw/",
+    "inputs/raw/**"
   ), ".gitignore")
 
   # Run audit
@@ -223,14 +223,14 @@ test_that("security_audit skips git checks when git not available", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
-  dir.create("data/source/private", recursive = TRUE)
-  writeLines("data/", ".gitignore")
+  dir.create("inputs/raw", recursive = TRUE)
+  writeLines("inputs/", ".gitignore")
 
   # Run audit (no git repo, so git checks should be skipped)
   audit <- security_audit(check_git_history = TRUE, verbose = FALSE)
@@ -260,14 +260,14 @@ test_that("security_audit respects history_depth parameter", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
-  dir.create("data/source/private", recursive = TRUE)
-  writeLines("data/", ".gitignore")
+  dir.create("inputs/raw", recursive = TRUE)
+  writeLines("inputs/", ".gitignore")
 
   # Initialize git
   system2("git", c("init"), stdout = FALSE, stderr = FALSE)
@@ -305,18 +305,18 @@ test_that("security_audit auto_fix adds normalized entries to .gitignore", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private",
-        data_in_progress_private = "data/in_progress/private"
+        inputs_raw = "inputs/raw",
+        inputs_intermediate = "inputs/intermediate"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data
-  dir.create("data/source/private", recursive = TRUE)
-  dir.create("data/in_progress/private", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "data/source/private/secrets.csv", row.names = FALSE)
-  write.csv(data.frame(secret = 1:5), "data/in_progress/private/tmp.csv", row.names = FALSE)
+  dir.create("inputs/raw", recursive = TRUE)
+  dir.create("inputs/intermediate", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
+  write.csv(data.frame(secret = 1:5), "inputs/intermediate/tmp.csv", row.names = FALSE)
 
   # Create empty .gitignore
   writeLines("", ".gitignore")
@@ -332,17 +332,17 @@ test_that("security_audit auto_fix adds normalized entries to .gitignore", {
   # Check that .gitignore was updated
   gitignore_content <- readLines(".gitignore", warn = FALSE)
   expect_true(any(grepl("^# Framework Security Audit", gitignore_content)))
-  expect_true(any(grepl("data/source/private/$", gitignore_content)))
-  expect_true(any(grepl("data/source/private/\\*\\*$", gitignore_content)))
+  expect_true(any(grepl("inputs/raw/$", gitignore_content)))
+  expect_true(any(grepl("inputs/raw/\\*\\*$", gitignore_content)))
 
   # Run audit again after removing file to ensure idempotent header handling
-  file.remove("data/in_progress/private/tmp.csv")
-  write.csv(data.frame(secret = 1:5), "data/in_progress/private/tmp.csv", row.names = FALSE)
+  file.remove("inputs/intermediate/tmp.csv")
+  write.csv(data.frame(secret = 1:5), "inputs/intermediate/tmp.csv", row.names = FALSE)
   audit <- security_audit(check_git_history = FALSE, auto_fix = TRUE, verbose = FALSE)
 
   gitignore_content <- readLines(".gitignore", warn = FALSE)
-  expect_true(any(grepl("data/in_progress/private/$", gitignore_content)))
-  expect_true(any(grepl("data/in_progress/private/\\*\\*$", gitignore_content)))
+  expect_true(any(grepl("inputs/intermediate/$", gitignore_content)))
+  expect_true(any(grepl("inputs/intermediate/\\*\\*$", gitignore_content)))
   expect_equal(sum(grepl("^# Framework Security Audit", gitignore_content)), 1)
   expect_true(
     audit$summary$status[audit$summary$check == "gitignore_coverage"] %in% c("pass", "warning")
@@ -365,14 +365,14 @@ test_that("security_audit saves results to framework database", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
-  dir.create("data/source/private", recursive = TRUE)
-  writeLines("data/", ".gitignore")
+  dir.create("inputs/raw", recursive = TRUE)
+  writeLines("inputs/", ".gitignore")
 
   # Create framework database with proper initialization
   con <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
@@ -421,14 +421,14 @@ test_that("security_audit handles various data file extensions", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_public = "data/source/public"
+        inputs_reference = "inputs/reference"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
-  dir.create("data/source/public", recursive = TRUE)
-  writeLines("data/", ".gitignore")
+  dir.create("inputs/reference", recursive = TRUE)
+  writeLines("inputs/", ".gitignore")
 
   # Create data files with various extensions
   writeLines("test", "orphan.csv")
@@ -467,14 +467,14 @@ test_that("security_audit returns correct structure", {
     default = list(
       project_type = "project",
       directories = list(
-        data_source_private = "data/source/private"
+        inputs_raw = "inputs/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
-  dir.create("data/source/private", recursive = TRUE)
-  writeLines("data/", ".gitignore")
+  dir.create("inputs/raw", recursive = TRUE)
+  writeLines("inputs/", ".gitignore")
 
   # Initialize git
   system2("git", c("init"), stdout = FALSE, stderr = FALSE)

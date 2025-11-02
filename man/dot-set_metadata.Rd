@@ -4,12 +4,14 @@
 \alias{.set_metadata}
 \title{Set a metadata value}
 \usage{
-.set_metadata(key, value)
+.set_metadata(key, value, project_root = NULL)
 }
 \arguments{
 \item{key}{The metadata key}
 
 \item{value}{The metadata value}
+
+\item{project_root}{Optional project root for database resolution}
 }
 \description{
 Set a metadata value

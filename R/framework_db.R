@@ -63,25 +63,47 @@
 #' Initialize the framework database
 #' @keywords internal
 .init_db <- function() {
-  db_path <- "framework.db"
+  # Use project root to find framework.db (consistent with .ensure_framework_db)
+  project_root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+  db_path <- if (!is.null(project_root)) {
+    file.path(project_root, "framework.db")
+  } else {
+    "framework.db"
+  }
+
   if (!file.exists(db_path)) {
     # Copy template database
-    file.copy("inst/templates/framework.fr.db", db_path)
+    template_db <- system.file("templates", "framework.fr.db", package = "framework")
+    if (nzchar(template_db) && file.exists(template_db)) {
+      file.copy(template_db, db_path)
+    }
   }
 }
 
 #' Get a connection to the framework database
+#' @param project_root Optional project root used to resolve the database path.
 #' @keywords internal
-.get_db_connection <- function() {
-  DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+.get_db_connection <- function(project_root = NULL) {
+  if (is.null(project_root)) {
+    # Use project root to find framework.db (consistent with .ensure_framework_db)
+    project_root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+  }
+  db_path <- if (!is.null(project_root)) {
+    file.path(project_root, "framework.db")
+  } else {
+    "framework.db"
+  }
+
+  DBI::dbConnect(RSQLite::SQLite(), db_path)
 }
 
 #' Set a metadata value
 #' @param key The metadata key
 #' @param value The metadata value
+#' @param project_root Optional project root for database resolution
 #' @keywords internal
-.set_metadata <- function(key, value) {
-  con <- .get_db_connection()
+.set_metadata <- function(key, value, project_root = NULL) {
+  con <- .get_db_connection(project_root)
   on.exit(DBI::dbDisconnect(con))
   now <- lubridate::now()
 
@@ -107,10 +129,11 @@
 
 #' Get a metadata value
 #' @param key The metadata key
+#' @param project_root Optional project root for database resolution
 #' @return The metadata value, or NULL if not found
 #' @keywords internal
-.get_metadata <- function(key) {
-  con <- .get_db_connection()
+.get_metadata <- function(key, project_root = NULL) {
+  con <- .get_db_connection(project_root)
   on.exit(DBI::dbDisconnect(con))
   result <- DBI::dbGetQuery(
     con,
@@ -154,9 +177,10 @@ list_metadata <- function() {
 
 #' Remove a metadata value
 #' @param key The metadata key to remove
+#' @param project_root Optional project root for database resolution
 #' @keywords internal
-.remove_metadata <- function(key) {
-  con <- .get_db_connection()
+.remove_metadata <- function(key, project_root = NULL) {
+  con <- .get_db_connection(project_root)
   on.exit(DBI::dbDisconnect(con))
   DBI::dbExecute(con, "DELETE FROM meta WHERE key = ?", list(key))
 }

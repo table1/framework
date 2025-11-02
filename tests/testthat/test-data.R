@@ -159,7 +159,7 @@ test_that("data_spec_get retrieves data specification from config", {
   config$data$inputs <- list(
     raw = list(
       test = list(
-        path = "inputs/private/raw/test.csv",
+        path = "inputs/raw/test.csv",
         type = "csv",
         delimiter = "comma"
       )
@@ -170,7 +170,7 @@ test_that("data_spec_get retrieves data specification from config", {
   spec <- data_spec_get("inputs.raw.test")
 
   expect_type(spec, "list")
-  expect_equal(spec$path, "inputs/private/raw/test.csv")
+  expect_equal(spec$path, "inputs/raw/test.csv")
   expect_equal(spec$type, "csv")
   expect_equal(spec$delimiter, "comma")
 })
@@ -187,7 +187,7 @@ test_that("data_spec_update updates configuration", {
 
   # Update spec
   new_spec <- list(
-    path = "inputs/private/raw/new_test.csv",
+    path = "inputs/raw/new_test.csv",
     type = "csv",
     delimiter = "tab"
   )
@@ -196,7 +196,7 @@ test_that("data_spec_update updates configuration", {
 
   # Read back
   spec <- data_spec_get("inputs.raw.new_test")
-  expect_equal(spec$path, "inputs/private/raw/new_test.csv")
+  expect_equal(spec$path, "inputs/raw/new_test.csv")
   expect_equal(spec$delimiter, "tab")
 })
 
@@ -241,16 +241,16 @@ test_that("load_data reads Excel files from config", {
   setwd(test_dir)
 
   # Create an Excel file
-  dir.create("inputs/private/raw", recursive = TRUE)
+  dir.create("inputs/raw", recursive = TRUE)
   test_data <- data.frame(name = c("Alice", "Bob"), age = c(25, 30))
-  writexl::write_xlsx(test_data, "inputs/private/raw/people.xlsx")
+  writexl::write_xlsx(test_data, "inputs/raw/people.xlsx")
 
   # Add to config
   config <- read_config()
   config$data$inputs <- list(
-    raw = list(
+     raw = list(
       people = list(
-        path = "inputs/private/raw/people.xlsx",
+        path = "inputs/raw/people.xlsx",
         type = "excel",
         locked = FALSE,
         encrypted = FALSE

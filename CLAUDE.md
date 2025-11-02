@@ -44,6 +44,42 @@ This is the **Framework** R package - a data management and project scaffolding 
 
 **Framework is Quarto-first**: The package prioritizes Quarto for notebooks and documentation, with RMarkdown provided for backward compatibility.
 
+## GUI Development Workflow
+
+The Framework GUI is developed in `gui-dev/` (Vue 3 + Tailwind) and served by R via httpuv.
+
+**Development Setup:**
+- **Frontend dev server** (port 5173): `cd gui-dev && npm run dev` - Hot reload for UI changes
+- **Backend R server** (port 8080): Run in tmux session `fw`, window 8
+
+**Restarting the R GUI Server (tmux):**
+
+When you make changes to R backend code (e.g., adding API endpoints in `R/gui.R`), restart the server:
+
+```bash
+# Stop, reload package, and restart in one command
+/opt/homebrew/bin/tmux send-keys -t fw:8 C-c && \
+sleep 1 && \
+/opt/homebrew/bin/tmux send-keys -t fw:8 'devtools::load_all()' Enter && \
+sleep 2 && \
+/opt/homebrew/bin/tmux send-keys -t fw:8 'gui()' Enter
+```
+
+This sends commands to tmux session `fw`, window `8` to:
+1. Stop the running server (Ctrl+C)
+2. Reload the package with `devtools::load_all()`
+3. Restart the GUI server with `gui()`
+
+**Deploying UI Changes:**
+
+After making frontend changes, build and deploy to the R package:
+
+```bash
+cd gui-dev && npm run deploy
+```
+
+This builds the Vue app and copies assets to `inst/gui/` for distribution.
+
 ## Configuration Philosophy
 
 **CRITICAL: When adding new configurable settings, ALWAYS follow this pattern:**
@@ -272,10 +308,16 @@ default:
     notebooks: notebooks
     scripts: scripts
     functions: functions
-    results_public: results/public
-    results_private: results/private
-    cache: data/cached
-    scratch: data/scratch
+    inputs_raw: inputs/raw
+    inputs_intermediate: inputs/intermediate
+    inputs_final: inputs/final
+    inputs_reference: inputs/reference
+    outputs_private: outputs/private
+    outputs_public: outputs/public
+    outputs_docs: outputs/private/docs
+    outputs_docs_public: outputs/public/docs
+    cache: outputs/private/cache
+    scratch: outputs/private/scratch
 
   # Packages
   packages:
@@ -284,8 +326,8 @@ default:
 
   # Simple data catalog
   data:
-    example:
-      path: data/example.csv
+    inputs.raw.example:
+      path: inputs/raw/example.csv
       type: csv
 ```
 
@@ -299,7 +341,7 @@ default:
     notebooks: notebooks
     scripts: scripts
     functions: functions
-    cache: data/cached
+    cache: outputs/private/cache
 
   # Complex settings reference split files
   data: settings/data.yml           # Large data catalog
@@ -317,7 +359,7 @@ default:
 # Smart lookups (checks multiple locations)
 config("notebooks")              # → "notebooks" (from directories$notebooks)
 config("scripts")                # → "scripts"
-config("cache")                  # → "data/cached"
+config("cache")                  # → "outputs/private/cache"
 
 # Explicit nested paths
 config("directories.notebooks")  # → "notebooks"

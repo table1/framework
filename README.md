@@ -71,8 +71,8 @@ source("init.R")
 ### Project Types
 
 - **project** (default): Full-featured research projects with exploratory notebooks, production scripts, organized data management, and documentation
-- **course**: Teaching materials with presentations, student notebooks, and example data
-- **presentation**: Single talks or presentations with minimal overhead: just data, helper functions, and output
+- **course**: Teaching materials with slides, assignments, and shared datasets
+- **presentation**: Single talks or presentations with one Quarto file and minimal setup
 
 **Not sure?** Use `type = "project"`. You can always delete directories you don't need; you won't break anything.
 
@@ -84,15 +84,19 @@ project/
 ├── scripts/                # Production pipelines
 ├── inputs/
 │   ├── raw/                # Raw data (gitignored)
-│   ├── intermediate/       # Processed data (gitignored)
-│   └── examples/           # Public example data
+│   ├── intermediate/       # Cleaned-but-input datasets (gitignored)
+│   ├── final/              # Curated analytic datasets (gitignored)
+│   └── reference/          # External documentation/codebooks (gitignored)
 ├── outputs/
 │   ├── private/tables/     # Analysis outputs (gitignored)
 │   ├── private/figures/    # Visualizations (gitignored)
 │   ├── private/models/     # Saved models (gitignored)
 │   ├── private/notebooks/  # Rendered notebooks (gitignored)
+│   ├── private/final/      # Published datasets (gitignored)
+│   ├── private/docs/       # Working docs (gitignored)
 │   ├── private/cache/      # Computation cache (gitignored)
-│   └── public/             # Public outputs
+│   ├── private/scratch/    # Temporary files (gitignored)
+│   └── public/             # Share-ready artifacts
 ├── functions/              # Custom functions
 ├── docs/                   # Documentation
 ├── settings.yml            # Project configuration
@@ -179,7 +183,7 @@ data:
   inputs:
     raw:
       survey:
-        path: inputs/private/raw/survey.csv
+        path: inputs/raw/survey.csv
         type: csv
         locked: true  # Errors if file changes
 ```
@@ -195,9 +199,9 @@ df <- data_load("inputs.raw.survey")
 You can still read files without having them in your configuration. This approach still provides data integrity tracking:
 
 ```r
-df <- data_load("data/example.csv")       # Framework detects type
-df <- data_load("data/stata_file.dta")    # Stata
-df <- data_load("data/spss_file.sav")     # SPSS
+df <- data_load("inputs/raw/example.csv")       # Framework detects type
+df <- data_load("inputs/raw/stata_file.dta")    # Stata
+df <- data_load("inputs/raw/spss_file.sav")     # SPSS
 ```
 
 ### 3. Do your analysis
@@ -295,7 +299,7 @@ data:
   inputs:
     raw:
       survey:
-        path: inputs/private/raw/survey.dta
+        path: inputs/raw/survey.dta
         type: stata
         locked: true
 ```
@@ -310,15 +314,15 @@ df <- data_load("inputs.raw.survey")
 # Available data paths:
 #   inputs.raw.survey
 #   inputs.raw.companies
-#   inputs.intermediate.processed
+#   inputs.intermediate.table1
 #   ...
 ```
 
 **Direct path:**
 ```r
-df <- data_load("data/my_file.csv")       # CSV
-df <- data_load("data/stata_file.dta")    # Stata
-df <- data_load("data/spss_file.sav")     # SPSS
+df <- data_load("inputs/raw/my_file.csv")       # CSV
+df <- data_load("inputs/raw/stata_file.dta")    # Stata
+df <- data_load("inputs/raw/spss_file.sav")     # SPSS
 ```
 
 **Important:** Dot notation paths must match your YAML structure exactly. Each level in the YAML becomes a dot-separated part of the path. Use underscores for multi-word keys (e.g., `modeling_data`, not `modeling.data`).
@@ -336,8 +340,8 @@ model <- get_or_cache("model_v1", {
 ### 5. Save Results
 
 ```r
-# Save data
-data_save(processed_df, "final.private.clean", type = "csv")
+# Save data (adds catalog entry if missing, maps to outputs/private/tables/)
+data_save(processed_df, "outputs.tables.clean", type = "csv")
 
 # Save analysis output
 result_save("regression_model", model, type = "model")
@@ -363,7 +367,6 @@ connections:
 ```r
 df <- query_get("SELECT * FROM users WHERE active = true", "db")
 ```
-
 
 ## Configuration
 

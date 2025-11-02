@@ -18,7 +18,7 @@ data:
   inputs:
     raw:
       survey:
-        path: inputs/private/raw/survey.csv
+        path: inputs/raw/survey.csv
         type: csv
         locked: true  # Errors if file changes
 ```
@@ -34,9 +34,9 @@ df <- data_load("inputs.raw.survey")
 You can still read files without having them in your configuration. This approach still provides data integrity tracking:
 
 ```r
-df <- data_load("data/example.csv")       # Framework detects type
-df <- data_load("data/stata_file.dta")    # Stata
-df <- data_load("data/spss_file.sav")     # SPSS
+df <- data_load("inputs/raw/example.csv")       # Framework detects type
+df <- data_load("inputs/raw/stata_file.dta")    # Stata
+df <- data_load("inputs/raw/spss_file.sav")     # SPSS
 ```
 
 ### 3. Do your analysis

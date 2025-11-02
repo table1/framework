@@ -14,28 +14,30 @@ default:
     - name: readr
       auto_attach: false
 
-  # Project options
-  options:
-    # Directory paths (defaults shown - customize as needed)
-    functions_dir: functions           # Single dir or list: [functions, helpers]
-    results:
-      public_dir: results/public
-      private_dir: results/private
-    data:
-      cache_dir: data/cached
-      scratch_dir: data/scratch
-
-    # renv integration
+  # Project directories (customize as needed)
+  directories:
+    notebooks: notebooks
+    scripts: scripts
+    functions: functions
+    inputs_raw: inputs/raw
+    inputs_intermediate: inputs/intermediate
+    inputs_final: inputs/final
+    inputs_reference: inputs/reference
+    outputs_private: outputs/private
+    outputs_public: outputs/public
+    outputs_docs: outputs/private/docs
+    outputs_docs_public: outputs/public/docs
+    outputs_final: outputs/private/final
+    outputs_final_public: outputs/public/final
+    cache: outputs/private/cache
+    scratch: outputs/private/scratch
 
   # Data catalog
   data:
     # Example: Uncomment and modify
-    # source:
-    #   private:
-    #     example:
-    #       path: data/source/private/example.csv
-    #       type: csv
-    #       locked: true
+    # inputs.raw.example:
+    #   path: inputs/raw/example.csv
+    #   type: csv
 
   # Database connections
   connections:

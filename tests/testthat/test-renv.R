@@ -83,7 +83,7 @@ test_that(".parse_package_spec() trims whitespace", {
   expect_equal(result$source, "cran")
 })
 
-test_that(".mark_scaffolded() creates marker on first run", {
+test_that(".mark_scaffolded() records history on first run", {
   test_dir <- tempdir()
   orig_wd <- getwd()
   setwd(test_dir)
@@ -92,17 +92,22 @@ test_that(".mark_scaffolded() creates marker on first run", {
   if (file.exists(".framework_scaffolded")) {
     file.remove(".framework_scaffolded")
   }
+  if (file.exists("framework.db")) {
+    unlink("framework.db")
+  }
 
   framework:::.mark_scaffolded()
 
-  expect_true(file.exists(".framework_scaffolded"))
-  content <- readLines(".framework_scaffolded")
-  expect_true(grepl("^First scaffolded at:", content[1]))
-
-  file.remove(".framework_scaffolded")
+  history <- framework:::.get_scaffold_history(getwd())
+  expect_true(inherits(history$first, "POSIXct"))
+  expect_true(inherits(history$last, "POSIXct"))
+  
+  if (file.exists("framework.db")) {
+    unlink("framework.db")
+  }
 })
 
-test_that(".mark_scaffolded() appends on subsequent runs", {
+test_that(".mark_scaffolded() updates existing history", {
   test_dir <- tempdir()
   orig_wd <- getwd()
   setwd(test_dir)
@@ -110,24 +115,27 @@ test_that(".mark_scaffolded() appends on subsequent runs", {
 
   if (file.exists(".framework_scaffolded")) {
     file.remove(".framework_scaffolded")
+  }
+  if (file.exists("framework.db")) {
+    unlink("framework.db")
   }
 
   # First run
   framework:::.mark_scaffolded()
-  content1 <- readLines(".framework_scaffolded")
-  expect_length(content1, 2)
-  expect_true(grepl("^First scaffolded at:", content1[1]))
-  expect_true(grepl("^Last scaffolded at:", content1[2]))
+  history1 <- framework:::.get_scaffold_history(getwd())
+  expect_true(inherits(history1$first, "POSIXct"))
+  expect_true(inherits(history1$last, "POSIXct"))
 
   # Second run
   Sys.sleep(0.1) # Ensure different timestamp
   framework:::.mark_scaffolded()
-  content2 <- readLines(".framework_scaffolded")
-  expect_length(content2, 2)
-  expect_true(grepl("^First scaffolded at:", content2[1]))
-  expect_true(grepl("^Last scaffolded at:", content2[2]))
+  history2 <- framework:::.get_scaffold_history(getwd())
+  expect_equal(history1$first, history2$first)
+  expect_true(history2$last >= history1$last)
 
-  file.remove(".framework_scaffolded")
+  if (file.exists("framework.db")) {
+    unlink("framework.db")
+  }
 })
 
 test_that("packages_snapshot() requires renv to be enabled", {

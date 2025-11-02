@@ -14,20 +14,19 @@ Framework provides:
 ## Directory Structure
 
 ### Data Directories
-- `data/source/` - Original data files (public/private subdirs)
-  - `data/source/public/` - Non-sensitive source data (tracked in git)
-  - `data/source/private/` - Sensitive source data (gitignored, nested .gitignore for defense-in-depth)
-- `data/in_progress/` - Intermediate analysis data (public/private subdirs)
-- `data/final/` - Cleaned, analysis-ready datasets (public/private subdirs)
-- `data/cached/` - Cached computation results (gitignored)
-- `data/scratch/` - Temporary files (gitignored, auto-cleaned)
+- `inputs/raw/` - Original data files as delivered (gitignored)
+- `inputs/intermediate/` - Cleaned-but-input datasets that feed later steps (gitignored)
+- `inputs/final/` - Curated, analysis-ready datasets (gitignored)
+- `inputs/reference/` - Codebooks, manuals, and other external documentation (gitignored)
+- `outputs/private/cache/` - Cached computation results (gitignored)
+- `outputs/private/scratch/` - Temporary files (gitignored, auto-cleaned)
 
 ### Working Directories
 - `notebooks/` - Quarto (.qmd) or RMarkdown (.Rmd) analysis notebooks
 - `scripts/` - Standalone R scripts for automation
 - `functions/` - Custom R functions for this project (auto-sourced by scaffold())
-- `results/public/` - Shareable outputs like figures and tables (tracked in git)
-- `results/private/` - Sensitive outputs (gitignored)
+- `outputs/public/` - Shareable outputs like figures and tables (tracked in git)
+- `outputs/private/` - Sensitive outputs (gitignored)
 
 ### Configuration Files
 - `settings.yml` - Primary project configuration (directories, packages, data catalog, connections)
@@ -80,10 +79,10 @@ data <- load_data("my_dataset")
 **Direct File Load:**
 ```r
 # CSV
-data <- load_data("data/source/public/file.csv")
+data <- load_data("inputs/reference/file.csv")
 
 # RDS
-data <- load_data("data/final/public/processed.rds")
+data <- load_data("inputs/final/processed.rds")
 
 # Encrypted data (requires sodium package, prompts for passphrase)
 sensitive <- load_data("confidential_data")
@@ -93,15 +92,15 @@ sensitive <- load_data("confidential_data")
 ```r
 # Save plot
 result_save(my_plot, "figure-1", type = "plot")
-# Saves to results/public/figure-1.png
+# Saves to outputs/public/figures/figure-1.png
 
 # Save table
 result_save(summary_table, "table-1", type = "table")
-# Saves to results/public/table-1.csv
+# Saves to outputs/public/tables/table-1.csv
 
 # Save to private results
 result_save(sensitive_plot, "private-figure", type = "plot", private = TRUE)
-# Saves to results/private/
+# Saves to outputs/private/docs/
 
 # Mark as blind for unbiased analysis
 result_save(treatment_data, "blinded-results", blind = TRUE)
@@ -131,7 +130,7 @@ cache_list()
 
 ### Data Privacy - CRITICAL
 - **NEVER commit sensitive data to git**
-- Use `data/source/private/`, `data/in_progress/private/`, `data/final/private/` for sensitive files
+- Use `inputs/raw/`, `inputs/intermediate/`, `inputs/final/` for sensitive files
 - These directories have **nested .gitignore files** (defense-in-depth against accidental `git add -f`)
 - Store credentials and API keys in `.env`, **NEVER in code or settings.yml**
 - Use `result_save(..., private = TRUE)` for sensitive outputs
@@ -181,7 +180,7 @@ data <- load_data("confidential")
 - `result_save(object, name, type, blind, private)` - Save analysis results
   - `type`: "plot", "table", "data", "model", "other"
   - `blind`: TRUE to prevent viewing until unblinded
-  - `private`: TRUE to save to results/private/
+  - `private`: TRUE to save to outputs/private/docs/
 - `result_get(name)` - Retrieve saved result
 - `result_list()` - Show all saved results
 - `result_delete(name)` - Remove result
@@ -217,10 +216,16 @@ default:
     notebooks: notebooks
     scripts: scripts
     functions: functions
-    results_public: results/public
-    results_private: results/private
-    cache: data/cached
-    scratch: data/scratch
+    inputs_raw: inputs/raw
+    inputs_intermediate: inputs/intermediate
+    inputs_final: inputs/final
+    inputs_reference: inputs/reference
+    outputs_private: outputs/private
+    outputs_public: outputs/public
+    outputs_docs: outputs/private/docs
+    outputs_docs_public: outputs/public/docs
+    cache: outputs/private/cache
+    scratch: outputs/private/scratch
 
   # Packages to load
   packages:
@@ -230,8 +235,8 @@ default:
 
   # Data catalog (can be split into settings/data.yml)
   data:
-    my_dataset:
-      path: data/source/public/dataset.csv
+    inputs.raw.survey_2024:
+      path: inputs/raw/dataset.csv
       type: csv
       description: "Customer survey responses from 2024"
 
@@ -246,7 +251,7 @@ default:
 ```r
 # Smart lookups (checks directories + legacy options)
 notebook_dir <- settings("directories.notebooks")  # Returns "notebooks"
-cache_dir <- settings("directories.cache")  # Returns "data/cached"
+cache_dir <- settings("directories.cache")  # Returns "outputs/private/cache"
 
 # Explicit nested paths
 db_host <- settings("connections.db.host")
@@ -312,7 +317,7 @@ users <- query_get("get-users", params = list(start_date = "2024-01-01"))
 data:
   # Document source and update frequency
   customer_survey:
-    path: data/source/public/survey_2024.csv
+    path: inputs/reference/survey_2024.csv
     type: csv
     description: "Annual customer satisfaction survey"
     source: "Marketing team, updated yearly"
@@ -320,7 +325,7 @@ data:
 
   # Mark encrypted data
   patient_records:
-    path: data/source/private/patients.rds
+    path: inputs/raw/patients.rds
     type: rds
     encrypted: true
     description: "De-identified patient data for outcomes analysis"

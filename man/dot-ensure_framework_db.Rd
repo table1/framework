@@ -4,7 +4,10 @@
 \alias{.ensure_framework_db}
 \title{Ensure framework database exists}
 \usage{
-.ensure_framework_db()
+.ensure_framework_db(project_root = NULL)
+}
+\arguments{
+\item{project_root}{Optional project root used to resolve the database path.}
 }
 \description{
 Ensure framework database exists

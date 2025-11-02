@@ -1,0 +1,21 @@
+project:
+  type: default
+  output-dir: ../outputs/private/notebooks
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: false
+    code-tools: true
+    code-link: true
+    df-print: paged
+    embed-resources: false
+    output-file: "{{ slug }}"
+
+execute:
+  freeze: auto
+  cache: true
+  warning: false
+  message: false

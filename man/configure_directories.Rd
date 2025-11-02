@@ -26,8 +26,14 @@ Directories control where Framework creates and looks for files.
 \item \code{notebooks} - Where make_notebook() creates files
 \item \code{scripts} - Where make_script() creates files
 \item \code{functions} - Where scaffold() looks for custom functions
-\item \code{results_public} - Public results/outputs
-\item \code{results_private} - Private results/outputs
+\item \code{inputs_raw} - Source data (gitignored)
+\item \code{inputs_intermediate} - Cleaned-but-input datasets
+\item \code{inputs_final} - Curated analytic datasets
+\item \code{inputs_reference} - External documentation/codebooks
+\item \code{outputs_private} - Working artifacts (tables/figures/models)
+\item \code{outputs_public} - Share-ready artifacts
+\item \code{outputs_docs} - Narrative/report outputs (private)
+\item \code{outputs_docs_public} - Narrative/report outputs (public)
 \item \code{cache} - Cached computation results
 \item \code{scratch} - Temporary workspace
 }

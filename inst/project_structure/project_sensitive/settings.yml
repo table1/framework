@@ -1,0 +1,14 @@
+default:
+  # Core metadata stays inline for quick reference
+  project_type: project_sensitive
+
+  # Delegated configuration files (edit these under settings/)
+  author: settings/author.yml
+  packages: settings/packages.yml
+  directories: settings/directories.yml
+  options: settings/options.yml
+  data: settings/data.yml
+  connections: settings/connections.yml
+  security: settings/security.yml
+  ai: settings/ai.yml
+  git: settings/git.yml

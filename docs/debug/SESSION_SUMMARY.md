@@ -27,7 +27,7 @@ All bugs documented in `docs/debug/BUG_FIXES.md`:
 1. **`.set_data()` missing database fields** - Now stores complete metadata
 2. **`write_config()` file handling** - Handles missing files, auto-wraps in "default" section
 3. **Database schema inconsistency** - Single source of truth in `init.sql`
-4. **Missing project directories** - Added `data/final/public` and `data/final/private`
+4. **Missing project directories** - Added `inputs/final/public` and `inputs/final/private`
 5. **Cache table schema** - Added missing `file_path` and `expire_at` fields
 6. **Test design flaw** - Fixed cache counter test
 
@@ -85,8 +85,8 @@ Updated root `CLAUDE.md` to reference docs directory.
 - `inst/templates/init.sql` - Added missing cache table fields
 
 ### Structure
-- `inst/project_structure/default/data/final/public/` - Created
-- `inst/project_structure/default/data/final/private/` - Created
+- `inst/project_structure/default/inputs/final/public/` - Created
+- `inst/project_structure/default/inputs/final/private/` - Created
 - `inst/templates/framework.fr.db` - Regenerated with correct schema
 
 ### Templates

@@ -1,0 +1,99 @@
+name: data_load
+title: Load Data from Catalog
+category: Data Management
+slug: data-load
+description: |
+  Load datasets defined in your data catalog (settings/data.yml). Supports
+  CSV and RDS formats with automatic integrity verification, encryption,
+  and caching.
+
+usage: data_load(name, verify_hash = TRUE, cache = TRUE)
+
+params:
+  - name: name
+    type: character
+    required: true
+    description: Name of the dataset as defined in settings/data.yml (supports dot-notation like "source.private.my_data")
+
+  - name: verify_hash
+    type: logical
+    default: TRUE
+    description: Verify file integrity against stored hash from framework.db
+
+  - name: cache
+    type: logical
+    default: TRUE
+    description: Cache the loaded data in memory for faster subsequent access
+
+returns: |
+  The loaded dataset as a data.frame or tibble. Encrypted files are automatically
+  decrypted if sodium package is available.
+
+details: |
+  data_load() uses your data catalog to load datasets with the following features:
+
+  **Catalog-based loading:**
+  - Define datasets once in settings/data.yml
+  - Specify path, type (csv/rds), encryption status
+  - Use dot-notation for nested organization
+
+  **Integrity verification:**
+  - Computes file hash and compares to stored value
+  - Warns if file has changed since last registration
+  - Updates hash in framework.db on load
+
+  **Encryption support:**
+  - Automatically decrypts .enc files using sodium
+  - Requires encryption key in .env file
+  - Transparent to user (just works)
+
+  **Performance:**
+  - In-memory caching for repeated access
+  - Smart cache invalidation on file changes
+
+examples:
+  - code: |
+      # Load a simple dataset
+      df <- data_load("example")
+    description: Load dataset named "example" from catalog
+
+  - code: |
+      # Load with dot-notation (nested in catalog)
+      private_data <- data_load("source.private.patient_data")
+    description: Load from nested catalog path
+
+  - code: |
+      # Skip hash verification (faster, less safe)
+      df <- data_load("example", verify_hash = FALSE)
+    description: Skip integrity check for performance
+
+  - code: |
+      # Force fresh load (bypass cache)
+      df <- data_load("example", cache = FALSE)
+    description: Disable caching to force reload from disk
+
+related:
+  - data_save
+  - data_list
+  - data_encrypt
+
+see_also:
+  - name: data_save
+    description: Save data to catalog with integrity tracking
+  - name: data_list
+    description: List all datasets in catalog
+  - name: configure_data
+    description: Configure data catalog interactively
+
+tags:
+  - data
+  - loading
+  - catalog
+  - encryption
+  - integrity
+
+notes:
+  - Encrypted files require sodium package and KEY in .env
+  - Hash verification uses digest package (MD5 by default)
+  - Catalog location defaults to settings/data.yml
+  - Use data_list() to see all available datasets

@@ -23,18 +23,8 @@ default:
       auto_attach: true
 
   # --------------------------------------------------------------------------
-  # Project Directories
-  # --------------------------------------------------------------------------
-  directories:
-    presentation: "."             # Presentation file in root (presentation.qmd)
-    functions: functions          # Helper functions
-    outputs: outputs              # Where Quarto renders the presentation
-
-  # --------------------------------------------------------------------------
   # Project Behavior
   # --------------------------------------------------------------------------
-  # Default notebook format for make_notebook() (quarto or rmarkdown)
-    default_notebook_format: quarto
   seed: 1234
   seed_on_scaffold: true
 
@@ -54,10 +44,7 @@ default:
   # --------------------------------------------------------------------------
   # Database Connections
   # --------------------------------------------------------------------------
-  connections:
-    framework:
-      driver: "sqlite"
-      database: "framework.db"
+  connections: {}
 
   # --------------------------------------------------------------------------
   # AI Assistant Configuration
