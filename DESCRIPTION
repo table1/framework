@@ -28,7 +28,8 @@ Suggests:
     testthat (>= 3.0.0),
     cyclocomp,
     usethis,
-    languageserver,tm
+    languageserver,
+    tm,
     devtools,
     sodium,
     httpgd,
