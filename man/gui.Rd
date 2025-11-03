@@ -3,20 +3,11 @@
 \name{framework_gui}
 \alias{framework_gui}
 \alias{gui}
-\alias{gui_stop}
-\alias{gui_list}
-\alias{gui_restart}
 \title{Launch Framework GUI}
 \usage{
-framework_gui(port = 0, browse = TRUE)
+framework_gui(port = 8080, browse = TRUE)
 
-gui(port = 0, browse = TRUE)
-
-gui_stop(port = NULL, all = FALSE)
-
-gui_list()
-
-gui_restart(port = 8080, browse = TRUE)
+gui(port = 8080, browse = TRUE)
 }
 \arguments{
 \item{port}{Port number to use (default: 8080)}
@@ -24,7 +15,7 @@ gui_restart(port = 8080, browse = TRUE)
 \item{browse}{Automatically open browser (default: TRUE)}
 }
 \value{
-Invisibly returns the httpuv server object
+Invisibly returns the plumber server object
 }
 \description{
 Opens a beautiful web-based interface for Framework with documentation,

@@ -78,7 +78,8 @@
       "Bash(python3:*)",
       "Bash(/opt/homebrew/bin/tmux capture-pane:*)",
       "Bash(/opt/homebrew/bin/tmux list-windows:*)",
-      "mcp__plugin_claude-mem_claude-mem-search__search_observations"
+      "mcp__plugin_claude-mem_claude-mem-search__search_observations",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []

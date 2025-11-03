@@ -2,28 +2,15 @@
 % Please edit documentation in R/gui.R
 \name{gui_restart}
 \alias{gui_restart}
-\title{Restart GUI Server}
+\title{Restart the GUI server}
 \usage{
-gui_restart(port = 8080, browse = TRUE)
+gui_restart(port = 8080, browse = FALSE)
 }
 \arguments{
-\item{port}{Port number to use (default: 8080)}
+\item{port}{Port number to use}
 
-\item{browse}{Automatically open browser (default: TRUE)}
-}
-\value{
-Invisibly returns the httpuv server object
+\item{browse}{Automatically open browser}
 }
 \description{
-Stops any running GUI servers and starts a new one.
-}
-\examples{
-\dontrun{
-# Restart GUI on default port
-gui_restart()
-
-# Restart on specific port
-gui_restart(port = 9090)
-}
-
+Restart the GUI server
 }

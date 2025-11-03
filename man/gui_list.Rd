@@ -2,19 +2,13 @@
 % Please edit documentation in R/gui.R
 \name{gui_list}
 \alias{gui_list}
-\title{List Running GUI Servers}
+\title{List running GUI servers}
 \usage{
 gui_list()
 }
 \value{
-Invisibly returns a data frame of running servers, or NULL if none found.
+List of running GUI server information
 }
 \description{
-Shows all currently running Framework GUI servers with their ports and PIDs.
-}
-\examples{
-\dontrun{
-gui_list()
-}
-
+List running GUI servers
 }

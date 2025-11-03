@@ -23,7 +23,8 @@ Imports:
     lubridate,
     httpuv,
     jsonlite,
-    config
+    config,
+    plumber
 Suggests:
     testthat (>= 3.0.0),
     cyclocomp,

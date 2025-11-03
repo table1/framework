@@ -61,7 +61,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, h } from 'vue'
+import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  XCircleIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   title: {
@@ -102,37 +108,24 @@ const visible = ref(false)
 let timeout = null
 
 const iconComponent = computed(() => {
-  const icons = {
-    success: {
-      template: `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-sky-400">
-          <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      `
-    },
-    error: {
-      template: `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-red-400">
-          <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      `
-    },
-    warning: {
-      template: `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-yellow-400">
-          <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      `
-    },
-    info: {
-      template: `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-blue-400">
-          <path d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      `
-    }
+  const iconMap = {
+    success: CheckCircleIcon,
+    error: XCircleIcon,
+    warning: ExclamationTriangleIcon,
+    info: InformationCircleIcon
   }
-  return icons[props.type]
+
+  const colorMap = {
+    success: 'text-sky-400',
+    error: 'text-red-400',
+    warning: 'text-yellow-400',
+    info: 'text-blue-400'
+  }
+
+  const Icon = iconMap[props.type]
+  const colorClass = colorMap[props.type]
+
+  return () => h(Icon, { class: `size-6 ${colorClass}` })
 })
 
 const close = () => {

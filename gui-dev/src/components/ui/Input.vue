@@ -3,7 +3,24 @@
     <label v-if="label" :for="id" class="block text-sm/6 font-medium text-gray-900 dark:text-white">
       {{ label }}
     </label>
-    <div :class="['mt-2', error ? 'grid grid-cols-1' : '']">
+    <div v-if="prefix" class="mt-2 flex">
+      <div class="flex shrink-0 items-center rounded-l-md bg-gray-100 px-2 text-base text-gray-500 outline-1 -outline-offset-1 outline-gray-300 sm:text-sm/6 dark:bg-white/5 dark:text-gray-400 dark:outline-white/10 font-mono">
+        {{ prefix }}
+      </div>
+      <input
+        :id="id"
+        :type="type"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :required="required"
+        :disabled="disabled"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="error ? `${id}-error` : hint ? `${id}-description` : undefined"
+        @input="$emit('update:modelValue', $event.target.value)"
+        :class="inputClassesWithPrefix"
+      />
+    </div>
+    <div v-else :class="['mt-2', error ? 'grid grid-cols-1' : '']">
       <input
         :id="id"
         :type="type"
@@ -75,6 +92,14 @@ const props = defineProps({
   hint: {
     type: String,
     default: null
+  },
+  monospace: {
+    type: Boolean,
+    default: false
+  },
+  prefix: {
+    type: String,
+    default: null
   }
 })
 
@@ -99,6 +124,10 @@ const inputClasses = computed(() => {
     'dark:placeholder:text-gray-500'
   ]
 
+  if (props.monospace) {
+    classes.push('font-mono')
+  }
+
   if (props.error) {
     classes.push(
       'col-start-1',
@@ -110,6 +139,56 @@ const inputClasses = computed(() => {
       'placeholder:text-red-300',
       'focus:outline-red-600',
       'sm:pr-9',
+      'dark:text-red-400',
+      'dark:outline-red-500/50',
+      'dark:placeholder:text-red-400/70',
+      'dark:focus:outline-red-400'
+    )
+  } else {
+    classes.push(
+      'text-gray-900',
+      'outline-gray-300',
+      'focus:outline-sky-600',
+      'dark:text-white',
+      'dark:outline-white/10',
+      'dark:focus:outline-sky-500'
+    )
+  }
+
+  return classes.join(' ')
+})
+
+const inputClassesWithPrefix = computed(() => {
+  const classes = [
+    '-ml-px',
+    'block',
+    'w-full',
+    'grow',
+    'rounded-r-md',
+    'bg-white',
+    'px-3',
+    'py-1.5',
+    'text-base',
+    'outline-1',
+    '-outline-offset-1',
+    'placeholder:text-gray-400',
+    'focus:outline-2',
+    'focus:-outline-offset-2',
+    'sm:text-sm/6',
+    'dark:bg-white/5',
+    'dark:placeholder:text-gray-500'
+  ]
+
+  if (props.monospace) {
+    classes.push('font-mono')
+  }
+
+  if (props.error) {
+    classes.push(
+      'text-red-900',
+      'outline-red-300',
+      'placeholder:text-red-300',
+      'focus:outline-red-600',
       'dark:text-red-400',
       'dark:outline-red-500/50',
       'dark:placeholder:text-red-400/70',

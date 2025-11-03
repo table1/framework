@@ -41,7 +41,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                   </svg>
                 </div>
-                <Badge variant="emerald">
+                <Badge variant="sky">
                   {{ project.type }}
                 </Badge>
               </div>
@@ -53,7 +53,17 @@
                 {{ project.path }}
               </p>
 
-              <div class="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-500">
+              <!-- Author info if available -->
+              <div v-if="project.author" class="mt-3 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>{{ project.author }}</span>
+                <span v-if="project.author_email" class="text-zinc-400 dark:text-zinc-500">·</span>
+                <span v-if="project.author_email" class="truncate">{{ project.author_email }}</span>
+              </div>
+
+              <div class="mt-3 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-500">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -66,18 +76,18 @@
             <Button
               variant="primary"
               size="md"
-              @click="setActiveProject(project)"
+              @click="$router.push(`/project/${project.id}`)"
               class="flex-1"
             >
-              Set Active
+              View Project
             </Button>
             <Button
               variant="secondary"
               size="md"
-              :href="`file://${project.path}`"
+              @click="viewProjectDetails(project)"
               class="flex-1"
             >
-              Open
+              See More
             </Button>
           </div>
         </div>
@@ -122,7 +132,6 @@
     <Modal
       v-model="showImportModal"
       title="Import Existing Project"
-      icon="info"
       size="md"
     >
       <div class="space-y-4">
@@ -167,6 +176,79 @@
         </div>
       </template>
     </Modal>
+
+    <!-- Project Details Modal -->
+    <Modal
+      v-model="showDetailsModal"
+      title="Project Details"
+      size="lg"
+    >
+      <div v-if="selectedProject" class="space-y-6">
+        <!-- Project Name & Type -->
+        <div>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3">
+            {{ selectedProject.name }}
+          </h3>
+          <Badge :variant="'sky'" class="mb-4">
+            {{ selectedProject.type }}
+          </Badge>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid gap-4">
+          <!-- Path -->
+          <div>
+            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Location
+            </label>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 font-mono bg-zinc-50 dark:bg-zinc-800 px-3 py-2 rounded-lg">
+              {{ selectedProject.path }}
+            </p>
+          </div>
+
+          <!-- Author Info -->
+          <div v-if="selectedProject.author" class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Author
+              </label>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                {{ selectedProject.author }}
+              </p>
+            </div>
+            <div v-if="selectedProject.author_email">
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Email
+              </label>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                {{ selectedProject.author_email }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Created Date -->
+          <div>
+            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Created
+            </label>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              {{ selectedProject.created }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <template #actions>
+        <div class="flex gap-3 justify-end">
+          <Button variant="secondary" @click="showDetailsModal = false">
+            Close
+          </Button>
+          <Button variant="primary" @click="$router.push(`/project/${selectedProject.id}`); showDetailsModal = false">
+            View Full Details
+          </Button>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -180,9 +262,11 @@ import Modal from '../components/ui/Modal.vue'
 
 const showWizard = ref(false)
 const showImportModal = ref(false)
+const showDetailsModal = ref(false)
 const importPath = ref('')
 const importError = ref('')
 const importing = ref(false)
+const selectedProject = ref(null)
 
 const settings = ref({
   projects: []
@@ -193,12 +277,9 @@ const loadSettings = async () => {
     const response = await fetch('/api/settings/get')
     const data = await response.json()
 
-    if (data.author) {
-      settings.value = {
-        projects: data.projects || []
-      }
-    } else {
-      settings.value = { projects: [] }
+    // Always load projects if they exist, regardless of global author settings
+    settings.value = {
+      projects: data.projects || []
     }
   } catch (error) {
     console.error('Failed to load settings:', error)
@@ -211,27 +292,15 @@ const handleWizardClose = () => {
   loadSettings()
 }
 
-const setActiveProject = async (project) => {
-  try {
-    const response = await fetch('/api/project/set-active', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_path: project.path })
-    })
-
-    if (response.ok) {
-      // Reload the page to update sidebar
-      window.location.reload()
-    }
-  } catch (error) {
-    console.error('Failed to set active project:', error)
-  }
-}
-
 const closeImportModal = () => {
   showImportModal.value = false
   importPath.value = ''
   importError.value = ''
+}
+
+const viewProjectDetails = (project) => {
+  selectedProject.value = project
+  showDetailsModal.value = true
 }
 
 const handleImport = async () => {

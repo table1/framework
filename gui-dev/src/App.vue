@@ -43,38 +43,34 @@
               </div>
             </li>
 
-            <!-- Project Section (only if in project or has active project) -->
-            <li v-if="hasActiveProject" class="relative mt-6">
-              <div class="flex items-center justify-between">
-                <h2 class="text-xs font-semibold text-zinc-900 dark:text-white">
-                  Project
-                </h2>
-                <div v-if="activeProject" class="flex h-2 w-2 rounded-full bg-sky-500"></div>
-              </div>
-              <div v-if="activeProject" class="mt-2 rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800/50">
-                <p class="text-xs font-medium text-zinc-900 dark:text-white truncate">{{ activeProject.name }}</p>
-                <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400 font-mono truncate">{{ activeProject.path }}</p>
-              </div>
+            <!-- Projects Section -->
+            <li v-if="projects.length > 0" class="relative mt-6">
+              <h2 class="text-xs font-semibold text-zinc-900 dark:text-white">
+                Your Projects
+              </h2>
               <div class="relative mt-3 pl-2">
                 <div class="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5"></div>
                 <!-- Active page marker -->
                 <div
-                  v-if="getActiveGroupIndex('project') >= 0"
+                  v-if="getActiveProjectIndex() >= 0"
                   class="absolute left-2 h-6 w-px bg-sky-500 transition-all duration-200"
-                  :style="{ top: `${getActiveGroupIndex('project') * 32 + 4}px` }"
+                  :style="{ top: `${getActiveProjectIndex() * 32 + 4}px` }"
                 ></div>
                 <ul role="list" class="border-l border-transparent">
-                  <li v-for="tab in projectTabs" :key="tab.id" class="relative">
+                  <li v-for="project in projects" :key="project.id" class="relative">
                     <router-link
-                      :to="tab.to"
+                      :to="`/project/${project.id}`"
                       :class="[
                         'flex justify-between gap-2 py-1 pl-4 pr-3 text-sm transition',
-                        $route.path.startsWith(tab.to)
+                        $route.path === `/project/${project.id}`
                           ? 'text-zinc-900 dark:text-white'
                           : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                       ]"
                     >
-                      <span class="truncate">{{ tab.label }}</span>
+                      <span class="truncate">{{ project.name }}</span>
+                      <span v-if="project.type" class="text-xs text-zinc-400 dark:text-zinc-500">
+                        {{ project.type === 'project' ? '📁' : project.type === 'course' ? '📚' : '📊' }}
+                      </span>
                     </router-link>
                   </li>
                 </ul>
@@ -102,6 +98,9 @@
         <router-view />
       </main>
     </div>
+
+    <!-- Toast notifications (global) -->
+    <ToastContainer ref="toastContainer" />
   </div>
 </template>
 
@@ -109,19 +108,22 @@
 import { ref, h, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDarkMode } from './composables/useDarkMode'
+import ToastContainer from './components/ui/ToastContainer.vue'
+import { setToastContainer } from './composables/useToast'
+
+const toastContainer = ref(null)
 
 const route = useRoute()
 const { isDark, toggle: toggleDarkMode } = useDarkMode()
-const context = ref({ inProject: false, projectPath: null, projectName: null })
-const activeProject = ref(null)
-
-const hasActiveProject = computed(() => {
-  return context.value.inProject || activeProject.value !== null
-})
+const projects = ref([])
 
 const getActiveGroupIndex = (group) => {
-  const tabs = group === 'framework' ? frameworkTabs : projectTabs
+  const tabs = frameworkTabs
   return tabs.findIndex(tab => route.path.startsWith(tab.to))
+}
+
+const getActiveProjectIndex = () => {
+  return projects.value.findIndex(project => route.path === `/project/${project.id}`)
 }
 
 // Icons for dark mode toggle
@@ -139,32 +141,20 @@ const frameworkTabs = [
   { id: 'settings', label: 'Global Settings', to: '/settings' }
 ]
 
-// Project tabs (only visible when in/has active project)
-const projectTabs = [
-  { id: 'packages', label: 'Packages', to: '/project/packages' },
-  { id: 'data', label: 'Data', to: '/project/data' },
-  { id: 'connections', label: 'Connections', to: '/project/connections' }
-]
-
-// Load context and initialize
+// Load projects and initialize
 onMounted(async () => {
-  // Load context from API
-  try {
-    const response = await fetch('/api/context')
-    const data = await response.json()
-    context.value = data
+  // Initialize toast container
+  setToastContainer(toastContainer.value)
 
-    // Set active project from context (either current project or globally active project)
-    if (data.inProject) {
-      activeProject.value = {
-        name: data.projectName,
-        path: data.projectPath
-      }
-    } else if (data.activeProject) {
-      activeProject.value = data.activeProject
-    }
+  // Load projects from API
+  try {
+    const response = await fetch('/api/settings/get')
+    const data = await response.json()
+
+    // Set projects with enriched metadata
+    projects.value = data.projects || []
   } catch (error) {
-    console.error('Failed to load context:', error)
+    console.error('Failed to load projects:', error)
   }
 })
 </script>

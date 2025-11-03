@@ -19,7 +19,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'gray',
-    validator: (value) => ['gray', 'red', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink', 'emerald'].includes(value)
+    validator: (value) => ['gray', 'red', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink', 'sky'].includes(value)
   },
   pill: {
     type: Boolean,
@@ -84,7 +84,7 @@ const badgeClasses = computed(() => {
       darkText: 'dark:text-green-400',
       darkRing: 'dark:inset-ring-green-500/20'
     },
-    emerald: {
+    sky: {
       bg: 'bg-sky-50',
       text: 'text-sky-700',
       ring: 'inset-ring-sky-600/20',
@@ -156,7 +156,7 @@ const dotClasses = computed(() => {
     red: 'fill-red-500 dark:fill-red-400',
     yellow: 'fill-yellow-500 dark:fill-yellow-400',
     green: 'fill-green-500 dark:fill-green-400',
-    emerald: 'fill-sky-500 dark:fill-sky-400',
+    sky: 'fill-sky-500 dark:fill-sky-400',
     blue: 'fill-blue-500 dark:fill-blue-400',
     indigo: 'fill-indigo-500 dark:fill-indigo-400',
     purple: 'fill-purple-500 dark:fill-purple-400',

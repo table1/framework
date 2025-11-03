@@ -2,28 +2,13 @@
 % Please edit documentation in R/gui.R
 \name{gui_stop}
 \alias{gui_stop}
-\title{Stop GUI Server}
+\title{Stop a running GUI server}
 \usage{
-gui_stop(port = NULL, all = FALSE)
+gui_stop(port = 8080)
 }
 \arguments{
-\item{port}{Port number of the server to stop. If NULL, stops all Framework GUI servers.}
-
-\item{all}{Logical; if TRUE, stops all running Framework GUI servers.}
-}
-\value{
-Invisibly returns TRUE if any servers were stopped, FALSE otherwise.
+\item{port}{Port number of server to stop}
 }
 \description{
-Stops a running Framework GUI server by port number or stops all running servers.
-}
-\examples{
-\dontrun{
-# Stop server on specific port
-gui_stop(port = 8080)
-
-# Stop all Framework GUI servers
-gui_stop(all = TRUE)
-}
-
+Stop a running GUI server
 }

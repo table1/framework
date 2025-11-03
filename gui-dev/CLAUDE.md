@@ -56,6 +56,30 @@ After making UI changes:
 - **Logo**: `public/framework-logo.png` is automatically copied during build
 - **Always deploy before committing** to ensure `inst/gui/` stays in sync
 
+## Important Constraints
+
+**No Local File System Access:**
+- The GUI runs in a browser - you **cannot** directly access the user's file system
+- **Always rely on data sent from the server** about file names, paths, and project structure
+- **Use copy buttons liberally** for paths and file names (not HTTPS, so use old-school `navigator.clipboard.writeText()`)
+- Example: On a project page, provide a copy button next to the path to copy it to clipboard
+- **Never** try to use file:// links or attempt to open files directly - instead provide copy functionality
+
+**Copy Button Pattern:**
+- Copy indicators are useful in many places (paths, commands, IDs, etc.)
+- Create a reusable `CopyButton.vue` component that:
+  - Takes a `value` prop (the text to copy to clipboard)
+  - Copies to clipboard when clicked using `navigator.clipboard.writeText()`
+  - Shows a toast notification on successful copy
+  - Has visual feedback (icon changes or button state change)
+- Use this component wherever users might want to copy text
+
+**Navigation Architecture:**
+- Left menu should list **all projects as first-order menu items**
+- Let people click through projects directly from the sidebar
+- Each project gets its own link in the main navigation (not nested in dropdowns)
+- Keep navigation simple and direct - no deep nesting
+
 ## Design System
 
 **Accent Color: Sky (Blue)**
@@ -100,6 +124,30 @@ After making UI changes:
 **`Badge.vue`** - Status badges
 - Variants: sky, gray, red, yellow, green, blue
 - Modifiers: `pill`, `dot`
+
+**`CopyButton.vue`** - Copy to clipboard button
+```vue
+<!-- Icon only (default) -->
+<CopyButton value="/path/to/copy" />
+
+<!-- With label -->
+<CopyButton value="/path/to/copy" showLabel />
+
+<!-- Ghost variant (no background) -->
+<CopyButton value="/path/to/copy" variant="ghost" />
+
+<!-- Custom success message -->
+<CopyButton value="/path/to/copy" successMessage="Path copied!" />
+
+<!-- Custom slot for styling -->
+<CopyButton value="/path/to/copy" v-slot="{ copied }">
+  <span>{{ copied ? '✓' : 'Copy' }}</span>
+</CopyButton>
+```
+- Automatically shows toast notification on copy
+- Visual feedback with checkmark when copied
+- Variants: `default` (with background), `ghost` (transparent)
+- Optional label with `showLabel` prop
 
 **`Select.vue`**, **`Textarea.vue`**, **`Radio.vue`**, **`RadioGroup.vue`** - Standard form inputs
 
@@ -304,6 +352,7 @@ gui-dev/
 │   │   │   ├── Button.vue
 │   │   │   ├── Card.vue
 │   │   │   ├── Checkbox.vue
+│   │   │   ├── CopyButton.vue
 │   │   │   ├── Dropdown.vue
 │   │   │   ├── DropdownDivider.vue
 │   │   │   ├── DropdownItem.vue

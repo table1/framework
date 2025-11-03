@@ -61,14 +61,14 @@ SCRIPT_URL="https://raw.githubusercontent.com/table1/framework-project/main/new-
 
 # Function to check if settings are configured
 check_settings_configured() {
-  frameworkrc="$HOME/.frameworkrc"
+  frameworkrc="$HOME/.frameworkrc.json"
 
   if [ ! -f "$frameworkrc" ]; then
     return 1
   fi
 
-  fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-  fw_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+  fw_ides=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ide')" 2>/dev/null)
+  fw_ai=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_support')" 2>/dev/null)
 
   if [ -z "$fw_ides" ] || [ -z "$fw_ai" ]; then
     return 1
@@ -79,7 +79,7 @@ check_settings_configured() {
 
 # Function to run settings check-in (first-time setup)
 run_settings_checkin() {
-  frameworkrc="$HOME/.frameworkrc"
+  frameworkrc="$HOME/.frameworkrc.json"
 
   # Skip interactive prompts when running non-interactively
   if [ ! -t 0 ]; then
@@ -87,11 +87,12 @@ run_settings_checkin() {
   fi
 
   if [ ! -f "$frameworkrc" ]; then
-    touch "$frameworkrc"
+    # Initialize with empty config
+    Rscript --quiet --no-save -e "framework::configure_global(list())" 2>/dev/null
   fi
 
-  existing_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-  existing_ai=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+  existing_ides=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ide')" 2>/dev/null)
+  existing_ai=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_support')" 2>/dev/null)
 
   if [ -z "$existing_ides" ] || [ -z "$existing_ai" ]; then
     printf "\n${BLUE}═══════════════════════════════════════════════${NC}\n"
@@ -118,9 +119,7 @@ run_settings_checkin() {
       *) ides="rstudio,vscode" ;;
     esac
 
-    grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-    echo "FW_IDES=\"$ides\"" >> "$frameworkrc.tmp"
-    mv "$frameworkrc.tmp" "$frameworkrc"
+    Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ide = '$ides')))" 2>/dev/null
     printf "\n"
   fi
 
@@ -131,11 +130,7 @@ run_settings_checkin() {
     read -r ai_response
 
     if [ "$ai_response" = "n" ] || [ "$ai_response" = "N" ]; then
-      grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-      grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
-      echo "FW_AI_SUPPORT=\"never\"" >> "$frameworkrc.tmp2"
-      mv "$frameworkrc.tmp2" "$frameworkrc"
-      rm -f "$frameworkrc.tmp"
+      Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ai_support = 'never')))" 2>/dev/null
     else
       printf "\nWhich AI assistants? (y/n for each)\n"
       printf "  Claude Code? [y]: "
@@ -160,12 +155,7 @@ run_settings_checkin() {
         assistants="claude"
       fi
 
-      grep -v "^FW_AI_SUPPORT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-      grep -v "^FW_AI_ASSISTANTS=" "$frameworkrc.tmp" > "$frameworkrc.tmp2" 2>/dev/null || touch "$frameworkrc.tmp2"
-      echo "FW_AI_SUPPORT=\"yes\"" >> "$frameworkrc.tmp2"
-      echo "FW_AI_ASSISTANTS=\"$assistants\"" >> "$frameworkrc.tmp2"
-      mv "$frameworkrc.tmp2" "$frameworkrc"
-      rm -f "$frameworkrc.tmp"
+      Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ai_support = 'yes', ai_assistants = '$assistants')))" 2>/dev/null
 
       printf "\n${YELLOW}Default Canonical AI File${NC}\n"
       printf "  1. AGENTS.md (recommended)\n"
@@ -180,16 +170,14 @@ run_settings_checkin() {
         *) canonical_default="AGENTS.md" ;;
       esac
 
-      grep -v "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-      echo "FW_AI_CANONICAL_DEFAULT=\"$canonical_default\"" >> "$frameworkrc.tmp"
-      mv "$frameworkrc.tmp" "$frameworkrc"
+      Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ai_canonical_default = '$canonical_default')))" 2>/dev/null
     fi
     printf "\n"
   fi
 
   if [ -z "$existing_ides" ] || [ -z "$existing_ai" ]; then
     printf "${GREEN}✓ Preferences saved!${NC}\n"
-    printf "Settings stored in ~/.frameworkrc\n\n"
+    printf "Settings stored in ~/.frameworkrc.json\n\n"
   fi
 }
 
@@ -222,16 +210,16 @@ case "$COMMAND" in
     fi
 
     # Export settings
-    frameworkrc="$HOME/.frameworkrc"
+    frameworkrc="$HOME/.frameworkrc.json"
     if [ -f "$frameworkrc" ]; then
-      export FW_IDES=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-      export FW_AI_SUPPORT=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-      export FW_AI_ASSISTANTS=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-      export FW_AI_CANONICAL_DEFAULT=$(grep "^FW_AI_CANONICAL_DEFAULT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+      export FW_IDES=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ide')" 2>/dev/null)
+      export FW_AI_SUPPORT=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_support')" 2>/dev/null)
+      export FW_AI_ASSISTANTS=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_assistants')" 2>/dev/null)
+      export FW_AI_CANONICAL_DEFAULT=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_canonical_default')" 2>/dev/null)
     fi
 
     # Config directory preference - only ask if not already set
-    global_config_dir=$(grep "^FW_CONFIG_DIR=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+    global_config_dir=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.config_dir')" 2>/dev/null)
 
     if [ -z "$global_config_dir" ]; then
       # Not set - ask user and save preference
@@ -245,17 +233,11 @@ case "$COMMAND" in
       case "$config_dir_choice" in
         2)
           export FW_CONFIG_DIR="config"
-          # Save to frameworkrc
-          grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-          echo "FW_CONFIG_DIR=\"config\"" >> "$frameworkrc.tmp"
-          mv "$frameworkrc.tmp" "$frameworkrc"
+          Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(config_dir = 'config')))" 2>/dev/null
           ;;
         *)
           export FW_CONFIG_DIR="settings"
-          # Save to frameworkrc
-          grep -v "^FW_CONFIG_DIR=" "$frameworkrc" > "$frameworkrc.tmp" 2>/dev/null || touch "$frameworkrc.tmp"
-          echo "FW_CONFIG_DIR=\"settings\"" >> "$frameworkrc.tmp"
-          mv "$frameworkrc.tmp" "$frameworkrc"
+          Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(config_dir = 'settings')))" 2>/dev/null
           ;;
       esac
       printf "\n${GREEN}✓ Preference saved${NC}\n\n"
@@ -293,8 +275,7 @@ case "$COMMAND" in
 
   # Settings namespace (global configuration)
   settings:editor)
-    frameworkrc="$HOME/.frameworkrc"
-    fw_ides=$(grep "^FW_IDES=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+    fw_ides=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ide')" 2>/dev/null)
 
     printf "\n${BLUE}Editor Configuration${NC}\n"
     printf "═══════════════════════════════════════════════\n\n"
@@ -323,12 +304,7 @@ case "$COMMAND" in
         ;;
     esac
 
-    if [ -f "$frameworkrc" ]; then
-      grep -v "^FW_IDES=" "$frameworkrc" > "$frameworkrc.tmp"
-      mv "$frameworkrc.tmp" "$frameworkrc"
-    fi
-
-    echo "FW_IDES=\"$ides\"" >> "$frameworkrc"
+    Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ide = '$ides')))" 2>/dev/null
     printf "\n${GREEN}✓ Editor preferences saved${NC}\n"
     printf "  Editor: $ides\n"
     ;;
@@ -345,9 +321,8 @@ case "$COMMAND" in
 
   # AI namespace
   ai:configure)
-    frameworkrc="$HOME/.frameworkrc"
-    fw_support=$(grep "^FW_AI_SUPPORT=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
-    fw_assistants=$(grep "^FW_AI_ASSISTANTS=" "$frameworkrc" 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+    fw_support=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_support')" 2>/dev/null)
+    fw_assistants=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_assistants')" 2>/dev/null)
 
     printf "\n${BLUE}AI Assistant Configuration${NC}\n"
     printf "═══════════════════════════════════════════════\n\n"
@@ -394,10 +369,10 @@ case "$COMMAND" in
           exit 1
         fi
 
-        R --quiet --no-save -e "framework::configure_ai_agents(support='yes', assistants=c($(echo $assistants | sed 's/,/\",\"/g' | sed 's/^/\"/' | sed 's/$/\"/'  )))"
+        Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ai_support = 'yes', ai_assistants = '$assistants')))"
         ;;
       2)
-        R --quiet --no-save -e "framework::configure_ai_agents(support='never')"
+        Rscript --quiet --no-save -e "framework::configure_global(list(defaults = list(ai_support = 'never')))"
         ;;
       *)
         printf "\n${YELLOW}Cancelled${NC}\n"

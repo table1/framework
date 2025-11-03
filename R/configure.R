@@ -633,3 +633,253 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
 
   invisible(config)
 }
+
+
+# Internal validation helpers for configure_global()
+
+.validate_author <- function(author) {
+  if (is.null(author)) return(invisible(TRUE))
+
+  checkmate::assert_list(author)
+  if (!is.null(author$name)) {
+    checkmate::assert_string(author$name, min.chars = 1)
+  }
+  if (!is.null(author$email)) {
+    checkmate::assert_string(author$email, min.chars = 1)
+  }
+  if (!is.null(author$affiliation)) {
+    checkmate::assert_string(author$affiliation, min.chars = 1)
+  }
+
+  invisible(TRUE)
+}
+
+.validate_defaults <- function(defaults) {
+  if (is.null(defaults)) return(invisible(TRUE))
+
+  checkmate::assert_list(defaults)
+
+  # Validate project_type
+  if (!is.null(defaults$project_type)) {
+    checkmate::assert_choice(defaults$project_type,
+                              choices = c("project", "project_sensitive", "presentation", "course"))
+  }
+
+  # Validate notebook_format
+  if (!is.null(defaults$notebook_format)) {
+    checkmate::assert_choice(defaults$notebook_format,
+                              choices = c("quarto", "rmarkdown"))
+  }
+
+  # Validate ide
+  if (!is.null(defaults$ide)) {
+    checkmate::assert_choice(defaults$ide,
+                              choices = c("vscode", "rstudio", "both", "none"))
+  }
+
+  # Validate booleans
+  if (!is.null(defaults$use_git)) {
+    checkmate::assert_flag(defaults$use_git)
+  }
+  if (!is.null(defaults$use_renv)) {
+    checkmate::assert_flag(defaults$use_renv)
+  }
+  if (!is.null(defaults$seed_on_scaffold)) {
+    checkmate::assert_flag(defaults$seed_on_scaffold)
+  }
+  if (!is.null(defaults$ai_support)) {
+    checkmate::assert_flag(defaults$ai_support)
+  }
+
+  # Validate seed (can be NULL, numeric, or character)
+  if (!is.null(defaults$seed)) {
+    if (!is.numeric(defaults$seed) && !is.character(defaults$seed)) {
+      stop("seed must be numeric or character")
+    }
+  }
+
+  # Validate ai_assistants is a list or character vector
+  if (!is.null(defaults$ai_assistants)) {
+    checkmate::assert(
+      checkmate::check_character(defaults$ai_assistants),
+      checkmate::check_list(defaults$ai_assistants)
+    )
+  }
+
+  # Validate packages is a list
+  if (!is.null(defaults$packages)) {
+    checkmate::assert_list(defaults$packages)
+  }
+
+  # Validate directories is a list
+  if (!is.null(defaults$directories)) {
+    checkmate::assert_list(defaults$directories)
+  }
+
+  # Validate git_hooks is a list
+  if (!is.null(defaults$git_hooks)) {
+    checkmate::assert_list(defaults$git_hooks)
+  }
+
+  invisible(TRUE)
+}
+
+.validate_projects <- function(projects) {
+  if (is.null(projects)) return(invisible(TRUE))
+
+  checkmate::assert_list(projects)
+
+  invisible(TRUE)
+}
+
+.validate_active_project <- function(active_project) {
+  if (is.null(active_project)) return(invisible(TRUE))
+
+  checkmate::assert_string(active_project, min.chars = 1)
+
+  invisible(TRUE)
+}
+
+
+#' Configure Global Framework Settings
+#'
+#' Unified function for reading and writing global Framework settings to ~/.frameworkrc.json.
+#' This function provides a single source of truth for global configuration,
+#' used by both the CLI and GUI interfaces.
+#'
+#' @param settings List. Settings to update (partial updates supported)
+#' @param validate Logical. Validate settings before saving (default: TRUE)
+#'
+#' @return Invisibly returns updated global configuration
+#'
+#' @details
+#' ## Global Settings Structure
+#'
+#' - `author` - Author information (name, email, affiliation)
+#' - `defaults` - Project defaults
+#'   - `project_type` - Default project type ("project", "presentation", "course")
+#'   - `notebook_format` - Default notebook format ("quarto", "rmarkdown")
+#'   - `ide` - IDE preference ("vscode", "rstudio", "both", "none")
+#'   - `use_git` - Initialize git repositories by default
+#'   - `use_renv` - Enable renv by default
+#'   - `seed` - Default random seed
+#'   - `seed_on_scaffold` - Set seed during scaffold()
+#'   - `ai_support` - Enable AI assistant support
+#'   - `ai_assistants` - List of AI assistants ("claude", "agents", etc.)
+#'   - `ai_canonical_file` - Canonical AI instruction file
+#'   - `packages` - Default package list
+#'   - `directories` - Default directory structure
+#'   - `git_hooks` - Git hook preferences
+#' - `projects` - Registered projects list
+#' - `active_project` - Currently active project path
+#'
+#' @examples
+#' \dontrun{
+#' # Update author information
+#' configure_global(settings = list(
+#'   author = list(
+#'     name = "Jane Doe",
+#'     email = "jane@example.com"
+#'   )
+#' ))
+#'
+#' # Update default project type
+#' configure_global(settings = list(
+#'   defaults = list(
+#'     project_type = "presentation"
+#'   )
+#' ))
+#'
+#' # Get current settings (read-only)
+#' current <- configure_global()
+#' }
+#'
+#' @export
+configure_global <- function(settings = NULL, validate = TRUE) {
+  # Read current config
+  current <- read_frameworkrc(use_defaults = TRUE)
+
+  # If no settings provided, just return current config
+  if (is.null(settings)) {
+    return(invisible(current))
+  }
+
+  # Validate settings is a list
+  checkmate::assert_list(settings, null.ok = FALSE)
+
+  # Merge settings with current config (deep merge, keeping NULL values)
+  updated <- modifyList(current, settings, keep.null = TRUE)
+
+  # Validate if requested
+  if (validate) {
+    .validate_author(updated$author)
+    .validate_defaults(updated$defaults)
+    .validate_projects(updated$projects)
+  }
+
+  # Write updated config
+  write_frameworkrc(updated)
+
+  message("\u2713 Global configuration updated in ~/.frameworkrc.json")
+
+  invisible(updated)
+}
+
+#' Get Global Configuration Setting
+#'
+#' Retrieve a specific setting from the global configuration file (~/.frameworkrc.json).
+#' This is a helper function primarily for use by the CLI script.
+#'
+#' @param key Character. The setting key to retrieve (e.g., "defaults.ide", "author.name")
+#' @param default Character. Default value if setting is not found (default: "")
+#' @param print Logical. If TRUE, prints the value (for bash consumption). Default TRUE.
+#'
+#' @return The setting value as a character string
+#'
+#' @examples
+#' \dontrun{
+#' # Get IDE setting
+#' get_global_setting("defaults.ide")
+#'
+#' # Get with default value
+#' get_global_setting("defaults.notebook_format", default = "quarto")
+#' }
+#'
+#' @export
+get_global_setting <- function(key, default = "", print = TRUE) {
+  checkmate::assert_string(key)
+  checkmate::assert_string(default)
+  checkmate::assert_flag(print)
+
+  config <- read_frameworkrc(use_defaults = TRUE)
+
+  # Navigate nested keys (e.g., "defaults.ide" -> config$defaults$ide)
+  keys <- strsplit(key, "\\.")[[1]]
+  value <- config
+
+  for (k in keys) {
+    if (is.list(value) && k %in% names(value)) {
+      value <- value[[k]]
+    } else {
+      value <- default
+      break
+    }
+  }
+
+  # Convert to character
+  result <- if (is.null(value)) {
+    default
+  } else if (is.character(value)) {
+    value
+  } else if (is.logical(value)) {
+    tolower(as.character(value))
+  } else {
+    as.character(value)
+  }
+
+  if (print) {
+    cat(result)
+  }
+
+  invisible(result)
+}
