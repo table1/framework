@@ -48,27 +48,44 @@ This is the **Framework** R package - a data management and project scaffolding 
 
 The Framework GUI is developed in `gui-dev/` (Vue 3 + Tailwind) and served by R via httpuv.
 
-**Development Setup:**
-- **Frontend dev server** (port 5173): `cd gui-dev && npm run dev` - Hot reload for UI changes
-- **Backend R server** (port 8080): Run in tmux session `fw`, window 8
+**Development Setup (Auto-Reload):**
 
-**Restarting the R GUI Server (tmux):**
+Run these two servers in separate terminals:
 
-When you make changes to R backend code (e.g., adding API endpoints in `R/gui.R`), restart the server:
+**Terminal 1** - Frontend dev server (port 5173):
+```bash
+cd gui-dev
+npm run dev
+```
+→ Hot reload for UI changes
+
+**Terminal 2** - Backend R server (port 8080, auto-restarts on R file changes):
+```bash
+cd gui-dev
+npm install  # First time only
+npm run dev:server
+```
+→ Automatically reloads when `R/` or `inst/plumber.R` files change
+→ Uses nodemon to watch files and restart R process
+
+**Alternative - Manual R Server (Old Way):**
+
+If you prefer manual restarts or are using tmux:
 
 ```bash
-# Stop, reload package, and restart in one command
+# Stop, reload package, and restart in one command (without opening browser)
 /opt/homebrew/bin/tmux send-keys -t fw:8 C-c && \
 sleep 1 && \
 /opt/homebrew/bin/tmux send-keys -t fw:8 'devtools::load_all()' Enter && \
 sleep 2 && \
-/opt/homebrew/bin/tmux send-keys -t fw:8 'gui()' Enter
+/opt/homebrew/bin/tmux send-keys -t fw:8 'gui(browse = FALSE)' Enter
 ```
 
-This sends commands to tmux session `fw`, window `8` to:
-1. Stop the running server (Ctrl+C)
-2. Reload the package with `devtools::load_all()`
-3. Restart the GUI server with `gui()`
+Or run directly:
+```bash
+cd gui-dev
+Rscript start-server.R
+```
 
 **Deploying UI Changes:**
 

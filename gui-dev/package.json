@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "nodemon --watch ../R --watch ../inst/plumber.R --exec Rscript start-server.R",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "./build-and-deploy.sh"
@@ -19,6 +20,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@vitejs/plugin-vue": "^6.0.1",
     "autoprefixer": "^10.4.21",
+    "nodemon": "^3.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.16",
     "vite": "^7.1.7"

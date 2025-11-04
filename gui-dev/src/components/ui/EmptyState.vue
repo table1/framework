@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, h } from 'vue'
 
 const props = defineProps({
   title: {
@@ -87,48 +87,24 @@ const containerClasses = computed(() => {
 
 const iconComponent = computed(() => {
   const icons = {
-    database: {
-      template: `
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6" />
-        </svg>
-      `
-    },
-    folder: {
-      template: `
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7v30a4 4 0 004 4h34a4 4 0 004-4V13a4 4 0 00-4-4H23.343a4 4 0 01-2.829-1.172l-2.828-2.828A4 4 0 0014.858 4H7a4 4 0 00-4 4v0zM37 17v6m0 0v6m0-6h6m-6 0h-6" />
-        </svg>
-      `
-    },
-    document: {
-      template: `
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 4a4 4 0 00-4 4v32a4 4 0 004 4h32a4 4 0 004-4V8a4 4 0 00-4-4H8zm24 16v6m0 0v6m0-6h6m-6 0h-6" />
-        </svg>
-      `
-    },
-    users: {
-      template: `
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21a5 5 0 110-10 5 5 0 010 10zm-6.5 8a7.5 7.5 0 0115 0H10.5zM31 21a5 5 0 110-10 5 5 0 010 10zm-6.5 8a7.5 7.5 0 0115 0H24.5z" />
-        </svg>
-      `
-    },
-    inbox: {
-      template: `
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 8h40M4 8v28a4 4 0 004 4h32a4 4 0 004-4V8M4 8l18 14a2 2 0 002.4 0L44 8" />
-        </svg>
-      `
-    },
-    photo: {
-      template: `
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 8a4 4 0 014-4h32a4 4 0 014 4v32a4 4 0 01-4 4H8a4 4 0 01-4-4V8zm10 6a3 3 0 100-6 3 3 0 000 6zM4 40l12-12 8 8 8-8L44 40" />
-        </svg>
-      `
-    }
+    database: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6' })
+    ]),
+    folder: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M3 7v30a4 4 0 004 4h34a4 4 0 004-4V13a4 4 0 00-4-4H23.343a4 4 0 01-2.829-1.172l-2.828-2.828A4 4 0 0014.858 4H7a4 4 0 00-4 4v0zM37 17v6m0 0v6m0-6h6m-6 0h-6' })
+    ]),
+    document: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M8 4a4 4 0 00-4 4v32a4 4 0 004 4h32a4 4 0 004-4V8a4 4 0 00-4-4H8zm24 16v6m0 0v6m0-6h6m-6 0h-6' })
+    ]),
+    users: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M17 21a5 5 0 110-10 5 5 0 010 10zm-6.5 8a7.5 7.5 0 0115 0H10.5zM31 21a5 5 0 110-10 5 5 0 010 10zm-6.5 8a7.5 7.5 0 0115 0H24.5z' })
+    ]),
+    inbox: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M4 8h40M4 8v28a4 4 0 004 4h32a4 4 0 004-4V8M4 8l18 14a2 2 0 002.4 0L44 8' })
+    ]),
+    photo: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M4 8a4 4 0 014-4h32a4 4 0 014 4v32a4 4 0 01-4 4H8a4 4 0 01-4-4V8zm10 6a3 3 0 100-6 3 3 0 000 6zM4 40l12-12 8 8 8-8L44 40' })
+    ])
   }
 
   return icons[props.icon] || null

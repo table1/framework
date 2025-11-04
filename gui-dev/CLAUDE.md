@@ -6,20 +6,30 @@ Standards for developing the Framework GUI using Vue 3, Tailwind CSS, and compon
 
 ### Quick Start
 
-**Development Mode (Recommended)** - Run two servers:
+**Development Mode (Recommended)** - Run two servers with auto-reload:
 
-**Terminal 1** - Vite dev server (hot reload):
+**Terminal 1** - Vite dev server (hot reload for UI):
 ```bash
 cd gui-dev
 npm run dev
 ```
 → Access at **http://127.0.0.1:5173** (instant updates)
 
-**Terminal 2** - R backend (API):
+**Terminal 2** - R backend (auto-restarts on R file changes):
 ```bash
-R -e "framework::gui()"
+cd gui-dev
+npm run dev:server
 ```
 → Runs on port 8080 (Vite proxies `/api/*` requests)
+→ Auto-reloads when R/ or inst/plumber.R files change
+→ **First time setup**: Run `npm install` to install nodemon
+
+**Alternative** - Manual R server (if you prefer):
+```bash
+cd gui-dev
+Rscript start-server.R
+```
+→ No auto-reload, must restart manually
 
 **Production Mode** - Test what users will see:
 ```bash
@@ -89,6 +99,119 @@ After making UI changes:
 **Neutral Colors:**
 - Gray scale for backgrounds, borders, text
 - `inset-ring` utility for borders (preferred over `border`)
+
+### Page Layout Standards
+
+**CRITICAL: Desktop-only UI - no mobile optimization needed**
+
+All pages use a **consistent left sidebar + content area layout**:
+
+```vue
+<div class="flex min-h-screen">
+  <!-- Left Sidebar (always 256px wide) -->
+  <nav class="w-64 shrink-0 border-r border-gray-200 p-6 dark:border-gray-800">
+    <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+      Page Title
+    </h2>
+
+    <div class="space-y-1">
+      <!-- Navigation links -->
+      <a :class="getSidebarLinkClasses('section-name')">
+        <IconComponent class="h-4 w-4" />
+        Section Name
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 p-10">
+    <!-- Content sections here -->
+  </div>
+</div>
+```
+
+**Sidebar Link Styling:**
+```javascript
+const getSidebarLinkClasses = (section) => {
+  const isActive = activeSection.value === section
+  return [
+    'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition',
+    isActive
+      ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
+      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+  ]
+}
+```
+
+### Content Section Styling ("Well" Backgrounds)
+
+**Always use well backgrounds for content sections**:
+
+```vue
+<!-- Well background for form sections -->
+<div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+  <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+    Section Title
+  </h3>
+  <!-- Content here -->
+</div>
+```
+
+**When to use Wells vs Cards:**
+- **Well background** (`bg-gray-50 dark:bg-gray-800/50`) - DEFAULT for all content sections
+- **Card component** (white background) - ONLY for special cases where you need strong visual separation
+
+**Section Header Pattern:**
+```vue
+<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+  Main Section Title
+</h2>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+  Description text
+</p>
+```
+
+**Subsection Header Pattern:**
+```vue
+<h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+  Subsection Title
+</h3>
+```
+
+### URL-Based Section Navigation
+
+**Always implement URL persistence for sections:**
+
+```javascript
+// Initialize from URL
+const initializeSection = () => {
+  const sectionFromUrl = route.query.section
+  const validSections = ['overview', 'settings', 'data']
+  if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
+    activeSection.value = sectionFromUrl
+  } else {
+    activeSection.value = 'overview'
+  }
+}
+
+// Update URL when section changes
+watch(activeSection, (newSection) => {
+  router.replace({ query: { ...route.query, section: newSection } })
+})
+
+// Handle browser back/forward
+watch(() => route.query.section, (newSection) => {
+  const validSections = ['overview', 'settings', 'data']
+  if (newSection && validSections.includes(newSection)) {
+    activeSection.value = newSection
+  }
+})
+```
+
+This ensures:
+- Refreshing the page keeps you on the same section
+- Browser back/forward buttons work correctly
+- URLs can be shared to specific sections
 
 ## Component Library
 
@@ -271,6 +394,31 @@ toast.error('Error', 'Something went wrong')
 - Sensible defaults
 - Dark mode support required
 - Keyboard/screen reader accessible
+
+**Keyboard Shortcuts:**
+- **ALWAYS implement Cmd/Ctrl+S to save on forms/settings pages**
+- Add cleanup on component unmount
+- Pattern to use:
+
+```javascript
+import { onMounted, onUnmounted } from 'vue'
+
+const handleKeydown = (e) => {
+  // Cmd/Ctrl + S to save
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault()
+    saveSettings() // or whatever your save function is
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+```
 
 ## Common Patterns
 

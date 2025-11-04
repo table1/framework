@@ -27,7 +27,7 @@
 
               <!-- Content -->
               <div :class="contentClasses">
-                <h3 v-if="title" :id="titleId" class="text-base font-semibold text-gray-900 dark:text-white">
+                <h3 v-if="title" :id="titleId" :class="titleClasses">
                   {{ title }}
                 </h3>
                 <div v-if="description || $slots.default" :class="descriptionClasses">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -79,7 +79,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'centered',
-    validator: (value) => ['centered', 'side-icon'].includes(value)
+    validator: (value) => ['centered', 'side-icon', 'left'].includes(value)
   },
   closeOnBackdrop: {
     type: Boolean,
@@ -156,6 +156,8 @@ const contentClasses = computed(() => {
 
   if (props.variant === 'centered') {
     classes.push('mt-3', 'text-center', 'sm:mt-5')
+  } else if (props.variant === 'left') {
+    classes.push('text-left')
   } else {
     classes.push('mt-3', 'text-center', 'sm:mt-0', 'sm:ml-4', 'sm:text-left')
   }
@@ -167,12 +169,22 @@ const contentClasses = computed(() => {
   return classes.join(' ')
 })
 
+const titleClasses = computed(() => {
+  if (props.variant === 'left') {
+    return 'text-lg font-bold text-gray-900 dark:text-white mb-4'
+  }
+  return 'text-base font-semibold text-gray-900 dark:text-white'
+})
+
 const descriptionClasses = computed(() => {
   return props.variant === 'centered' ? 'mt-2' : 'mt-2'
 })
 
 const actionsClasses = computed(() => {
-  return props.variant === 'centered' ? 'mt-5 sm:mt-6' : 'mt-5 sm:mt-4'
+  if (props.variant === 'left') {
+    return 'mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-between'
+  }
+  return props.variant === 'centered' ? 'mt-5 sm:mt-6 flex gap-3 justify-end' : 'mt-5 sm:mt-4 flex gap-3 justify-end'
 })
 
 const iconComponent = computed(() => {
@@ -210,10 +222,25 @@ const handleBackdropClick = () => {
   }
 }
 
+const handleKeydown = (e) => {
+  if (e.key === 'Escape' && props.modelValue) {
+    close()
+  }
+}
+
 const close = () => {
   emit('update:modelValue', false)
   emit('close')
 }
+
+// Add/remove keyboard listener
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 
 // Expose close method for parent components
 defineExpose({ close })

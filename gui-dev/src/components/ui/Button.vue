@@ -85,11 +85,11 @@ const buttonClasses = computed(() => {
 
   // Size classes
   const sizeMap = {
-    xs: props.iconOnly ? 'p-1' : 'px-2 py-1 text-xs',
-    sm: props.iconOnly ? 'p-1.5' : 'px-2 py-1 text-sm',
-    md: props.iconOnly ? 'p-2' : 'px-2.5 py-1.5 text-sm',
-    lg: props.iconOnly ? 'p-2' : 'px-3 py-2 text-sm',
-    xl: props.iconOnly ? 'p-2.5' : 'px-3.5 py-2.5 text-sm'
+    xs: props.iconOnly ? 'p-2' : 'px-3 py-2 text-xs',
+    sm: props.iconOnly ? 'p-2.5' : 'px-3 py-2 text-sm',
+    md: props.iconOnly ? 'p-3' : 'px-3.5 py-2.5 text-sm',
+    lg: props.iconOnly ? 'p-3' : 'px-4 py-3 text-sm',
+    xl: props.iconOnly ? 'p-3.5' : 'px-4.5 py-3.5 text-sm'
   }
   classes.push(sizeMap[props.size])
 
