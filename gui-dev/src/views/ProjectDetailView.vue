@@ -471,48 +471,35 @@
           Browse your project's data sources with copy commands.
         </p>
 
-        <div v-if="dataCatalog && Object.keys(flattenedDataCatalog).length > 0" class="rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
-            <div
-              v-for="(item, key) in flattenedDataCatalog"
-              :key="key"
-              class="p-4 first:rounded-t-lg last:rounded-b-lg"
-            >
-              <div class="flex items-start justify-between gap-4">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h4 class="text-sm font-semibold text-zinc-900 dark:text-white font-mono">
-                      {{ key }}
-                    </h4>
-                    <Badge variant="gray" class="text-xs">{{ item.type || 'csv' }}</Badge>
-                  </div>
-                  <p class="text-xs text-zinc-500 dark:text-zinc-400 font-mono truncate">
-                    {{ item.path }}
-                  </p>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <CopyButton
-                    :value="item.path"
-                    successMessage="Path copied"
-                    variant="ghost"
-                    title="Copy path"
-                  />
-                  <CopyButton
-                    :value="`data_read('${key}')`"
-                    successMessage="data_read() command copied"
-                    variant="ghost"
-                    title="Copy data_read() command"
-                  />
-                  <CopyButton
-                    :value="key"
-                    successMessage="Dot notation copied"
-                    variant="ghost"
-                    title="Copy dot notation"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="mb-6">
+          <Input
+            v-model="dataSearch"
+            label="Search data sources"
+            placeholder="Filter by name, prefix, or file path"
+          />
+        </div>
+
+        <div v-if="displayDataTree.length > 0" class="space-y-4">
+          <DataCatalogTree
+            v-for="node in displayDataTree"
+            :key="node.fullKey"
+            :node="node"
+            :expanded-keys="expandedDataKeys"
+            :auto-expanded-keys="autoExpandedDataKeys"
+            :toggle-group="toggleDataGroup"
+            :search-term="dataSearch"
+            :hierarchical="useHierarchicalDataView"
+            @edit="openDataEditor"
+          />
+        </div>
+
+        <div v-else-if="isFilteringData" class="rounded-xl border border-dashed border-zinc-300 bg-white/70 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
+          <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            No data sources match "{{ dataSearch }}".
+          </p>
+          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            Try adjusting your search terms or clearing the filter.
+          </p>
         </div>
 
         <EmptyState
@@ -522,6 +509,14 @@
           icon="database"
         />
       </div>
+
+      <DataCatalogEditModal
+        v-model="isEditingDataEntry"
+        :entry="editingDataEntry"
+        :saving="savingDataEntry"
+        :error="dataEditError"
+        @save="handleDataEntrySave"
+      />
 
       <!-- Connections Section -->
       <div v-show="activeSection === 'connections'" id="connections">
@@ -1333,6 +1328,8 @@ import Toggle from '../components/ui/Toggle.vue'
 import Tabs from '../components/ui/Tabs.vue'
 import TabPanel from '../components/ui/TabPanel.vue'
 import Modal from '../components/ui/Modal.vue'
+import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
+import DataCatalogTree from '../components/DataCatalogTree.vue'
 import {
   InformationCircleIcon,
   Cog6ToothIcon,
@@ -1354,6 +1351,12 @@ const loading = ref(true)
 const error = ref(null)
 const activeSection = ref('overview')
 const dataCatalog = ref(null)
+const dataSearch = ref('')
+const expandedDataKeys = ref(new Set())
+const isEditingDataEntry = ref(false)
+const editingDataEntry = ref(null)
+const savingDataEntry = ref(false)
+const dataEditError = ref(null)
 const projectSettings = ref(null)
 const editableSettings = ref({})
 const settingsLoading = ref(false)
@@ -1458,28 +1461,296 @@ watch(packageSearch, () => {
   }, 300)
 })
 
-// Flatten nested data catalog into dot notation
-const flattenDataCatalog = (obj, prefix = '') => {
-  const result = {}
+const formatNodeTitle = (value = '') => {
+  return value
+    .split(/[._-]/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
 
-  for (const key in obj) {
-    const value = obj[key]
+const cloneDeep = (value) => JSON.parse(JSON.stringify(value))
+
+const toNodeEntries = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item, index) => [String(index), item])
+  }
+
+  return Object.entries(value)
+}
+
+const buildDataTree = (value, prefix = '', depth = 0) => {
+  if (!value || typeof value !== 'object') {
+    return []
+  }
+
+  return toNodeEntries(value).reduce((acc, [key, child]) => {
+    if (child == null) {
+      return acc
+    }
+
     const newKey = prefix ? `${prefix}.${key}` : key
 
-    if (value && typeof value === 'object' && value.path) {
-      result[newKey] = value
-    } else if (value && typeof value === 'object') {
-      Object.assign(result, flattenDataCatalog(value, newKey))
+    if (typeof child === 'object' && !Array.isArray(child) && child.path) {
+      acc.push({
+        type: 'leaf',
+        name: key,
+        displayName: formatNodeTitle(key),
+        fullKey: newKey,
+        data: child,
+        leafCount: 1,
+        depth: depth
+      })
+      return acc
+    }
+
+    if (typeof child === 'object') {
+      const children = buildDataTree(child, newKey, depth + 1)
+      if (children.length > 0) {
+        const leafCount = children.reduce((total, item) => total + (item.leafCount || 0), 0)
+        acc.push({
+          type: 'group',
+          name: key,
+          displayName: formatNodeTitle(key),
+          fullKey: newKey,
+          children,
+          leafCount,
+          depth
+        })
+      }
+    }
+
+    return acc
+  }, [])
+}
+
+const sortDataNodes = (nodes) => {
+  return nodes
+    .slice()
+    .sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base', numeric: true }))
+    .map((node) => {
+      if (node.type === 'group') {
+        return {
+          ...node,
+          children: sortDataNodes(node.children)
+        }
+      }
+
+      return node
+    })
+}
+
+const nodeMatchesTerm = (node, term) => {
+  if (!term) return true
+  const lowerTerm = term.toLowerCase()
+  const valuesToCheck = [node.displayName, node.name, node.fullKey]
+  if (node.type === 'leaf' && node.data?.path) {
+    valuesToCheck.push(node.data.path)
+  }
+  return valuesToCheck.some((value) => value && value.toLowerCase().includes(lowerTerm))
+}
+
+const filterDataNodes = (nodes, term) => {
+  if (!term) {
+    return {
+      nodes,
+      matchedKeys: new Set()
     }
   }
 
-  return result
+  const filteredNodes = []
+  const matchedKeys = new Set()
+
+  nodes.forEach((node) => {
+    if (node.type === 'leaf') {
+      if (nodeMatchesTerm(node, term)) {
+        filteredNodes.push(node)
+        matchedKeys.add(node.fullKey)
+      }
+      return
+    }
+
+    const childResult = filterDataNodes(node.children, term)
+    const groupMatches = nodeMatchesTerm(node, term)
+
+    if (groupMatches || childResult.nodes.length > 0) {
+      const children = childResult.nodes
+      const leafCount = children.reduce((total, item) => total + (item.leafCount || 0), 0)
+      filteredNodes.push({
+        ...node,
+        children,
+        leafCount: leafCount || node.leafCount
+      })
+      matchedKeys.add(node.fullKey)
+      childResult.matchedKeys.forEach((value) => matchedKeys.add(value))
+    }
+  })
+
+  return {
+    nodes: filteredNodes,
+    matchedKeys
+  }
 }
 
-const flattenedDataCatalog = computed(() => {
-  if (!dataCatalog.value) return {}
-  return flattenDataCatalog(dataCatalog.value)
+const dataTree = computed(() => {
+  const catalog = dataCatalog.value
+
+  if (!catalog || typeof catalog !== 'object') {
+    return []
+  }
+
+  if (!Array.isArray(catalog) && catalog.path) {
+    return [{
+      type: 'leaf',
+      name: catalog.name || 'data',
+      displayName: formatNodeTitle(catalog.name || 'data'),
+      fullKey: catalog.name || 'data',
+      data: catalog,
+      leafCount: 1,
+      depth: 0
+    }]
+  }
+
+  return sortDataNodes(buildDataTree(catalog))
 })
+
+const normalizedDataSearch = computed(() => dataSearch.value.trim().toLowerCase())
+
+const filteredDataResult = computed(() => {
+  const term = normalizedDataSearch.value
+  if (!term) {
+    return {
+      nodes: dataTree.value,
+      matchedKeys: new Set()
+    }
+  }
+
+  return filterDataNodes(dataTree.value, term)
+})
+
+const displayDataTree = computed(() => filteredDataResult.value.nodes)
+const autoExpandedDataKeys = computed(() => filteredDataResult.value.matchedKeys)
+const isFilteringData = computed(() => normalizedDataSearch.value.length > 0)
+
+const computeMaxDepth = (nodes) => {
+  let maxDepth = 0
+  nodes.forEach((node) => {
+    maxDepth = Math.max(maxDepth, node.depth || 0)
+    if (node.type === 'group' && node.children) {
+      maxDepth = Math.max(maxDepth, computeMaxDepth(node.children))
+    }
+  })
+  return maxDepth
+}
+
+const maxDataDepth = computed(() => computeMaxDepth(dataTree.value))
+const useHierarchicalDataView = computed(() => maxDataDepth.value > 2)
+
+const applyDataCatalogUpdate = (catalog, fullKey, newValue) => {
+  if (!catalog || !fullKey) return null
+  const updatedCatalog = cloneDeep(catalog)
+  const segments = fullKey.split('.')
+  let cursor = updatedCatalog
+
+  for (let i = 0; i < segments.length - 1; i++) {
+    const segment = segments[i]
+    if (Array.isArray(cursor)) {
+      const index = Number(segment)
+      if (!Number.isInteger(index) || index < 0 || index >= cursor.length) {
+        return null
+      }
+      cursor = cursor[index]
+    } else if (cursor && typeof cursor === 'object' && segment in cursor) {
+      cursor = cursor[segment]
+    } else {
+      return null
+    }
+  }
+
+  const lastSegment = segments[segments.length - 1]
+  const nextValue = cloneDeep(newValue)
+
+  if (Array.isArray(cursor)) {
+    const index = Number(lastSegment)
+    if (!Number.isInteger(index) || index < 0 || index >= cursor.length) {
+      return null
+    }
+    cursor[index] = nextValue
+  } else if (cursor && typeof cursor === 'object') {
+    cursor[lastSegment] = nextValue
+  } else {
+    return null
+  }
+
+  return updatedCatalog
+}
+
+const persistDataCatalog = async (catalog) => {
+  const response = await fetch(`/api/project/${route.params.id}/data`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ data: catalog })
+  })
+  const result = await response.json()
+  if (!response.ok || result.error) {
+    throw new Error(result.error || 'Failed to save data catalog')
+  }
+}
+
+const openDataEditor = (node) => {
+  if (!node) return
+  editingDataEntry.value = {
+    fullKey: node.fullKey,
+    name: node.name,
+    data: cloneDeep(node.data || {})
+  }
+  dataEditError.value = null
+  isEditingDataEntry.value = true
+}
+
+const handleDataEntrySave = async (payload) => {
+  if (!payload || !payload.fullKey || !payload.data) {
+    dataEditError.value = payload?.error || 'Invalid data entry payload'
+    return
+  }
+
+  const previousCatalog = cloneDeep(dataCatalog.value)
+  const updatedCatalog = applyDataCatalogUpdate(dataCatalog.value, payload.fullKey, payload.data)
+
+  if (!updatedCatalog) {
+    dataEditError.value = 'Unable to locate data entry in catalog'
+    return
+  }
+
+  dataCatalog.value = updatedCatalog
+  savingDataEntry.value = true
+  dataEditError.value = null
+
+  try {
+    await persistDataCatalog(updatedCatalog)
+    toast.success('Data Catalog Updated', 'Data entry saved successfully')
+    isEditingDataEntry.value = false
+    editingDataEntry.value = null
+  } catch (err) {
+    dataCatalog.value = previousCatalog
+    dataEditError.value = err.message || 'Failed to save data catalog'
+    toast.error('Save Failed', err.message || 'Failed to save data catalog')
+  } finally {
+    savingDataEntry.value = false
+  }
+}
+
+const toggleDataGroup = (key) => {
+  const updated = new Set(expandedDataKeys.value)
+  if (updated.has(key)) {
+    updated.delete(key)
+  } else {
+    updated.add(key)
+  }
+  expandedDataKeys.value = updated
+}
 
 const loadProject = async () => {
   loading.value = true

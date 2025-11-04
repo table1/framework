@@ -3,10 +3,8 @@
     type="button"
     @click="copyToClipboard"
     :class="[
-      'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-all',
-      variant === 'ghost'
-        ? 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
-        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700',
+      baseClasses,
+      variantClasses,
       copied && 'ring-2 ring-sky-500/20'
     ]"
     :title="copied ? 'Copied!' : 'Copy to clipboard'"
@@ -47,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
@@ -61,8 +59,8 @@ const props = defineProps({
   },
   variant: {
     type: String,
-    default: 'default', // 'default' or 'ghost'
-    validator: (value) => ['default', 'ghost'].includes(value)
+    default: 'default', // 'default', 'ghost', 'bare'
+    validator: (value) => ['default', 'ghost', 'bare'].includes(value)
   },
   successMessage: {
     type: String,
@@ -73,6 +71,22 @@ const props = defineProps({
 const toast = useToast()
 const copied = ref(false)
 let resetTimeout = null
+
+const baseClasses = computed(() => (
+  props.variant === 'bare'
+    ? 'inline-flex items-center text-sm font-medium transition-all'
+    : 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-all'
+))
+
+const variantClasses = computed(() => {
+  if (props.variant === 'ghost') {
+    return 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+  }
+  if (props.variant === 'bare') {
+    return 'gap-2 rounded-lg transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-500'
+  }
+  return 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+})
 
 const copyToClipboard = async () => {
   try {

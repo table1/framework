@@ -188,22 +188,15 @@ standardize_wd <- function(project_root = NULL) {
     in_rstudio_notebook <- isTRUE(getOption("rstudio.notebook.executing"))
     in_render_context <- in_knitr || in_quarto || in_rstudio_notebook
 
-    # Set knitr working directory if available
+    # Set knitr working directory if available (affects future chunks)
     if (requireNamespace("knitr", quietly = TRUE)) {
       knitr::opts_knit$set(root.dir = project_root)
     }
 
-    # Only call setwd() if NOT in a render context (knitr/Quarto/RStudio notebook)
-    if (!in_render_context) {
-      old_wd <- setwd(project_root)
-    } else {
-      # In rendering contexts, just verify we can access the settings file from
-      # the project root. Engines will manage the working directory themselves.
-      if (!file.exists(file.path(project_root, "settings.yml")) &&
-          !file.exists(file.path(project_root, "config.yml"))) {
-        warning("settings.yml or config.yml not found in project root: ", project_root)
-      }
-    }
+    # Always set working directory to project root
+    # Even in render contexts, the current chunk needs the correct working directory
+    # The knitr root.dir option (above) ensures future chunks also use project root
+    old_wd <- setwd(project_root)
 
   } else {
     # Return NULL silently - let calling function (scaffold) handle the error

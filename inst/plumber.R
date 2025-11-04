@@ -218,6 +218,73 @@ function(id) {
   })
 }
 
+#* Save data catalog for a project
+#* @post /api/project/<id>/data
+#* @param id Project ID
+#* @param req The request object
+function(id, req) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  body <- jsonlite::fromJSON(req$postBody, simplifyVector = FALSE)
+  if (is.null(body$data)) {
+    return(list(error = "Missing data payload"))
+  }
+
+  # Locate primary settings file
+  settings_file <- NULL
+  if (file.exists(file.path(project$path, "settings.yml"))) {
+    settings_file <- file.path(project$path, "settings.yml")
+  } else if (file.exists(file.path(project$path, "config.yml"))) {
+    settings_file <- file.path(project$path, "config.yml")
+  } else {
+    return(list(error = "No settings file found"))
+  }
+
+  tryCatch({
+    old_wd <- getwd()
+    setwd(project$path)
+    on.exit(setwd(old_wd))
+
+    settings_raw <- yaml::read_yaml(settings_file)
+    has_default <- !is.null(settings_raw$default)
+    settings <- settings_raw$default %||% settings_raw
+
+    data_ref <- settings$data
+    if (is.character(data_ref) && length(data_ref) == 1 && grepl("\\.yml$", data_ref)) {
+      data_file <- file.path(project$path, data_ref)
+      dir.create(dirname(data_file), recursive = TRUE, showWarnings = FALSE)
+      yaml::write_yaml(list(data = body$data), data_file)
+    } else {
+      settings$data <- body$data
+      if (has_default) {
+        settings_raw$default <- settings
+        yaml::write_yaml(settings_raw, settings_file)
+      } else {
+        yaml::write_yaml(settings, settings_file)
+      }
+    }
+
+    list(success = TRUE)
+  }, error = function(e) {
+    list(error = paste("Failed to save data catalog:", e$message))
+  })
+}
+
 #* Get all settings for a project
 #* @get /api/project/<id>/settings
 #* @param id Project ID
