@@ -20,7 +20,7 @@ const props = defineProps({
   language: {
     type: String,
     default: 'r',
-    validator: (value) => ['r', 'markdown', 'text'].includes(value)
+    validator: (value) => ['r', 'markdown', 'text', 'gitignore'].includes(value)
   },
   minHeight: {
     type: String,
@@ -75,6 +75,7 @@ onMounted(() => {
     basicSetup,
     getLanguageExtension(),
     updateListener,
+    EditorView.lineWrapping,
     EditorView.theme({
       '&': {
         minHeight: props.minHeight,

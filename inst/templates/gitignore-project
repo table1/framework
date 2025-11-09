@@ -1,5 +1,5 @@
 # Framework Research Project
-# Tailored for data analysis workflows with inputs, outputs, and artifacts
+# Pattern-based gitignore - works regardless of directory structure customization
 
 # R environment
 .Rproj.user/
@@ -11,17 +11,13 @@
 /renv/
 /renv.lock
 
-# Framework generated content
-# Private outputs gitignored by default - use framework::result_save() to track important results
-# Public outputs (outputs/public/) are committed by default
-/outputs/private/
-/outputs/cache/
-/cache/
-/scratch/
+# Private directories (anywhere in project tree)
+**/private/**
+**/*_private/**
 
-# Inputs - adjust based on your workflow
-# Uncomment to gitignore raw data if it's large or sensitive:
-# /inputs/raw/
+# Utility directories (anywhere in project tree)
+**/cache/**
+**/scratch/**
 
 # Python (if using reticulate)
 __pycache__/
@@ -29,7 +25,7 @@ __pycache__/
 
 # IDE - personal settings only (commit workspace settings)
 .vscode/.history/
-.positron/
+.positron/.history/
 
 # macOS
 .DS_Store

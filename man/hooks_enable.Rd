@@ -7,7 +7,7 @@
 hooks_enable(hook_name, config_file = NULL, verbose = TRUE)
 }
 \arguments{
-\item{hook_name}{Name of hook: "ai_sync" or "data_security"}
+\item{hook_name}{Name of hook: "ai_sync", "data_security", or "check_sensitive_dirs"}
 
 \item{config_file}{Path to configuration file (default: auto-discover settings.yml or settings.yml)}
 

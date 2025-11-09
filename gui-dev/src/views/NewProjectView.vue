@@ -1500,6 +1500,26 @@
                   </div>
                 </div>
             </div>
+
+            <!-- .gitignore Template -->
+            <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">.gitignore Template</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Customize the .gitignore template for this project type. Uses pattern-based matching to catch sensitive directories anywhere in your project tree.
+              </p>
+              <CodeEditor
+                v-model="project.git.gitignore_content"
+                language="gitignore"
+                class="mb-4"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                @click="resetGitignoreTemplate"
+              >
+                Restore Default
+              </Button>
+            </div>
         </div>
 
         <!-- Packages & Dependencies Section -->
@@ -1519,63 +1539,51 @@
               />
 
               <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Default Packages</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Packages to install during project initialization. Auto-attach loads them automatically when scaffold() runs. Supports version pinning (e.g., dplyr@1.1.0).
-                </p>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+                  <div>
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300">Default Packages</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Installed (and optionally attached) when scaffold() runs.</p>
+                  </div>
+                  <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
+                </div>
 
-                <div class="space-y-3">
-                  <div v-for="(pkg, index) in project.packages.default_packages" :key="index" class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-                    <div class="flex items-start gap-3">
-                      <div class="flex-1 space-y-3">
-                        <Input
-                          :model-value="pkg.name"
-                          @update:model-value="project.packages.default_packages[index].name = $event"
-                          label="Package Name"
-                          :placeholder="getPackagePlaceholder(pkg.source || 'cran')"
-                          :hint="getPackageHint(pkg.source || 'cran')"
-                          monospace
-                          size="sm"
+                <div class="space-y-3" v-if="project.packages.default_packages && project.packages.default_packages.length">
+                  <div
+                    v-for="(pkg, idx) in project.packages.default_packages"
+                    :key="`pkg-${idx}`"
+                    class="rounded-md border border-gray-200 p-4 dark:border-gray-700"
+                  >
+                    <div class="flex flex-col gap-3">
+                      <div class="grid gap-3 grid-cols-[1fr_160px]">
+                        <PackageAutocomplete
+                          v-if="pkg.source === 'cran' || pkg.source === 'bioconductor'"
+                          v-model="pkg.name"
+                          :source="pkg.source"
+                          label="Package"
+                          :placeholder="pkg.source === 'cran' ? 'Search CRAN...' : 'Search Bioconductor...'"
+                          @select="(selectedPkg) => pkg.name = selectedPkg.name"
                         />
-                        <Select
-                          v-model="project.packages.default_packages[index].source"
-                          label="Source"
-                        >
+                        <Input
+                          v-else
+                          v-model="pkg.name"
+                          label="Package"
+                          placeholder="user/repo"
+                        />
+                        <Select v-model="pkg.source" label="Source">
                           <option value="cran">CRAN</option>
                           <option value="github">GitHub</option>
-                          <option value="bioc">Bioconductor</option>
+                          <option value="bioconductor">Bioconductor</option>
                         </Select>
-                        <Toggle
-                          :id="`pkg-auto-attach-${index}`"
-                          v-model="project.packages.default_packages[index].auto_attach"
-                          label="Auto-attach"
-                          description="Automatically attach this package in every session (calls library() when scaffold() runs)"
-                        />
                       </div>
-                      <button
-                        type="button"
-                        @click="project.packages.default_packages.splice(index, 1)"
-                        class="shrink-0 rounded-md p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                      <div class="flex items-center justify-between">
+                        <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() in notebooks." />
+                        <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  @click="project.packages.default_packages.push({ name: '', source: 'cran', auto_attach: true })"
-                  class="mt-3 inline-flex"
-                >
-                  <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Package
-                </Button>
+                <p v-else class="text-xs text-gray-500 dark:text-gray-400">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
               </div>
             </div>
           </div>
@@ -1614,15 +1622,6 @@
                   </Checkbox>
 
                   <Checkbox
-                    id="ai-cursor"
-                    :model-value="project.ai.assistants.includes('cursor')"
-                    @update:model-value="toggleAssistant('cursor', $event)"
-                    description="Creates .cursorrules configuration file"
-                  >
-                    Cursor
-                  </Checkbox>
-
-                  <Checkbox
                     id="ai-copilot"
                     :model-value="project.ai.assistants.includes('copilot')"
                     @update:model-value="toggleAssistant('copilot', $event)"
@@ -1632,12 +1631,12 @@
                   </Checkbox>
 
                   <Checkbox
-                    id="ai-chatgpt"
-                    :model-value="project.ai.assistants.includes('chatgpt')"
-                    @update:model-value="toggleAssistant('chatgpt', $event)"
-                    description="Creates AGENTS.md context file"
+                    id="ai-agents"
+                    :model-value="project.ai.assistants.includes('agents')"
+                    @update:model-value="toggleAssistant('agents', $event)"
+                    description="Creates AGENTS.md (supported by ChatGPT, Cursor, Codex, and other tools)"
                   >
-                    ChatGPT
+                    AGENTS.md
                   </Checkbox>
                 </div>
 
@@ -1652,38 +1651,37 @@
                         <div class="mt-2 text-sm text-sky-700 dark:text-sky-300">
                           <ul class="list-disc list-inside space-y-1">
                             <li v-if="project.ai.assistants.includes('claude')">CLAUDE.md</li>
-                            <li v-if="project.ai.assistants.includes('cursor')">.cursorrules</li>
                             <li v-if="project.ai.assistants.includes('copilot')">.github/copilot-instructions.md</li>
-                            <li v-if="project.ai.assistants.includes('chatgpt')">AGENTS.md</li>
+                            <li v-if="project.ai.assistants.includes('agents')">AGENTS.md</li>
                           </ul>
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Canonical Context File Editor -->
-                  <div class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Primary Context File</h4>
-                      <Select v-model="project.ai.canonical_file" class="w-auto">
-                        <option value="CLAUDE.md">CLAUDE.md</option>
-                        <option value="AGENTS.md">AGENTS.md</option>
-                        <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
-                        <option value=".cursorrules">.cursorrules</option>
-                      </Select>
-                    </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      Edit the default content for your primary AI context file. This will be pre-populated based on your project type.
-                    </p>
-                    <CodeEditor
-                      v-model="project.ai.canonical_content"
-                      language="markdown"
-                      min-height="400px"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Primary Context File Editor (separate panel) -->
+          <div v-if="project.ai.enabled && project.ai.assistants.length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Primary Context File</h3>
+              <Select v-model="project.ai.canonical_file" class="w-auto">
+                <option value="CLAUDE.md">CLAUDE.md</option>
+                <option value="AGENTS.md">AGENTS.md</option>
+                <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
+              </Select>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Edit the default content for your primary AI context file. This will be pre-populated based on your project type.
+            </p>
+            <CodeEditor
+              v-model="project.ai.canonical_content"
+              language="markdown"
+              min-height="400px"
+              class="mb-4"
+            />
           </div>
         </div>
 
@@ -1705,43 +1703,26 @@
 
               <div v-if="project.git.initialize" class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-5">
                 <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300">.gitignore</h4>
-                    <Select v-model="project.git.gitignore_template" class="w-auto">
-                      <option value="gitignore-project">Research Project</option>
-                      <option value="gitignore-sensitive">Sensitive Data Project</option>
-                      <option value="gitignore-course">Course/Teaching</option>
-                      <option value="gitignore-presentation">Presentation</option>
-                    </Select>
-                  </div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Files and directories to exclude from version control. Customized for {{ getGitignoreTemplateLabel(project.git.gitignore_template) }}.
-                  </p>
-                  <CodeEditor
-                    v-model="project.git.gitignore_content"
-                    language="text"
-                    min-height="300px"
-                    placeholder="# Add patterns to ignore..."
-                  />
-                </div>
-
-                <div>
                   <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Git Hooks</h4>
-                  <div class="space-y-3">
-                    <Checkbox
+                  <div class="space-y-4">
+                    <Toggle
                       id="hook-ai-sync"
                       v-model="project.git.hooks.ai_sync"
-                      description="Mirror and sync AI context files (CLAUDE.md, .cursorrules, etc.) on commit"
-                    >
-                      AI Context File Mirroring
-                    </Checkbox>
-                    <Checkbox
+                      label="AI Context File Mirroring"
+                      description="Mirror and sync AI context files (CLAUDE.md, AGENTS.md, etc.) on commit"
+                    />
+                    <Toggle
                       id="hook-data-security"
                       v-model="project.git.hooks.data_security"
+                      label="Data Security Scan"
                       description="Scan for secrets before commit"
-                    >
-                      Data Security Scan
-                    </Checkbox>
+                    />
+                    <Toggle
+                      id="hook-check-sensitive-dirs"
+                      v-model="project.git.hooks.check_sensitive_dirs"
+                      label="Check Sensitive Directories"
+                      description="Warn about unignored sensitive directories (private, cache, scratch, etc.)"
+                    />
                   </div>
                 </div>
               </div>
@@ -1766,6 +1747,7 @@ import RadioGroup from '../components/ui/RadioGroup.vue'
 import Checkbox from '../components/ui/Checkbox.vue'
 import Repeater from '../components/ui/Repeater.vue'
 import CodeEditor from '../components/ui/CodeEditor.vue'
+import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import { useToast } from '../composables/useToast'
 
 const router = useRouter()
@@ -1823,7 +1805,8 @@ const project = ref({
     gitignore_content: '',
     hooks: {
       ai_sync: false,
-      data_security: false
+      data_security: false,
+      check_sensitive_dirs: false
     }
   },
   directories_enabled: {},
@@ -1934,7 +1917,7 @@ onMounted(async () => {
         if (globalSettings.value.defaults?.ai) {
           project.value.ai = {
             enabled: globalSettings.value.defaults.ai.enabled !== false,
-            assistants: [...(globalSettings.value.defaults.ai.assistants || [])],
+            assistants: [], // Start with no assistants selected - user must explicitly choose
             canonical_file: globalSettings.value.defaults.ai.canonical_file || 'CLAUDE.md',
             canonical_content: ''
           }
@@ -1948,6 +1931,20 @@ onMounted(async () => {
         // Load git defaults
         if (globalSettings.value.defaults?.git) {
           project.value.git = { ...globalSettings.value.defaults.git }
+        }
+
+        // Initialize gitignore template based on project type
+        const gitignoreTemplateMap = {
+          'project': 'gitignore-project',
+          'project_sensitive': 'gitignore-project_sensitive',
+          'course': 'gitignore-course',
+          'presentation': 'gitignore-presentation'
+        }
+        project.value.git.gitignore_template = gitignoreTemplateMap[project.value.type] || 'gitignore-project'
+
+        // Load initial gitignore template content
+        if (project.value.git.gitignore_template) {
+          loadGitignoreTemplate(project.value.git.gitignore_template)
         }
       }
     }
@@ -1970,9 +1967,19 @@ onMounted(async () => {
   }
 })
 
-// Watch project type changes to update directories
-watch(() => project.value.type, () => {
+// Watch project type changes to update directories and gitignore template
+watch(() => project.value.type, (newType) => {
   loadProjectTypeDefaults()
+
+  // Update gitignore template based on project type
+  const gitignoreTemplateMap = {
+    'project': 'gitignore-project',
+    'project_sensitive': 'gitignore-project_sensitive',
+    'course': 'gitignore-course',
+    'presentation': 'gitignore-presentation'
+  }
+
+  project.value.git.gitignore_template = gitignoreTemplateMap[newType] || 'gitignore-project'
 })
 
 // DEBUG: Watch packages changes
@@ -2131,6 +2138,21 @@ const toggleAssistant = (assistant, enabled) => {
   }
 }
 
+const addPackage = () => {
+  if (!project.value.packages.default_packages) {
+    project.value.packages.default_packages = []
+  }
+  project.value.packages.default_packages.push({
+    name: '',
+    source: 'cran',
+    auto_attach: false
+  })
+}
+
+const removePackage = (index) => {
+  project.value.packages.default_packages.splice(index, 1)
+}
+
 const getGitignoreTemplateLabel = (template) => {
   const labels = {
     'gitignore-project': 'Research Project',
@@ -2152,6 +2174,14 @@ const loadGitignoreTemplate = async (template) => {
     }
   } catch (error) {
     console.error('Failed to load gitignore template:', error)
+  }
+}
+
+const resetGitignoreTemplate = async () => {
+  // Reload the default template for the current project type
+  if (project.value.git.gitignore_template) {
+    await loadGitignoreTemplate(project.value.git.gitignore_template)
+    toast.success('Template Reset', 'Restored default .gitignore template')
   }
 }
 
@@ -2179,10 +2209,6 @@ const loadAITemplate = async (canonicalFile, projectType) => {
       templateName = 'ai_agents'
     } else if (canonicalFile === '.github/copilot-instructions.md') {
       templateName = 'ai_copilot'
-    } else if (canonicalFile === '.cursorrules') {
-      // Cursor doesn't have a template yet, use empty content
-      project.value.ai.canonical_content = ''
-      return
     }
 
     const response = await fetch(`/api/templates/${templateName}`)

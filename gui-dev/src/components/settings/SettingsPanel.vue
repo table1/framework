@@ -8,6 +8,10 @@
     <div class="space-y-6">
       <slot />
     </div>
+
+    <div v-if="$slots.actions" class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+      <slot name="actions" />
+    </div>
   </section>
 </template>
 

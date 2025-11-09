@@ -24,6 +24,7 @@ Creates or updates \code{.git/hooks/pre-commit} to run enabled Framework hooks:
 \itemize{
 \item \strong{ai_sync}: Sync AI assistant context files before commit
 \item \strong{data_security}: Run security audit to catch data leaks
+\item \strong{check_sensitive_dirs}: Warn about unignored sensitive directories
 }
 
 Hook behavior is controlled by \verb{git.hooks.*} settings in settings.yml.

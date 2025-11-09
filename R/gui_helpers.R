@@ -258,12 +258,11 @@ write_frameworkrc <- function(config) {
   projects <- config$projects
   config$projects <- NULL
 
-  # Fix packages structure - ensure it's a proper list, not a map with empty keys
-  if (!is.null(config$defaults$packages)) {
-    # Convert to list if it's not already
-    if (is.list(config$defaults$packages) && !is.null(names(config$defaults$packages))) {
-      # Has names (probably empty ones) - strip them
-      config$defaults$packages <- unname(config$defaults$packages)
+  # Fix packages structure - ensure default_packages array doesn't have names
+  if (!is.null(config$defaults$packages$default_packages)) {
+    # Ensure default_packages is an unnamed array
+    if (is.list(config$defaults$packages$default_packages) && !is.null(names(config$defaults$packages$default_packages))) {
+      config$defaults$packages$default_packages <- unname(config$defaults$packages$default_packages)
     }
   }
 

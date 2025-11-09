@@ -13,6 +13,7 @@
 #' \itemize{
 #'   \item **ai_sync**: Sync AI assistant context files before commit
 #'   \item **data_security**: Run security audit to catch data leaks
+#'   \item **check_sensitive_dirs**: Warn about unignored sensitive directories
 #' }
 #'
 #' Hook behavior is controlled by `git.hooks.*` settings in settings.yml.
@@ -62,8 +63,9 @@ hooks_install <- function(config_file = NULL,
   # Read hook configuration
   ai_sync_enabled <- config("git.hooks.ai_sync", config_file = config_file, default = FALSE)
   data_security_enabled <- config("git.hooks.data_security", config_file = config_file, default = FALSE)
+  check_sensitive_dirs_enabled <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
 
-  if (!ai_sync_enabled && !data_security_enabled) {
+  if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
     if (verbose) {
       message("ℹ No hooks enabled in settings.yml/config.yml")
       message("  Enable with: config$git$hooks$ai_sync = TRUE")
@@ -89,7 +91,7 @@ hooks_install <- function(config_file = NULL,
   }
 
   # Generate hook script
-  hook_script <- .generate_hook_script(ai_sync_enabled, data_security_enabled)
+  hook_script <- .generate_hook_script(ai_sync_enabled, data_security_enabled, check_sensitive_dirs_enabled)
 
   # Write hook
   tryCatch({
@@ -103,6 +105,9 @@ hooks_install <- function(config_file = NULL,
       }
       if (data_security_enabled) {
         message("  • Data security check enabled")
+      }
+      if (check_sensitive_dirs_enabled) {
+        message("  • Sensitive directories check enabled")
       }
     }
 
@@ -167,7 +172,7 @@ hooks_uninstall <- function(verbose = TRUE) {
 #'
 #' Enables a specific hook in settings and reinstalls the pre-commit hook.
 #'
-#' @param hook_name Name of hook: "ai_sync" or "data_security"
+#' @param hook_name Name of hook: "ai_sync", "data_security", or "check_sensitive_dirs"
 #' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
@@ -181,7 +186,7 @@ hooks_uninstall <- function(verbose = TRUE) {
 #'
 #' @export
 hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
-  valid_hooks <- c("ai_sync", "data_security")
+  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
@@ -211,7 +216,7 @@ hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #'
 #' Disables a specific hook in settings and reinstalls the pre-commit hook.
 #'
-#' @param hook_name Name of hook: "ai_sync" or "data_security"
+#' @param hook_name Name of hook: "ai_sync", "data_security", or "check_sensitive_dirs"
 #' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
@@ -219,7 +224,7 @@ hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #'
 #' @export
 hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
-  valid_hooks <- c("ai_sync", "data_security")
+  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
@@ -243,8 +248,9 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   # Reinstall hooks (or uninstall if all disabled)
   ai_sync_enabled <- config("git.hooks.ai_sync", config_file = config_file, default = FALSE)
   data_security_enabled <- config("git.hooks.data_security", config_file = config_file, default = FALSE)
+  check_sensitive_dirs_enabled <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
 
-  if (!ai_sync_enabled && !data_security_enabled) {
+  if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
     hooks_uninstall(verbose = verbose)
   } else {
     hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
@@ -279,15 +285,17 @@ hooks_list <- function(config_file = NULL) {
 
   ai_sync <- config("git.hooks.ai_sync", config_file = config_file, default = FALSE)
   data_security <- config("git.hooks.data_security", config_file = config_file, default = FALSE)
+  check_sensitive_dirs <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
 
   hook_installed <- file.exists(".git/hooks/pre-commit")
 
   df <- data.frame(
-    hook = c("ai_sync", "data_security"),
-    enabled = c(ai_sync, data_security),
+    hook = c("ai_sync", "data_security", "check_sensitive_dirs"),
+    enabled = c(ai_sync, data_security, check_sensitive_dirs),
     description = c(
       "Sync AI assistant context files",
-      "Check for secrets/credentials"
+      "Check for secrets/credentials",
+      "Warn about unignored sensitive directories"
     ),
     stringsAsFactors = FALSE
   )
@@ -322,7 +330,7 @@ hooks_list <- function(config_file = NULL) {
 
 #' Generate pre-commit hook script
 #' @keywords internal
-.generate_hook_script <- function(ai_sync_enabled, data_security_enabled) {
+.generate_hook_script <- function(ai_sync_enabled, data_security_enabled, check_sensitive_dirs_enabled) {
   c(
     "#!/usr/bin/env bash",
     "# Framework Git Hooks",
@@ -335,6 +343,41 @@ hooks_list <- function(config_file = NULL) {
     "PROJECT_ROOT=\"$(git rev-parse --show-toplevel)\"",
     "cd \"$PROJECT_ROOT\"",
     "",
+    if (check_sensitive_dirs_enabled) c(
+      "# Check for unignored sensitive directories",
+      "SENSITIVE_PATTERNS=('*private*' '*confidential*' '*sensitive*' '*cache*' '*scratch*')",
+      "UNIGNORED_DIRS=()",
+      "",
+      "for pattern in \"${SENSITIVE_PATTERNS[@]}\"; do",
+      "  while IFS= read -r -d '' dir; do",
+      "    # Skip if it's the .git directory itself",
+      "    [[ \"$dir\" == \"./.git\"* ]] && continue",
+      "    ",
+      "    # Check if directory is gitignored",
+      "    if ! git check-ignore -q \"$dir\"; then",
+      "      UNIGNORED_DIRS+=(\"$dir\")",
+      "    fi",
+      "  done < <(find . -type d -iname \"$pattern\" -print0 2>/dev/null)",
+      "done",
+      "",
+      "if [ ${#UNIGNORED_DIRS[@]} -gt 0 ]; then",
+      "  echo \"⚠ Warning: Found sensitive directories that are NOT gitignored:\"",
+      "  for dir in \"${UNIGNORED_DIRS[@]}\"; do",
+      "    echo \"  - $dir\"",
+      "  done",
+      "  echo \"\"",
+      "  echo \"These directories may contain sensitive data and should be added to .gitignore.\"",
+      "  echo \"Pattern-based .gitignore entries like '**/private/**' will automatically catch them.\"",
+      "  echo \"\"",
+      "  read -p \"Continue with commit anyway? (y/N) \" -n 1 -r",
+      "  echo",
+      "  if [[ ! $REPLY =~ ^[Yy]$ ]]; then",
+      "    echo \"Commit aborted. Add directories to .gitignore and try again.\"",
+      "    exit 1",
+      "  fi",
+      "fi",
+      ""
+    ) else NULL,
     if (ai_sync_enabled) c(
       "# AI context sync",
       "if ! Rscript -e \"library(framework); ai_sync_context(verbose=FALSE)\"; then",

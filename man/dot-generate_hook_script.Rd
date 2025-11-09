@@ -4,7 +4,11 @@
 \alias{.generate_hook_script}
 \title{Generate pre-commit hook script}
 \usage{
-.generate_hook_script(ai_sync_enabled, data_security_enabled)
+.generate_hook_script(
+  ai_sync_enabled,
+  data_security_enabled,
+  check_sensitive_dirs_enabled
+)
 }
 \description{
 Generate pre-commit hook script

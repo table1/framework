@@ -883,14 +883,30 @@ function(id, req) {
 #* Search CRAN packages
 #* @get /api/packages/search
 #* @param q Search query
-function(q = "") {
+#* @param source Package source (cran, bioconductor, github)
+function(q = "", source = "cran") {
   if (q == "" || nchar(q) < 2) {
     return(list(packages = list()))
   }
 
   tryCatch({
-    # Get available CRAN packages
-    available <- available.packages(repos = "https://cloud.r-project.org")
+    # Determine repository based on source
+    if (source == "bioconductor") {
+      # Bioconductor repositories
+      repos <- c(
+        "https://bioconductor.org/packages/release/bioc",
+        "https://bioconductor.org/packages/release/data/annotation",
+        "https://bioconductor.org/packages/release/data/experiment"
+      )
+    } else if (source == "cran") {
+      repos <- "https://cloud.r-project.org"
+    } else {
+      # GitHub doesn't have a package listing API we can easily search
+      return(list(packages = list()))
+    }
+
+    # Get available packages
+    available <- available.packages(repos = repos)
 
     # Filter by search term (case-insensitive)
     matches <- grepl(tolower(q), tolower(available[, "Package"]))
@@ -912,7 +928,7 @@ function(q = "") {
         version = as.character(row["Version"]),
         title = if (!is.na(row["Title"])) as.character(row["Title"]) else "",
         author = author,
-        source = "cran"
+        source = source
       )
     })
     names(results) <- NULL  # Ensure unnamed for JSON array

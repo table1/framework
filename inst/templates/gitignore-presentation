@@ -1,5 +1,5 @@
 # Framework Presentation Project
-# Tailored for talks, slides, and presentation materials
+# Pattern-based gitignore - works regardless of directory structure customization
 
 # R environment
 .Rproj.user/
@@ -11,40 +11,26 @@
 /renv/
 /renv.lock
 
-# Rendered presentation outputs (regenerate from source)
-/*.html
-/*.pdf
-/slides/*.html
-/slides/*.pdf
-/presentation/*.html
-/presentation/*.pdf
+# Private directories (anywhere in project tree)
+**/private/**
+**/*_private/**
 
-# Quarto/RevealJS outputs
-/_site/
-/.quarto/
+# Utility directories (anywhere in project tree)
+**/cache/**
+**/scratch/**
 
-# Speaker notes (keep private if needed)
-/notes_private/
-*_speaker_notes.*
-
-# Cache and scratch
-/cache/
-/scratch/
-
-# Large media files (commit selectively)
-# Uncomment if you have large videos or images:
-# *.mp4
-# *.mov
-# *.avi
+# Python (if using reticulate)
+__pycache__/
+.ipynb_checkpoints/
 
 # IDE - personal settings only (commit workspace settings)
 .vscode/.history/
-.positron/
+.positron/.history/
 
 # macOS
 .DS_Store
 
-# Secrets
+# Secrets and environment files
 .env
 .env.local
 .Renviron
@@ -52,8 +38,3 @@
 # Temporary files
 *.tmp
 *.log
-
-# Assets exceptions - commit images and small media
-!assets/
-!images/
-!figures/

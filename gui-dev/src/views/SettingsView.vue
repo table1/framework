@@ -55,25 +55,27 @@
           </div>
         </div>
       </div>
+
+      <!-- Save Button in Sidebar -->
+      <div class="mt-6 px-3">
+        <Button
+          variant="primary"
+          size="md"
+          :disabled="saving"
+          @click="saveSettings"
+          class="w-full"
+        >
+          {{ saving ? 'Saving…' : 'Save Changes' }}
+        </Button>
+      </div>
     </nav>
 
     <!-- Main Content -->
-    <div class="flex-1 p-10">
+    <div class="flex-1 p-10 pb-24">
       <PageHeader
         :title="pageHeaderTitle"
         :description="pageHeaderDescription"
-      >
-        <template #actions>
-          <Button
-            variant="primary"
-            size="md"
-            :disabled="saving"
-            @click="saveSettings"
-          >
-            {{ saving ? 'Saving…' : 'Save Changes' }}
-          </Button>
-        </template>
-      </PageHeader>
+      />
 
       <div class="mt-8 space-y-10">
         <!-- Author Information -->
@@ -201,6 +203,13 @@
                   @click="scrollToSection(`project-${currentProjectTypeKey}-utility`)"
                   >
                     Utility
+                  </button>
+                <button
+                  type="button"
+                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="scrollToSection(`project-${currentProjectTypeKey}-gitignore`)"
+                  >
+                    .gitignore
                   </button>
                 </div>
                 <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="resetProjectType(currentProjectTypeKey)">
@@ -1152,6 +1161,25 @@
               </div>
 
             </div>
+
+            <div :id="`project-${currentProjectTypeKey}-gitignore`">
+              <SettingsPanel
+                title=".gitignore Template"
+                description="Patterns applied to all new projects of this type."
+              >
+                <CodeEditor
+                  v-model="templateEditors[`gitignore_${currentProjectTypeKey}`].contents"
+                  language="text"
+                  min-height="400px"
+                  :disabled="templateEditors[`gitignore_${currentProjectTypeKey}`].loading"
+                />
+                <p v-if="templateEditors[`gitignore_${currentProjectTypeKey}`].loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading .gitignore template…</p>
+
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate(`gitignore-${currentProjectTypeKey}`, `gitignore_${currentProjectTypeKey}`)">Restore Default</Button>
+                </div>
+              </SettingsPanel>
+            </div>
           </div>
         </div>
 
@@ -1277,10 +1305,10 @@
           </SettingsPanel>
         </div>
 
-        <!-- Git & Version Control -->
+        <!-- Git & Hooks -->
         <div id="git" v-show="activeSection === 'git'">
           <SettingsPanel
-            description="Configure how Framework initializes repositories and stamps commits."
+            description="Configure how Framework initializes repositories, commits, and pre-commit hooks."
           >
             <SettingsBlock>
               <Toggle
@@ -1308,6 +1336,32 @@
                 />
               </div>
             </SettingsBlock>
+
+            <SettingsBlock
+              title="Git Hooks"
+              description="Pre-commit hooks that run automatically before each commit."
+            >
+              <div class="space-y-4">
+                <Toggle
+                  v-model="settings.defaults.git_hooks.ai_sync"
+                  label="Sync AI Files Before Commit"
+                  description="Update non-canonical files so assistants share the same instructions."
+                />
+                <Toggle
+                  v-model="settings.privacy.secret_scan"
+                  label="Check for Secrets"
+                  description="Run a lightweight scan for API keys and credentials before commits."
+                />
+                <Toggle
+                  v-model="settings.defaults.git_hooks.check_sensitive_dirs"
+                  label="Warn About Unignored Sensitive Directories"
+                  description="Block commits if directories with sensitive names aren't gitignored."
+                />
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                Project-specific .gitignore templates can be customized in <a href="#/settings/project-defaults" class="text-sky-600 dark:text-sky-400 hover:underline">Project Defaults</a>.
+              </p>
+            </SettingsBlock>
           </SettingsPanel>
         </div>
 
@@ -1318,7 +1372,7 @@
           >
             <SettingsBlock>
               <Toggle
-                v-model="settings.defaults.use_renv"
+                v-model="settings.defaults.packages.use_renv"
                 label="Enable renv"
                 description="Create renv environments for new projects."
               />
@@ -1333,15 +1387,39 @@
                 <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
               </div>
 
-              <div class="space-y-3" v-if="settings.defaults.packages.length">
+              <div class="space-y-3" v-if="settings.defaults.packages.default_packages && settings.defaults.packages.default_packages.length">
                 <div
-                  v-for="(pkg, idx) in settings.defaults.packages"
+                  v-for="(pkg, idx) in settings.defaults.packages.default_packages"
                   :key="`pkg-${idx}`"
-                  class="flex flex-col gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700 sm:flex-row sm:items-center"
+                  class="rounded-md border border-gray-200 p-4 dark:border-gray-700"
                 >
-                  <Input v-model="pkg.name" label="Package" placeholder="dplyr" class="sm:flex-1" />
-                  <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() in notebooks." />
-                  <Button size="xs" variant="secondary" @click="removePackage(idx)">Remove</Button>
+                  <div class="flex flex-col gap-3">
+                    <div class="grid gap-3 grid-cols-[1fr_160px]">
+                      <PackageAutocomplete
+                        v-if="pkg.source === 'cran' || pkg.source === 'bioconductor'"
+                        v-model="pkg.name"
+                        :source="pkg.source"
+                        label="Package"
+                        :placeholder="pkg.source === 'cran' ? 'Search CRAN...' : 'Search Bioconductor...'"
+                        @select="(selectedPkg) => pkg.name = selectedPkg.name"
+                      />
+                      <Input
+                        v-else
+                        v-model="pkg.name"
+                        label="Package"
+                        placeholder="user/repo"
+                      />
+                      <Select v-model="pkg.source" label="Source">
+                        <option value="cran">CRAN</option>
+                        <option value="github">GitHub</option>
+                        <option value="bioconductor">Bioconductor</option>
+                      </Select>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() in notebooks." />
+                      <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1350,42 +1428,6 @@
           </SettingsPanel>
         </div>
 
-        <!-- Privacy & Security -->
-        <div id="privacy" v-show="activeSection === 'privacy'">
-          <SettingsPanel>
-            <SettingsBlock>
-              <Toggle
-                v-model="settings.privacy.secret_scan"
-                label="Check for Secrets"
-                description="Run a lightweight scan for API keys and credentials before commits."
-              />
-            </SettingsBlock>
-
-            <SettingsBlock
-              title="Universal .gitignore"
-              description="Patterns from this template are applied to every new project."
-            >
-              <CodeEditor
-                v-model="templateEditors.gitignore.contents"
-                language="text"
-                min-height="500px"
-                :disabled="templateEditors.gitignore.loading"
-              />
-              <p v-if="templateEditors.gitignore.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading .gitignore template…</p>
-
-              <div v-if="suggestedGitignoreEntries.length" class="mt-3 text-xs text-gray-600 dark:text-gray-400">
-                <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Recommended private directories:</p>
-                <ul class="list-disc pl-4 space-y-0.5">
-                  <li v-for="path in suggestedGitignoreEntries" :key="path">/{{ path }}</li>
-                </ul>
-              </div>
-
-              <div class="flex justify-end mt-3">
-                <Button size="sm" variant="secondary" @click="resetInlineTemplate(activeGitignoreTemplate.value, 'gitignore')">Restore Default</Button>
-              </div>
-            </SettingsBlock>
-          </SettingsPanel>
-        </div>
       </div>
 
     </div>
@@ -1413,6 +1455,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '../components/ui/PageHeader.vue'
 import Input from '../components/ui/Input.vue'
+import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import Select from '../components/ui/Select.vue'
 import Toggle from '../components/ui/Toggle.vue'
 import Checkbox from '../components/ui/Checkbox.vue'
@@ -1435,9 +1478,8 @@ const sections = [
   { id: 'structure', label: 'Project Defaults', slug: 'project-defaults' },
   { id: 'notebooksScripts', label: 'Notebooks & Scripts', slug: 'notebooks-scripts' },
   { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants' },
-  { id: 'git', label: 'Git & Version Control', slug: 'git-version-control' },
-  { id: 'packages', label: 'Packages & Dependencies', slug: 'packages-dependencies' },
-  { id: 'privacy', label: 'Privacy & Security', slug: 'privacy-security' }
+  { id: 'git', label: 'Git & Hooks', slug: 'git-hooks' },
+  { id: 'packages', label: 'Packages & Dependencies', slug: 'packages-dependencies' }
 ]
 
 const sectionSlugMap = Object.fromEntries(sections.map(({ id, slug }) => [id, slug]))
@@ -1694,12 +1736,16 @@ const settings = ref({
     directories: JSON.parse(JSON.stringify(defaultProjectTypes.value.project.directories)),
     git_hooks: {
       ai_sync: false,
-      data_security: false
+      data_security: false,
+      check_sensitive_dirs: false
     },
-    packages: [
-      { name: 'dplyr', auto_attach: true },
-      { name: 'ggplot2', auto_attach: true }
-    ]
+    packages: {
+      use_renv: false,
+      default_packages: [
+        { name: 'dplyr', source: 'cran', auto_attach: true },
+        { name: 'ggplot2', source: 'cran', auto_attach: true }
+      ]
+    }
   },
   git: {
     user_name: '',
@@ -1736,7 +1782,10 @@ const templateEditors = reactive({
   notebook: { loading: false, contents: '' },
   script: { loading: false, contents: '' },
   canonical: { loading: false, contents: '' },
-  gitignore: { loading: false, contents: '' }
+  gitignore_project: { loading: false, contents: '' },
+  gitignore_project_sensitive: { loading: false, contents: '' },
+  gitignore_course: { loading: false, contents: '' },
+  gitignore_presentation: { loading: false, contents: '' }
 })
 
 const projectTypeEntries = computed(() => Object.entries(settings.value.project_types || {}))
@@ -1785,16 +1834,12 @@ const sectionHeaderMeta = {
     description: 'Manage assistant support, canonical context files, and sync hooks.'
   },
   git: {
-    title: 'Git & Version Control',
-    description: 'Configure repository initialization and commit identity defaults.'
+    title: 'Git & Hooks',
+    description: 'Configure repository initialization, commit identity, git hooks, and security scanning.'
   },
   packages: {
     title: 'Packages & Dependencies',
     description: 'Define dependency defaults and auto-attach behavior for new projects.'
-  },
-  privacy: {
-    title: 'Privacy & Security',
-    description: 'Manage secret scanning and shared .gitignore defaults.'
   }
 }
 
@@ -2153,11 +2198,14 @@ const saveTemplate = async () => {
 }
 
 const addPackage = () => {
-  settings.value.defaults.packages.push({ name: '', auto_attach: false })
+  if (!settings.value.defaults.packages.default_packages) {
+    settings.value.defaults.packages.default_packages = []
+  }
+  settings.value.defaults.packages.default_packages.push({ name: '', source: 'cran', auto_attach: false })
 }
 
 const removePackage = (index) => {
-  settings.value.defaults.packages.splice(index, 1)
+  settings.value.defaults.packages.default_packages.splice(index, 1)
 }
 
 const scrollToSection = (id) => {
@@ -2217,13 +2265,6 @@ watch(
   }
 )
 
-watch(
-  () => activeGitignoreTemplate.value,
-  (name, prev) => {
-    if (!name || name === prev) return
-    loadTemplateInline(name, 'gitignore')
-  }
-)
 
 const loadSettings = async () => {
   try {
@@ -2302,16 +2343,33 @@ const loadSettings = async () => {
       console.log('[DEBUG LOAD] Is array?', Array.isArray(defaults.packages))
       console.log('[DEBUG LOAD] Type:', typeof defaults.packages)
 
-      if (Array.isArray(defaults.packages)) {
-        console.log('[DEBUG LOAD] Loading packages from array')
-        settings.value.defaults.packages = defaults.packages.map((pkg) => ({
-          name: toScalar(pkg.name, ''),
-          auto_attach: toBoolean(pkg.auto_attach, false)
-        }))
-        console.log('[DEBUG LOAD] Loaded packages:', settings.value.defaults.packages)
-      } else {
-        console.log('[DEBUG LOAD] defaults.packages is not an array, using empty array')
-        settings.value.defaults.packages = []
+      if (defaults.packages) {
+        // New nested structure: packages: { use_renv: bool, default_packages: [...] }
+        if (defaults.packages.default_packages) {
+          console.log('[DEBUG LOAD] Loading packages from nested structure (default_packages)')
+          settings.value.defaults.packages = {
+            use_renv: toBoolean(defaults.packages.use_renv, false),
+            default_packages: (defaults.packages.default_packages || []).map((pkg) => ({
+              name: toScalar(pkg.name, ''),
+              source: toScalar(pkg.source, 'cran'),
+              auto_attach: toBoolean(pkg.auto_attach, false)
+            }))
+          }
+          console.log('[DEBUG LOAD] Loaded packages:', settings.value.defaults.packages)
+        }
+        // Old flat array structure (backward compatibility)
+        else if (Array.isArray(defaults.packages)) {
+          console.log('[DEBUG LOAD] Loading packages from legacy array structure')
+          settings.value.defaults.packages = {
+            use_renv: false,
+            default_packages: defaults.packages.map((pkg) => ({
+              name: toScalar(pkg.name, ''),
+              source: toScalar(pkg.source, 'cran'),
+              auto_attach: toBoolean(pkg.auto_attach, false)
+            }))
+          }
+          console.log('[DEBUG LOAD] Loaded packages:', settings.value.defaults.packages)
+        }
       }
 
       // Keep legacy directories around for backwards compatibility
@@ -2451,7 +2509,10 @@ const saveSettings = async () => {
     payload.defaults.seed = payload.defaults.seed === '' ? null : payload.defaults.seed
 
     console.log('[DEBUG SAVE] Before filter - packages:', payload.defaults.packages)
-    payload.defaults.packages = (payload.defaults.packages || []).filter((pkg) => pkg.name && pkg.name.trim() !== '')
+    // Handle nested packages structure: { use_renv: bool, default_packages: [...] }
+    if (payload.defaults.packages && payload.defaults.packages.default_packages) {
+      payload.defaults.packages.default_packages = (payload.defaults.packages.default_packages || []).filter((pkg) => pkg.name && pkg.name.trim() !== '')
+    }
     console.log('[DEBUG SAVE] After filter - packages:', payload.defaults.packages)
 
     payload.defaults.directories = payload.project_types?.project?.directories || payload.defaults.directories
@@ -2492,8 +2553,6 @@ const saveSettings = async () => {
     const responseData = await response.json()
     console.log('[DEBUG SAVE] API response data:', responseData)
 
-    const gitignoreTemplateName = activeGitignoreTemplate.value || 'gitignore'
-
     const templateResponses = await Promise.all([
       fetch('/api/templates/notebook', {
         method: 'POST',
@@ -2505,10 +2564,25 @@ const saveSettings = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: templateEditors.script.contents })
       }),
-      fetch(`/api/templates/${gitignoreTemplateName}`, {
+      fetch('/api/templates/gitignore-project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: templateEditors.gitignore.contents })
+        body: JSON.stringify({ contents: templateEditors.gitignore_project.contents })
+      }),
+      fetch('/api/templates/gitignore-project_sensitive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: templateEditors.gitignore_project_sensitive.contents })
+      }),
+      fetch('/api/templates/gitignore-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: templateEditors.gitignore_course.contents })
+      }),
+      fetch('/api/templates/gitignore-presentation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: templateEditors.gitignore_presentation.contents })
       })
     ])
 
@@ -2529,7 +2603,10 @@ onMounted(() => {
   loadSettings()
   loadTemplateInline('notebook')
   loadTemplateInline('script')
-  loadTemplateInline(activeGitignoreTemplate.value, 'gitignore')
+  loadTemplateInline('gitignore-project', 'gitignore_project')
+  loadTemplateInline('gitignore-project_sensitive', 'gitignore_project_sensitive')
+  loadTemplateInline('gitignore-course', 'gitignore_course')
+  loadTemplateInline('gitignore-presentation', 'gitignore_presentation')
   loadTemplateInline(canonicalTemplateName.value, 'canonical')
   window.addEventListener('keydown', handleKeyDown)
 })

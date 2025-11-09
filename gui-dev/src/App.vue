@@ -10,7 +10,7 @@
         </router-link>
 
         <!-- New Project Button -->
-        <div class="mt-6">
+        <div v-if="$route.path !== '/projects/new'" class="mt-6">
           <router-link
             to="/projects/new"
             class="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 ring-1 ring-zinc-900/10 transition hover:bg-zinc-50 hover:ring-zinc-900/20 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10"
@@ -44,7 +44,7 @@
                       :to="tab.to"
                       :class="[
                         'flex justify-between gap-2 py-1 pl-4 pr-3 text-sm transition',
-                        $route.path.startsWith(tab.to)
+                        isTabActive(tab)
                           ? 'text-zinc-900 dark:text-white'
                           : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                       ]"
@@ -132,11 +132,25 @@ const projects = ref([])
 
 const getActiveGroupIndex = (group) => {
   const tabs = frameworkTabs
-  return tabs.findIndex(tab => route.path.startsWith(tab.to))
+  return tabs.findIndex(tab => {
+    // Don't highlight "Projects" when on "New Project" page
+    if (tab.to === '/projects' && route.path === '/projects/new') {
+      return false
+    }
+    return route.path.startsWith(tab.to)
+  })
 }
 
 const getActiveProjectIndex = () => {
   return projects.value.findIndex(project => route.path === `/project/${project.id}`)
+}
+
+const isTabActive = (tab) => {
+  // Don't highlight "Projects" when on "New Project" page
+  if (tab.to === '/projects' && route.path === '/projects/new') {
+    return false
+  }
+  return route.path.startsWith(tab.to)
 }
 
 // Icons for dark mode toggle

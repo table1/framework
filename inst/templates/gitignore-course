@@ -1,5 +1,5 @@
 # Framework Course/Teaching Project
-# Tailored for courses, workshops, and teaching materials
+# Pattern-based gitignore - works regardless of directory structure customization
 
 # R environment
 .Rproj.user/
@@ -7,38 +7,30 @@
 .RData
 .Ruserdata
 
-# renv (package management) - may want to commit renv.lock for reproducibility
+# renv (package management)
 /renv/
-# Consider committing renv.lock so students can restore exact package versions:
-# !renv.lock
+/renv.lock
 
-# Student work and submissions (don't commit student data)
-/submissions/
-/student_work/
-/grades/
+# Private directories (anywhere in project tree)
+**/private/**
+**/*_private/**
 
-# Rendered course materials (regenerate from source)
-/course_materials/rendered/
-/slides/rendered/
+# Utility directories (anywhere in project tree)
+**/cache/**
+**/scratch/**
 
-# Answer keys and solutions (keep private)
-/solutions_private/
-/answer_keys/
-*_solutions.*
-*_answers.*
-
-# Cache and scratch
-/cache/
-/scratch/
+# Python (if using reticulate)
+__pycache__/
+.ipynb_checkpoints/
 
 # IDE - personal settings only (commit workspace settings)
 .vscode/.history/
-.positron/
+.positron/.history/
 
 # macOS
 .DS_Store
 
-# Secrets
+# Secrets and environment files
 .env
 .env.local
 .Renviron
@@ -46,7 +38,3 @@
 # Temporary files
 *.tmp
 *.log
-
-# Course data exceptions - commit small example datasets
-!course_materials/data/
-!examples/data/
