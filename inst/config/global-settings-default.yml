@@ -1,0 +1,154 @@
+# Framework Global Settings
+# This file contains your default settings for all Framework projects.
+# Location: ~/.config/framework/settings.yml
+# VERSION 2: Reorganized around scaffold() workflow
+# Edit this file to change your defaults, or use: framework configure:*
+
+meta:
+  version: 2
+  description: "Framework global settings"
+
+# Author information (used in new projects)
+author:
+  name: "Your Name"
+  email: "your.email@example.com"
+  affiliation: "Your Institution"
+
+# Global settings
+global:
+  projects_root: "~/projects"  # Default location for new projects
+
+# Default settings for new projects
+defaults:
+  project_type: "project"  # project, course, presentation, project_sensitive
+
+  # Scaffold Behavior (runtime settings)
+  scaffold:
+    seed_on_scaffold: false              # Automatically set seed when scaffold() runs
+    seed: ""                             # Default random seed (e.g., "20241107")
+    set_theme_on_scaffold: true          # Set ggplot2 theme when scaffold() runs
+    ggplot_theme: "theme_minimal"        # ggplot2 theme
+    source_all_functions: true           # Source all R files from functions/ directory
+    notebook_format: "quarto"            # quarto or rmarkdown
+    ide: "vscode"                        # vscode, rstudio, both, or none
+
+  # Packages & Dependencies
+  packages:
+    use_renv: false                      # Use renv for package management
+    default_packages:
+      - name: "dplyr"
+        auto_attach: true
+      - name: "ggplot2"
+        auto_attach: true
+      - name: "readr"
+        auto_attach: false
+
+  # AI Assistants
+  ai:
+    enabled: true                        # Enable AI support
+    canonical_file: "CLAUDE.md"          # Canonical context file
+    preferred_assistant: "claude"        # Preferred AI assistant
+    assistants:
+      - "claude"
+
+  # Git & Hooks
+  git:
+    initialize: true                     # Initialize git repository
+    gitignore_template: "gitignore-project"  # Default .gitignore template
+    hooks:
+      ai_sync: false                     # Sync AI context on commit
+      data_security: false               # Scan for secrets in commits
+
+# Stubs & Templates
+templates:
+  notebook:
+    quarto_default: "notebook-default.qmd"
+    rmarkdown_default: "notebook-default.Rmd"
+  script:
+    r_default: "script-default.R"
+  gitignore:
+    available:
+      - "gitignore-project"
+      - "gitignore-sensitive"
+      - "gitignore-course"
+      - "gitignore-presentation"
+
+# Project type definitions
+project_types:
+  project:
+    label: "Research Project"
+    description: "Full-featured project with organized data, work, and output directories"
+    scaffold:
+      set_theme_on_scaffold: true        # Automatically set ggplot theme when scaffold() runs
+      ggplot_theme: "theme_minimal"      # ggplot2 theme
+    directories:
+      notebooks: "notebooks"
+      scripts: "scripts"
+      functions: "functions"
+      inputs_raw: "inputs/raw"
+      inputs_intermediate: "inputs/intermediate"
+      inputs_final: "inputs/final"
+      reference: "reference"
+      outputs_notebooks: "outputs/notebooks"
+      outputs_tables: "outputs/tables"
+      outputs_figures: "outputs/figures"
+      outputs_models: "outputs/models"
+      outputs_reports: "outputs/reports"
+      cache: "outputs/cache"
+      scratch: "scratch"
+
+  course:
+    label: "Course/Teaching"
+    description: "Simplified structure for teaching materials"
+    scaffold:
+      set_theme_on_scaffold: true
+      ggplot_theme: "theme_minimal"
+    directories:
+      data: "data"
+      slides: "slides"
+      assignments: "assignments"
+      course_docs: "course_docs"
+      readings: "readings"
+      notebooks: "modules"
+
+  presentation:
+    label: "Presentation"
+    description: "Minimal structure for slides and presentations"
+    scaffold:
+      set_theme_on_scaffold: true
+      ggplot_theme: "theme_minimal"
+    directories:
+      presentation_source: "presentation.qmd"
+      rendered_slides: "."
+      data: "data"
+      scripts: "scripts"
+      functions: "functions"
+
+  project_sensitive:
+    label: "Sensitive Data Project"
+    description: "Enhanced privacy controls for sensitive data"
+    scaffold:
+      set_theme_on_scaffold: true
+      ggplot_theme: "theme_minimal"
+    directories:
+      functions: "functions"
+      notebooks: "notebooks"
+      scripts: "scripts"
+      inputs_private_raw: "inputs/private/raw"
+      inputs_public_raw: "inputs/public/raw"
+      inputs_private_intermediate: "inputs/private/intermediate"
+      inputs_public_intermediate: "inputs/public/intermediate"
+      inputs_private_final: "inputs/private/final"
+      inputs_public_final: "inputs/public/final"
+      outputs_private_notebooks: "outputs/private/notebooks"
+      outputs_public_notebooks: "outputs/public/notebooks"
+      outputs_private_tables: "outputs/private/tables"
+      outputs_public_tables: "outputs/public/tables"
+      outputs_private_figures: "outputs/private/figures"
+      outputs_public_figures: "outputs/public/figures"
+      outputs_private_models: "outputs/private/models"
+      outputs_public_models: "outputs/public/models"
+      outputs_private_reports: "outputs/private/reports"
+      outputs_public_reports: "outputs/public/reports"
+      cache: "outputs/private/cache"
+      scratch: "scratch"

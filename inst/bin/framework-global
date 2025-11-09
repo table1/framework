@@ -319,6 +319,25 @@ case "$COMMAND" in
     Rscript --quiet --no-save -e "library(framework); configure_directories()"
     ;;
 
+  settings:edit-template)
+    TEMPLATE_NAME="$2"
+    if [ -z "$TEMPLATE_NAME" ]; then
+      printf "${YELLOW}Usage:${NC} framework settings:edit-template <template>\n"
+      printf "Available templates: %s\n" "$(Rscript --quiet --no-save -e 'cat(paste(framework::list_framework_templates(), collapse=", "))')"
+      exit 1
+    fi
+
+    TEMPLATE_PATH=$(Rscript --quiet --no-save -e "cat(framework::framework_template_path('$TEMPLATE_NAME'))" 2>/dev/null)
+
+    if [ -z "$TEMPLATE_PATH" ]; then
+      printf "${RED}Unknown template: %s${NC}\n" "$TEMPLATE_NAME"
+      exit 1
+    fi
+
+    EDITOR_CMD="${EDITOR:-${VISUAL:-nano}}"
+    "$EDITOR_CMD" "$TEMPLATE_PATH"
+    ;;
+
   # AI namespace
   ai:configure)
     fw_support=$(Rscript --quiet --no-save -e "framework::get_global_setting('defaults.ai_support')" 2>/dev/null)
@@ -714,7 +733,8 @@ case "$COMMAND" in
     printf "  framework settings:editor               Configure editor preferences\n"
     if [ "$IN_PROJECT" = true ]; then
       printf "  framework settings:author               Set author information\n"
-      printf "  framework settings:directories          Configure directories\n"
+    printf "  framework settings:directories          Configure directories\n"
+    printf "  framework settings:edit-template NAME   Edit a template (notebook, gitignore, ai_*)\n"
     fi
     printf "\n"
 

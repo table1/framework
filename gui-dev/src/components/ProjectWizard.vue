@@ -1,11 +1,11 @@
 <template>
-  <!-- Modal overlay -->
-  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="$emit('close')">
-    <Card class="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+  <div :class="outerClass" @click.self="handleBackdropClick">
+    <Card :class="cardClass">
       <template #header>
         <div class="flex items-center justify-between">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Create New Project</h2>
           <button
+            v-if="isModal"
             @click="$emit('close')"
             class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"
           >
@@ -16,16 +16,27 @@
         </div>
       </template>
 
-      <!-- Content -->
       <div class="space-y-6">
         <!-- Project Directory -->
         <Input
           v-model="form.directory"
           label="Project Directory"
-          placeholder="my-analysis"
-          hint="The directory where your project will be created"
+          :placeholder="directoryPlaceholder"
+          :hint="directoryHint"
           @input="suggestName"
         />
+
+        <div
+          v-if="normalizedRoot || showFullPathPreview"
+          class="text-xs text-gray-500 dark:text-gray-400 space-y-1"
+        >
+          <p v-if="normalizedRoot">
+            Projects will be created inside <span class="font-mono">{{ normalizedRoot }}</span>.
+          </p>
+          <p v-if="showFullPathPreview">
+            Full path: <span class="font-mono">{{ resolvedDirectory }}</span>
+          </p>
+        </div>
 
         <!-- Project Name -->
         <Input
@@ -100,7 +111,7 @@
         <Alert v-if="success" type="success" title="Project created successfully!">
           <p class="mt-2">Next steps:</p>
           <ol class="list-decimal list-inside mt-1 space-y-1">
-            <li>cd {{ form.directory }}</li>
+            <li>cd {{ resolvedDirectory }}</li>
             <li>R</li>
             <li>library(framework)</li>
             <li>scaffold()</li>
@@ -127,14 +138,55 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import Card from './ui/Card.vue'
 import Button from './ui/Button.vue'
 import Input from './ui/Input.vue'
 import Checkbox from './ui/Checkbox.vue'
 import Alert from './ui/Alert.vue'
 
-const emit = defineEmits(['close'])
+const props = defineProps({
+  mode: {
+    type: String,
+    default: 'modal',
+    validator: (value) => ['modal', 'page'].includes(value)
+  },
+  projectsRoot: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['close', 'created'])
+
+const isModal = computed(() => props.mode === 'modal')
+
+const normalizedRoot = computed(() => (props.projectsRoot || '').trim())
+
+const isAbsolutePath = (value) => /^([A-Za-z]:[\\/]|\\\\|\/|~)/.test(value)
+
+const joinPaths = (root, segment) => {
+  if (!root) return segment
+  const sanitizedSegment = segment.replace(/^[\\/]+/, '')
+  if (!sanitizedSegment) return root
+  if (root.endsWith('/') || root.endsWith('\\')) {
+    return `${root}${sanitizedSegment}`
+  }
+  const separator = root.includes('\\') && !root.includes('/') ? '\\' : '/'
+  return `${root}${separator}${sanitizedSegment}`
+}
+
+const outerClass = computed(() => (
+  isModal.value
+    ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'
+    : 'flex w-full justify-center'
+))
+
+const cardClass = computed(() => (
+  isModal.value
+    ? 'max-w-2xl w-full max-h-[90vh] overflow-y-auto'
+    : 'w-full max-w-2xl shadow-xl'
+))
 
 const form = reactive({
   directory: '',
@@ -145,6 +197,35 @@ const form = reactive({
   use_renv: false,
   attach_defaults: true
 })
+
+const resolvedDirectory = computed(() => {
+  const dir = form.directory.trim()
+  if (!dir) {
+    return normalizedRoot.value || ''
+  }
+  if (isAbsolutePath(dir)) {
+    return dir
+  }
+  if (!normalizedRoot.value) {
+    return dir
+  }
+  return joinPaths(normalizedRoot.value, dir)
+})
+
+const showFullPathPreview = computed(() => {
+  const dir = form.directory.trim()
+  if (!dir) return false
+  return normalizedRoot.value.length > 0 || isAbsolutePath(dir)
+})
+
+const directoryHint = computed(() => {
+  if (normalizedRoot.value) {
+    return `Folder will be created inside ${normalizedRoot.value}`
+  }
+  return 'The directory where your project will be created'
+})
+
+const directoryPlaceholder = computed(() => (normalizedRoot.value ? 'analytics-project' : 'my-analysis'))
 
 const projectTypes = [
   {
@@ -171,6 +252,12 @@ const creating = ref(false)
 const error = ref('')
 const success = ref(false)
 
+const handleBackdropClick = () => {
+  if (isModal.value) {
+    emit('close')
+  }
+}
+
 const suggestName = () => {
   if (!form.name && form.directory) {
     // Convert directory name to title case
@@ -187,11 +274,13 @@ const createProject = async () => {
   creating.value = true
 
   try {
+    const targetDirectory = resolvedDirectory.value || form.directory
+
     const response = await fetch('/api/project/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        project_dir: form.directory,
+        project_dir: targetDirectory,
         project_name: form.name || form.directory,
         type: form.type,
         sensitive: form.sensitive,
@@ -205,9 +294,15 @@ const createProject = async () => {
 
     if (response.ok && result.success) {
       success.value = true
-      setTimeout(() => {
-        emit('close')
-      }, 3000)
+      if (result && !result.path) {
+        result.path = targetDirectory
+      }
+      emit('created', result)
+      if (isModal.value) {
+        setTimeout(() => {
+          emit('close')
+        }, 3000)
+      }
     } else {
       error.value = result.error || 'Failed to create project'
     }

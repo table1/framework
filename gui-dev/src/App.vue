@@ -9,6 +9,19 @@
           <span class="text-lg font-semibold text-zinc-900 dark:text-white">Framework</span>
         </router-link>
 
+        <!-- New Project Button -->
+        <div class="mt-6">
+          <router-link
+            to="/projects/new"
+            class="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 ring-1 ring-zinc-900/10 transition hover:bg-zinc-50 hover:ring-zinc-900/20 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            New Project
+          </router-link>
+        </div>
+
         <!-- Navigation -->
         <nav class="mt-10">
           <ul role="list">

@@ -170,6 +170,21 @@
           Data
         </a>
 
+        <div v-if="activeSection === 'data' && dataSectionSublinks.length" class="ml-6 mt-1 space-y-0.5">
+          <a
+            v-for="link in dataSectionSublinks"
+            :key="link.anchorId"
+            :href="`#${link.anchorId}`"
+            @click.prevent="handleDataSublinkClick(link)"
+            class="flex items-center justify-between gap-2 rounded-md px-3 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+          >
+            <span class="truncate">{{ link.label }}</span>
+            <span v-if="link.count" class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-300">
+              {{ link.count }}
+            </span>
+          </a>
+        </div>
+
         <a
           href="#env"
           @click.prevent="activeSection = 'env'"
@@ -466,10 +481,23 @@
 
       <!-- Data Section -->
       <div v-show="activeSection === 'data'" id="data">
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Data Catalog</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          Browse your project's data sources with copy commands.
-        </p>
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Data Catalog</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Browse your project's data sources with copy commands.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            class="inline-flex items-center gap-2"
+            @click="openDataCreator"
+          >
+            <PlusIcon class="h-4 w-4" />
+            Add Data Source
+          </Button>
+        </div>
 
         <div class="mb-6">
           <Input
@@ -489,8 +517,45 @@
             :toggle-group="toggleDataGroup"
             :search-term="dataSearch"
             :hierarchical="useHierarchicalDataView"
+            :pending-deletes="dataEntriesToDelete"
             @edit="openDataEditor"
+            @delete="toggleDataDelete"
           />
+        </div>
+
+        <div v-if="hasPendingDataDeletes" class="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/40 dark:bg-red-900/20">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm font-medium text-red-700 dark:text-red-200">
+                {{ pendingDeleteCount }} data source{{ pendingDeleteCount === 1 ? '' : 's' }} marked for deletion.
+              </p>
+              <p class="text-xs text-red-600 dark:text-red-200/80">
+                Changes will be applied when you save.
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                class="shadow-none"
+                :disabled="savingDataDeletes"
+                @click="clearPendingDataDeletes"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                class="bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600 dark:bg-red-500 dark:hover:bg-red-400"
+                :disabled="savingDataDeletes"
+                @click="savePendingDataDeletes"
+              >
+                {{ savingDataDeletes ? 'Saving…' : 'Save Changes' }}
+              </Button>
+            </div>
+          </div>
+          <ul class="mt-3 list-disc space-y-1 pl-5 text-xs font-mono text-red-700 dark:text-red-200/90">
+            <li v-for="key in pendingDeleteList" :key="key">{{ key }}</li>
+          </ul>
         </div>
 
         <div v-else-if="isFilteringData" class="rounded-xl border border-dashed border-zinc-300 bg-white/70 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
@@ -502,20 +567,24 @@
           </p>
         </div>
 
-        <EmptyState
-          v-else
-          title="No Data Sources"
-          description="This project doesn't have any data sources defined in its settings"
-          icon="database"
-        />
+        <template v-else>
+          <EmptyState
+            v-if="!hasPendingDataDeletes && (!dataCatalog || Object.keys(dataCatalog || {}).length === 0)"
+            title="No Data Sources"
+            description="This project doesn't have any data sources defined in its settings"
+            icon="database"
+          />
+        </template>
       </div>
 
       <DataCatalogEditModal
+        :mode="isCreatingDataEntry ? 'create' : 'edit'"
         v-model="isEditingDataEntry"
         :entry="editingDataEntry"
         :saving="savingDataEntry"
         :error="dataEditError"
         @save="handleDataEntrySave"
+        @update:modelValue="handleDataModalVisibility"
       />
 
       <!-- Connections Section -->
@@ -1313,7 +1382,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast'
 import PageHeader from '../components/ui/PageHeader.vue'
@@ -1330,6 +1399,7 @@ import TabPanel from '../components/ui/TabPanel.vue'
 import Modal from '../components/ui/Modal.vue'
 import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
 import DataCatalogTree from '../components/DataCatalogTree.vue'
+import { createDataAnchorId } from '../utils/dataCatalog.js'
 import {
   InformationCircleIcon,
   Cog6ToothIcon,
@@ -1340,7 +1410,8 @@ import {
   EyeIcon,
   EyeSlashIcon,
   CubeIcon,
-  FolderIcon
+  FolderIcon,
+  PlusIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -1357,6 +1428,9 @@ const isEditingDataEntry = ref(false)
 const editingDataEntry = ref(null)
 const savingDataEntry = ref(false)
 const dataEditError = ref(null)
+const isCreatingDataEntry = ref(false)
+const dataEntriesToDelete = ref(new Set())
+const savingDataDeletes = ref(false)
 const projectSettings = ref(null)
 const editableSettings = ref({})
 const settingsLoading = ref(false)
@@ -1632,6 +1706,26 @@ const displayDataTree = computed(() => filteredDataResult.value.nodes)
 const autoExpandedDataKeys = computed(() => filteredDataResult.value.matchedKeys)
 const isFilteringData = computed(() => normalizedDataSearch.value.length > 0)
 
+const dataSectionSublinks = computed(() => {
+  if (isFilteringData.value) return []
+
+  return (dataTree.value || [])
+    .filter((node) => (node.depth || 0) === 0)
+    .map((node) => {
+      const key = node.fullKey || node.name || ''
+      return {
+        anchorId: key ? createDataAnchorId(key) : null,
+        label: node.displayName || formatNodeTitle(node.name || key || 'data source'),
+        count: node.leafCount || (node.type === 'leaf' ? 1 : 0),
+        nodeKey: key
+      }
+    })
+    .filter((link) => link.anchorId && link.label)
+})
+const hasPendingDataDeletes = computed(() => dataEntriesToDelete.value.size > 0)
+const pendingDeleteCount = computed(() => dataEntriesToDelete.value.size)
+const pendingDeleteList = computed(() => Array.from(dataEntriesToDelete.value))
+
 const computeMaxDepth = (nodes) => {
   let maxDepth = 0
   nodes.forEach((node) => {
@@ -1646,43 +1740,70 @@ const computeMaxDepth = (nodes) => {
 const maxDataDepth = computed(() => computeMaxDepth(dataTree.value))
 const useHierarchicalDataView = computed(() => maxDataDepth.value > 2)
 
-const applyDataCatalogUpdate = (catalog, fullKey, newValue) => {
-  if (!catalog || !fullKey) return null
-  const updatedCatalog = cloneDeep(catalog)
-  const segments = fullKey.split('.')
+const upsertDataCatalogEntry = (catalog, fullKey, newValue) => {
+  const segments = fullKey.split('.').filter(Boolean)
+  if (segments.length === 0) return null
+
+  const updatedCatalog = cloneDeep(catalog || {})
   let cursor = updatedCatalog
 
   for (let i = 0; i < segments.length - 1; i++) {
     const segment = segments[i]
-    if (Array.isArray(cursor)) {
-      const index = Number(segment)
-      if (!Number.isInteger(index) || index < 0 || index >= cursor.length) {
-        return null
-      }
-      cursor = cursor[index]
-    } else if (cursor && typeof cursor === 'object' && segment in cursor) {
-      cursor = cursor[segment]
-    } else {
-      return null
+    if (!cursor[segment] || typeof cursor[segment] !== 'object' || Array.isArray(cursor[segment])) {
+      cursor[segment] = {}
     }
+    cursor = cursor[segment]
   }
 
-  const lastSegment = segments[segments.length - 1]
-  const nextValue = cloneDeep(newValue)
-
-  if (Array.isArray(cursor)) {
-    const index = Number(lastSegment)
-    if (!Number.isInteger(index) || index < 0 || index >= cursor.length) {
-      return null
-    }
-    cursor[index] = nextValue
-  } else if (cursor && typeof cursor === 'object') {
-    cursor[lastSegment] = nextValue
-  } else {
-    return null
-  }
-
+  cursor[segments[segments.length - 1]] = cloneDeep(newValue)
   return updatedCatalog
+}
+
+const getDataCatalogEntry = (catalog, fullKey) => {
+  if (!catalog || !fullKey) return null
+  const segments = fullKey.split('.').filter(Boolean)
+  if (segments.length === 0) return null
+
+  let cursor = catalog
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i]
+    if (!cursor || typeof cursor !== 'object' || !(segment in cursor)) {
+      return null
+    }
+    cursor = cursor[segment]
+  }
+  return cursor
+}
+
+const ensureDataPathExpanded = (fullKey) => {
+  const segments = fullKey.split('.').filter(Boolean)
+  if (segments.length <= 1) return
+
+  const updated = new Set(expandedDataKeys.value)
+  let prefix = ''
+  for (let i = 0; i < segments.length - 1; i++) {
+    prefix = prefix ? `${prefix}.${segments[i]}` : segments[i]
+    updated.add(prefix)
+  }
+  expandedDataKeys.value = updated
+}
+
+const scrollToDataAnchor = async (anchorId, nodeKey) => {
+  if (!anchorId) return
+
+  if (nodeKey) {
+    ensureDataPathExpanded(nodeKey)
+    const updated = new Set(expandedDataKeys.value)
+    updated.add(nodeKey)
+    expandedDataKeys.value = updated
+  }
+
+  await nextTick()
+
+  const element = document.getElementById(anchorId)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 }
 
 const persistDataCatalog = async (catalog) => {
@@ -1701,6 +1822,7 @@ const persistDataCatalog = async (catalog) => {
 
 const openDataEditor = (node) => {
   if (!node) return
+  isCreatingDataEntry.value = false
   editingDataEntry.value = {
     fullKey: node.fullKey,
     name: node.name,
@@ -1710,17 +1832,50 @@ const openDataEditor = (node) => {
   isEditingDataEntry.value = true
 }
 
+const openDataCreator = () => {
+  isCreatingDataEntry.value = true
+  editingDataEntry.value = {
+    fullKey: '',
+    data: {}
+  }
+  dataEditError.value = null
+  isEditingDataEntry.value = true
+}
+
+const handleDataModalVisibility = (value) => {
+  isEditingDataEntry.value = value
+  if (!value) {
+    editingDataEntry.value = null
+    dataEditError.value = null
+    savingDataEntry.value = false
+    isCreatingDataEntry.value = false
+  }
+}
+
 const handleDataEntrySave = async (payload) => {
   if (!payload || !payload.fullKey || !payload.data) {
     dataEditError.value = payload?.error || 'Invalid data entry payload'
     return
   }
 
+  const fullKey = payload.fullKey.trim()
+  const isNew = Boolean(payload.isNew)
+
+  if (!fullKey) {
+    dataEditError.value = 'Dot notation key is required'
+    return
+  }
+
+  if (isNew && getDataCatalogEntry(dataCatalog.value, fullKey)) {
+    dataEditError.value = 'A data source with this key already exists'
+    return
+  }
+
   const previousCatalog = cloneDeep(dataCatalog.value)
-  const updatedCatalog = applyDataCatalogUpdate(dataCatalog.value, payload.fullKey, payload.data)
+  const updatedCatalog = upsertDataCatalogEntry(dataCatalog.value, fullKey, payload.data)
 
   if (!updatedCatalog) {
-    dataEditError.value = 'Unable to locate data entry in catalog'
+    dataEditError.value = 'Unable to write data entry to catalog'
     return
   }
 
@@ -1730,9 +1885,16 @@ const handleDataEntrySave = async (payload) => {
 
   try {
     await persistDataCatalog(updatedCatalog)
-    toast.success('Data Catalog Updated', 'Data entry saved successfully')
+    ensureDataPathExpanded(fullKey)
+    toast.success(isNew ? 'Data Source Added' : 'Data Catalog Updated', isNew ? 'Data entry created successfully' : 'Data entry saved successfully')
     isEditingDataEntry.value = false
     editingDataEntry.value = null
+    isCreatingDataEntry.value = false
+    if (dataEntriesToDelete.value.has(fullKey)) {
+      const updatedDeletes = new Set(dataEntriesToDelete.value)
+      updatedDeletes.delete(fullKey)
+      dataEntriesToDelete.value = updatedDeletes
+    }
   } catch (err) {
     dataCatalog.value = previousCatalog
     dataEditError.value = err.message || 'Failed to save data catalog'
@@ -1740,6 +1902,82 @@ const handleDataEntrySave = async (payload) => {
   } finally {
     savingDataEntry.value = false
   }
+}
+
+const removeDataCatalogEntry = (catalog, fullKey) => {
+  if (!catalog || !fullKey) return null
+  const segments = fullKey.split('.').filter(Boolean)
+  if (segments.length === 0) return null
+
+  const updatedCatalog = cloneDeep(catalog)
+  const pathStack = []
+  let cursor = updatedCatalog
+
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i]
+    if (!cursor || typeof cursor !== 'object' || !(segment in cursor)) {
+      return null
+    }
+    pathStack.push({ parent: cursor, key: segment })
+    cursor = cursor[segment]
+  }
+
+  const last = pathStack.pop()
+  if (!last) return null
+  delete last.parent[last.key]
+
+  // Clean up empty objects up the chain
+  for (let i = pathStack.length - 1; i >= 0; i--) {
+    const { parent, key } = pathStack[i]
+    if (parent[key] && typeof parent[key] === 'object' && !Array.isArray(parent[key]) && Object.keys(parent[key]).length === 0) {
+      delete parent[key]
+    }
+  }
+
+  return updatedCatalog
+}
+
+const savePendingDataDeletes = async () => {
+  if (!hasPendingDataDeletes.value) return
+  savingDataDeletes.value = true
+  const currentCatalog = cloneDeep(dataCatalog.value)
+  let nextCatalog = cloneDeep(currentCatalog)
+
+  for (const key of dataEntriesToDelete.value) {
+    const updated = removeDataCatalogEntry(nextCatalog, key)
+    if (!updated) {
+      toast.error('Delete Failed', `Unable to locate ${key} in catalog`)
+      savingDataDeletes.value = false
+      return
+    }
+    nextCatalog = updated
+  }
+
+  try {
+    await persistDataCatalog(nextCatalog)
+    dataCatalog.value = nextCatalog
+    toast.success('Data Catalog Updated', 'Staged deletions have been saved')
+    dataEntriesToDelete.value = new Set()
+  } catch (err) {
+    toast.error('Delete Failed', err.message || 'Failed to save catalog changes')
+  } finally {
+    savingDataDeletes.value = false
+  }
+}
+
+const toggleDataDelete = (node) => {
+  if (!node || !node.fullKey) return
+  const updated = new Set(dataEntriesToDelete.value)
+  if (updated.has(node.fullKey)) {
+    updated.delete(node.fullKey)
+  } else {
+    updated.add(node.fullKey)
+  }
+  dataEntriesToDelete.value = updated
+}
+
+const clearPendingDataDeletes = () => {
+  dataEntriesToDelete.value = new Set()
 }
 
 const toggleDataGroup = (key) => {
@@ -1845,6 +2083,11 @@ const scrollToSection = (sectionId) => {
   if (element) {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+}
+
+const handleDataSublinkClick = (link) => {
+  if (!link) return
+  scrollToDataAnchor(link.anchorId, link.nodeKey)
 }
 
 const loadConnections = async () => {

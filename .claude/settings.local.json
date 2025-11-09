@@ -80,7 +80,8 @@
       "Bash(/opt/homebrew/bin/tmux list-windows:*)",
       "mcp__plugin_claude-mem_claude-mem-search__search_observations",
       "Bash(git push)",
-      "Bash(git -C /Users/erikwestlund/code/better-shoes/R show:*)"
+      "Bash(git -C /Users/erikwestlund/code/better-shoes/R show:*)",
+      "Bash(npm run dev)"
     ],
     "deny": [],
     "ask": []

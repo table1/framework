@@ -1,0 +1,59 @@
+# Framework Presentation Project
+# Tailored for talks, slides, and presentation materials
+
+# R environment
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# renv (package management)
+/renv/
+/renv.lock
+
+# Rendered presentation outputs (regenerate from source)
+/*.html
+/*.pdf
+/slides/*.html
+/slides/*.pdf
+/presentation/*.html
+/presentation/*.pdf
+
+# Quarto/RevealJS outputs
+/_site/
+/.quarto/
+
+# Speaker notes (keep private if needed)
+/notes_private/
+*_speaker_notes.*
+
+# Cache and scratch
+/cache/
+/scratch/
+
+# Large media files (commit selectively)
+# Uncomment if you have large videos or images:
+# *.mp4
+# *.mov
+# *.avi
+
+# IDE - personal settings only (commit workspace settings)
+.vscode/.history/
+.positron/
+
+# macOS
+.DS_Store
+
+# Secrets
+.env
+.env.local
+.Renviron
+
+# Temporary files
+*.tmp
+*.log
+
+# Assets exceptions - commit images and small media
+!assets/
+!images/
+!figures/

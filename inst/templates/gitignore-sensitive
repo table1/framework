@@ -1,0 +1,55 @@
+# Framework Sensitive Data Project
+# Enhanced privacy controls - gitignores all data directories by default
+
+# R environment
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# renv (package management)
+/renv/
+/renv.lock
+
+# Framework generated content
+/cache/
+/scratch/
+
+# ALL data inputs (sensitive project - nothing committed by default)
+/inputs/
+/work/
+
+# Private outputs - NEVER commit
+# Public outputs (outputs/public/ or outputs_public/) are for sharing
+/outputs/private/
+/outputs/cache/
+/outputs_private/
+/inputs_private/
+
+# Python (if using reticulate)
+__pycache__/
+.ipynb_checkpoints/
+
+# IDE - personal settings only (commit workspace settings)
+.vscode/.history/
+.positron/
+
+# macOS
+.DS_Store
+
+# Secrets and environment files
+.env
+.env.local
+.Renviron
+
+# Encrypted data (keep encrypted files out of git by default)
+*.enc
+*.encrypted
+
+# Temporary files
+*.tmp
+*.log
+
+# Documentation of data (commit these!)
+!inputs/README.md
+!inputs_private/README.md

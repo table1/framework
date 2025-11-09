@@ -740,6 +740,127 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   invisible(TRUE)
 }
 
+.validate_projects_root <- function(projects_root) {
+  if (is.null(projects_root)) return(invisible(TRUE))
+
+  checkmate::assert_string(projects_root, min.chars = 1)
+
+  invisible(TRUE)
+}
+
+.validate_project_types <- function(project_types) {
+  if (is.null(project_types)) return(invisible(TRUE))
+
+  checkmate::assert_list(project_types, names = "strict")
+
+  for (type_name in names(project_types)) {
+    entry <- project_types[[type_name]]
+    checkmate::assert_list(entry, names = "unique")
+    if (!is.null(entry$label)) checkmate::assert_string(entry$label, min.chars = 1)
+    if (!is.null(entry$description)) checkmate::assert_string(entry$description, min.chars = 1)
+    if (!is.null(entry$directories)) {
+      checkmate::assert_list(entry$directories)
+      for (dir_value in entry$directories) {
+        if (!is.null(dir_value)) checkmate::assert_string(dir_value, min.chars = 1)
+      }
+    }
+    if (!is.null(entry$quarto)) {
+      checkmate::assert_list(entry$quarto)
+      if (!is.null(entry$quarto$render_dir)) {
+        checkmate::assert_string(entry$quarto$render_dir, min.chars = 1)
+      }
+    }
+    if (!is.null(entry$notebook_template)) {
+      checkmate::assert_string(entry$notebook_template, min.chars = 1)
+    }
+
+    # Validate extra_directories
+    if (!is.null(entry$extra_directories)) {
+      checkmate::assert_list(entry$extra_directories)
+
+      # Track keys to detect duplicates
+      seen_keys <- character()
+
+      for (i in seq_along(entry$extra_directories)) {
+        dir_entry <- entry$extra_directories[[i]]
+
+        # Must be a list with required fields
+        if (!is.list(dir_entry)) {
+          stop(sprintf("Project type '%s': extra_directories[%d] must be an object/list", type_name, i))
+        }
+
+        # Validate required fields
+        if (is.null(dir_entry$key) || !nzchar(dir_entry$key)) {
+          stop(sprintf("Project type '%s': extra_directories[%d] missing required field 'key'", type_name, i))
+        }
+        if (is.null(dir_entry$label) || !nzchar(dir_entry$label)) {
+          stop(sprintf("Project type '%s': extra_directories[%d] missing required field 'label'", type_name, i))
+        }
+        if (is.null(dir_entry$path) || !nzchar(dir_entry$path)) {
+          stop(sprintf("Project type '%s': extra_directories[%d] missing required field 'path'", type_name, i))
+        }
+        if (is.null(dir_entry$type) || !nzchar(dir_entry$type)) {
+          stop(sprintf("Project type '%s': extra_directories[%d] missing required field 'type'", type_name, i))
+        }
+
+        # Validate key format (alphanumeric + underscore only)
+        if (!grepl("^[a-zA-Z0-9_]+$", dir_entry$key)) {
+          stop(sprintf("Project type '%s': extra_directories key '%s' must contain only letters, numbers, and underscores",
+                       type_name, dir_entry$key))
+        }
+
+        # Check for duplicate keys
+        if (dir_entry$key %in% seen_keys) {
+          stop(sprintf("Project type '%s': duplicate extra_directories key '%s'", type_name, dir_entry$key))
+        }
+        seen_keys <- c(seen_keys, dir_entry$key)
+
+        # Validate type
+        valid_types <- c("input", "workspace", "output", "input_private", "input_public", "output_private", "output_public")
+        if (!dir_entry$type %in% valid_types) {
+          stop(sprintf("Project type '%s': extra_directories type '%s' must be one of: %s",
+                       type_name, dir_entry$type, paste(valid_types, collapse = ", ")))
+        }
+
+        # Validate path is relative (no leading slash)
+        if (grepl("^/", dir_entry$path)) {
+          stop(sprintf("Project type '%s': extra_directories path '%s' must be relative (no leading slash)",
+                       type_name, dir_entry$path))
+        }
+
+        # Prevent path traversal
+        if (grepl("\\.\\.", dir_entry$path)) {
+          stop(sprintf("Project type '%s': extra_directories path '%s' cannot contain '..' (path traversal)",
+                       type_name, dir_entry$path))
+        }
+      }
+    }
+  }
+
+  invisible(TRUE)
+}
+
+.validate_git_profile <- function(git) {
+  if (is.null(git)) return(invisible(TRUE))
+
+  checkmate::assert_list(git)
+  # Empty strings are allowed (means use system git config)
+  if (!is.null(git$user_name)) checkmate::assert_string(git$user_name, min.chars = 0)
+  if (!is.null(git$user_email)) checkmate::assert_string(git$user_email, min.chars = 0)
+
+  invisible(TRUE)
+}
+
+.validate_privacy <- function(privacy) {
+  if (is.null(privacy)) return(invisible(TRUE))
+
+  checkmate::assert_list(privacy)
+  if (!is.null(privacy$secret_scan)) checkmate::assert_flag(privacy$secret_scan)
+  if (!is.null(privacy$gitignore_template)) checkmate::assert_string(privacy$gitignore_template, min.chars = 1)
+
+  invisible(TRUE)
+}
+
 
 #' Configure Global Framework Settings
 #'
@@ -810,17 +931,53 @@ configure_global <- function(settings = NULL, validate = TRUE) {
   # Merge settings with current config (deep merge, keeping NULL values)
   updated <- modifyList(current, settings, keep.null = TRUE)
 
+  # CRITICAL FIX: modifyList() doesn't handle unnamed lists (arrays) correctly
+  # It replaces them with empty lists. We need to manually restore extra_directories
+  # for all project types after the merge
+  if (!is.null(settings$project_types)) {
+    for (type_name in names(settings$project_types)) {
+      if (!is.null(settings$project_types[[type_name]]$extra_directories)) {
+        # Directly assign the extra_directories from settings (bypassing modifyList's broken behavior)
+        updated$project_types[[type_name]]$extra_directories <-
+          settings$project_types[[type_name]]$extra_directories
+      }
+    }
+  }
+
+  # CRITICAL FIX: Same issue with defaults.packages array
+  if (!is.null(settings$defaults$packages)) {
+    updated$defaults$packages <- settings$defaults$packages
+  }
+
   # Validate if requested
   if (validate) {
     .validate_author(updated$author)
     .validate_defaults(updated$defaults)
     .validate_projects(updated$projects)
+    .validate_projects_root(updated$projects_root)
+    .validate_project_types(updated$project_types)
+    .validate_git_profile(updated$git)
+    .validate_privacy(updated$privacy)
+  }
+
+  if (!is.null(updated$projects_root)) {
+    if (!nzchar(updated$projects_root)) {
+      updated$projects_root <- NULL
+    } else {
+      updated$projects_root <- path.expand(updated$projects_root)
+    }
+  }
+
+  if (!is.null(updated$project_types) && !is.null(updated$project_types$project$directories)) {
+    updated$defaults$directories <- updated$project_types$project$directories
   }
 
   # Write updated config
   write_frameworkrc(updated)
 
-  message("\u2713 Global configuration updated in ~/.frameworkrc.json")
+  if (validate) {
+    message("\u2713 Global settings updated in ~/.config/framework/settings.yml")
+  }
 
   invisible(updated)
 }

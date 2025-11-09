@@ -27,7 +27,8 @@ test_that("configure_global updates author information", {
 
   on.exit({
     Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
 
   Sys.setenv(HOME = temp_home)
@@ -46,7 +47,8 @@ test_that("configure_global updates author information", {
   expect_equal(result$author$affiliation, "Test Org")
 
   # Verify file was written
-  expect_true(file.exists(file.path(temp_home, ".frameworkrc.json")))
+  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  expect_true(file.exists(settings_path))
 
   # Read back and verify
   saved <- read_frameworkrc()
@@ -230,7 +232,8 @@ test_that("configure_global can skip validation", {
 
   on.exit({
     Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
 
   Sys.setenv(HOME = temp_home)
@@ -247,13 +250,14 @@ test_that("configure_global can skip validation", {
 })
 
 
-test_that("configure_global writes JSON format", {
+test_that("configure_global writes YAML format", {
   temp_home <- tempdir()
   old_home <- Sys.getenv("HOME")
 
   on.exit({
     Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
 
   Sys.setenv(HOME = temp_home)
@@ -262,11 +266,290 @@ test_that("configure_global writes JSON format", {
     author = list(name = "Test User")
   ))
 
-  rc_path <- file.path(temp_home, ".frameworkrc.json")
-  expect_true(file.exists(rc_path))
+  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  expect_true(file.exists(settings_path))
 
-  # Should be valid JSON
-  json_content <- jsonlite::fromJSON(rc_path)
-  expect_true(is.list(json_content))
-  expect_equal(json_content$author$name, "Test User")
+  # Should be valid YAML
+  yaml_content <- yaml::read_yaml(settings_path)
+  expect_true(is.list(yaml_content))
+  expect_equal(yaml_content$author$name, "Test User")
+})
+
+
+# Tests for extra_directories validation
+
+test_that("configure_global accepts valid extra_directories", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Valid extra_directories
+  result <- configure_global(settings = list(
+    project_types = list(
+      project = list(
+        extra_directories = list(
+          list(key = "inputs_archive", label = "Archive", path = "inputs/archive", type = "input"),
+          list(key = "outputs_animations", label = "Animations", path = "outputs/animations", type = "output")
+        )
+      )
+    )
+  ))
+
+  expect_equal(length(result$project_types$project$extra_directories), 2)
+  expect_equal(result$project_types$project$extra_directories[[1]]$key, "inputs_archive")
+  expect_equal(result$project_types$project$extra_directories[[2]]$type, "output")
+})
+
+
+test_that("configure_global rejects extra_directories with missing fields", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Missing 'key' field
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(label = "Archive", path = "inputs/archive", type = "input")
+          )
+        )
+      )
+    )),
+    "missing required field 'key'"
+  )
+
+  # Missing 'type' field
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "test", label = "Test", path = "test")
+          )
+        )
+      )
+    )),
+    "missing required field 'type'"
+  )
+})
+
+
+test_that("configure_global rejects invalid extra_directories key format", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Key with hyphen (invalid)
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "my-dir", label = "My Dir", path = "my-dir", type = "input")
+          )
+        )
+      )
+    )),
+    "must contain only letters, numbers, and underscores"
+  )
+
+  # Key with space (invalid)
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "my dir", label = "My Dir", path = "mydir", type = "input")
+          )
+        )
+      )
+    )),
+    "must contain only letters, numbers, and underscores"
+  )
+})
+
+
+test_that("configure_global rejects duplicate extra_directories keys", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Duplicate keys
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "test_dir", label = "Test 1", path = "test1", type = "input"),
+            list(key = "test_dir", label = "Test 2", path = "test2", type = "input")
+          )
+        )
+      )
+    )),
+    "duplicate extra_directories key 'test_dir'"
+  )
+})
+
+
+test_that("configure_global rejects invalid extra_directories type", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Invalid type
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "test", label = "Test", path = "test", type = "invalid")
+          )
+        )
+      )
+    )),
+    "type 'invalid' must be one of: input, workspace, output"
+  )
+})
+
+
+test_that("configure_global rejects absolute paths in extra_directories", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Absolute path
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "test", label = "Test", path = "/absolute/path", type = "input")
+          )
+        )
+      )
+    )),
+    "must be relative \\(no leading slash\\)"
+  )
+})
+
+
+test_that("configure_global rejects path traversal in extra_directories", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Path traversal
+  expect_error(
+    configure_global(settings = list(
+      project_types = list(
+        project = list(
+          extra_directories = list(
+            list(key = "test", label = "Test", path = "../parent", type = "input")
+          )
+        )
+      )
+    )),
+    "cannot contain '\\.\\.' \\(path traversal\\)"
+  )
+})
+
+
+test_that("configure_global preserves extra_directories through modifyList", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Set initial extra_directories
+  configure_global(settings = list(
+    project_types = list(
+      project = list(
+        extra_directories = list(
+          list(key = "test1", label = "Test 1", path = "test1", type = "input")
+        )
+      )
+    )
+  ))
+
+  # Update author (different field) - extra_directories should persist
+  result <- configure_global(settings = list(
+    author = list(name = "Updated User")
+  ))
+
+  # extra_directories should still exist
+  expect_equal(length(result$project_types$project$extra_directories), 1)
+  expect_equal(result$project_types$project$extra_directories[[1]]$key, "test1")
+
+  # Now update extra_directories
+  result2 <- configure_global(settings = list(
+    project_types = list(
+      project = list(
+        extra_directories = list(
+          list(key = "test2", label = "Test 2", path = "test2", type = "workspace")
+        )
+      )
+    )
+  ))
+
+  # Should be replaced
+  expect_equal(length(result2$project_types$project$extra_directories), 1)
+  expect_equal(result2$project_types$project$extra_directories[[1]]$key, "test2")
+  expect_equal(result2$project_types$project$extra_directories[[1]]$type, "workspace")
 })

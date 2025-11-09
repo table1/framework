@@ -193,10 +193,14 @@ standardize_wd <- function(project_root = NULL) {
       knitr::opts_knit$set(root.dir = project_root)
     }
 
-    # Always set working directory to project root
-    # Even in render contexts, the current chunk needs the correct working directory
-    # The knitr root.dir option (above) ensures future chunks also use project root
-    old_wd <- setwd(project_root)
+    # Change working directory for current session
+    # In knitr/Quarto contexts, suppress the "changed working directory" warning
+    # since we're intentionally managing this via root.dir option
+    if (in_render_context) {
+      suppressWarnings(setwd(project_root))
+    } else {
+      old_wd <- setwd(project_root)
+    }
 
   } else {
     # Return NULL silently - let calling function (scaffold) handle the error

@@ -91,6 +91,9 @@ scaffold <- function(config_file = NULL) {
   # Set random seed for reproducibility (if configured)
   .set_random_seed(config_obj)
 
+  # Set ggplot2 theme if configured
+  .set_ggplot_theme(config_obj)
+
   .install_required_packages(config_obj)
   .load_libraries(config_obj)
   .load_functions(config_file, project_root)
@@ -300,6 +303,16 @@ scaffold <- function(config_file = NULL) {
   }
 
   config <- read_config(config_file)
+
+  # Check if user opted out of sourcing all functions (default: TRUE)
+  source_all <- config$options$source_all_functions
+  if (is.null(source_all)) {
+    source_all <- TRUE  # Default to including all functions
+  }
+
+  if (!isTRUE(source_all)) {
+    return(invisible(NULL))
+  }
 
   # Get function directories from config (can be list or single value)
   func_dirs <- config$options$functions_dir
@@ -543,6 +556,53 @@ scaffold <- function(config_file = NULL) {
 
   set.seed(seed_value)
   message(sprintf("Random seed set to %s.", seed_value))
+
+  invisible(NULL)
+}
+
+#' Set ggplot2 theme for consistent styling
+#' @param config Configuration object from read_config()
+#' @keywords internal
+#' @description
+#' Sets ggplot2 theme if configured. Checks for theme settings in this order:
+#' 1. Project settings.yml (ggplot_theme and set_theme_on_scaffold)
+#' 2. Skip if set_theme_on_scaffold is FALSE or theme is empty
+.set_ggplot_theme <- function(config) {
+  set_theme_on <- config$options$set_theme_on_scaffold %||%
+                  config$set_theme_on_scaffold %||%
+                  FALSE
+
+  if (!isTRUE(set_theme_on)) {
+    return(invisible(NULL))
+  }
+
+  theme_name <- config$options$ggplot_theme %||%
+                config$ggplot_theme %||%
+                ""
+
+  # Skip if no theme specified
+  if (!nzchar(theme_name)) {
+    return(invisible(NULL))
+  }
+
+  # Check if ggplot2 is available
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    warning("set_theme_on_scaffold is enabled but ggplot2 is not installed")
+    return(invisible(NULL))
+  }
+
+  # Get the theme function
+  theme_func <- tryCatch({
+    get(theme_name, envir = asNamespace("ggplot2"))
+  }, error = function(e) {
+    warning(sprintf("ggplot2 theme '%s' not found, skipping theme_set()", theme_name))
+    return(NULL)
+  })
+
+  if (!is.null(theme_func) && is.function(theme_func)) {
+    ggplot2::theme_set(theme_func())
+    message(sprintf("ggplot2 theme set to %s.", theme_name))
+  }
 
   invisible(NULL)
 }

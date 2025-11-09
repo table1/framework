@@ -67,6 +67,7 @@ npm run dev:server
 ```
 → Automatically reloads when `R/` or `inst/plumber.R` files change
 → Uses nodemon to watch files and restart R process
+→ **Note**: Vite may show proxy errors immediately after restart while R server is starting up - these are normal and will resolve once the R server finishes loading (typically 2-5 seconds)
 
 **Alternative - Manual R Server (Old Way):**
 
@@ -97,11 +98,32 @@ cd gui-dev && npm run deploy
 
 This builds the Vue app and copies assets to `inst/gui/` for distribution.
 
+## Configuration System
+
+### Global Configuration (All YAML)
+
+Framework now uses **all-YAML configuration** for consistency across global and project settings.
+
+**Global Config Location**: `~/.config/framework/`
+- `config.yml` - User defaults (author, preferences, default packages, etc.)
+- `projects.yml` - Project registry
+- `settings-catalog.yml` - Templates/schema (copied from package on first run)
+
+**Auto-initialization**: If no global config exists, Framework automatically creates it from `inst/config/global-config-default.yml` on first run (GUI launch or `framework::init_global_config()`).
+
+**Why YAML everywhere**:
+- Consistency - one parser, one format, fewer edge cases
+- Comments supported - crucial for user-editable config files
+- Same structure for global defaults and project settings
+- No conversion logic needed between formats
+
+**Legacy migration**: Old `~/.frameworkrc.json` files are automatically migrated to the new YAML format on first read.
+
 ## Configuration Philosophy
 
 **CRITICAL: When adding new configurable settings, ALWAYS follow this pattern:**
 
-1. **Add to global defaults** (`~/.frameworkrc`):
+1. **Add to global defaults** (`inst/config/global-config-default.yml`):
    - Add `FW_*` environment variable with sensible default
    - Document in comments what the setting controls
    - Example: `FW_SEED="20241016"  # Random seed for reproducibility`

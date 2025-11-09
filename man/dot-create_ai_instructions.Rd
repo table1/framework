@@ -4,7 +4,12 @@
 \alias{.create_ai_instructions}
 \title{Create AI Assistant Instruction Files}
 \usage{
-.create_ai_instructions(assistants, target_dir = ".", project_name = NULL)
+.create_ai_instructions(
+  assistants,
+  target_dir = ".",
+  project_name = NULL,
+  project_type = "project"
+)
 }
 \arguments{
 \item{assistants}{Character vector of assistants: "claude", "copilot", "agents"}
@@ -12,6 +17,8 @@
 \item{target_dir}{Target directory (default: current directory)}
 
 \item{project_name}{Project name for template substitution}
+
+\item{project_type}{Project type for template selection ("project", "project_sensitive", "course", "presentation")}
 }
 \description{
 Internal function called during init() to create AI assistant instruction

@@ -67,8 +67,9 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
 #' @param assistants Character vector of assistants: "claude", "copilot", "agents"
 #' @param target_dir Target directory (default: current directory)
 #' @param project_name Project name for template substitution
+#' @param project_type Project type for template selection ("project", "project_sensitive", "course", "presentation")
 #' @keywords internal
-.create_ai_instructions <- function(assistants, target_dir = ".", project_name = NULL) {
+.create_ai_instructions <- function(assistants, target_dir = ".", project_name = NULL, project_type = "project") {
   if (length(assistants) == 0) {
     return(invisible(NULL))
   }
@@ -77,8 +78,16 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
 
   for (assistant in assistants) {
     if (assistant == "claude") {
-      # Copy CLAUDE.md
-      template_file <- file.path(template_dir, "CLAUDE.fr.md")
+      # Select project-type-specific CLAUDE template
+      template_name <- switch(
+        project_type,
+        "project_sensitive" = "CLAUDE-sensitive.fr.md",
+        "course" = "CLAUDE-course.fr.md",
+        "presentation" = "CLAUDE-presentation.fr.md",
+        "CLAUDE-project.fr.md"  # Default for "project" and any other type
+      )
+
+      template_file <- file.path(template_dir, template_name)
       target_file <- file.path(target_dir, "CLAUDE.md")
 
       if (file.exists(template_file)) {

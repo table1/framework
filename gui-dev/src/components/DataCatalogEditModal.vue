@@ -6,9 +6,9 @@
     title="Edit Data Entry"
     @update:modelValue="(value) => emit('update:modelValue', value)"
   >
-    <template v-if="entry" #default>
+    <template v-if="entry || isCreateMode" #default>
       <div class="space-y-6">
-        <div>
+        <div v-if="!isCreateMode">
           <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Data Key
           </p>
@@ -16,14 +16,23 @@
             {{ entry.fullKey }}
           </p>
         </div>
+        <div v-else>
+          <Input
+            v-model="form.fullKey"
+            label="Dot Notation Key"
+            placeholder="e.g., inputs.raw.custom_dataset"
+            hint="Use dot notation to place this entry within the catalog hierarchy."
+          />
+        </div>
 
         <Input
           v-model="form.path"
           label="File Path"
           placeholder="inputs/raw/example.csv"
           required
-          :error="pathError"
+          :error="pathFieldError"
           monospace
+          hint="Provide a path relative to the project root (e.g., inputs/raw/data.csv) or an absolute path."
         />
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -182,6 +191,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  mode: {
+    type: String,
+    default: 'edit',
+    validator: (value) => ['edit', 'create'].includes(value)
+  },
   entry: {
     type: Object,
     default: null
@@ -201,6 +215,7 @@ const emit = defineEmits(['update:modelValue', 'save'])
 const typeOptions = Object.freeze([
   { value: 'csv', label: 'CSV (comma-separated)' },
   { value: 'tsv', label: 'TSV (tab-separated)' },
+  { value: 'csv_custom', label: 'Delimited text (custom)' },
   { value: 'rds', label: 'RDS (R serialized)' },
   { value: 'excel', label: 'Excel (.xlsx / .xls)' },
   { value: 'stata', label: 'Stata (.dta)' },
@@ -215,9 +230,12 @@ const sampleJsonPlaceholder = '{"source": "data-catalog"}'
 
 const parseError = ref(null)
 const typeManuallySelected = ref(false)
+const showValidationErrors = ref(false)
+const isCreateMode = computed(() => props.mode === 'create')
 
 const form = reactive({
   path: '',
+  fullKey: '',
   type: '',
   description: '',
   delimiter: '',
@@ -225,10 +243,10 @@ const form = reactive({
   additionalFields: []
 })
 
-const shouldShowDelimiter = computed(() => form.type && !['csv', 'tsv'].includes(form.type))
+const shouldShowDelimiter = computed(() => form.type === 'csv_custom')
 
 const localError = computed(() => {
-  if (!props.entry) return null
+  if (!props.entry && !isCreateMode.value) return null
   const duplicateKeys = findDuplicateKeys()
   if (duplicateKeys.length > 0) {
     return `Duplicate metadata keys: ${duplicateKeys.join(', ')}`
@@ -240,6 +258,10 @@ const localError = computed(() => {
 })
 
 const pathError = computed(() => (!form.path.trim() ? 'File path is required' : null))
+const pathFieldError = computed(() => {
+  if (!isCreateMode.value) return pathError.value
+  return showValidationErrors.value ? pathError.value : null
+})
 
 watch(
   () => props.entry,
@@ -256,13 +278,18 @@ watch(
 watch(
   () => form.path,
   (newPath) => {
+    if (typeManuallySelected.value) return
     const guess = guessTypeFromPath(newPath)
     if (!guess) return
-    if (!typeManuallySelected.value || !form.type) {
+    if (guess.type === 'csv') {
+      form.type = 'csv'
+      form.delimiter = defaultDelimiterForType('csv')
+    } else if (guess.type === 'tsv') {
+      form.type = 'tsv'
+      form.delimiter = defaultDelimiterForType('tsv')
+    } else {
       form.type = guess.type
-    }
-    if (!shouldShowDelimiter.value || !form.delimiter) {
-      form.delimiter = guess.delimiter || defaultDelimiterForType(form.type)
+      form.delimiter = ''
     }
   }
 )
@@ -271,9 +298,11 @@ watch(
   () => form.type,
   (newType) => {
     if (!newType) return
-    if (['csv', 'tsv'].includes(newType)) {
-      form.delimiter = defaultDelimiterForType(newType)
-    } else if (!shouldShowDelimiter.value) {
+    if (newType === 'csv') {
+      form.delimiter = defaultDelimiterForType('csv')
+    } else if (newType === 'tsv') {
+      form.delimiter = defaultDelimiterForType('tsv')
+    } else if (newType !== 'csv_custom') {
       form.delimiter = ''
     }
   }
@@ -287,6 +316,18 @@ function defaultDelimiterForType (type) {
   if (type === 'csv') return 'comma'
   if (type === 'tsv') return 'tab'
   return ''
+}
+
+function isStandardDelimiter (delimiter, type) {
+  if (!delimiter) return false
+  const normalized = delimiter.toLowerCase()
+  if (type === 'csv') {
+    return normalized === 'comma' || delimiter === ','
+  }
+  if (type === 'tsv') {
+    return normalized === 'tab' || delimiter === '\t'
+  }
+  return false
 }
 
 function guessTypeFromPath (path) {
@@ -313,25 +354,70 @@ function handleTypeChange (value) {
     typeManuallySelected.value = false
     return
   }
+
   form.type = value
   typeManuallySelected.value = true
-  if (['csv', 'tsv'].includes(value)) {
-    form.delimiter = defaultDelimiterForType(value)
-  } else if (!form.delimiter || ['csv', 'tsv'].includes(form.type)) {
+
+  if (value === 'csv') {
+    form.delimiter = defaultDelimiterForType('csv')
+  } else if (value === 'tsv') {
+    form.delimiter = defaultDelimiterForType('tsv')
+  } else if (value === 'csv_custom') {
+    form.delimiter = ''
+  } else {
     form.delimiter = ''
   }
 }
 
 function initializeForm (entry) {
   resetForm()
+  showValidationErrors.value = false
+  if (isCreateMode.value) {
+    const data = entry?.data || {}
+    form.fullKey = entry?.fullKey || ''
+    form.path = data.path || ''
+    form.type = data.type || ''
+    form.description = data.description || ''
+    form.locked = Boolean(data.locked)
+    form.delimiter = data.delimiter || ''
+    typeManuallySelected.value = false
+    return
+  }
+
   const data = entry.data || {}
+  form.fullKey = entry.fullKey || ''
   form.path = data.path || ''
   const guessed = guessTypeFromPath(form.path)
-  form.type = data.type || guessed?.type || ''
+  const rawType = data.type || guessed?.type || ''
   form.description = data.description || ''
   form.locked = Boolean(data.locked)
-  form.delimiter = data.delimiter || guessed?.delimiter || defaultDelimiterForType(form.type)
-  typeManuallySelected.value = Boolean(data.type)
+
+  if (rawType === 'csv') {
+    const existingDelimiter = data.delimiter || guessed?.delimiter || defaultDelimiterForType('csv')
+    if (isStandardDelimiter(existingDelimiter, 'csv')) {
+      form.type = 'csv'
+      form.delimiter = defaultDelimiterForType('csv')
+    } else if (existingDelimiter) {
+      form.type = 'csv_custom'
+      form.delimiter = existingDelimiter
+    } else {
+      form.type = 'csv'
+      form.delimiter = defaultDelimiterForType('csv')
+    }
+  } else if (rawType === 'tsv') {
+    form.type = 'tsv'
+    form.delimiter = defaultDelimiterForType('tsv')
+  } else {
+    form.type = rawType
+    form.delimiter = shouldShowDelimiter.value ? (data.delimiter || '') : ''
+  }
+
+  if (!form.type && guessed?.type) {
+    form.type = guessed.type
+    form.delimiter = guessed.delimiter || defaultDelimiterForType(guessed.type)
+  }
+
+  typeManuallySelected.value = Boolean(data.type) || (form.type === 'csv_custom')
 
   const extraFields = Object.entries(data)
     .filter(([key]) => !reservedKeys.includes(key))
@@ -349,6 +435,7 @@ function initializeForm (entry) {
 
 function resetForm () {
   form.path = ''
+  form.fullKey = ''
   form.type = ''
   form.description = ''
   form.delimiter = ''
@@ -462,8 +549,9 @@ function toggleFieldMode (field) {
 
 const handleSave = () => {
   parseError.value = null
+  showValidationErrors.value = true
   if (pathError.value || localError.value) return
-  if (!props.entry) return
+  if (!isCreateMode.value && !props.entry) return
 
   try {
     const payload = buildPayload()
@@ -481,15 +569,22 @@ const buildPayload = () => {
   const data = {}
   data.path = form.path.trim()
 
-  if (form.type.trim()) {
-    data.type = form.type.trim()
+  const typeValue = form.type === 'csv_custom' ? 'csv' : form.type.trim()
+
+  if (typeValue) {
+    data.type = typeValue
   }
 
   if (form.description.trim()) {
     data.description = form.description.trim()
   }
 
-  if (form.delimiter.trim()) {
+  if (form.type === 'csv_custom') {
+    if (!form.delimiter.trim()) {
+      throw new Error('Delimiter is required for custom delimited text sources')
+    }
+    data.delimiter = form.delimiter.trim()
+  } else if (form.delimiter.trim() && !isStandardDelimiter(form.delimiter.trim(), form.type)) {
     data.delimiter = form.delimiter.trim()
   }
 
@@ -512,9 +607,16 @@ const buildPayload = () => {
     data[key] = value
   }
 
+  const fullKey = (isCreateMode.value ? form.fullKey : props.entry.fullKey || '').trim()
+
+  if (!fullKey) {
+    throw new Error('Dot notation key is required')
+  }
+
   return {
-    fullKey: props.entry.fullKey,
-    data
+    fullKey,
+    data,
+    isNew: isCreateMode.value
   }
 }
 </script>

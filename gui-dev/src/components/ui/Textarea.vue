@@ -12,7 +12,7 @@
         :required="required"
         :disabled="disabled"
         @input="$emit('update:modelValue', $event.target.value)"
-        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-sky-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-sky-500"
+        :class="textareaClasses"
       ></textarea>
     </div>
     <p v-if="hint" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -22,7 +22,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   id: {
     type: String,
     default: () => `textarea-${Math.random().toString(36).substr(2, 9)}`
@@ -54,8 +56,22 @@ defineProps({
   hint: {
     type: String,
     default: null
+  },
+  monospace: {
+    type: Boolean,
+    default: false
+  },
+  textareaClass: {
+    type: [String, Array, Object],
+    default: ''
   }
 })
 
 defineEmits(['update:modelValue'])
+
+const textareaClasses = computed(() => [
+  'block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-sky-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-sky-500',
+  props.monospace ? 'font-mono text-sm leading-6' : '',
+  props.textareaClass
+])
 </script>

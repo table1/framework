@@ -1,0 +1,52 @@
+# Framework Course/Teaching Project
+# Tailored for courses, workshops, and teaching materials
+
+# R environment
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# renv (package management) - may want to commit renv.lock for reproducibility
+/renv/
+# Consider committing renv.lock so students can restore exact package versions:
+# !renv.lock
+
+# Student work and submissions (don't commit student data)
+/submissions/
+/student_work/
+/grades/
+
+# Rendered course materials (regenerate from source)
+/course_materials/rendered/
+/slides/rendered/
+
+# Answer keys and solutions (keep private)
+/solutions_private/
+/answer_keys/
+*_solutions.*
+*_answers.*
+
+# Cache and scratch
+/cache/
+/scratch/
+
+# IDE - personal settings only (commit workspace settings)
+.vscode/.history/
+.positron/
+
+# macOS
+.DS_Store
+
+# Secrets
+.env
+.env.local
+.Renviron
+
+# Temporary files
+*.tmp
+*.log
+
+# Course data exceptions - commit small example datasets
+!course_materials/data/
+!examples/data/

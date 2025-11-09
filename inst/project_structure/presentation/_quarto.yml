@@ -1,21 +1,21 @@
 project:
   type: default
 
-# Single presentation project - revealjs slides by default
+execute:
+  echo: true
+  warning: true
+  message: false
+  error: false
+  cache: false
 
 format:
-  revealjs:
-    theme: [default]
-    slide-number: true
-    transition: slide
-    background-transition: fade
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
     code-fold: false
     code-tools: true
-    code-link: true
+    df-print: paged
+    fig-width: 8
+    fig-height: 6
     embed-resources: true
-
-execute:
-  freeze: auto
-  cache: true
-  warning: false
-  message: false

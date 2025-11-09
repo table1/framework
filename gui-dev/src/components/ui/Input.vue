@@ -17,10 +17,11 @@
         :aria-invalid="error ? 'true' : undefined"
         :aria-describedby="error ? `${id}-error` : hint ? `${id}-description` : undefined"
         @input="$emit('update:modelValue', $event.target.value)"
+        @blur="$emit('blur', $event)"
         :class="inputClassesWithPrefix"
       />
     </div>
-    <div v-else :class="['mt-2', error ? 'grid grid-cols-1' : '']">
+    <div v-else class="mt-2">
       <input
         :id="id"
         :type="type"
@@ -31,6 +32,7 @@
         :aria-invalid="error ? 'true' : undefined"
         :aria-describedby="error ? `${id}-error` : hint ? `${id}-description` : undefined"
         @input="$emit('update:modelValue', $event.target.value)"
+        @blur="$emit('blur', $event)"
         :class="inputClasses"
       />
       <svg
@@ -47,7 +49,7 @@
     <p v-if="error" :id="`${id}-error`" class="mt-2 text-sm text-red-600 dark:text-red-400">
       {{ error }}
     </p>
-    <p v-if="hint && !error" :id="`${id}-description`" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+    <p v-if="hint && !error" :id="`${id}-description`" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
       {{ hint }}
     </p>
   </div>
@@ -103,7 +105,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['update:modelValue'])
+defineEmits(['update:modelValue', 'blur'])
 
 const inputClasses = computed(() => {
   const classes = [

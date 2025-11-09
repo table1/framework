@@ -408,7 +408,7 @@ init <- function(
   # Prompt for AI assistant support (if enabled by user)
   assistants <- .prompt_ai_support_init()
   if (length(assistants) > 0) {
-    .create_ai_instructions(assistants, target_dir, project_name)
+    .create_ai_instructions(assistants, target_dir, project_name, type)
   }
 
   # Configure git hooks if enabled
@@ -577,7 +577,7 @@ init <- function(
     if (fname == "test.fr.R") next  # Skip test file template
 
     # Skip AI instruction files (handled by .create_ai_instructions based on user selection)
-    if (fname == "CLAUDE.fr.md") next
+    if (grepl("^CLAUDE.*\\.fr\\.md$", fname)) next  # Skip all CLAUDE template variants
     if (fname == "AGENTS.fr.md") next
     if (fname == "copilot-instructions.fr.md") next
 

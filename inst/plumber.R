@@ -75,10 +75,199 @@ function(pr) {
   })
 }
 
-#* Get global settings and projects list
+#* Get global settings (simple endpoint for new project wizard)
+#* @get /api/settings
+#* @serializer unboxedJSON
+function() {
+  settings_path <- path.expand("~/.config/framework/settings.yml")
+  first_run <- !file.exists(settings_path)
+
+  settings <- framework::read_frameworkrc()
+
+  # Check if v1 format (no meta.version or version < 2)
+  needs_migration <- is.null(settings$meta$version) || settings$meta$version < 2
+
+  if (needs_migration) {
+    message("Auto-migrating settings from v1 to v2...")
+
+    # Build v2 structure
+    settings_v2 <- list(
+      meta = list(version = 2, description = "Framework global settings"),
+      author = settings$author %||% list(
+        name = "Your Name",
+        email = "your.email@example.com",
+        affiliation = "Your Institution"
+      ),
+      global = list(
+        projects_root = settings$projects_root %||% "~/projects"
+      ),
+      defaults = list(
+        project_type = settings$defaults$project_type %||% "project",
+        scaffold = list(
+          seed_on_scaffold = settings$defaults$seed_on_scaffold %||% FALSE,
+          seed = settings$defaults$seed %||% "",
+          set_theme_on_scaffold = settings$defaults$set_theme_on_scaffold %||% TRUE,
+          ggplot_theme = settings$defaults$ggplot_theme %||% "theme_minimal",
+          notebook_format = settings$defaults$notebook_format %||% "quarto",
+          ide = settings$defaults$ide %||% "vscode"
+        ),
+        packages = list(
+          use_renv = settings$defaults$use_renv %||% FALSE,
+          default_packages = if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages)) {
+            # Convert to proper structure if needed, filtering out malformed entries
+            result <- lapply(settings$defaults$packages, function(pkg) {
+              if (is.character(pkg) && length(pkg) == 1) {
+                # Single string like "dplyr"
+                list(name = pkg, auto_attach = TRUE)
+              } else if (is.list(pkg) && !is.null(pkg$name)) {
+                # Already proper format
+                list(name = as.character(pkg$name), auto_attach = isTRUE(pkg$auto_attach))
+              } else {
+                # Skip arrays, malformed entries, etc.
+                NULL
+              }
+            })
+            # Filter out NULLs and unbox to force JSON array
+            filtered <- Filter(Negate(is.null), result)
+            if (length(filtered) == 0) character(0) else filtered
+          } else {
+            character(0)
+          }
+        ),
+        ai = list(
+          enabled = settings$defaults$ai_support %||% TRUE,
+          canonical_file = settings$defaults$ai_canonical_file %||% "CLAUDE.md",
+          preferred_assistant = settings$defaults$ai_assistants %||% "claude",
+          assistants = I(if (is.character(settings$defaults$ai_assistants)) {
+            strsplit(settings$defaults$ai_assistants, ",\\s*")[[1]]
+          } else {
+            c("claude")
+          })
+        ),
+        git = list(
+          initialize = settings$defaults$use_git %||% TRUE,
+          gitignore_template = settings$privacy$gitignore_template %||% "gitignore-project",
+          hooks = list(
+            ai_sync = settings$defaults$git_hooks$ai_sync %||% FALSE,
+            data_security = settings$defaults$git_hooks$data_security %||% FALSE
+          )
+        )
+      ),
+      templates = settings$templates %||% list(),
+      project_types = settings$project_types %||% list()
+    )
+
+    settings <- settings_v2
+
+    # Save migrated settings back to disk
+    framework::write_frameworkrc(settings)
+  }
+
+  # Expand ~ in projects_root for frontend display
+  if (!is.null(settings$global$projects_root)) {
+    settings$global$projects_root <- path.expand(settings$global$projects_root)
+  }
+
+  # Add metadata about settings state
+  settings$meta$first_run <- first_run
+  settings$meta$settings_path <- settings_path
+
+  # CRITICAL FIX: Empty packages list becomes {} in JSON instead of []
+  # Force it to be an array by using I() wrapper
+  if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages) && length(settings$defaults$packages) == 0) {
+    settings$defaults$packages <- I(list())
+  }
+
+  return(settings)
+}
+
+#* Get global settings and projects list (legacy endpoint)
 #* @get /api/settings/get
 function() {
+  settings_path <- path.expand("~/.config/framework/settings.yml")
+  first_run <- !file.exists(settings_path)
+
   settings <- framework::read_frameworkrc()
+
+  # Check if v1 format (no meta.version or version < 2)
+  needs_migration <- is.null(settings$meta$version) || settings$meta$version < 2
+
+  if (needs_migration) {
+    message("Auto-migrating settings from v1 to v2...")
+
+    # Build v2 structure
+    settings_v2 <- list(
+      meta = list(version = 2, description = "Framework global settings"),
+      author = settings$author %||% list(
+        name = "Your Name",
+        email = "your.email@example.com",
+        affiliation = "Your Institution"
+      ),
+      global = list(
+        projects_root = settings$projects_root %||% "~/projects"
+      ),
+      defaults = list(
+        project_type = settings$defaults$project_type %||% "project",
+        scaffold = list(
+          seed_on_scaffold = settings$defaults$seed_on_scaffold %||% FALSE,
+          seed = settings$defaults$seed %||% "",
+          set_theme_on_scaffold = settings$defaults$set_theme_on_scaffold %||% TRUE,
+          ggplot_theme = settings$defaults$ggplot_theme %||% "theme_minimal",
+          notebook_format = settings$defaults$notebook_format %||% "quarto",
+          ide = settings$defaults$ide %||% "vscode"
+        ),
+        packages = list(
+          use_renv = settings$defaults$use_renv %||% FALSE,
+          default_packages = if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages)) {
+            # Convert to proper structure if needed, filtering out malformed entries
+            result <- lapply(settings$defaults$packages, function(pkg) {
+              if (is.character(pkg) && length(pkg) == 1) {
+                # Single string like "dplyr"
+                list(name = pkg, auto_attach = TRUE)
+              } else if (is.list(pkg) && !is.null(pkg$name)) {
+                # Already proper format
+                list(name = as.character(pkg$name), auto_attach = isTRUE(pkg$auto_attach))
+              } else {
+                # Skip arrays, malformed entries, etc.
+                NULL
+              }
+            })
+            # Filter out NULLs and unbox to force JSON array
+            filtered <- Filter(Negate(is.null), result)
+            if (length(filtered) == 0) character(0) else filtered
+          } else {
+            character(0)
+          }
+        ),
+        ai = list(
+          enabled = settings$defaults$ai_support %||% TRUE,
+          canonical_file = settings$defaults$ai_canonical_file %||% "CLAUDE.md",
+          preferred_assistant = settings$defaults$ai_assistants %||% "claude",
+          assistants = I(if (is.character(settings$defaults$ai_assistants)) {
+            strsplit(settings$defaults$ai_assistants, ",\\s*")[[1]]
+          } else {
+            c("claude")
+          })
+        ),
+        git = list(
+          initialize = settings$defaults$use_git %||% TRUE,
+          gitignore_template = settings$privacy$gitignore_template %||% "gitignore-project",
+          hooks = list(
+            ai_sync = settings$defaults$git_hooks$ai_sync %||% FALSE,
+            data_security = settings$defaults$git_hooks$data_security %||% FALSE
+          )
+        )
+      ),
+      templates = settings$templates %||% list(),
+      project_types = settings$project_types %||% list(),
+      projects = settings$projects %||% list()
+    )
+
+    settings <- settings_v2
+
+    # Save migrated settings back to disk
+    framework::write_frameworkrc(settings)
+  }
 
   # Enrich projects with live metadata
   if (!is.null(settings$projects) && length(settings$projects) > 0) {
@@ -92,20 +281,67 @@ function() {
     })
   }
 
+  # Add metadata about settings state
+  settings$meta$first_run <- first_run
+  settings$meta$settings_path <- settings_path
+
+  # CRITICAL FIX: Empty packages list becomes {} in JSON instead of []
+  # Force it to be an array by using I() wrapper
+  if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages) && length(settings$defaults$packages) == 0) {
+    settings$defaults$packages <- I(list())
+  }
+
   return(settings)
+}
+
+#* Get settings catalog (simple endpoint for new project wizard)
+#* @get /api/settings-catalog
+function() {
+  framework::load_settings_catalog()
+}
+
+#* Get settings catalog metadata and defaults (legacy endpoint)
+#* @get /api/settings/catalog
+function() {
+  framework::load_settings_catalog()
+}
+
+#* Fetch template contents for editing
+#* @get /api/templates/<name>
+function(name) {
+  contents <- framework::read_framework_template(name)
+  list(success = TRUE, name = name, contents = contents)
+}
+
+#* Update a template's contents
+#* @post /api/templates/<name>
+#* @param req The request object
+function(name, req) {
+  body <- jsonlite::fromJSON(req$postBody)
+  framework::write_framework_template(name, body$contents %||% "")
+  list(success = TRUE)
+}
+
+#* Reset a template back to defaults
+#* @delete /api/templates/<name>
+function(name) {
+  framework::reset_framework_template(name)
+  list(success = TRUE)
 }
 
 #* Save global settings
 #* @post /api/settings/save
 #* @param req The request object
 function(req) {
-  body <- jsonlite::fromJSON(req$postBody)
+  body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
 
   tryCatch({
     # Use unified configure_global function for validation and persistence
     framework::configure_global(settings = body, validate = TRUE)
     list(success = TRUE)
   }, error = function(e) {
+    message("ERROR: ", e$message)
+    message("Traceback: ", paste(as.character(sys.calls()), collapse = "\n"))
     list(success = FALSE, error = e$message)
   })
 }
@@ -399,9 +635,17 @@ function(id, req) {
 
     # Save author settings
     if (!is.null(body$author)) {
-      if (file.exists("settings/author.yml")) {
-        yaml::write_yaml(list(author = body$author), "settings/author.yml")
+      author_file <- "settings/author.yml"
+      if (file.exists(author_file)) {
+        message("Saving author to: ", author_file)
+        message("Author data: ", jsonlite::toJSON(body$author, auto_unbox = TRUE))
+        yaml::write_yaml(list(author = body$author), author_file)
+        message("Author file saved successfully")
+      } else {
+        message("Author file does not exist: ", author_file)
       }
+    } else {
+      message("No author data in request body")
     }
 
     # Save directories settings
@@ -1167,7 +1411,53 @@ function(id, req) {
   })
 }
 
-#* Create a new Framework project
+#* Create a new Framework project (new endpoint)
+#* @post /api/projects/create
+#* @param req The request object
+function(req) {
+  body <- jsonlite::fromJSON(req$postBody)
+
+  tryCatch({
+    # Build project_dir from location + name
+    project_dir <- file.path(
+      path.expand(body$location),
+      body$name
+    )
+
+    # Save current working directory
+    old_wd <- getwd()
+    on.exit(setwd(old_wd))
+
+    # Change to parent directory
+    parent_dir <- path.expand(body$location)
+    if (!dir.exists(parent_dir)) {
+      dir.create(parent_dir, recursive = TRUE)
+    }
+    setwd(parent_dir)
+
+    # Create the project in subdirectory
+    framework::init(
+      subdir = body$name,
+      project_name = body$name,
+      type = body$type,
+      author_name = body$author$name %||% "",
+      author_email = body$author$email %||% "",
+      author_affiliation = body$author$affiliation %||% "",
+      use_git = body$use_git %||% TRUE,
+      use_renv = body$use_renv %||% FALSE,
+      default_notebook_format = body$notebook_format %||% "quarto"
+    )
+
+    # Add to project registry
+    project_id <- framework::add_project_to_config(project_dir)
+
+    list(success = TRUE, path = project_dir, id = project_id)
+  }, error = function(e) {
+    list(success = FALSE, error = e$message)
+  })
+}
+
+#* Create a new Framework project (legacy endpoint)
 #* @post /api/project/create
 #* @param req The request object
 function(req) {

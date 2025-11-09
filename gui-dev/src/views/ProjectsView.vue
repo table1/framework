@@ -9,12 +9,33 @@
           <Button size="lg" variant="secondary" @click="showImportModal = true">
             Import Project
           </Button>
-          <Button size="lg" @click="showWizard = true">
+          <Button size="lg" @click="goToNewProject">
             New Project
           </Button>
         </div>
       </template>
     </PageHeader>
+
+    <div
+      v-if="projectsRoot"
+      class="mt-6 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="min-w-0">
+        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">Projects Root</p>
+        <p class="mt-1 font-mono text-sm text-zinc-600 dark:text-zinc-400 truncate">{{ projectsRoot }}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <CopyButton
+          :value="projectsRoot"
+          variant="ghost"
+          show-label
+          success-message="Root path copied"
+        />
+        <Button size="sm" variant="secondary" @click="router.push('/settings')">
+          Edit
+        </Button>
+      </div>
+    </div>
 
     <!-- Project List -->
     <div v-if="settings.projects && settings.projects.length > 0" class="mt-10 grid gap-6 sm:grid-cols-2">
@@ -113,7 +134,7 @@
           </p>
 
           <button
-            @click="showWizard = true"
+            @click="goToNewProject"
             class="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-base font-semibold text-sky-600 shadow-xl transition-all duration-200 hover:scale-105 hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +147,12 @@
     </div>
 
     <!-- Project Wizard Modal -->
-    <ProjectWizard v-if="showWizard" @close="handleWizardClose" />
+    <ProjectWizard
+      v-if="showWizard"
+      :projects-root="projectsRoot"
+      @close="handleWizardClose"
+      @created="handleWizardCreated"
+    />
 
     <!-- Import Project Modal -->
     <Modal
@@ -253,13 +279,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import ProjectWizard from '../components/ProjectWizard.vue'
 import PageHeader from '../components/ui/PageHeader.vue'
 import Button from '../components/ui/Button.vue'
 import Badge from '../components/ui/Badge.vue'
 import Modal from '../components/ui/Modal.vue'
+import CopyButton from '../components/ui/CopyButton.vue'
 
+const router = useRouter()
+const route = useRoute()
 const showWizard = ref(false)
 const showImportModal = ref(false)
 const showDetailsModal = ref(false)
@@ -271,6 +301,7 @@ const selectedProject = ref(null)
 const settings = ref({
   projects: []
 })
+const projectsRoot = ref('')
 
 const loadSettings = async () => {
   try {
@@ -278,18 +309,37 @@ const loadSettings = async () => {
     const data = await response.json()
 
     // Always load projects if they exist, regardless of global author settings
-    settings.value = {
-      projects: data.projects || []
-    }
+    settings.value.projects = data.projects || []
+    projectsRoot.value = data.projects_root && data.projects_root !== '' ? data.projects_root : ''
   } catch (error) {
     console.error('Failed to load settings:', error)
   }
 }
 
+const goToNewProject = () => {
+  if (route.path === '/projects/new') {
+    showWizard.value = true
+  } else {
+    router.push('/projects/new')
+  }
+}
+
 const handleWizardClose = () => {
   showWizard.value = false
-  // Reload projects after wizard closes
+  if (route.path === '/projects/new') {
+    router.push('/projects')
+  }
+}
+
+const handleWizardCreated = (result) => {
+  showWizard.value = false
   loadSettings()
+
+  if (result?.id) {
+    router.push(`/project/${result.id}`)
+  } else {
+    router.push('/projects')
+  }
 }
 
 const closeImportModal = () => {
@@ -342,5 +392,14 @@ const handleImport = async () => {
 
 onMounted(() => {
   loadSettings()
+  showWizard.value = route.path === '/projects/new'
 })
+
+watch(
+  () => route.path,
+  (path) => {
+    showWizard.value = path === '/projects/new'
+  },
+  { immediate: true }
+)
 </script>
