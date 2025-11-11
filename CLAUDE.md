@@ -48,6 +48,12 @@ This is the **Framework** R package - a data management and project scaffolding 
 
 The Framework GUI is developed in `gui-dev/` (Vue 3 + Tailwind) and served by R via httpuv.
 
+### Iconography
+
+- Prefer **Font Awesome Sharp Light** variants when choosing new icons so weights match existing design language.
+- Keep SVGs inline (no external requests) and scope them to the consuming component rather than global assets.
+- When adding filled/sharp icons, remember to expose `svgFill`, `svgStroke`, and related props so sections that still rely on outline icons remain unaffected.
+
 **Development Setup (Auto-Reload):**
 
 Run these two servers in separate terminals:

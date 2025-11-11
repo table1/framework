@@ -20,8 +20,20 @@
             ]"
           >
             <component v-if="section.icon" :is="section.icon" class="h-4 w-4" />
-            <svg v-else-if="section.svgIcon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="section.svgIcon" />
+            <svg
+              v-else-if="section.svgIcon"
+              class="h-4 w-4"
+              :fill="section.svgFill ?? 'none'"
+              :viewBox="section.svgViewBox ?? '0 0 24 24'"
+              :stroke="section.svgStroke ?? 'currentColor'"
+            >
+              <path
+                :stroke-linecap="section.svgStrokeLinecap ?? 'round'"
+                :stroke-linejoin="section.svgStrokeLinejoin ?? 'round'"
+                :stroke-width="section.svgStrokeWidth ?? 2"
+                :fill="section.svgPathFill ?? 'none'"
+                :d="section.svgIcon"
+              />
             </svg>
             {{ section.label }}
           </a>
@@ -103,7 +115,7 @@
                 title="AI Assistants"
                 @click="activeSection = 'ai'"
               >
-                <template v-if="project.ai.enabled && project.ai.assistants.length > 0">
+                <template v-if="project.ai.enabled && Array.isArray(project.ai.assistants) && project.ai.assistants.length > 0">
                   {{ project.ai.assistants.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') }}
                   <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
                   <span class="text-gray-600 dark:text-gray-400">{{ project.ai.canonical_file }}</span>
@@ -174,7 +186,8 @@
               />
 
               <Input
-                v-model="project.location"
+                :model-value="project.location"
+                @update:modelValue="handleLocationInput"
                 label="Project Location"
                 hint="Directory where the project will be created"
                 placeholder="e.g., ~/projects or /Users/yourname/code"
@@ -248,67 +261,17 @@
 
         <!-- Scaffold Behavior Section -->
         <div v-show="activeSection === 'scaffold'">
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              Scaffold Behavior
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Automatic actions when <code class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">scaffold()</code> runs to initialize your project environment.
-            </p>
-            <div class="space-y-5">
-              <!-- Auto-Load Functions -->
-              <div>
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Auto-Load Functions</h4>
-                <Toggle
-                  v-model="project.scaffold.source_all_functions"
-                  label="Source all R files from functions/ directory"
-                  description="Automatically loads all helper functions when scaffold() runs"
-                />
-              </div>
-
-              <!-- ggplot Theme -->
-              <div>
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">ggplot2 Theme</h4>
-                <Toggle
-                  v-model="project.scaffold.set_theme_on_scaffold"
-                  label="Set ggplot2 theme when scaffold() runs"
-                  description="Automatically sets ggplot2 theme for consistent plot styling"
-                />
-                <Select
-                  v-if="project.scaffold.set_theme_on_scaffold"
-                  v-model="project.scaffold.ggplot_theme"
-                  label="Theme"
-                  class="mt-4"
-                >
-                  <option value="">None</option>
-                  <option value="theme_minimal">Minimal</option>
-                  <option value="theme_bw">Black & White</option>
-                  <option value="theme_classic">Classic</option>
-                  <option value="theme_gray">Gray (default)</option>
-                  <option value="theme_light">Light</option>
-                  <option value="theme_dark">Dark</option>
-                  <option value="theme_void">Void</option>
-                </Select>
-              </div>
-
-              <!-- Random Seed -->
-              <div>
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Random Seed</h4>
-                <Toggle
-                  v-model="project.scaffold.seed_on_scaffold"
-                  label="Set random seed when scaffold() runs"
-                  description="Ensures deterministic behavior for reproducibility"
-                />
-                <Input
-                  v-if="project.scaffold.seed_on_scaffold"
-                  v-model="project.scaffold.seed"
-                  label="Seed Value"
-                  placeholder="e.g., 1234 or 20241107"
-                  hint="Leave empty to use global default"
-                  class="mt-4"
-                />
-              </div>
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 space-y-6">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                Scaffold Behavior
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Automatic actions when <code class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">scaffold()</code> runs to initialize your project environment.
+              </p>
             </div>
+
+            <ScaffoldBehaviorPanel v-model="project.scaffold" flush />
           </div>
         </div>
 
@@ -1520,21 +1483,13 @@
                       v-for="assistant in availableAssistants"
                       :key="assistant.id"
                       :id="`ai-${assistant.id}`"
-                      :model-value="project.ai.assistants.includes(assistant.id)"
+                      :model-value="Array.isArray(project.ai.assistants) && project.ai.assistants.includes(assistant.id)"
                       @update:model-value="toggleAssistant(assistant.id, $event)"
                       :description="assistant.description"
                     >
                       {{ assistant.label }}
                     </Checkbox>
                   </div>
-                </div>
-
-                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <Toggle
-                    v-model="project.git.hooks.ai_sync"
-                    label="Sync AI Files Before Commit"
-                    description="Update non-canonical files so assistants share the same instructions."
-                  />
                 </div>
 
                 <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -1555,47 +1510,11 @@
 
         <!-- Git & Hooks Section -->
         <div v-show="activeSection === 'git'">
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              Git & Hooks
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Configure version control and git hooks for this project.
-            </p>
-            <div class="space-y-5">
-              <Toggle
-                v-model="project.git.initialize"
-                label="Initialize Git repository"
-                description="Run git init for this project"
-              />
-
-              <div v-if="project.git.initialize" class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-5">
-                <div>
-                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Git Hooks</h4>
-                  <div class="space-y-4">
-                    <Toggle
-                      id="hook-ai-sync"
-                      v-model="project.git.hooks.ai_sync"
-                      label="AI Context File Mirroring"
-                      description="Mirror and sync AI context files (CLAUDE.md, AGENTS.md, etc.) on commit"
-                    />
-                    <Toggle
-                      id="hook-data-security"
-                      v-model="project.git.hooks.data_security"
-                      label="Data Security Scan"
-                      description="Scan for secrets before commit"
-                    />
-                    <Toggle
-                      id="hook-check-sensitive-dirs"
-                      v-model="project.git.hooks.check_sensitive_dirs"
-                      label="Check Sensitive Directories"
-                      description="Warn about unignored sensitive directories (private, cache, scratch, etc.)"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <GitHooksPanel v-model="gitPanelModel">
+            <template #note>
+              Project-specific .gitignore templates can be customized in Project Defaults.
+            </template>
+          </GitHooksPanel>
         </div>
 
       </div>
@@ -1619,6 +1538,8 @@ import CodeEditor from '../components/ui/CodeEditor.vue'
 import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import OverviewCard from '../components/ui/OverviewCard.vue'
 import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
+import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
+import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import { useToast } from '../composables/useToast'
 import {
   InformationCircleIcon,
@@ -1643,6 +1564,23 @@ const availableAssistants = [
   { id: 'agents', label: 'Multi-Agent (OpenAI Codex, Cursor, etc.)', description: 'Shared instructions for multi-model orchestrators.' }
 ]
 
+const normalizeAssistantList = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return Array.from(new Set(value.map((item) => String(item))))
+  }
+  if (typeof value === 'string') {
+    return [value]
+  }
+  return []
+}
+
+const ensureAiAssistantsArray = () => {
+  if (!Array.isArray(project.value.ai.assistants)) {
+    project.value.ai.assistants = normalizeAssistantList(project.value.ai.assistants)
+  }
+}
+
 const sections = [
   { id: 'overview', label: 'Overview', icon: InformationCircleIcon },
   { id: 'basics', label: 'Basics', icon: Cog6ToothIcon },
@@ -1650,12 +1588,23 @@ const sections = [
   { id: 'packages', label: 'Packages', icon: CubeIcon },
   { id: 'ai', label: 'AI Assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
-  { id: 'scaffold', label: 'Scaffold Behavior', svgIcon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' }
+  {
+    id: 'scaffold',
+    label: 'Scaffold Behavior',
+    svgIcon:
+      'M256 64L576 64L576 576L64 576L64 192L256 192L256 64zM256 224L96 224L96 544L256 544L256 224zM288 544L544 544L544 96L288 96L288 544zM440 152L488 152L488 200L440 200L440 152zM392 152L392 200L344 200L344 152L392 152zM440 248L488 248L488 296L440 296L440 248zM392 248L392 296L344 296L344 248L392 248zM152 280L200 280L200 328L152 328L152 280zM392 344L392 392L344 392L344 344L392 344zM152 376L200 376L200 424L152 424L152 376zM488 344L488 392L440 392L440 344L488 344z',
+    svgViewBox: '0 0 640 640',
+    svgFill: 'currentColor',
+    svgStroke: 'none',
+    svgStrokeWidth: 0,
+    svgPathFill: 'currentColor'
+  }
 ]
 
 const activeSection = ref('basics')
 const creating = ref(false)
 const projectNameInput = ref(null)
+const locationAutoSynced = ref(true)
 
 const project = ref({
   name: '',
@@ -1690,6 +1639,8 @@ const project = ref({
     initialize: true,
     gitignore_template: 'gitignore-project',
     gitignore_content: '',
+    user_name: '',
+    user_email: '',
     hooks: {
       ai_sync: false,
       data_security: false,
@@ -1792,12 +1743,14 @@ onMounted(async () => {
         }
 
         // Load AI defaults
+        const defaultAssistants = normalizeAssistantList(globalSettings.value.defaults?.ai_assistants)
         project.value.ai = {
           enabled: globalSettings.value.defaults?.ai_support !== false,
-          assistants: globalSettings.value.defaults?.ai_assistants || ['claude'],
+          assistants: defaultAssistants.length > 0 ? defaultAssistants : ['claude'],
           canonical_file: globalSettings.value.defaults?.ai_canonical_file || 'CLAUDE.md',
           canonical_content: ''
         }
+        ensureAiAssistantsArray()
 
         // Load initial AI template content if AI is enabled
         if (project.value.ai.enabled && project.value.ai.canonical_file) {
@@ -1806,6 +1759,8 @@ onMounted(async () => {
 
         // Load git defaults
         project.value.git.initialize = globalSettings.value.defaults?.use_git !== false
+        project.value.git.user_name = globalSettings.value.git?.user_name || ''
+        project.value.git.user_email = globalSettings.value.git?.user_email || ''
         if (globalSettings.value.defaults?.git_hooks) {
           project.value.git.hooks = { ...globalSettings.value.defaults.git_hooks }
         }
@@ -1882,6 +1837,11 @@ watch(() => project.value.git.gitignore_template, (newTemplate) => {
   if (newTemplate) {
     loadGitignoreTemplate(newTemplate)
   }
+})
+
+watch(() => project.value.name, () => {
+  if (!globalSettings.value?.global?.projects_root) return
+  updateProjectLocation()
 })
 
 // Watch for AI enabled state changes
@@ -2014,10 +1974,36 @@ const ideLabel = computed(() => {
 
 const enabledGitHooks = computed(() => {
   const hooks = []
-  if (project.value.git.hooks.ai_sync) hooks.push('AI sync')
-  if (project.value.git.hooks.data_security) hooks.push('data security')
-  if (project.value.git.hooks.check_sensitive_dirs) hooks.push('check sensitive')
+  if (project.value.git.hooks.ai_sync) hooks.push('Sync AI files')
+  if (project.value.git.hooks.data_security) hooks.push('Check for secrets')
+  if (project.value.git.hooks.check_sensitive_dirs) hooks.push('Warn about sensitive dirs')
   return hooks
+})
+
+const gitPanelModel = computed({
+  get() {
+    const hooks = project.value.git.hooks || {}
+    return {
+      initialize: project.value.git.initialize,
+      user_name: project.value.git.user_name || '',
+      user_email: project.value.git.user_email || '',
+      hooks: {
+        ai_sync: hooks.ai_sync || false,
+        data_security: hooks.data_security || false,
+        check_sensitive_dirs: hooks.check_sensitive_dirs || false
+      }
+    }
+  },
+  set(val) {
+    project.value.git.initialize = val.initialize
+    project.value.git.user_name = val.user_name
+    project.value.git.user_email = val.user_email
+    project.value.git.hooks = {
+      ai_sync: val.hooks.ai_sync,
+      data_security: val.hooks.data_security,
+      check_sensitive_dirs: val.hooks.check_sensitive_dirs
+    }
+  }
 })
 
 const displayLocation = computed(() => {
@@ -2051,12 +2037,26 @@ const getPackageHint = (source) => {
 }
 
 const toggleAssistant = (assistant, enabled) => {
+  ensureAiAssistantsArray()
   if (enabled) {
     if (!project.value.ai.assistants.includes(assistant)) {
       project.value.ai.assistants.push(assistant)
     }
   } else {
     project.value.ai.assistants = project.value.ai.assistants.filter(a => a !== assistant)
+  }
+}
+
+const handleLocationInput = (value) => {
+  project.value.location = value
+  const projectsRoot = globalSettings.value?.global?.projects_root || ''
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+
+  if (!trimmed || (projectsRoot && trimmed === projectsRoot)) {
+    locationAutoSynced.value = true
+    updateProjectLocation()
+  } else {
+    locationAutoSynced.value = false
   }
 }
 
@@ -2221,13 +2221,14 @@ const navigateToSection = (sectionId) => {
 }
 
 const updateProjectLocation = () => {
+  if (!locationAutoSynced.value) return
   if (!project.value.name || !project.value.name.trim()) return
 
   const projectsRoot = globalSettings.value?.global?.projects_root || ''
   if (!projectsRoot) return
 
   // Only auto-update if the current location is still within projects_root or empty
-  const currentLocation = project.value.location.trim()
+  const currentLocation = (project.value.location || '').trim()
   if (currentLocation && !currentLocation.startsWith(projectsRoot)) {
     // User has manually changed it to a different location, don't override
     return
@@ -2242,8 +2243,14 @@ const updateProjectLocation = () => {
     .replace(/-+/g, '-')        // Replace multiple hyphens with single hyphen
     .replace(/^-|-$/g, '')      // Remove leading/trailing hyphens
 
-  // Update location to projects_root + kebab-cased name
-  project.value.location = `${projectsRoot}/${kebabName}`
+  if (!kebabName) {
+    project.value.location = projectsRoot
+    return
+  }
+
+  // Normalize root to avoid double slashes
+  const normalizedRoot = projectsRoot.replace(/\/+$/, '')
+  project.value.location = `${normalizedRoot}/${kebabName}`
 }
 
 const resetForm = () => {
