@@ -18,6 +18,7 @@
 .framework_template_sources <- list(
   notebook = list(file = "notebook-default.qmd"),
   script = list(file = "script-default.R"),
+  presentation = list(file = "presentation-default.qmd"),
   gitignore = list(file = "gitignore-project"),
   `gitignore-project` = list(file = "gitignore-project"),
   `gitignore-project_sensitive` = list(file = "gitignore-sensitive"),

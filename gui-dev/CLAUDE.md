@@ -2,6 +2,19 @@
 
 Standards for developing the Framework GUI using Vue 3, Tailwind CSS, and component library.
 
+## UI Terminology
+
+The Framework GUI uses a three-bar layout:
+
+- **Left Bar**: Global navigation sidebar (managed in `App.vue`) - contains Framework logo, "New Project" button, and links to Projects and New Project Defaults
+- **Middle Bar**: Page-specific navigation sidebar - the sidebar within each page that shows sections/subsections (e.g., Overview, Author Information, etc.)
+- **Right Bar**: Main content area - the actual page content where forms, data, and information are displayed
+
+Example: On the New Project Defaults page:
+- Left Bar: Shows "Framework", "Projects", "New Project Defaults"
+- Middle Bar: Shows "Overview", "Author Information", "Editor & Workflow", etc.
+- Right Bar: Shows the actual settings forms and content
+
 ## Development Workflow
 
 ### Quick Start

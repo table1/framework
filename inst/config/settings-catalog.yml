@@ -76,7 +76,7 @@ templates:
 # Project Structure - organized by project type
 project_types:
   project:
-    label: "Research Project"
+    label: "Standard Project Structure"
     description: "Full-featured with organized data, work, and output directories"
 
     # Scaffold settings (per-type)
@@ -165,7 +165,7 @@ project_types:
       default: "notebook"
 
   project_sensitive:
-    label: "Sensitive Data Project"
+    label: "Privacy Sensitive Project Structure"
     description: "Enhanced privacy controls for sensitive data with dedicated private/public flows"
 
     scaffold:
@@ -267,7 +267,7 @@ project_types:
       default: "notebook"
 
   presentation:
-    label: "Presentation"
+    label: "Presentation Structure"
     description: "Minimal structure for slides and presentations"
 
     scaffold:
@@ -305,7 +305,7 @@ project_types:
       default: "notebook"
 
   course:
-    label: "Course/Teaching"
+    label: "Course Structure"
     description: "Simplified structure for teaching materials with modules and assignments"
 
     scaffold:

@@ -165,7 +165,7 @@ const SunIcon = () => h('svg', { class: 'h-5 w-5', fill: 'none', viewBox: '0 0 2
 // Framework tabs (always visible)
 const frameworkTabs = [
   { id: 'projects', label: 'Projects', to: '/projects' },
-  { id: 'settings', label: 'Global Settings', to: '/settings' }
+  { id: 'settings', label: 'New Project Defaults', to: '/settings' }
 ]
 
 // Load projects and initialize

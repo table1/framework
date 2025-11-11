@@ -63,7 +63,7 @@
                   </svg>
                 </div>
                 <Badge variant="sky">
-                  {{ project.type }}
+                  {{ getProjectTypeLabel(project.type) }}
                 </Badge>
               </div>
 
@@ -302,6 +302,22 @@ const settings = ref({
   projects: []
 })
 const projectsRoot = ref('')
+const settingsCatalog = ref(null)
+
+// Helper function to get pretty project type labels
+const getProjectTypeLabel = (type) => {
+  if (!type) return 'Unknown'
+
+  // Try to get from catalog
+  const label = settingsCatalog.value?.project_types?.[type]?.label
+  if (label) return label
+
+  // Fallback: prettify the type name
+  return type
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
 
 const loadSettings = async () => {
   try {
@@ -390,8 +406,21 @@ const handleImport = async () => {
   }
 }
 
+const loadSettingsCatalog = async () => {
+  try {
+    const response = await fetch('/api/settings-catalog')
+    const data = await response.json()
+    if (!data.error) {
+      settingsCatalog.value = data
+    }
+  } catch (err) {
+    console.error('Failed to load settings catalog:', err)
+  }
+}
+
 onMounted(() => {
   loadSettings()
+  loadSettingsCatalog()
   showWizard.value = route.path === '/projects/new'
 })
 

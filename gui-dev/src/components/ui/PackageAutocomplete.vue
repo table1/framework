@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import Input from './Input.vue'
 
 const props = defineProps({
@@ -74,21 +74,19 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'select'])
 
-const searchQuery = ref(props.modelValue)
+// Use computed for the input value to ensure reactivity
+const searchQuery = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+})
+
 const results = ref([])
 const searching = ref(false)
 const highlightIndex = ref(-1)
 let searchTimeout = null
 
-// Watch for external updates
-watch(() => props.modelValue, (newVal) => {
-  searchQuery.value = newVal
-})
-
-// Watch for search query changes
+// Watch for search query changes to trigger autocomplete
 watch(searchQuery, (newVal) => {
-  emit('update:modelValue', newVal)
-
   if (searchTimeout) clearTimeout(searchTimeout)
 
   if (newVal.length < 2) {
@@ -137,7 +135,6 @@ const handleKeydown = (e) => {
 }
 
 const selectPackage = (pkg) => {
-  searchQuery.value = pkg.name
   emit('update:modelValue', pkg.name)
   emit('select', pkg)
   results.value = []

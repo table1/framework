@@ -1,0 +1,601 @@
+#' Create a new Framework project from GUI configuration
+#'
+#' This function creates a complete Framework project from scratch based on
+#' configuration provided by the GUI. Unlike the legacy init() function which
+#' relied on templates, this function builds everything programmatically.
+#'
+#' @param name Project name (used for project title)
+#' @param location Full path to the project directory (will be created)
+#' @param type Project type: "project", "project_sensitive", "course", "presentation"
+#' @param author List with name, email, affiliation
+#' @param packages List with use_renv (logical) and default_packages (list of package configs)
+#' @param directories Named list of directory paths (notebooks, scripts, functions, etc.)
+#' @param extra_directories List of additional custom directories
+#' @param ai List with enabled, assistants, canonical_content
+#' @param git List with use_git, hooks, gitignore_content
+#' @param scaffold List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme
+#'
+#' @return List with success status, project path, and project ID
+#' @export
+project_create <- function(
+  name,
+  location,
+  type = "project",
+  author = list(name = "", email = "", affiliation = ""),
+  packages = list(use_renv = FALSE, default_packages = list()),
+  directories = list(),
+  extra_directories = list(),
+  ai = list(enabled = FALSE, assistants = c(), canonical_content = ""),
+  git = list(use_git = TRUE, hooks = list(), gitignore_content = ""),
+  scaffold = list(
+    seed_on_scaffold = FALSE,
+    seed = "",
+    set_theme_on_scaffold = TRUE,
+    ggplot_theme = "theme_minimal"
+  )
+) {
+  # Validate inputs
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(location, min.chars = 1)
+  checkmate::assert_choice(type, c("project", "project_sensitive", "course", "presentation"))
+  checkmate::assert_list(author)
+  checkmate::assert_list(packages)
+  checkmate::assert_list(directories)
+  checkmate::assert_list(ai)
+  checkmate::assert_list(git)
+  checkmate::assert_list(scaffold)
+
+  # Use location as the full project directory path
+  project_dir <- path.expand(location)
+
+  # Check if directory already exists
+  if (dir.exists(project_dir)) {
+    stop("Project directory already exists: ", project_dir)
+  }
+
+  # Create project directory
+  dir.create(project_dir, recursive = TRUE)
+  message("Created project directory: ", project_dir)
+
+  # Create subdirectories from directories config
+  .create_project_directories(project_dir, directories, extra_directories)
+
+  # Create config.yml with all settings
+  .create_project_config(
+    project_dir = project_dir,
+    name = name,
+    type = type,
+    author = author,
+    packages = packages,
+    directories = directories,
+    extra_directories = extra_directories,
+    ai = ai,
+    git = git,
+    scaffold = scaffold
+  )
+
+  # Create .gitignore from template content
+  if (!is.null(git$gitignore_content) && nzchar(git$gitignore_content)) {
+    .create_gitignore(project_dir, git$gitignore_content)
+  }
+
+  # Create AI context files
+  if (ai$enabled && length(ai$assistants) > 0) {
+    .create_ai_files(project_dir, ai$assistants, ai$canonical_content, type)
+  }
+
+  # Create scaffold.R with seed and theme setup
+  .create_scaffold_file(project_dir, scaffold)
+
+  # Create .Rproj file (always)
+  .create_rproj_file(project_dir, name)
+
+  # Create .code-workspace file for VSCode/Positron users
+  ide <- scaffold$ide %||% ""
+  if (grepl("vscode|positron", ide, ignore.case = TRUE)) {
+    .create_code_workspace(project_dir, name)
+  }
+
+  # Create stub files for specific project types
+  .create_stub_files(project_dir, type, name, author)
+
+  # Initialize git repository
+  if (git$initialize %||% git$use_git %||% TRUE) {
+    .init_git_repo(project_dir, git$hooks)
+  }
+
+  # Initialize renv if requested
+  if (packages$use_renv) {
+    .init_renv(project_dir)
+  }
+
+  # Add to project registry (skip for temp directories used in tests)
+  project_id <- NULL
+  if (!grepl("^/tmp/|^/var/folders/", project_dir)) {
+    project_id <- add_project_to_config(project_dir)
+  }
+
+  message("✓ Project created successfully: ", project_dir)
+
+  list(
+    success = TRUE,
+    path = project_dir,
+    id = project_id
+  )
+}
+
+#' Create project subdirectories
+#' @keywords internal
+.create_project_directories <- function(project_dir, directories, extra_directories) {
+  # Files that should NOT be created as directories
+  file_patterns <- c("\\.qmd$", "\\.Rmd$", "\\.R$", "\\.md$")
+
+  # Create standard directories
+  for (dir_name in directories) {
+    if (!is.null(dir_name) && nzchar(dir_name)) {
+      # Skip if this looks like a file (has a file extension)
+      is_file <- any(sapply(file_patterns, function(pattern) grepl(pattern, dir_name)))
+      if (is_file) {
+        next
+      }
+
+      dir_path <- file.path(project_dir, dir_name)
+      dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+      message("  Created: ", dir_name)
+    }
+  }
+
+  # Create extra directories
+  if (length(extra_directories) > 0) {
+    for (extra_dir in extra_directories) {
+      if (!is.null(extra_dir$path) && nzchar(extra_dir$path)) {
+        dir_path <- file.path(project_dir, extra_dir$path)
+        dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+        message("  Created: ", extra_dir$path)
+      }
+    }
+  }
+}
+
+#' Create project config.yml
+#' @keywords internal
+.create_project_config <- function(
+  project_dir,
+  name,
+  type,
+  author,
+  packages,
+  directories,
+  extra_directories,
+  ai,
+  git,
+  scaffold
+) {
+  # For project and project_sensitive types, use split settings files
+  # For presentation and course, use single settings.yml file
+  use_split_files <- type %in% c("project", "project_sensitive")
+
+  if (use_split_files) {
+    # Create settings/ directory
+    settings_dir <- file.path(project_dir, "settings")
+    dir.create(settings_dir, recursive = TRUE, showWarnings = FALSE)
+
+    # Main settings.yml with references to split files
+    main_config <- list(
+      default = list(
+        project_name = name,
+        project_type = type,
+
+        # Directory configuration (inline for discoverability)
+        directories = directories,
+        extra_directories = if (length(extra_directories) > 0) extra_directories else NULL,
+
+        # References to split files
+        author = "settings/author.yml",
+        packages = "settings/packages.yml",
+        git = "settings/git.yml",
+        ai = "settings/ai.yml",
+        scaffold = "settings/scaffold.yml"
+      )
+    )
+
+    # Write main settings.yml
+    yaml::write_yaml(main_config, file.path(project_dir, "settings.yml"))
+    message("  Created: settings.yml")
+
+    # Write split files
+    yaml::write_yaml(list(author = list(
+      name = author$name %||% "",
+      email = author$email %||% "",
+      affiliation = author$affiliation %||% ""
+    )), file.path(settings_dir, "author.yml"))
+
+    yaml::write_yaml(list(packages = list(
+      use_renv = packages$use_renv %||% FALSE,
+      default_packages = packages$default_packages
+    )), file.path(settings_dir, "packages.yml"))
+
+    yaml::write_yaml(list(git = list(
+      enabled = git$initialize %||% git$use_git %||% TRUE,
+      hooks = git$hooks
+    )), file.path(settings_dir, "git.yml"))
+
+    yaml::write_yaml(list(ai = list(
+      enabled = ai$enabled %||% FALSE,
+      assistants = ai$assistants
+    )), file.path(settings_dir, "ai.yml"))
+
+    yaml::write_yaml(list(scaffold = list(
+      seed_on_scaffold = scaffold$seed_on_scaffold %||% FALSE,
+      seed = scaffold$seed %||% "",
+      set_theme_on_scaffold = scaffold$set_theme_on_scaffold %||% TRUE,
+      ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal"
+    )), file.path(settings_dir, "scaffold.yml"))
+
+    message("  Created: settings/ directory with split configuration files")
+  } else {
+    # Single settings.yml file for presentation and course types
+    config <- list(
+      default = list(
+        project_name = name,
+        project_type = type,
+
+        # Author information
+        author = list(
+          name = author$name %||% "",
+          email = author$email %||% "",
+          affiliation = author$affiliation %||% ""
+        ),
+
+        # Directories (inline for discoverability)
+        directories = directories,
+        extra_directories = if (length(extra_directories) > 0) extra_directories else NULL,
+
+        # Package configuration
+        packages = list(
+          use_renv = packages$use_renv %||% FALSE,
+          default_packages = packages$default_packages
+        ),
+
+        # Git configuration
+        git = list(
+          enabled = git$initialize %||% git$use_git %||% TRUE,
+          hooks = git$hooks
+        ),
+
+        # AI configuration
+        ai = list(
+          enabled = ai$enabled %||% FALSE,
+          assistants = ai$assistants
+        ),
+
+        # Scaffold configuration
+        scaffold = list(
+          seed_on_scaffold = scaffold$seed_on_scaffold %||% FALSE,
+          seed = scaffold$seed %||% "",
+          set_theme_on_scaffold = scaffold$set_theme_on_scaffold %||% TRUE,
+          ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal"
+        )
+      )
+    )
+
+    config_path <- file.path(project_dir, "settings.yml")
+    yaml::write_yaml(config, config_path)
+    message("  Created: settings.yml")
+  }
+}
+
+#' Create .gitignore file
+#' @keywords internal
+.create_gitignore <- function(project_dir, content) {
+  gitignore_path <- file.path(project_dir, ".gitignore")
+  writeLines(content, gitignore_path)
+  message("  Created: .gitignore")
+}
+
+#' Create AI context files
+#' @keywords internal
+.create_ai_files <- function(project_dir, assistants, canonical_content, type) {
+  # Map assistants to file paths
+  ai_files <- list(
+    claude = "CLAUDE.md",
+    agents = "AGENTS.md",
+    copilot = ".github/copilot-instructions.md"
+  )
+
+  for (assistant in assistants) {
+    if (assistant %in% names(ai_files)) {
+      file_path <- file.path(project_dir, ai_files[[assistant]])
+
+      # Create directory if needed (for copilot)
+      file_dir <- dirname(file_path)
+      if (!dir.exists(file_dir)) {
+        dir.create(file_dir, recursive = TRUE)
+      }
+
+      # Get template content
+      template_name <- switch(assistant,
+        claude = sprintf("ai_claude_%s", type),
+        agents = "ai_agents",
+        copilot = "ai_copilot"
+      )
+
+      # Try to load template, fallback to canonical_content
+      content <- .load_template_content(template_name)
+      if (is.null(content) || !nzchar(content)) {
+        content <- canonical_content
+      }
+
+      # Write file
+      writeLines(content, file_path)
+      message("  Created: ", ai_files[[assistant]])
+    }
+  }
+}
+
+#' Load template content from inst/templates
+#' @keywords internal
+.load_template_content <- function(template_name) {
+  template_path <- system.file(sprintf("templates/%s", template_name), package = "framework")
+  if (file.exists(template_path)) {
+    return(paste(readLines(template_path, warn = FALSE), collapse = "\n"))
+  }
+  NULL
+}
+
+#' Create scaffold.R file
+#' @keywords internal
+.create_scaffold_file <- function(project_dir, scaffold) {
+  scaffold_content <- c(
+    "# scaffold.R",
+    "# This file is sourced by framework::scaffold() to set up your project environment",
+    "",
+    "# Set random seed for reproducibility"
+  )
+
+  if (scaffold$seed_on_scaffold && nzchar(scaffold$seed)) {
+    scaffold_content <- c(
+      scaffold_content,
+      sprintf('set.seed(%s)', scaffold$seed),
+      sprintf('message("Random seed set to %s")', scaffold$seed)
+    )
+  } else {
+    scaffold_content <- c(
+      scaffold_content,
+      "# set.seed(20241109)  # Uncomment and set your seed"
+    )
+  }
+
+  scaffold_content <- c(
+    scaffold_content,
+    "",
+    "# Set ggplot2 theme"
+  )
+
+  if (scaffold$set_theme_on_scaffold && nzchar(scaffold$ggplot_theme)) {
+    scaffold_content <- c(
+      scaffold_content,
+      "if (requireNamespace('ggplot2', quietly = TRUE)) {",
+      sprintf("  ggplot2::theme_set(ggplot2::%s())", scaffold$ggplot_theme),
+      sprintf('  message("ggplot2 theme set to %s")', scaffold$ggplot_theme),
+      "}"
+    )
+  } else {
+    scaffold_content <- c(
+      scaffold_content,
+      "# if (requireNamespace('ggplot2', quietly = TRUE)) {",
+      "#   ggplot2::theme_set(ggplot2::theme_minimal())",
+      "# }"
+    )
+  }
+
+  scaffold_path <- file.path(project_dir, "scaffold.R")
+  writeLines(scaffold_content, scaffold_path)
+  message("  Created: scaffold.R")
+}
+
+#' Convert string to kebab-case
+#' @keywords internal
+.to_kebab_case <- function(str) {
+  # Convert to lowercase
+  result <- tolower(str)
+  # Remove non-alphanumeric characters except spaces, underscores, and hyphens
+  result <- gsub("[^a-z0-9 _-]", "", result)
+  # Replace spaces and underscores with hyphens
+  result <- gsub("[ _]+", "-", result)
+  # Replace multiple hyphens with single hyphen
+  result <- gsub("-+", "-", result)
+  # Remove leading/trailing hyphens
+  result <- gsub("^-|-$", "", result)
+  result
+}
+
+#' Create .Rproj file
+#' @keywords internal
+.create_rproj_file <- function(project_dir, name) {
+  kebab_name <- .to_kebab_case(name)
+
+  rproj_content <- c(
+    "Version: 1.0",
+    "",
+    "RestoreWorkspace: No",
+    "SaveWorkspace: No",
+    "AlwaysSaveHistory: No",
+    "",
+    "EnableCodeIndexing: Yes",
+    "UseSpacesForTab: Yes",
+    "NumSpacesForTab: 2",
+    "Encoding: UTF-8",
+    "",
+    "RnwWeave: knitr",
+    "LaTeX: XeLaTeX"
+  )
+
+  rproj_path <- file.path(project_dir, sprintf("%s.Rproj", kebab_name))
+  writeLines(rproj_content, rproj_path)
+  message("  Created: ", sprintf("%s.Rproj", kebab_name))
+}
+
+#' Create .code-workspace file for VSCode/Positron
+#' @keywords internal
+.create_code_workspace <- function(project_dir, name) {
+  kebab_name <- .to_kebab_case(name)
+
+  # Create basic workspace configuration
+  workspace_config <- list(
+    folders = list(
+      list(path = ".")
+    ),
+    settings = list(
+      `r.rterm.option` = c("--no-save", "--no-restore"),
+      `r.sessionWatcher` = TRUE,
+      `r.alwaysUseActiveTerminal` = TRUE,
+      `files.associations` = list(
+        `*.qmd` = "quarto",
+        `*.Rmd` = "rmarkdown"
+      )
+    )
+  )
+
+  workspace_path <- file.path(project_dir, sprintf("%s.code-workspace", kebab_name))
+  workspace_json <- jsonlite::toJSON(workspace_config, pretty = TRUE, auto_unbox = TRUE)
+  writeLines(workspace_json, workspace_path)
+  message("  Created: ", sprintf("%s.code-workspace", kebab_name))
+}
+
+#' Initialize git repository
+#' @keywords internal
+.init_git_repo <- function(project_dir, hooks) {
+  old_wd <- getwd()
+  on.exit(setwd(old_wd))
+  setwd(project_dir)
+
+  # Initialize git
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  message("  Initialized git repository")
+
+  # Install git hooks if any are enabled
+  if (length(hooks) > 0 && any(unlist(hooks))) {
+    tryCatch({
+      # This will use the git_hooks.R functions
+      hooks_install(
+        ai_sync = hooks$ai_sync %||% FALSE,
+        data_security = hooks$data_security %||% FALSE,
+        check_sensitive_dirs = hooks$check_sensitive_dirs %||% FALSE
+      )
+      message("  Installed git hooks")
+    }, error = function(e) {
+      warning("Failed to install git hooks: ", e$message)
+    })
+  }
+
+  # Make initial commit
+  add_result <- system2("git", c("add", "."), stdout = TRUE, stderr = TRUE)
+  commit_result <- system2("git", c("commit", "-m", "Initial commit."), stdout = TRUE, stderr = TRUE)
+
+  if (length(commit_result) > 0 && any(grepl("create mode|Initial commit", commit_result))) {
+    message("  Created initial commit")
+  } else {
+    warning("Git commit may have failed. Output: ", paste(commit_result, collapse = "\n"))
+  }
+}
+
+#' Initialize renv
+#' @keywords internal
+.init_renv <- function(project_dir) {
+  old_wd <- getwd()
+  on.exit(setwd(old_wd))
+  setwd(project_dir)
+
+  if (requireNamespace("renv", quietly = TRUE)) {
+    tryCatch({
+      renv::init(bare = TRUE)
+      message("  Initialized renv")
+    }, error = function(e) {
+      warning("Failed to initialize renv: ", e$message)
+    })
+  } else {
+    warning("renv package not available - skipping renv initialization")
+  }
+}
+
+#' Create stub files for specific project types
+#' @keywords internal
+.create_stub_files <- function(project_dir, type, name, author) {
+  author_name <- if (!is.null(author$name) && nzchar(author$name)) {
+    author$name
+  } else {
+    "Your Name"
+  }
+
+  # Presentation projects need a presentation.qmd file
+  if (type == "presentation") {
+    presentation_file <- file.path(project_dir, "presentation.qmd")
+    presentation_content <- sprintf('---
+title: "%s"
+author: "%s"
+date: "`r Sys.Date()`"
+format:
+  revealjs:
+    theme: default
+    transition: slide
+    slide-number: true
+    chalkboard: true
+execute:
+  echo: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(framework)
+scaffold()
+```
+
+## Introduction
+
+Welcome to your presentation!
+
+Edit this file or create new presentations with `make_notebook(stub = "revealjs")`.
+
+## Key Points
+
+- Point 1
+- Point 2
+- Point 3
+
+## Data Analysis
+
+```{r}
+# Load and analyze data
+# data <- load_data("example")
+summary(mtcars[, 1:3])
+```
+
+## Visualization
+
+```{r}
+plot(mtcars$mpg, mtcars$hp,
+     xlab = "MPG", ylab = "Horsepower",
+     main = "Example Plot")
+```
+
+## Conclusion
+
+- Summary point 1
+- Summary point 2
+- Next steps
+
+## Thank You!
+
+Questions?
+', name, author_name)
+
+    writeLines(presentation_content, presentation_file)
+    message("  Created: presentation.qmd")
+  }
+
+  # Course projects might need similar stub files in the future
+  # project and project_sensitive types don't need stub files
+}

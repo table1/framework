@@ -803,31 +803,61 @@ function(id) {
 
   tryCatch({
     packages_data <- yaml::read_yaml(packages_file)
-    raw_packages <- packages_data$packages %||% list()
+    packages_obj <- packages_data$packages %||% list()
+
+    # Extract use_renv flag (defaults to FALSE)
+    use_renv <- if (!is.null(packages_obj$use_renv)) as.logical(packages_obj$use_renv)[1] else FALSE
+
+    # Get the packages list - could be under default_packages or directly in packages
+    raw_packages <- if (!is.null(packages_obj$default_packages)) {
+      packages_obj$default_packages
+    } else if (is.list(packages_obj) && (is.null(names(packages_obj)) || all(names(packages_obj) == ""))) {
+      # Old format: packages was a direct array
+      packages_obj
+    } else {
+      list()
+    }
+
+    # Handle legacy comma-separated string format
+    if (is.character(raw_packages) && length(raw_packages) == 1) {
+      # Split comma-separated string: "dplyr,ggplot2,readr" -> ["dplyr", "ggplot2", "readr"]
+      raw_packages <- strsplit(raw_packages, "\\s*,\\s*")[[1]]
+      raw_packages <- trimws(raw_packages)
+      raw_packages <- raw_packages[nchar(raw_packages) > 0]
+    }
 
     # Normalize packages - handle both string format and object format
     normalized_packages <- lapply(raw_packages, function(pkg) {
-      if (is.character(pkg)) {
+      if (is.character(pkg) && length(pkg) == 1) {
         # Simple string format: "dplyr" -> {name: dplyr, source: cran, auto_attach: true}
         list(
-          name = pkg,
+          name = unname(as.character(pkg))[1],
           source = "cran",
           auto_attach = TRUE
         )
-      } else if (is.list(pkg)) {
-        # Object format - ensure defaults
+      } else if (is.list(pkg) && !is.null(names(pkg))) {
+        # Object format - ensure defaults and extract scalars
         list(
-          name = pkg$name %||% "",
-          source = pkg$source %||% "cran",
-          auto_attach = if (is.null(pkg$auto_attach)) TRUE else pkg$auto_attach
+          name = if (!is.null(pkg$name)) unname(as.character(pkg$name))[1] else "",
+          source = if (!is.null(pkg$source)) unname(as.character(pkg$source))[1] else "cran",
+          auto_attach = if (!is.null(pkg$auto_attach)) as.logical(pkg$auto_attach)[1] else TRUE
         )
       } else {
-        # Fallback
-        list(name = "", source = "cran", auto_attach = TRUE)
+        # Skip invalid entries
+        NULL
       }
     })
 
-    list(packages = normalized_packages)
+    # Remove NULL entries
+    normalized_packages <- Filter(Negate(is.null), normalized_packages)
+
+    # Ensure unnamed list for JSON array serialization
+    names(normalized_packages) <- NULL
+
+    list(
+      use_renv = use_renv,
+      packages = normalized_packages
+    )
   }, error = function(e) {
     list(error = paste("Failed to read packages:", e$message))
   })
@@ -860,19 +890,179 @@ function(id, req) {
   tryCatch({
     packages_file <- file.path(project$path, "settings/packages.yml")
 
-    # Save packages - ensure proper list structure
+    # Extract use_renv flag and packages list
+    use_renv <- as.logical(body$use_renv %||% FALSE)[1]
     packages_list <- body$packages %||% list()
 
-    # If it's a data frame, convert to list of lists
-    if (is.data.frame(packages_list)) {
-      packages_list <- lapply(seq_len(nrow(packages_list)), function(i) {
-        as.list(packages_list[i, ])
+    # Convert to proper unnamed list for YAML array serialization
+    # Each package should be a named list (object) in an unnamed list (array)
+    if (length(packages_list) > 0) {
+      packages_list <- lapply(packages_list, function(pkg) {
+        # Ensure it's a proper named list
+        list(
+          name = as.character(pkg$name %||% "")[1],
+          source = as.character(pkg$source %||% "cran")[1],
+          auto_attach = as.logical(pkg$auto_attach %||% TRUE)[1]
+        )
       })
+      # Remove names to force array serialization
+      names(packages_list) <- NULL
     }
 
-    yaml::write_yaml(list(
-      packages = packages_list
-    ), packages_file)
+    # Write with new structure: packages.use_renv and packages.default_packages
+    yaml::write_yaml(
+      list(
+        packages = list(
+          use_renv = use_renv,
+          default_packages = packages_list
+        )
+      ),
+      packages_file,
+      column.major = FALSE  # Prevent column-major format
+    )
+
+    list(success = TRUE)
+  }, error = function(e) {
+    list(success = FALSE, error = e$message)
+  })
+}
+
+#* Save project AI settings
+#* @post /api/project/<id>/ai
+#* @param id Project ID
+#* @param req The request object
+function(id, req) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
+
+  tryCatch({
+    # Find settings file
+    settings_file <- NULL
+    if (file.exists(file.path(project$path, "settings.yml"))) {
+      settings_file <- file.path(project$path, "settings.yml")
+    } else if (file.exists(file.path(project$path, "config.yml"))) {
+      settings_file <- file.path(project$path, "config.yml")
+    } else {
+      return(list(error = "No settings file found"))
+    }
+
+    # Read current settings
+    settings_raw <- yaml::read_yaml(settings_file)
+    has_default <- !is.null(settings_raw$default)
+    settings <- settings_raw$default %||% settings_raw
+
+    # Update AI settings
+    settings$ai <- list(
+      enabled = as.logical(body$enabled %||% FALSE)[1],
+      canonical_file = as.character(body$canonical_file %||% "CLAUDE.md")[1],
+      assistants = unname(as.list(body$assistants %||% list()))
+    )
+
+    # Write back
+    if (has_default) {
+      settings_raw$default <- settings
+      yaml::write_yaml(settings_raw, settings_file)
+    } else {
+      yaml::write_yaml(settings, settings_file)
+    }
+
+    list(success = TRUE)
+  }, error = function(e) {
+    list(success = FALSE, error = e$message)
+  })
+}
+
+#* Save project Git settings
+#* @post /api/project/<id>/git
+#* @param id Project ID
+#* @param req The request object
+function(id, req) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
+
+  tryCatch({
+    # Find settings file (prefer settings/git.yml if using split config)
+    git_file <- file.path(project$path, "settings/git.yml")
+    main_settings_file <- NULL
+
+    # Determine if using split config or main config
+    if (file.exists(file.path(project$path, "settings.yml"))) {
+      main_settings_file <- file.path(project$path, "settings.yml")
+    } else if (file.exists(file.path(project$path, "config.yml"))) {
+      main_settings_file <- file.path(project$path, "config.yml")
+    } else {
+      return(list(error = "No settings file found"))
+    }
+
+    # Check if main config references git as a split file
+    settings_raw <- yaml::read_yaml(main_settings_file)
+    has_default <- !is.null(settings_raw$default)
+    settings <- settings_raw$default %||% settings_raw
+    use_split_file <- is.character(settings$git) && grepl("\\.yml$", settings$git)
+
+    if (use_split_file && file.exists(git_file)) {
+      # Update split file
+      git_data <- list(
+        git = list(
+          initialize = as.logical(body$initialize %||% TRUE)[1],
+          hooks = list(
+            ai_sync = as.logical(body$hooks$ai_sync %||% FALSE)[1],
+            data_security = as.logical(body$hooks$data_security %||% FALSE)[1],
+            check_sensitive_dirs = as.logical(body$hooks$check_sensitive_dirs %||% FALSE)[1]
+          )
+        )
+      )
+      yaml::write_yaml(git_data, git_file)
+    } else {
+      # Update main settings file
+      settings$git <- list(
+        initialize = as.logical(body$initialize %||% TRUE)[1],
+        hooks = list(
+          ai_sync = as.logical(body$hooks$ai_sync %||% FALSE)[1],
+          data_security = as.logical(body$hooks$data_security %||% FALSE)[1],
+          check_sensitive_dirs = as.logical(body$hooks$check_sensitive_dirs %||% FALSE)[1]
+        )
+      )
+
+      if (has_default) {
+        settings_raw$default <- settings
+        yaml::write_yaml(settings_raw, main_settings_file)
+      } else {
+        yaml::write_yaml(settings, main_settings_file)
+      }
+    }
 
     list(success = TRUE)
   }, error = function(e) {
@@ -924,9 +1114,9 @@ function(q = "", source = "cran") {
       author <- gsub("\\s*<.*>\\s*", "", maintainer)  # Remove email part
 
       list(
-        name = as.character(row["Package"]),
-        version = as.character(row["Version"]),
-        title = if (!is.na(row["Title"])) as.character(row["Title"]) else "",
+        name = unname(as.character(row["Package"]))[1],
+        version = unname(as.character(row["Version"]))[1],
+        title = if (!is.na(row["Title"])) unname(as.character(row["Title"]))[1] else "",
         author = author,
         source = source
       )
@@ -977,6 +1167,7 @@ function(id) {
 }
 
 #* Save project directories
+#* Add custom directories to a project
 #* @post /api/project/<id>/directories
 #* @param id Project ID
 #* @param req The request object
@@ -1000,18 +1191,79 @@ function(id, req) {
 
   body <- jsonlite::fromJSON(req$postBody)
 
-  tryCatch({
-    directories_file <- file.path(project$path, "settings/directories.yml")
+  # Get the directories array from the request body
+  directories <- body$directories
 
-    # Save directories
-    yaml::write_yaml(list(
-      directories = body$directories %||% list()
-    ), directories_file)
+  if (is.null(directories) || length(directories) == 0) {
+    return(list(success = FALSE, error = "No directories provided"))
+  }
 
-    list(success = TRUE)
-  }, error = function(e) {
-    list(success = FALSE, error = e$message)
-  })
+  # Track results for each directory
+  results <- list()
+  errors <- list()
+
+  # Process each directory
+  for (i in seq_along(directories)) {
+    dir_spec <- directories[[i]]
+
+    # Validate required fields
+    if (is.null(dir_spec$key) || is.null(dir_spec$label) || is.null(dir_spec$path)) {
+      errors[[length(errors) + 1]] <- sprintf(
+        "Directory %d missing required fields (key, label, or path)", i
+      )
+      next
+    }
+
+    # Call the project_add_directory function
+    result <- framework::project_add_directory(
+      project_path = project$path,
+      key = dir_spec$key,
+      label = dir_spec$label,
+      path = dir_spec$path
+    )
+
+    if (result$success) {
+      results[[length(results) + 1]] <- result$directory
+    } else {
+      errors[[length(errors) + 1]] <- sprintf(
+        "%s: %s", dir_spec$key, result$error
+      )
+    }
+  }
+
+  # Return summary
+  if (length(errors) > 0 && length(results) == 0) {
+    # All failed
+    return(list(
+      success = FALSE,
+      error = paste(errors, collapse = "; ")
+    ))
+  } else if (length(errors) > 0) {
+    # Partial success
+    return(list(
+      success = TRUE,
+      created = results,
+      errors = errors,
+      message = sprintf(
+        "Created %d director%s with %d error%s",
+        length(results),
+        if (length(results) == 1) "y" else "ies",
+        length(errors),
+        if (length(errors) == 1) "" else "s"
+      )
+    ))
+  } else {
+    # All succeeded
+    return(list(
+      success = TRUE,
+      created = results,
+      message = sprintf(
+        "Successfully created %d director%s",
+        length(results),
+        if (length(results) == 1) "y" else "ies"
+      )
+    ))
+  }
 }
 
 #* Get project security settings
@@ -1434,40 +1686,26 @@ function(req) {
   body <- jsonlite::fromJSON(req$postBody)
 
   tryCatch({
-    # Build project_dir from location + name
-    project_dir <- file.path(
-      path.expand(body$location),
-      body$name
+    # Call new project_create() function with full configuration
+    result <- framework::project_create(
+      name = body$name,
+      location = body$location,
+      type = body$type %||% "project",
+      author = body$author %||% list(name = "", email = "", affiliation = ""),
+      packages = body$packages %||% list(use_renv = FALSE, default_packages = list()),
+      directories = body$directories %||% list(),
+      extra_directories = body$extra_directories %||% list(),
+      ai = body$ai %||% list(enabled = FALSE, assistants = c(), canonical_content = ""),
+      git = body$git %||% list(use_git = TRUE, hooks = list(), gitignore_content = ""),
+      scaffold = body$scaffold %||% list(
+        seed_on_scaffold = FALSE,
+        seed = "",
+        set_theme_on_scaffold = TRUE,
+        ggplot_theme = "theme_minimal"
+      )
     )
 
-    # Save current working directory
-    old_wd <- getwd()
-    on.exit(setwd(old_wd))
-
-    # Change to parent directory
-    parent_dir <- path.expand(body$location)
-    if (!dir.exists(parent_dir)) {
-      dir.create(parent_dir, recursive = TRUE)
-    }
-    setwd(parent_dir)
-
-    # Create the project in subdirectory
-    framework::init(
-      subdir = body$name,
-      project_name = body$name,
-      type = body$type,
-      author_name = body$author$name %||% "",
-      author_email = body$author$email %||% "",
-      author_affiliation = body$author$affiliation %||% "",
-      use_git = body$use_git %||% TRUE,
-      use_renv = body$use_renv %||% FALSE,
-      default_notebook_format = body$notebook_format %||% "quarto"
-    )
-
-    # Add to project registry
-    project_id <- framework::add_project_to_config(project_dir)
-
-    list(success = TRUE, path = project_dir, id = project_id)
+    result
   }, error = function(e) {
     list(success = FALSE, error = e$message)
   })

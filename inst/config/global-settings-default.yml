@@ -76,7 +76,7 @@ templates:
 # Project type definitions
 project_types:
   project:
-    label: "Research Project"
+    label: "Standard Project Structure"
     description: "Full-featured project with organized data, work, and output directories"
     scaffold:
       set_theme_on_scaffold: true        # Automatically set ggplot theme when scaffold() runs
@@ -125,7 +125,7 @@ project_types:
       functions: "functions"
 
   project_sensitive:
-    label: "Sensitive Data Project"
+    label: "Privacy Sensitive Project"
     description: "Enhanced privacy controls for sensitive data"
     scaffold:
       set_theme_on_scaffold: true
