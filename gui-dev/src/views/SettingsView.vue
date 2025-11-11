@@ -20,8 +20,20 @@
             ]"
           >
             <component v-if="section.icon" :is="section.icon" class="h-4 w-4" />
-            <svg v-else-if="section.svgIcon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="section.svgIcon" />
+            <svg
+              v-else-if="section.svgIcon"
+              class="h-4 w-4"
+              :fill="section.svgFill ?? 'none'"
+              :viewBox="section.svgViewBox ?? '0 0 24 24'"
+              :stroke="section.svgStroke ?? 'currentColor'"
+            >
+              <path
+                :stroke-linecap="section.svgStrokeLinecap ?? 'round'"
+                :stroke-linejoin="section.svgStrokeLinejoin ?? 'round'"
+                :stroke-width="section.svgStrokeWidth ?? 2"
+                :fill="section.svgPathFill ?? 'none'"
+                :d="section.svgIcon"
+              />
             </svg>
             {{ section.label }}
           </a>
@@ -1396,14 +1408,6 @@
                 </div>
               </SettingsBlock>
 
-              <SettingsBlock>
-                <Toggle
-                  v-model="settings.defaults.git_hooks.ai_sync"
-                  label="Sync AI Files Before Commit"
-                  description="Update non-canonical files so assistants share the same instructions."
-                />
-              </SettingsBlock>
-
               <SettingsBlock
                 title="Canonical instructions"
                 description="Edit the canonical file directly. Restore defaults if you want to start over."
@@ -1424,61 +1428,28 @@
 
         <!-- Git & Hooks -->
         <div id="git" v-show="activeSection === 'git'">
-          <SettingsPanel
-            description="Configure how Framework initializes repositories, commits, and pre-commit hooks."
-          >
-            <SettingsBlock>
-              <Toggle
-                v-model="settings.defaults.use_git"
-                label="Initialize Git"
-                description="Run git init for every new project."
-              />
-            </SettingsBlock>
+          <SettingsPanel>
+            <GitHooksPanel v-model="gitPanelModel" flush>
+              <template #note>
+                Project-specific .gitignore templates can be customized in
+                <a href="#/settings/project-defaults" class="text-sky-600 dark:text-sky-400 hover:underline">
+                  Project Defaults
+                </a>.
+              </template>
+            </GitHooksPanel>
+          </SettingsPanel>
+        </div>
 
-            <SettingsBlock
-              title="Git identity"
-              description="Overrides Author Information when provided."
-            >
-              <div class="grid gap-4 sm:grid-cols-2">
-                <Input
-                  v-model="settings.git.user_name"
-                  label="Git Name"
-                  placeholder="Jane Analyst"
-                />
-                <Input
-                  v-model="settings.git.user_email"
-                  label="Git Email"
-                  placeholder="jane@example.com"
-                  hint="Used for git config user.email during project setup."
-                />
-              </div>
-            </SettingsBlock>
-
-            <SettingsBlock
-              title="Git Hooks"
-              description="Pre-commit hooks that run automatically before each commit."
-            >
-              <div class="space-y-4">
-                <Toggle
-                  v-model="settings.defaults.git_hooks.ai_sync"
-                  label="Sync AI Files Before Commit"
-                  description="Update non-canonical files so assistants share the same instructions."
-                />
-                <Toggle
-                  v-model="settings.privacy.secret_scan"
-                  label="Check for Secrets"
-                  description="Run a lightweight scan for API keys and credentials before commits."
-                />
-                <Toggle
-                  v-model="settings.defaults.git_hooks.check_sensitive_dirs"
-                  label="Warn About Unignored Sensitive Directories"
-                  description="Block commits if directories with sensitive names aren't gitignored."
-                />
-              </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
-                Project-specific .gitignore templates can be customized in <a href="#/settings/project-defaults" class="text-sky-600 dark:text-sky-400 hover:underline">Project Defaults</a>.
+        <div id="scaffold" v-show="activeSection === 'scaffold'">
+          <SettingsPanel>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Scaffold Behavior</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                Automatic actions when <code class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">scaffold()</code> runs to initialize your project environment.
               </p>
-            </SettingsBlock>
+            </div>
+
+            <ScaffoldBehaviorPanel v-model="scaffoldPanelModel" flush />
           </SettingsPanel>
         </div>
 
@@ -1604,6 +1575,8 @@ import Repeater from '../components/ui/Repeater.vue'
 import { useToast } from '../composables/useToast'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import SettingsBlock from '../components/settings/SettingsBlock.vue'
+import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
+import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import {
   InformationCircleIcon,
   UserIcon,
@@ -1624,6 +1597,18 @@ const sections = [
   { id: 'packages', label: 'Packages', slug: 'packages-dependencies', icon: CubeIcon },
   { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', slug: 'git-hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+  {
+    id: 'scaffold',
+    label: 'Scaffold Behavior',
+    slug: 'scaffold-behavior',
+    svgIcon:
+      'M256 64L576 64L576 576L64 576L64 192L256 192L256 64zM256 224L96 224L96 544L256 544L256 224zM288 544L544 544L544 96L288 96L288 544zM440 152L488 152L488 200L440 200L440 152zM392 152L392 200L344 200L344 152L392 152zM440 248L488 248L488 296L440 296L440 248zM392 248L392 296L344 296L344 248L392 248zM152 280L200 280L200 328L152 328L152 280zM392 344L392 392L344 392L344 344L392 344zM152 376L200 376L200 424L152 424L152 376zM488 344L488 392L440 392L440 344L488 344z',
+    svgViewBox: '0 0 640 640',
+    svgFill: 'currentColor',
+    svgStroke: 'none',
+    svgStrokeWidth: 0,
+    svgPathFill: 'currentColor'
+  },
   { id: 'templates', label: 'Templates', slug: 'templates', icon: DocumentTextIcon }
 ]
 
@@ -2006,6 +1991,10 @@ const sectionHeaderMeta = {
   git: {
     title: 'Git & Hooks',
     description: 'Configure repository initialization, commit identity, git hooks, and security scanning.'
+  },
+  scaffold: {
+    title: 'Scaffold Behavior',
+    description: 'Automatic actions Framework performs when scaffold() runs.'
   },
   packages: {
     title: 'Packages & Dependencies',
@@ -2570,6 +2559,59 @@ const loadSettings = async () => {
     toast.error('Load Failed', 'Unable to load current settings.')
   }
 }
+
+const gitPanelModel = computed({
+  get() {
+    const defaults = settings.value.defaults || {}
+    const gitHooks = defaults.git_hooks || {}
+    const git = settings.value.git || {}
+
+    return {
+      initialize: defaults.use_git !== false,
+      user_name: git.user_name || '',
+      user_email: git.user_email || '',
+      hooks: {
+        ai_sync: gitHooks.ai_sync || false,
+        data_security: gitHooks.data_security || false,
+        check_sensitive_dirs: gitHooks.check_sensitive_dirs || false
+      }
+    }
+  },
+  set(val) {
+    settings.value.defaults.use_git = val.initialize
+    settings.value.git = settings.value.git || {}
+    settings.value.git.user_name = val.user_name
+    settings.value.git.user_email = val.user_email
+
+    settings.value.defaults.git_hooks = settings.value.defaults.git_hooks || {}
+    settings.value.defaults.git_hooks.ai_sync = val.hooks.ai_sync
+    settings.value.defaults.git_hooks.data_security = val.hooks.data_security
+    settings.value.defaults.git_hooks.check_sensitive_dirs = val.hooks.check_sensitive_dirs
+  }
+})
+
+const scaffoldPanelModel = computed({
+  get() {
+    const scaffold = settings.value.defaults?.scaffold || {}
+    return {
+      source_all_functions: scaffold.source_all_functions !== false,
+      set_theme_on_scaffold: scaffold.set_theme_on_scaffold !== false,
+      ggplot_theme: scaffold.ggplot_theme || 'theme_minimal',
+      seed_on_scaffold: scaffold.seed_on_scaffold || false,
+      seed: scaffold.seed || ''
+    }
+  },
+  set(val) {
+    settings.value.defaults.scaffold = {
+      ...(settings.value.defaults.scaffold || {}),
+      source_all_functions: val.source_all_functions,
+      set_theme_on_scaffold: val.set_theme_on_scaffold,
+      ggplot_theme: val.ggplot_theme,
+      seed_on_scaffold: val.seed_on_scaffold,
+      seed: val.seed
+    }
+  }
+})
 
 // Helper functions for extra_directories with type field
 const extraDirectoriesByType = (projectTypeKey, type) => {

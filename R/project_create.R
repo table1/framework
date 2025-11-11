@@ -217,6 +217,8 @@ project_create <- function(
 
     yaml::write_yaml(list(git = list(
       enabled = git$initialize %||% git$use_git %||% TRUE,
+      user_name = git$user_name %||% "",
+      user_email = git$user_email %||% "",
       hooks = git$hooks
     )), file.path(settings_dir, "git.yml"))
 
@@ -260,6 +262,8 @@ project_create <- function(
         # Git configuration
         git = list(
           enabled = git$initialize %||% git$use_git %||% TRUE,
+          user_name = git$user_name %||% "",
+          user_email = git$user_email %||% "",
           hooks = git$hooks
         ),
 
@@ -313,15 +317,8 @@ project_create <- function(
         dir.create(file_dir, recursive = TRUE)
       }
 
-      # Get template content
-      template_name <- switch(assistant,
-        claude = sprintf("ai_claude_%s", type),
-        agents = "ai_agents",
-        copilot = "ai_copilot"
-      )
-
-      # Try to load template, fallback to canonical_content
-      content <- .load_template_content(template_name)
+      # Get template content (single canonical file for all assistants)
+      content <- .load_template_content("AI_CANONICAL.fr.md")
       if (is.null(content) || !nzchar(content)) {
         content <- canonical_content
       }

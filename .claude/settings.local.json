@@ -81,7 +81,8 @@
       "mcp__plugin_claude-mem_claude-mem-search__search_observations",
       "Bash(git push)",
       "Bash(git -C /Users/erikwestlund/code/better-shoes/R show:*)",
-      "Bash(npm run dev)"
+      "Bash(npm run dev)",
+      "mcp__plugin_claude-mem_claude-mem-search__find_by_type"
     ],
     "deny": [],
     "ask": []

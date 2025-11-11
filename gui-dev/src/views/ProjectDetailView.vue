@@ -58,6 +58,33 @@
         </a>
 
         <a
+          href="#ai"
+          @click.prevent="activeSection = 'ai'"
+          :class="getSidebarLinkClasses('ai')"
+        >
+          <SparklesIcon class="h-4 w-4" />
+          AI Assistants
+        </a>
+
+        <a
+          href="#git"
+          @click.prevent="activeSection = 'git'"
+          :class="getSidebarLinkClasses('git')"
+        >
+          <DocumentCheckIcon class="h-4 w-4" />
+          Git & Hooks
+        </a>
+
+        <a
+          href="#scaffold"
+          @click.prevent="activeSection = 'scaffold'"
+          :class="getSidebarLinkClasses('scaffold')"
+        >
+          <AdjustmentsVerticalIcon class="h-4 w-4" />
+          Scaffold Behavior
+        </a>
+
+        <a
           href="#connections"
           @click.prevent="activeSection = 'connections'"
           :class="getSidebarLinkClasses('connections')"
@@ -118,10 +145,14 @@
         <Button
           variant="primary"
           @click="saveCurrentSection"
-          :disabled="saving || savingPackages || savingConnections || savingEnv"
+          :disabled="saving || savingPackages || savingConnections || savingEnv || savingAI || savingGit"
           class="w-full"
         >
-          {{ (saving || savingPackages || savingConnections || savingEnv) ? 'Saving...' : 'Save' }}
+          {{
+            (saving || savingPackages || savingConnections || savingEnv || savingAI || savingGit)
+              ? 'Saving...'
+              : 'Save'
+          }}
         </Button>
       </div>
 
@@ -767,6 +798,147 @@
         </div>
       </div>
 
+      <!-- AI Assistants Section -->
+      <div v-show="activeSection === 'ai'" id="ai">
+        <div v-if="aiLoading">
+          <div class="text-center py-12 text-sm text-gray-500 dark:text-gray-400">Loading AI settings...</div>
+        </div>
+
+        <div v-else-if="aiError">
+          <Alert type="error" title="Error Loading AI Settings" :description="aiError" />
+        </div>
+
+        <div v-else>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">AI Assistants</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Framework maintains context files for selected assistants and keeps them in sync before commits.
+          </p>
+
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 space-y-6">
+            <Toggle
+              v-model="aiSettings.enabled"
+              label="Enable AI Support"
+              description="Generate and sync assistant-specific context files."
+            />
+
+            <div
+              v-if="aiSettings.enabled"
+              class="space-y-6 pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <div>
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical context file</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  This file is the source of truth; other instructions files are synced to it when AI hooks run.
+                </p>
+                <Select
+                  v-model="aiSettings.canonical_file"
+                  label="Canonical Context File"
+                  @change="handleCanonicalFileChange($event?.target?.value)"
+                >
+                  <option value="AGENTS.md">AGENTS.md (multi-agent orchestrator)</option>
+                  <option value="CLAUDE.md">CLAUDE.md</option>
+                  <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
+                </Select>
+              </div>
+
+              <div>
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Assistants</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Choose which assistants receive context updates.
+                </p>
+                <div class="space-y-2">
+                  <Checkbox
+                    v-for="assistant in availableAssistants"
+                    :key="assistant.id"
+                    :id="`project-ai-${assistant.id}`"
+                    :model-value="aiSettings.assistants.includes(assistant.id)"
+                    @update:model-value="(value) => toggleAiAssistant(assistant.id, value)"
+                    :description="assistant.description"
+                  >
+                    {{ assistant.label }}
+                  </Checkbox>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical instructions</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Edit the canonical file directly. Framework mirrors this content to other assistant files.
+                </p>
+                <Alert
+                  v-if="!aiContentMeta.exists"
+                  type="info"
+                  title="New canonical file"
+                  :description="`Saving copies the current instructions into ${aiSettings.canonical_file || 'CLAUDE.md'}. The original file stays on disk; if AI sync hooks are enabled they mirror everything from the new canonical file.`"
+                  class="mb-4"
+                />
+                <CodeEditor
+                  v-model="aiSettings.canonical_content"
+                  language="markdown"
+                  min-height="400px"
+                  :disabled="canonicalContentLoading"
+                />
+                <p v-if="canonicalContentLoading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Loading {{ aiSettings.canonical_file }}…
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Git & Hooks Section -->
+      <div v-show="activeSection === 'git'" id="git">
+        <div v-if="gitLoading">
+          <div class="text-center py-12 text-sm text-gray-500 dark:text-gray-400">Loading git settings...</div>
+        </div>
+
+        <div v-else-if="gitError">
+          <Alert type="error" title="Error Loading Git Settings" :description="gitError" />
+        </div>
+
+        <div v-else>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Git & Hooks</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Configure repository initialization, commit identity, git hooks, and security scanning.
+          </p>
+
+          <GitHooksPanel v-model="gitPanelModel">
+            <template #note>
+              Project-specific .gitignore templates can be customized in Project Defaults.
+            </template>
+          </GitHooksPanel>
+        </div>
+      </div>
+
+      <!-- Scaffold Behavior Section -->
+      <div v-show="activeSection === 'scaffold'" id="scaffold">
+        <div v-if="settingsLoading">
+          <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+            Loading settings...
+          </div>
+        </div>
+
+        <div v-else-if="settingsError">
+          <Alert type="error" title="Error Loading Settings" :description="settingsError" />
+        </div>
+
+        <div v-else>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Scaffold Behavior</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Automatic actions when <code class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">scaffold()</code> runs to initialize your project environment.
+          </p>
+
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+            <ScaffoldBehaviorPanel
+              v-if="editableSettings.scaffold"
+              v-model="editableSettings.scaffold"
+              flush
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- .env Section -->
       <div v-show="activeSection === 'env'" id="env">
         <div v-if="envLoading">
@@ -1091,6 +1263,7 @@ import Button from '../components/ui/Button.vue'
 import Toggle from '../components/ui/Toggle.vue'
 import Checkbox from '../components/ui/Checkbox.vue'
 import Select from '../components/ui/Select.vue'
+import CodeEditor from '../components/ui/CodeEditor.vue'
 import Tabs from '../components/ui/Tabs.vue'
 import TabPanel from '../components/ui/TabPanel.vue'
 import Modal from '../components/ui/Modal.vue'
@@ -1100,6 +1273,8 @@ import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
 import DataCatalogTree from '../components/DataCatalogTree.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
+import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
+import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import {
   InformationCircleIcon,
   UserIcon,
@@ -1112,7 +1287,10 @@ import {
   EyeSlashIcon,
   CubeIcon,
   FolderIcon,
-  PlusIcon
+  PlusIcon,
+  SparklesIcon,
+  DocumentCheckIcon,
+  AdjustmentsVerticalIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -1137,6 +1315,20 @@ const editableSettings = ref({})
 const settingsLoading = ref(false)
 const settingsError = ref(null)
 const saving = ref(false)
+const gitSettings = ref({
+  initialize: true,
+  user_name: '',
+  user_email: '',
+  hooks: {
+    ai_sync: false,
+    data_security: false,
+    check_sensitive_dirs: false
+  }
+})
+const gitLoading = ref(false)
+const gitError = ref(null)
+const gitLoaded = ref(false)
+const savingGit = ref(false)
 const customWorkspaceDirectories = ref([])
 const customInputDirectories = ref([])
 const customOutputDirectories = ref([])
@@ -1167,6 +1359,26 @@ const showEnvValues = ref(false)
 const visibleEnvFields = ref({})
 const envViewMode = ref('grouped') // 'grouped' or 'raw'
 const regroupOnSave = ref(false) // If true, regroup .env file by prefix (loses comments)
+const availableAssistants = [
+  { id: 'claude', label: 'Claude Code', description: "Anthropic's IDE-focused assistant." },
+  { id: 'copilot', label: 'GitHub Copilot', description: 'Complements VS Code and JetBrains editors.' },
+  { id: 'agents', label: 'Multi-Agent (OpenAI Codex, Cursor, etc.)', description: 'Shared instructions for multi-model orchestrators.' }
+]
+const aiSettings = ref({
+  enabled: false,
+  canonical_file: 'CLAUDE.md',
+  canonical_content: '',
+  assistants: []
+})
+const aiLoading = ref(false)
+const aiError = ref(null)
+const aiLoaded = ref(false)
+const savingAI = ref(false)
+const canonicalContentLoading = ref(false)
+const aiContentMeta = ref({
+  file: 'CLAUDE.md',
+  exists: true
+})
 
 // Sidebar link classes
 const getSidebarLinkClasses = (section) => {
@@ -1182,7 +1394,7 @@ const getSidebarLinkClasses = (section) => {
 // Initialize activeSection from URL query param
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'env']
+  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'ai', 'git', 'scaffold', 'env']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   } else {
@@ -1195,7 +1407,7 @@ watch(activeSection, (newSection) => {
   router.replace({ query: { ...route.query, section: newSection } })
 
   // Load settings when Settings or Basics section is activated
-  if ((newSection === 'settings' || newSection === 'basics') && !projectSettings.value) {
+  if ((newSection === 'settings' || newSection === 'basics' || newSection === 'scaffold') && !projectSettings.value) {
     loadProjectSettings()
   }
 
@@ -1209,6 +1421,14 @@ watch(activeSection, (newSection) => {
     loadPackages()
   }
 
+  if (newSection === 'git' && !gitLoaded.value) {
+    loadGitSettings()
+  }
+
+  if (newSection === 'ai' && !aiLoaded.value) {
+    loadAISettings()
+  }
+
   // Load env when .env section is activated
   if (newSection === 'env' && Object.keys(envVariables.value).length === 0) {
     loadEnv()
@@ -1217,11 +1437,23 @@ watch(activeSection, (newSection) => {
 
 // Watch for URL query param changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'env']
+  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'ai', 'git', 'scaffold', 'env']
   if (newSection && newSection !== activeSection.value && validSections.includes(newSection)) {
     activeSection.value = newSection
   }
 })
+
+let suppressCanonicalWatch = false
+
+watch(
+  () => aiSettings.value.canonical_file,
+  (newFile, oldFile) => {
+    if (suppressCanonicalWatch) return
+    if (!aiLoaded.value) return
+    if (!newFile || newFile === oldFile) return
+    handleCanonicalFileChange(newFile)
+  }
+)
 
 // Debounce package search
 let searchTimeout = null
@@ -1818,8 +2050,17 @@ const saveCurrentSection = async () => {
     case 'packages':
       await savePackages()
       break
+    case 'scaffold':
+      await saveSettings()
+      break
+    case 'git':
+      await saveGitSettings()
+      break
     case 'connections':
       await saveConnections()
+      break
+    case 'ai':
+      await saveAISettings()
       break
     case 'env':
       await saveEnv()
@@ -2167,6 +2408,241 @@ const removePackage = (index) => {
   editablePackages.value.default_packages.splice(index, 1)
 }
 
+const normalizeAssistantList = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return Array.from(new Set(value.map((item) => String(item))))
+  }
+  if (typeof value === 'string') {
+    return [value]
+  }
+  return []
+}
+
+const fetchProjectAI = async (canonicalOverride) => {
+  let endpoint = `/api/project/${route.params.id}/ai`
+  if (canonicalOverride) {
+    const params = new URLSearchParams()
+    params.set('canonical_file', canonicalOverride)
+    endpoint += `?${params.toString()}`
+  }
+
+  const response = await fetch(endpoint)
+  if (!response.ok) {
+    throw new Error('Failed to load AI settings')
+  }
+  return response.json()
+}
+
+const loadAISettings = async () => {
+  aiLoading.value = true
+  aiError.value = null
+
+  try {
+    const data = await fetchProjectAI()
+
+    if (data.error) {
+      aiError.value = data.error
+      aiLoaded.value = false
+      return
+    }
+
+    const ai = data.ai || {}
+    suppressCanonicalWatch = true
+    const initialSettings = {
+      enabled: Boolean(ai.enabled),
+      canonical_file: ai.canonical_file || 'CLAUDE.md',
+      canonical_content: ai.canonical_content || '',
+      assistants: normalizeAssistantList(ai.assistants)
+    }
+    aiSettings.value = initialSettings
+
+    aiContentMeta.value = {
+      file: ai.content_file || ai.canonical_file || 'CLAUDE.md',
+      exists: Boolean(ai.content_exists)
+    }
+    suppressCanonicalWatch = false
+
+    await loadCanonicalContent(initialSettings.canonical_file, { preserveContentIfMissing: false })
+
+    aiLoaded.value = true
+  } catch (err) {
+    aiError.value = err.message || 'Failed to load AI settings'
+    aiLoaded.value = false
+  } finally {
+    suppressCanonicalWatch = false
+    aiLoading.value = false
+    canonicalContentLoading.value = false
+  }
+}
+
+const loadGitSettings = async () => {
+  gitLoading.value = true
+  gitError.value = null
+
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/git`)
+    const data = await response.json()
+
+    if (data.error) {
+      gitError.value = data.error
+      gitLoaded.value = false
+      return
+    }
+
+    const git = data.git || {}
+    gitSettings.value = {
+      initialize: git.initialize !== undefined ? Boolean(git.initialize) : true,
+      user_name: git.user_name || '',
+      user_email: git.user_email || '',
+      hooks: {
+        ai_sync: git.hooks?.ai_sync || false,
+        data_security: git.hooks?.data_security || false,
+        check_sensitive_dirs: git.hooks?.check_sensitive_dirs || false
+      }
+    }
+
+    gitLoaded.value = true
+  } catch (err) {
+    gitError.value = err.message || 'Failed to load Git settings'
+    gitLoaded.value = false
+  } finally {
+    gitLoading.value = false
+  }
+}
+
+const gitPanelModel = computed({
+  get() {
+    return {
+      initialize: gitSettings.value.initialize,
+      user_name: gitSettings.value.user_name || '',
+      user_email: gitSettings.value.user_email || '',
+      hooks: {
+        ai_sync: gitSettings.value.hooks?.ai_sync || false,
+        data_security: gitSettings.value.hooks?.data_security || false,
+        check_sensitive_dirs: gitSettings.value.hooks?.check_sensitive_dirs || false
+      }
+    }
+  },
+  set(val) {
+    gitSettings.value = {
+      initialize: val.initialize,
+      user_name: val.user_name,
+      user_email: val.user_email,
+      hooks: {
+        ai_sync: val.hooks.ai_sync,
+        data_security: val.hooks.data_security,
+        check_sensitive_dirs: val.hooks.check_sensitive_dirs
+      }
+    }
+  }
+})
+
+const loadCanonicalContent = async (fileName, { preserveContentIfMissing = true } = {}) => {
+  if (!fileName) return
+  canonicalContentLoading.value = true
+
+  try {
+    const data = await fetchProjectAI(fileName)
+    if (data.error) {
+      toast.error('Load Failed', data.error)
+      return
+    }
+
+    const ai = data.ai || {}
+    aiContentMeta.value = {
+      file: ai.content_file || fileName,
+      exists: Boolean(ai.content_exists)
+    }
+
+    if (ai.content_exists || !preserveContentIfMissing) {
+      aiSettings.value.canonical_content = ai.canonical_content || ''
+    }
+  } catch (err) {
+    toast.error('Load Failed', err.message || 'Unable to load canonical file')
+  } finally {
+    canonicalContentLoading.value = false
+  }
+}
+
+const handleCanonicalFileChange = (value) => {
+  const nextValue = typeof value === 'string' && value.length > 0 ? value : 'CLAUDE.md'
+  loadCanonicalContent(nextValue, { preserveContentIfMissing: true })
+}
+
+const toggleAiAssistant = (assistantId, enabled) => {
+  if (!assistantId) return
+  const current = new Set(aiSettings.value.assistants)
+  if (enabled) {
+    current.add(assistantId)
+  } else {
+    current.delete(assistantId)
+  }
+  aiSettings.value.assistants = Array.from(current)
+}
+
+const saveAISettings = async () => {
+  savingAI.value = true
+
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        enabled: aiSettings.value.enabled,
+        canonical_file: aiSettings.value.canonical_file,
+        assistants: aiSettings.value.assistants,
+        canonical_content: aiSettings.value.canonical_content
+      })
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      toast.success('AI Settings Saved', 'AI assistant configuration has been updated')
+      aiLoaded.value = false
+      await loadAISettings()
+    } else {
+      toast.error('Save Failed', result.error || 'Failed to save AI settings')
+    }
+  } catch (err) {
+    toast.error('Save Failed', err.message || 'Failed to save AI settings')
+  } finally {
+    savingAI.value = false
+  }
+}
+
+const saveGitSettings = async () => {
+  savingGit.value = true
+
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/git`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initialize: gitSettings.value.initialize,
+        user_name: gitSettings.value.user_name,
+        user_email: gitSettings.value.user_email,
+        hooks: gitSettings.value.hooks
+      })
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      toast.success('Git Settings Saved', 'Repository configuration has been updated')
+      gitLoaded.value = false
+      await loadGitSettings()
+    } else {
+      toast.error('Save Failed', result.error || 'Failed to save Git settings')
+    }
+  } catch (err) {
+    toast.error('Save Failed', err.message || 'Failed to save Git settings')
+  } finally {
+    savingGit.value = false
+  }
+}
+
 const loadEnv = async () => {
   envLoading.value = true
   envError.value = null
@@ -2249,12 +2725,16 @@ const handleKeydown = (e) => {
   // Cmd/Ctrl + S to save
   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
     e.preventDefault()
-    if (activeSection.value === 'settings') {
+    if (activeSection.value === 'settings' || activeSection.value === 'scaffold') {
       saveSettings()
     } else if (activeSection.value === 'connections') {
       saveConnections()
     } else if (activeSection.value === 'packages') {
       savePackages()
+    } else if (activeSection.value === 'git') {
+      saveGitSettings()
+    } else if (activeSection.value === 'ai') {
+      saveAISettings()
     } else if (activeSection.value === 'directories') {
       saveDirectories()
     } else if (activeSection.value === 'env') {
@@ -2280,10 +2760,58 @@ watch(() => route.params.id, (newId, oldId) => {
     // Reset state
     activeSection.value = 'overview'
     project.value = null
+    projectSettings.value = null
     editableSettings.value = {}
+    settingsError.value = null
+    settingsLoading.value = false
     connections.value = null
+    connectionsError.value = null
+    connectionsToDelete.value = new Set()
+    connectionsLoading.value = false
     packages.value = []
-    directories.value = {}
+    editablePackages.value = { use_renv: false, default_packages: [] }
+    packagesError.value = null
+    packagesLoading.value = false
+    dataCatalog.value = null
+    dataEntriesToDelete.value = new Set()
+    dataEditError.value = null
+    editingDataEntry.value = null
+    envVariables.value = {}
+    envGroups.value = {}
+    envRawContent.value = ''
+    envError.value = null
+    envLoading.value = false
+    showEnvValues.value = false
+    visibleEnvFields.value = {}
+    envViewMode.value = 'grouped'
+    regroupOnSave.value = false
+    gitSettings.value = {
+      initialize: true,
+      user_name: '',
+      user_email: '',
+      hooks: {
+        ai_sync: false,
+        data_security: false,
+        check_sensitive_dirs: false
+      }
+    }
+    gitLoaded.value = false
+    gitError.value = null
+    gitLoading.value = false
+
+    suppressCanonicalWatch = true
+    aiSettings.value = {
+      enabled: false,
+      canonical_file: 'CLAUDE.md',
+      canonical_content: '',
+      assistants: []
+    }
+    aiContentMeta.value = { file: 'CLAUDE.md', exists: true }
+    aiLoaded.value = false
+    aiError.value = null
+    aiLoading.value = false
+    canonicalContentLoading.value = false
+    suppressCanonicalWatch = false
     dataCatalog.value = null
 
     // Reload project data

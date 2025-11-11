@@ -75,6 +75,21 @@ function(pr) {
   })
 }
 
+.sanitize_relative_path <- function(path_value) {
+  if (is.null(path_value) || is.na(path_value) || path_value == "") {
+    return(NULL)
+  }
+
+  cleaned <- gsub("\\\\", "/", as.character(path_value)[1])
+  cleaned <- gsub("^\\./", "", cleaned)
+
+  if (grepl("\\.\\.", cleaned, fixed = TRUE)) {
+    stop("Invalid path")
+  }
+
+  cleaned
+}
+
 #* Get global settings (simple endpoint for new project wizard)
 #* @get /api/settings
 #* @serializer unboxedJSON
@@ -863,6 +878,162 @@ function(id) {
   })
 }
 
+#* Get project AI settings
+#* @get /api/project/<id>/ai
+#* @param id Project ID
+#* @param canonical_file Optional canonical file to preview content for
+function(id, canonical_file = NULL) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  settings_file <- NULL
+  if (file.exists(file.path(project$path, "settings.yml"))) {
+    settings_file <- file.path(project$path, "settings.yml")
+  } else if (file.exists(file.path(project$path, "config.yml"))) {
+    settings_file <- file.path(project$path, "config.yml")
+  } else {
+    return(list(error = "No settings file found"))
+  }
+
+  tryCatch({
+    settings_raw <- yaml::read_yaml(settings_file)
+    settings <- settings_raw$default %||% settings_raw
+
+    ai_config <- settings$ai %||% list()
+    ai_ref <- NULL
+
+    if (is.character(ai_config) && length(ai_config) == 1 && grepl("\\.yml$", ai_config)) {
+      ai_ref <- ai_config
+      ai_file <- file.path(project$path, ai_config)
+      if (file.exists(ai_file)) {
+        ai_yaml <- yaml::read_yaml(ai_file)
+        if (!is.null(ai_yaml$ai)) {
+          ai_config <- ai_yaml$ai
+        } else {
+          ai_config <- ai_yaml
+        }
+      } else {
+        ai_config <- list()
+      }
+    }
+
+    enabled <- as.logical(ai_config$enabled %||% FALSE)[1]
+    canonical <- as.character(ai_config$canonical_file %||% "CLAUDE.md")[1]
+    assistants_raw <- ai_config$assistants %||% list()
+
+    assistants <- if (is.list(assistants_raw) || is.vector(assistants_raw)) {
+      as.list(unique(as.character(unlist(assistants_raw))))
+    } else {
+      list()
+    }
+
+    requested_file <- .sanitize_relative_path(canonical_file %||% canonical %||% "CLAUDE.md")
+    if (is.null(requested_file) || requested_file == "") {
+      requested_file <- "CLAUDE.md"
+    }
+
+    canonical_path <- file.path(project$path, requested_file)
+    canonical_exists <- file.exists(canonical_path)
+    canonical_content <- ""
+
+    if (canonical_exists) {
+      canonical_content <- paste(readLines(canonical_path, warn = FALSE), collapse = "\n")
+    }
+
+    list(
+      success = TRUE,
+      ai = list(
+        enabled = enabled,
+        canonical_file = canonical,
+        assistants = assistants,
+        canonical_content = canonical_content,
+        content_file = requested_file,
+        content_exists = canonical_exists,
+        reference = ai_ref
+      )
+    )
+  }, error = function(e) {
+    list(error = paste("Failed to load AI settings:", e$message))
+  })
+}
+
+#* Get project Git settings
+#* @get /api/project/<id>/git
+#* @param id Project ID
+function(id) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  tryCatch({
+    git_file <- file.path(project$path, "settings/git.yml")
+    settings_file <- NULL
+    if (file.exists(file.path(project$path, "settings.yml"))) {
+      settings_file <- file.path(project$path, "settings.yml")
+    } else if (file.exists(file.path(project$path, "config.yml"))) {
+      settings_file <- file.path(project$path, "config.yml")
+    } else {
+      return(list(error = "No settings file found"))
+    }
+
+    settings_raw <- yaml::read_yaml(settings_file)
+    has_default <- !is.null(settings_raw$default)
+    settings <- settings_raw$default %||% settings_raw
+    use_split_file <- is.character(settings$git) && grepl("\\.yml$", settings$git)
+
+    git_data <- list()
+    base_git <- if (!use_split_file && is.list(settings$git)) settings$git else list()
+    if (use_split_file && file.exists(git_file)) {
+      git_yaml <- yaml::read_yaml(git_file)
+      git_data <- git_yaml$git %||% git_yaml
+    } else if (!use_split_file && is.list(settings$git)) {
+      git_data <- settings$git
+    }
+
+    git_settings <- list(
+      initialize = as.logical(git_data$initialize %||% git_data$enabled %||% TRUE)[1],
+      user_name = as.character(git_data$user_name %||% base_git$user_name %||% "")[1],
+      user_email = as.character(git_data$user_email %||% base_git$user_email %||% "")[1],
+      hooks = list(
+        ai_sync = as.logical(git_data$hooks$ai_sync %||% FALSE)[1],
+        data_security = as.logical(git_data$hooks$data_security %||% FALSE)[1],
+        check_sensitive_dirs = as.logical(git_data$hooks$check_sensitive_dirs %||% FALSE)[1]
+      )
+    )
+
+    list(success = TRUE, git = git_settings)
+  }, error = function(e) {
+    list(error = paste("Failed to read git settings:", e$message))
+  })
+}
+
 #* Save project packages
 #* @post /api/project/<id>/packages
 #* @param id Project ID
@@ -952,6 +1123,23 @@ function(id, req) {
   body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
 
   tryCatch({
+    canonical_relative <- body$canonical_file %||% "CLAUDE.md"
+    canonical_relative <- .sanitize_relative_path(canonical_relative) %||% "CLAUDE.md"
+    assistants_raw <- body$assistants %||% list()
+    assistant_values <- if (is.list(assistants_raw) || is.vector(assistants_raw)) {
+      as.list(unique(as.character(unlist(assistants_raw))))
+    } else {
+      list()
+    }
+
+    new_ai_config <- list(
+      enabled = as.logical(body$enabled %||% FALSE)[1],
+      canonical_file = canonical_relative,
+      assistants = assistant_values
+    )
+
+    canonical_path <- file.path(project$path, canonical_relative)
+
     # Find settings file
     settings_file <- NULL
     if (file.exists(file.path(project$path, "settings.yml"))) {
@@ -967,19 +1155,29 @@ function(id, req) {
     has_default <- !is.null(settings_raw$default)
     settings <- settings_raw$default %||% settings_raw
 
-    # Update AI settings
-    settings$ai <- list(
-      enabled = as.logical(body$enabled %||% FALSE)[1],
-      canonical_file = as.character(body$canonical_file %||% "CLAUDE.md")[1],
-      assistants = unname(as.list(body$assistants %||% list()))
-    )
+    ai_reference <- settings$ai
+    use_split_file <- is.character(ai_reference) && length(ai_reference) == 1 && grepl("\\.yml$", ai_reference)
 
-    # Write back
-    if (has_default) {
-      settings_raw$default <- settings
-      yaml::write_yaml(settings_raw, settings_file)
+    if (use_split_file) {
+      ai_file <- file.path(project$path, ai_reference)
+      dir.create(dirname(ai_file), recursive = TRUE, showWarnings = FALSE)
+      yaml::write_yaml(list(ai = new_ai_config), ai_file)
     } else {
-      yaml::write_yaml(settings, settings_file)
+      settings$ai <- new_ai_config
+
+      if (has_default) {
+        settings_raw$default <- settings
+        yaml::write_yaml(settings_raw, settings_file)
+      } else {
+        yaml::write_yaml(settings, settings_file)
+      }
+    }
+
+    if (!is.null(body$canonical_content)) {
+      dir.create(dirname(canonical_path), recursive = TRUE, showWarnings = FALSE)
+      canonical_text <- as.character(body$canonical_content)[1]
+      canonical_lines <- strsplit(canonical_text, "\r?\n", perl = TRUE)[[1]]
+      writeLines(canonical_lines, canonical_path, sep = "\n")
     }
 
     list(success = TRUE)
@@ -1032,15 +1230,19 @@ function(id, req) {
     settings <- settings_raw$default %||% settings_raw
     use_split_file <- is.character(settings$git) && grepl("\\.yml$", settings$git)
 
+    hooks_payload <- body$hooks %||% list()
+
     if (use_split_file && file.exists(git_file)) {
       # Update split file
       git_data <- list(
         git = list(
           initialize = as.logical(body$initialize %||% TRUE)[1],
+          user_name = as.character(body$user_name %||% "")[1],
+          user_email = as.character(body$user_email %||% "")[1],
           hooks = list(
-            ai_sync = as.logical(body$hooks$ai_sync %||% FALSE)[1],
-            data_security = as.logical(body$hooks$data_security %||% FALSE)[1],
-            check_sensitive_dirs = as.logical(body$hooks$check_sensitive_dirs %||% FALSE)[1]
+            ai_sync = as.logical(hooks_payload$ai_sync %||% FALSE)[1],
+            data_security = as.logical(hooks_payload$data_security %||% FALSE)[1],
+            check_sensitive_dirs = as.logical(hooks_payload$check_sensitive_dirs %||% FALSE)[1]
           )
         )
       )
@@ -1049,10 +1251,12 @@ function(id, req) {
       # Update main settings file
       settings$git <- list(
         initialize = as.logical(body$initialize %||% TRUE)[1],
+        user_name = as.character(body$user_name %||% "")[1],
+        user_email = as.character(body$user_email %||% "")[1],
         hooks = list(
-          ai_sync = as.logical(body$hooks$ai_sync %||% FALSE)[1],
-          data_security = as.logical(body$hooks$data_security %||% FALSE)[1],
-          check_sensitive_dirs = as.logical(body$hooks$check_sensitive_dirs %||% FALSE)[1]
+          ai_sync = as.logical(hooks_payload$ai_sync %||% FALSE)[1],
+          data_security = as.logical(hooks_payload$data_security %||% FALSE)[1],
+          check_sensitive_dirs = as.logical(hooks_payload$check_sensitive_dirs %||% FALSE)[1]
         )
       )
 

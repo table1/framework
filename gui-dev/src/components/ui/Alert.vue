@@ -2,7 +2,10 @@
   <div :class="alertClasses" role="alert">
     <div class="flex gap-3">
       <!-- Icon -->
-      <component :is="iconComponent" class="h-5 w-5 shrink-0" />
+      <component
+        :is="iconComponent"
+        :class="['h-5 w-5 shrink-0', typeStyles[type].icon]"
+      />
 
       <!-- Content -->
       <div class="flex-1">

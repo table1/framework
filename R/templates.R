@@ -24,13 +24,14 @@
   `gitignore-project_sensitive` = list(file = "gitignore-sensitive"),
   `gitignore-course` = list(file = "gitignore-course"),
   `gitignore-presentation` = list(file = "gitignore-presentation"),
-  ai_claude = list(file = "CLAUDE.fr.md"),
-  ai_claude_project = list(file = "CLAUDE-project.fr.md"),
-  ai_claude_sensitive = list(file = "CLAUDE-sensitive.fr.md"),
-  ai_claude_course = list(file = "CLAUDE-course.fr.md"),
-  ai_claude_presentation = list(file = "CLAUDE-presentation.fr.md"),
-  ai_agents = list(file = "AGENTS.fr.md"),
-  ai_copilot = list(file = "copilot-instructions.fr.md")
+  ai_canonical = list(file = "AI_CANONICAL.fr.md"),
+  ai_claude = list(file = "AI_CANONICAL.fr.md"),
+  ai_claude_project = list(file = "AI_CANONICAL.fr.md"),
+  ai_claude_sensitive = list(file = "AI_CANONICAL.fr.md"),
+  ai_claude_course = list(file = "AI_CANONICAL.fr.md"),
+  ai_claude_presentation = list(file = "AI_CANONICAL.fr.md"),
+  ai_agents = list(file = "AI_CANONICAL.fr.md"),
+  ai_copilot = list(file = "AI_CANONICAL.fr.md")
 )
 
 .framework_template_path <- function(name) {
