@@ -1,4 +1,4 @@
-# Framework Sensitive Data Project - Claude Code Instructions
+# Framework Privacy Sensitive Project - Claude Code Instructions
 
 ## Project Overview
 

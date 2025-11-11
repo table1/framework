@@ -5,20 +5,27 @@
       <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">New Project</h2>
 
       <div class="space-y-1 mb-6">
-        <a
-          v-for="section in sections"
-          :key="section.id"
-          href="#"
-          @click.prevent="activeSection = section.id"
-          :class="[
-            'block px-3 py-2 rounded-md text-sm transition',
-            activeSection === section.id
-              ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
-              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-          ]"
-        >
-          {{ section.label }}
-        </a>
+        <template v-for="section in sections" :key="section.id">
+          <!-- Add SETTINGS heading before Basics section -->
+          <NavigationSectionHeading v-if="section.id === 'basics'">Settings</NavigationSectionHeading>
+
+          <a
+            href="#"
+            @click.prevent="activeSection = section.id"
+            :class="[
+              'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition',
+              activeSection === section.id
+                ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
+                : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+            ]"
+          >
+            <component v-if="section.icon" :is="section.icon" class="h-4 w-4" />
+            <svg v-else-if="section.svgIcon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="section.svgIcon" />
+            </svg>
+            {{ section.label }}
+          </a>
+        </template>
       </div>
 
       <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -26,7 +33,7 @@
           variant="primary"
           size="md"
           class="w-full"
-          :disabled="creating"
+          :disabled="creating || !project.name || !project.location"
           @click="createProject"
         >
           {{ creating ? 'Creating...' : 'Create Project' }}
@@ -37,316 +44,204 @@
     <!-- Main Content -->
     <div class="flex-1 p-10">
       <PageHeader
-        title="New Project"
+        :title="currentSectionTitle"
         :description="currentSectionDescription"
       />
 
       <div class="mt-8 space-y-6">
         <!-- Overview Section -->
-        <div v-show="activeSection === 'overview'" class="space-y-6">
-          <!-- Project Essentials -->
+        <div v-show="activeSection === 'overview'">
+          <div class="space-y-3">
+              <!-- Basics Card -->
+              <OverviewCard
+                title="Basics"
+                @click="activeSection = 'basics'"
+              >
+                <span class="text-gray-600 dark:text-gray-400">{{ project.name || 'Untitled Project' }}</span>
+                <template v-if="project.author.name">
+                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                  <span class="text-gray-600 dark:text-gray-400">{{ project.author.name }}</span>
+                </template>
+                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ getProjectTypeLabel(project.type) }}</span>
+              </OverviewCard>
+
+              <!-- Project Structure Card -->
+              <OverviewCard
+                title="Project Structure"
+                @click="activeSection = 'structure'"
+              >
+                <span class="text-gray-600 dark:text-gray-400">{{ getProjectTypeLabel(project.type) }}</span>
+                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ countDirectoriesByCategory('workspace') }} workspace</span>
+                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ countDirectoriesByCategory('input') }} input</span>
+                <template v-if="countDirectoriesByCategory('output') > 0">
+                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                  <span class="text-gray-600 dark:text-gray-400">{{ countDirectoriesByCategory('output') }} output</span>
+                </template>
+              </OverviewCard>
+
+              <!-- Packages Card -->
+              <OverviewCard
+                title="Packages"
+                @click="activeSection = 'packages'"
+              >
+                <span class="text-gray-600 dark:text-gray-400">
+                  renv: {{ project.packages.use_renv ? 'enabled' : 'disabled' }}
+                </span>
+                <template v-if="project.packages.default_packages && project.packages.default_packages.length > 0">
+                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                  <span class="text-gray-600 dark:text-gray-400">
+                    {{ project.packages.default_packages.length }} package{{ project.packages.default_packages.length !== 1 ? 's' : '' }}
+                  </span>
+                </template>
+              </OverviewCard>
+
+              <!-- AI Assistants Card -->
+              <OverviewCard
+                title="AI Assistants"
+                @click="activeSection = 'ai'"
+              >
+                <template v-if="project.ai.enabled && project.ai.assistants.length > 0">
+                  {{ project.ai.assistants.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') }}
+                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                  <span class="text-gray-600 dark:text-gray-400">{{ project.ai.canonical_file }}</span>
+                </template>
+                <template v-else-if="project.ai.enabled">
+                  <span class="text-gray-600 dark:text-gray-400">Enabled (no assistants selected)</span>
+                </template>
+                <template v-else>
+                  <span class="text-gray-600 dark:text-gray-400">Disabled</span>
+                </template>
+              </OverviewCard>
+
+              <!-- Git & Hooks Card -->
+              <OverviewCard
+                title="Git & Hooks"
+                @click="activeSection = 'git'"
+              >
+                <span class="text-gray-600 dark:text-gray-400">
+                  Git: {{ project.git.initialize ? 'enabled' : 'disabled' }}
+                </span>
+                <template v-if="project.git.initialize && enabledGitHooks.length > 0">
+                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                  <span class="text-gray-600 dark:text-gray-400">{{ enabledGitHooks.join(', ') }}</span>
+                </template>
+              </OverviewCard>
+
+              <!-- Scaffold Behavior Card -->
+              <OverviewCard
+                title="Scaffold Behavior"
+                @click="activeSection = 'scaffold'"
+              >
+                <span class="text-gray-600 dark:text-gray-400">
+                  <template v-if="project.scaffold.source_all_functions">
+                    Functions loaded from <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">functions/</code>
+                  </template>
+                  <template v-else>
+                    Does not load functions
+                  </template>
+                </span>
+                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                <span class="text-gray-600 dark:text-gray-400">
+                  <template v-if="project.scaffold.set_theme_on_scaffold">
+                    ggplot2: {{ (project.scaffold.ggplot_theme || 'theme_minimal').replace('theme_', '') }}
+                  </template>
+                  <template v-else>
+                    No ggplot theme
+                  </template>
+                </span>
+                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                <span class="text-gray-600 dark:text-gray-400">
+                  {{ project.scaffold.seed_on_scaffold ? 'Seed: ' + (project.scaffold.seed || 'default') : 'No random seed' }}
+                </span>
+              </OverviewCard>
+            </div>
+        </div>
+
+        <!-- Basics Section -->
+        <div v-show="activeSection === 'basics'">
           <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              Project Essentials
-            </h3>
-            <div class="space-y-6">
+            <div class="space-y-5">
               <Input
+                ref="projectNameInput"
                 v-model="project.name"
                 label="Project Name"
+                hint="Human-readable name for your project"
                 placeholder="My Analysis Project"
-                hint="Used for the project directory name and title"
-                @blur="updateProjectLocation"
+                required
               />
+
               <Input
                 v-model="project.location"
                 label="Project Location"
-                :placeholder="globalSettings?.global?.projects_root || '~/projects'"
-                hint="Parent directory where the project folder will be created"
-                monospace
+                hint="Directory where the project will be created"
+                placeholder="e.g., ~/projects or /Users/yourname/code"
               />
 
-              <RadioGroup legend="Project Type">
-                <Radio v-model="project.type" value="project" id="overview-type-project" name="overview_project_type">
-                  <div>
-                    <div class="font-medium">{{ getProjectTypeLabel('project') }}</div>
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                      {{ getProjectTypeDescription('project') }}
-                    </div>
-                  </div>
-                </Radio>
-                <Radio v-model="project.type" value="project_sensitive" id="overview-type-sensitive" name="overview_project_type">
-                  <div>
-                    <div class="font-medium">{{ getProjectTypeLabel('project_sensitive') }}</div>
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                      {{ getProjectTypeDescription('project_sensitive') }}
-                    </div>
-                  </div>
-                </Radio>
-                <Radio v-model="project.type" value="presentation" id="overview-type-presentation" name="overview_project_type">
-                  <div>
-                    <div class="font-medium">{{ getProjectTypeLabel('presentation') }}</div>
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                      {{ getProjectTypeDescription('presentation') }}
-                    </div>
-                  </div>
-                </Radio>
-                <Radio v-model="project.type" value="course" id="overview-type-course" name="overview_project_type">
-                  <div>
-                    <div class="font-medium">{{ getProjectTypeLabel('course') }}</div>
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                      {{ getProjectTypeDescription('course') }}
-                    </div>
-                  </div>
-                </Radio>
-              </RadioGroup>
+              <Select
+                v-model="project.type"
+                label="Project Type"
+                hint="Choose the template structure for your project"
+              >
+                <option value="project">Research Project</option>
+                <option value="course">Course</option>
+                <option value="presentation">Presentation</option>
+              </Select>
 
-              <!-- Notebook Format -->
               <div>
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Notebook Format</h4>
-                <RadioGroup legend="" hideLegend>
-                  <Radio v-model="project.scaffold.notebook_format" value="quarto" id="basics-format-quarto" name="basics_notebook_format">
-                    <div>
-                      <div class="font-medium">Quarto (.qmd)</div>
-                      <div class="text-xs text-gray-600 dark:text-gray-400">Modern publishing system (recommended)</div>
-                    </div>
-                  </Radio>
-                  <Radio v-model="project.scaffold.notebook_format" value="rmarkdown" id="basics-format-rmarkdown" name="basics_notebook_format">
-                    <div>
-                      <div class="font-medium">RMarkdown (.Rmd)</div>
-                      <div class="text-xs text-gray-600 dark:text-gray-400">Classic R notebook format</div>
-                    </div>
-                  </Radio>
-                </RadioGroup>
+                <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  Supported Editors
+                </label>
+                <Checkbox
+                  v-model="project.scaffold.positron"
+                  id="support-positron"
+                  description="Enable Positron-specific workspace and settings files"
+                >
+                  Positron
+                </Checkbox>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                  RStudio supported by default
+                </p>
               </div>
 
-              <!-- Primary Editor -->
-              <div>
-                <Select v-model="project.scaffold.ide" label="Primary Editor">
-                  <option value="vscode">Positron / VS Code</option>
-                  <option value="rstudio">RStudio</option>
-                  <option value="rstudio,vscode">Both</option>
-                  <option value="none">Other</option>
-                </Select>
+              <Select
+                v-model="project.scaffold.notebook_format"
+                label="Default Notebook Format"
+                hint="Format used when creating new notebooks"
+              >
+                <option value="quarto">Quarto (.qmd)</option>
+                <option value="rmarkdown">R Markdown (.Rmd)</option>
+              </Select>
+
+              <!-- Author Information Subheading -->
+              <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                  Author Information
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
+                  Author information is embedded in project templates and documentation.
+                </p>
+                <div class="space-y-5">
+                  <Input
+                    v-model="project.author.name"
+                    label="Your Name"
+                    placeholder="Your Name"
+                  />
+                  <Input
+                    v-model="project.author.email"
+                    type="email"
+                    label="Email"
+                    placeholder="your.email@example.com"
+                  />
+                  <Input
+                    v-model="project.author.affiliation"
+                    label="Affiliation"
+                    placeholder="Organization"
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Optional Customization -->
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              Optional Customization
-              <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
-                (using global defaults - click any card to customize)
-              </span>
-            </h3>
-
-            <div class="space-y-3">
-              <!-- Author -->
-              <button
-                @click="navigateToSection('author')"
-                class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Author & Metadata</div>
-                    <div class="text-sm text-gray-900 dark:text-white">
-                      <template v-if="project.author.name || project.author.email || project.author.affiliation">
-                        <span v-if="project.author.name">{{ project.author.name }}</span>
-                        <span v-if="project.author.name && project.author.email" class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                        <span v-if="project.author.email">{{ project.author.email }}</span>
-                        <span v-if="(project.author.name || project.author.email) && project.author.affiliation" class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                        <span v-if="project.author.affiliation">{{ project.author.affiliation }}</span>
-                      </template>
-                      <template v-else>
-                        Not set
-                      </template>
-                    </div>
-                  </div>
-                  <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              <!-- Scaffold Behavior -->
-              <button
-                @click="navigateToSection('scaffold')"
-                class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Scaffold Behavior</div>
-                    <div class="text-sm text-gray-900 dark:text-white">
-                      <span class="text-gray-600 dark:text-gray-400">
-                        <template v-if="project.scaffold.source_all_functions">
-                          Functions loaded from <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">functions/</code>
-                        </template>
-                        <template v-else>
-                          Does not load functions
-                        </template>
-                      </span>
-                      <span class="text-gray-600 dark:text-gray-400 mx-2">·</span>
-                      <span class="text-gray-600 dark:text-gray-400">
-                        <template v-if="project.scaffold.set_theme_on_scaffold">
-                          ggplot2 theme: {{ (project.scaffold.ggplot_theme || 'theme_minimal').replace('theme_', '') }}
-                        </template>
-                        <template v-else>
-                          No ggplot theme
-                        </template>
-                      </span>
-                      <span class="text-gray-600 dark:text-gray-400 mx-2">·</span>
-                      <span class="text-gray-600 dark:text-gray-400">
-                        {{ project.scaffold.seed_on_scaffold ? 'Seed: ' + (project.scaffold.seed || 'default') : 'No random seed' }}
-                      </span>
-                    </div>
-                  </div>
-                  <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              <!-- Project Structure -->
-              <button
-                @click="navigateToSection('structure')"
-                class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Project Structure</div>
-                    <div class="text-sm text-gray-900 dark:text-white">
-                      <span class="text-gray-600 dark:text-gray-400">
-                        {{ getProjectTypeLabel(project.type) }}
-                      </span>
-                      <span class="text-gray-600 dark:text-gray-400 mx-2">·</span>
-                      <span class="text-gray-600 dark:text-gray-400">
-                        {{ countDirectoriesByCategory('workspace') }} workspace
-                      </span>
-                      <span class="text-gray-600 dark:text-gray-400 mx-2">·</span>
-                      <span class="text-gray-600 dark:text-gray-400">
-                        {{ countDirectoriesByCategory('input') }} input
-                      </span>
-                      <template v-if="countDirectoriesByCategory('output') > 0">
-                        <span class="text-gray-600 dark:text-gray-400 mx-2">·</span>
-                        <span class="text-gray-600 dark:text-gray-400">
-                          {{ countDirectoriesByCategory('output') }} output
-                        </span>
-                      </template>
-                    </div>
-                  </div>
-                  <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              <!-- Packages & Dependencies -->
-              <button
-                @click="navigateToSection('packages')"
-                class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Packages & Dependencies</div>
-                    <div class="text-sm text-gray-900 dark:text-white">
-                      renv: <span class="font-medium">{{ project.packages.use_renv ? 'Enabled' : 'Disabled' }}</span>
-                      <span v-if="project.packages.default_packages && project.packages.default_packages.length > 0" class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                      <span v-if="project.packages.default_packages && project.packages.default_packages.length > 0">
-                        {{ project.packages.default_packages.length }} package{{ project.packages.default_packages.length !== 1 ? 's' : '' }}
-                      </span>
-                    </div>
-                  </div>
-                  <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              <!-- AI Assistants -->
-              <button
-                @click="navigateToSection('ai')"
-                class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">AI Assistants</div>
-                    <div class="text-sm text-gray-900 dark:text-white">
-                      <template v-if="project.ai.enabled && project.ai.assistants.length > 0">
-                        {{ project.ai.assistants.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') }}
-                        <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                        <span class="text-gray-600 dark:text-gray-400">{{ project.ai.canonical_file }}</span>
-                      </template>
-                      <template v-else-if="project.ai.enabled">
-                        Enabled (no assistants selected)
-                      </template>
-                      <template v-else>
-                        Disabled
-                      </template>
-                    </div>
-                  </div>
-                  <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              <!-- Git & Hooks -->
-              <button
-                @click="navigateToSection('git')"
-                class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Git & Hooks</div>
-                    <div class="text-sm text-gray-900 dark:text-white">
-                      Git: <span class="font-medium">{{ project.git.initialize ? 'Yes' : 'No' }}</span>
-                      <template v-if="project.git.initialize">
-                        <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                        <span class="text-gray-600 dark:text-gray-400">{{ getGitignoreTemplateLabel(project.git.gitignore_template) }}</span>
-                        <template v-if="project.git.hooks.ai_sync || project.git.hooks.data_security">
-                          <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                          <span class="text-gray-600 dark:text-gray-400">
-                            {{ project.git.hooks.ai_sync && project.git.hooks.data_security ? '2 hooks' : '1 hook' }}
-                          </span>
-                        </template>
-                      </template>
-                    </div>
-                  </div>
-                  <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Author & Metadata Section -->
-        <div v-show="activeSection === 'author'">
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              Author & Metadata
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Author information is embedded in project templates and documentation.
-            </p>
-            <div class="space-y-4">
-              <Input
-                v-model="project.author.name"
-                label="Your Name"
-                placeholder="Your Name"
-              />
-              <Input
-                v-model="project.author.email"
-                type="email"
-                label="Email"
-                placeholder="your.email@example.com"
-              />
-              <Input
-                v-model="project.author.affiliation"
-                label="Affiliation"
-                placeholder="Organization"
-              />
             </div>
           </div>
         </div>
@@ -435,7 +330,7 @@
                 </Radio>
                 <Radio v-model="project.type" id="type-sensitive" name="project-type" value="project_sensitive">
                   <div>
-                    <div class="font-medium text-sm">Sensitive Data Project</div>
+                    <div class="font-medium text-sm">Privacy Sensitive Project</div>
                     <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                       Enhanced privacy controls with separate private/public flows
                     </div>
@@ -1522,15 +1417,9 @@
             </div>
         </div>
 
-        <!-- Packages & Dependencies Section -->
+        <!-- Packages Section -->
         <div v-show="activeSection === 'packages'">
           <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              Packages & Dependencies
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Configure package management and default packages for this project.
-            </p>
             <div class="space-y-5">
               <Toggle
                 v-model="project.packages.use_renv"
@@ -1576,7 +1465,7 @@
                         </Select>
                       </div>
                       <div class="flex items-center justify-between">
-                        <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() in notebooks." />
+                        <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() when scaffold() runs." />
                         <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
                       </div>
                     </div>
@@ -1592,96 +1481,75 @@
         <!-- AI Assistants Section -->
         <div v-show="activeSection === 'ai'">
           <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              AI Assistants
-            </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Select which AI assistants you want to support. Context files will be created for each selected assistant.
+              Framework maintains context files for selected assistants and keeps them in sync before commits.
             </p>
-            <div class="space-y-5">
-              <Toggle
-                v-model="project.ai.enabled"
-                label="Enable AI support"
-                description="Create context files for AI assistants in this project"
-              />
 
-              <div v-if="project.ai.enabled" class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Assistants to Support</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Select which AI assistants you'll use. Files will be created for each:
-                </p>
+            <div class="space-y-6">
+              <div>
+                <Toggle
+                  v-model="project.ai.enabled"
+                  label="Enable AI Support"
+                  description="Generate and sync assistant-specific context files."
+                />
+              </div>
 
-                <div class="space-y-3">
-                  <Checkbox
-                    id="ai-claude"
-                    :model-value="project.ai.assistants.includes('claude')"
-                    @update:model-value="toggleAssistant('claude', $event)"
-                    description="Creates CLAUDE.md context file"
+              <template v-if="project.ai.enabled">
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical context file</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    This file is the source of truth; other instructions files are synced to it when AI hooks run.
+                  </p>
+                  <Select
+                    v-model="project.ai.canonical_file"
+                    label="Canonical Context File"
                   >
-                    Claude Code & Claude
-                  </Checkbox>
-
-                  <Checkbox
-                    id="ai-copilot"
-                    :model-value="project.ai.assistants.includes('copilot')"
-                    @update:model-value="toggleAssistant('copilot', $event)"
-                    description="Creates .github/copilot-instructions.md"
-                  >
-                    GitHub Copilot
-                  </Checkbox>
-
-                  <Checkbox
-                    id="ai-agents"
-                    :model-value="project.ai.assistants.includes('agents')"
-                    @update:model-value="toggleAssistant('agents', $event)"
-                    description="Creates AGENTS.md (supported by ChatGPT, Cursor, Codex, and other tools)"
-                  >
-                    AGENTS.md
-                  </Checkbox>
+                    <option value="AGENTS.md">AGENTS.md (multi-agent orchestrator)</option>
+                    <option value="CLAUDE.md">CLAUDE.md</option>
+                    <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
+                  </Select>
                 </div>
 
-                <div v-if="project.ai.assistants.length > 0" class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
-                  <div class="rounded-md bg-sky-50 p-4 dark:bg-sky-900/20">
-                    <div class="flex">
-                      <svg class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
-                      </svg>
-                      <div class="ml-3">
-                        <h4 class="text-sm font-medium text-sky-800 dark:text-sky-200">Files to be created:</h4>
-                        <div class="mt-2 text-sm text-sky-700 dark:text-sky-300">
-                          <ul class="list-disc list-inside space-y-1">
-                            <li v-if="project.ai.assistants.includes('claude')">CLAUDE.md</li>
-                            <li v-if="project.ai.assistants.includes('copilot')">.github/copilot-instructions.md</li>
-                            <li v-if="project.ai.assistants.includes('agents')">AGENTS.md</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Assistants</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Choose which assistants receive context updates.
+                  </p>
+                  <div class="space-y-2">
+                    <Checkbox
+                      v-for="assistant in availableAssistants"
+                      :key="assistant.id"
+                      :id="`ai-${assistant.id}`"
+                      :model-value="project.ai.assistants.includes(assistant.id)"
+                      @update:model-value="toggleAssistant(assistant.id, $event)"
+                      :description="assistant.description"
+                    >
+                      {{ assistant.label }}
+                    </Checkbox>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Primary Context File Editor (separate panel) -->
-          <div v-if="project.ai.enabled && project.ai.assistants.length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <div class="flex items-center justify-between mb-1">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Primary Context File</h3>
-              <Select v-model="project.ai.canonical_file" class="w-auto">
-                <option value="CLAUDE.md">CLAUDE.md</option>
-                <option value="AGENTS.md">AGENTS.md</option>
-                <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
-              </Select>
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <Toggle
+                    v-model="project.git.hooks.ai_sync"
+                    label="Sync AI Files Before Commit"
+                    description="Update non-canonical files so assistants share the same instructions."
+                  />
+                </div>
+
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical instructions</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Edit the canonical file directly. This will be pre-populated when the project is created.
+                  </p>
+                  <CodeEditor
+                    v-model="project.ai.canonical_content"
+                    language="markdown"
+                    min-height="500px"
+                  />
+                </div>
+              </template>
             </div>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Edit the default content for your primary AI context file. This will be pre-populated based on your project type.
-            </p>
-            <CodeEditor
-              v-model="project.ai.canonical_content"
-              language="markdown"
-              min-height="400px"
-              class="mb-4"
-            />
           </div>
         </div>
 
@@ -1729,6 +1597,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -1748,7 +1617,17 @@ import Checkbox from '../components/ui/Checkbox.vue'
 import Repeater from '../components/ui/Repeater.vue'
 import CodeEditor from '../components/ui/CodeEditor.vue'
 import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
+import OverviewCard from '../components/ui/OverviewCard.vue'
+import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
 import { useToast } from '../composables/useToast'
+import {
+  InformationCircleIcon,
+  UserIcon,
+  FolderIcon,
+  CubeIcon,
+  DocumentCheckIcon,
+  Cog6ToothIcon
+} from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -1758,18 +1637,25 @@ const globalSettings = ref(null)
 const settingsCatalog = ref(null)
 const loading = ref(true)
 
-const sections = [
-  { id: 'overview', label: 'Basics' },
-  { id: 'author', label: 'Author & Metadata' },
-  { id: 'structure', label: 'Project Structure' },
-  { id: 'packages', label: 'Packages & Dependencies' },
-  { id: 'ai', label: 'AI Assistants' },
-  { id: 'git', label: 'Git & Hooks' },
-  { id: 'scaffold', label: 'Scaffold Behavior' }
+const availableAssistants = [
+  { id: 'claude', label: 'Claude Code', description: "Anthropic's IDE-focused assistant." },
+  { id: 'copilot', label: 'GitHub Copilot', description: 'Complements VS Code and JetBrains editors.' },
+  { id: 'agents', label: 'Multi-Agent (OpenAI Codex, Cursor, etc.)', description: 'Shared instructions for multi-model orchestrators.' }
 ]
 
-const activeSection = ref('overview')
+const sections = [
+  { id: 'overview', label: 'Overview', icon: InformationCircleIcon },
+  { id: 'basics', label: 'Basics', icon: Cog6ToothIcon },
+  { id: 'structure', label: 'Project Structure', icon: FolderIcon },
+  { id: 'packages', label: 'Packages', icon: CubeIcon },
+  { id: 'ai', label: 'AI Assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  { id: 'git', label: 'Git & Hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+  { id: 'scaffold', label: 'Scaffold Behavior', svgIcon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' }
+]
+
+const activeSection = ref('basics')
 const creating = ref(false)
+const projectNameInput = ref(null)
 
 const project = ref({
   name: '',
@@ -1787,7 +1673,8 @@ const project = ref({
     ggplot_theme: 'theme_minimal',
     source_all_functions: true,
     notebook_format: 'quarto',
-    ide: 'vscode'
+    ide: 'vscode',
+    positron: false
   },
   packages: {
     use_renv: false,
@@ -1860,7 +1747,12 @@ onMounted(async () => {
 
       // Pre-populate from v2 defaults
       if (globalSettings.value) {
-        // Don't pre-fill location - let it auto-generate on name blur
+        // Pre-fill location from global projects_root
+        if (globalSettings.value.global?.projects_root) {
+          project.value.location = globalSettings.value.global.projects_root
+        }
+
+        // Pre-fill author info
         project.value.author = { ...globalSettings.value.author } || {}
 
         // Load project type default
@@ -1874,29 +1766,20 @@ onMounted(async () => {
         }
 
         // Load package defaults
-        console.log('[DEBUG] Global settings loaded:', globalSettings.value)
-        console.log('[DEBUG] Defaults object:', globalSettings.value.defaults)
-        console.log('[DEBUG] Packages data:', globalSettings.value.defaults?.packages)
-        console.log('[DEBUG] Is array?', Array.isArray(globalSettings.value.defaults?.packages))
-
         if (globalSettings.value.defaults?.packages) {
           // Handle flat array structure from SettingsView (current format)
           if (Array.isArray(globalSettings.value.defaults.packages)) {
-            console.log('[DEBUG] Loading packages from flat array format')
             const mappedPackages = globalSettings.value.defaults.packages.map(pkg => ({
               name: pkg.name || '',
               source: pkg.source || 'cran',
               auto_attach: pkg.auto_attach !== false
             }))
-            console.log('[DEBUG] Mapped packages:', mappedPackages)
 
             // Use splice to maintain reactivity instead of replacing the object
             project.value.packages.default_packages.splice(0, project.value.packages.default_packages.length, ...mappedPackages)
-            console.log('[DEBUG] Final project.packages:', project.value.packages)
           }
           // Handle nested object structure (backwards compatibility)
           else if (globalSettings.value.defaults.packages.default_packages) {
-            console.log('[DEBUG] Loading packages from nested object format')
             project.value.packages = {
               use_renv: globalSettings.value.defaults.packages.use_renv || false,
               default_packages: (globalSettings.value.defaults.packages.default_packages || []).map(pkg => ({
@@ -1905,22 +1788,15 @@ onMounted(async () => {
                 auto_attach: pkg.auto_attach !== false
               }))
             }
-            console.log('[DEBUG] Final project.packages:', project.value.packages)
-          } else {
-            console.log('[DEBUG] Packages exists but is not array or nested object:', typeof globalSettings.value.defaults.packages)
           }
-        } else {
-          console.log('[DEBUG] No packages found in defaults')
         }
 
         // Load AI defaults
-        if (globalSettings.value.defaults?.ai) {
-          project.value.ai = {
-            enabled: globalSettings.value.defaults.ai.enabled !== false,
-            assistants: [], // Start with no assistants selected - user must explicitly choose
-            canonical_file: globalSettings.value.defaults.ai.canonical_file || 'CLAUDE.md',
-            canonical_content: ''
-          }
+        project.value.ai = {
+          enabled: globalSettings.value.defaults?.ai_support !== false,
+          assistants: globalSettings.value.defaults?.ai_assistants || ['claude'],
+          canonical_file: globalSettings.value.defaults?.ai_canonical_file || 'CLAUDE.md',
+          canonical_content: ''
         }
 
         // Load initial AI template content if AI is enabled
@@ -1929,8 +1805,9 @@ onMounted(async () => {
         }
 
         // Load git defaults
-        if (globalSettings.value.defaults?.git) {
-          project.value.git = { ...globalSettings.value.defaults.git }
+        project.value.git.initialize = globalSettings.value.defaults?.use_git !== false
+        if (globalSettings.value.defaults?.git_hooks) {
+          project.value.git.hooks = { ...globalSettings.value.defaults.git_hooks }
         }
 
         // Initialize gitignore template based on project type
@@ -1964,6 +1841,16 @@ onMounted(async () => {
   } finally {
     console.log('[DEBUG] Initialization complete, loading =', loading.value)
     loading.value = false
+
+    // Focus project name input after component is fully loaded
+    setTimeout(() => {
+      if (projectNameInput.value && projectNameInput.value.$el) {
+        const inputElement = projectNameInput.value.$el.querySelector('input')
+        if (inputElement) {
+          inputElement.focus()
+        }
+      }
+    }, 100)
   }
 })
 
@@ -2019,8 +1906,6 @@ watch(() => project.value.type, (newType) => {
 })
 
 const loadProjectTypeDefaults = () => {
-  console.log('[DEBUG] loadProjectTypeDefaults() called - current packages:', project.value.packages.default_packages)
-
   if (!settingsCatalog.value?.project_types) return
 
   const catalogType = settingsCatalog.value.project_types[project.value.type]
@@ -2087,15 +1972,32 @@ const getProjectTypeDescription = (type) => {
   return settingsCatalog.value?.project_types?.[type]?.description || ''
 }
 
+const currentSectionTitle = computed(() => {
+  const titles = {
+    overview: 'Overview',
+    basics: 'Basics',
+    author: 'Author & Metadata',
+    scaffold: 'Scaffold Behavior',
+    structure: 'Project Structure',
+    packages: 'Packages & Dependencies',
+    ai: 'AI Assistants',
+    git: 'Git & Hooks',
+    review: 'Review & Create'
+  }
+  return titles[activeSection.value] || 'New Project'
+})
+
 const currentSectionDescription = computed(() => {
   const descriptions = {
-    overview: 'Set your project name, location, and type. Customize defaults below or skip to create.',
+    overview: 'Quick overview of your project settings. We used your Framework Project Defaults as a starting point.',
+    basics: 'Essential project settings including name, location, type, and editor support.',
     author: 'Configure author information embedded in project templates.',
     scaffold: 'Runtime settings that control what happens when scaffold() runs.',
     structure: 'Customize which directories to create for this project type.',
     packages: 'Configure package management and default packages.',
     ai: 'Configure AI assistant integration for this project.',
-    git: 'Configure version control and git hooks.'
+    git: 'Configure version control and git hooks.',
+    review: 'Review your project configuration and create the project.'
   }
   return descriptions[activeSection.value] || ''
 })
@@ -2108,6 +2010,26 @@ const ideLabel = computed(() => {
     none: 'Other'
   }
   return labels[project.value.scaffold.ide] || project.value.scaffold.ide
+})
+
+const enabledGitHooks = computed(() => {
+  const hooks = []
+  if (project.value.git.hooks.ai_sync) hooks.push('AI sync')
+  if (project.value.git.hooks.data_security) hooks.push('data security')
+  if (project.value.git.hooks.check_sensitive_dirs) hooks.push('check sensitive')
+  return hooks
+})
+
+const displayLocation = computed(() => {
+  const location = project.value.location
+  const globalRoot = globalSettings.value?.global?.projects_root
+
+  // If location equals global projects_root or is empty, show "(not set)"
+  if (!location || location === globalRoot) {
+    return '(not set)'
+  }
+
+  return location
 })
 
 const getPackagePlaceholder = (source) => {
@@ -2156,7 +2078,7 @@ const removePackage = (index) => {
 const getGitignoreTemplateLabel = (template) => {
   const labels = {
     'gitignore-project': 'Research Project',
-    'gitignore-sensitive': 'Sensitive Data Project',
+    'gitignore-sensitive': 'Privacy Sensitive Project',
     'gitignore-course': 'Course/Teaching',
     'gitignore-presentation': 'Presentation'
   }
@@ -2324,6 +2246,11 @@ const updateProjectLocation = () => {
   project.value.location = `${projectsRoot}/${kebabName}`
 }
 
+const resetForm = () => {
+  // Reload the page to reset all form data
+  window.location.reload()
+}
+
 const createProject = async () => {
   // Validate
   if (!project.value.name || !project.value.name.trim()) {
@@ -2354,9 +2281,10 @@ const createProject = async () => {
     }
 
     // Build request payload matching v2 structure
+    // Location is the FULL path to the project directory
     const payload = {
-      name: project.value.name,
-      location: project.value.location,
+      name: project.value.name.trim(),
+      location: project.value.location.trim(),
       type: project.value.type,
       author: project.value.author,
       scaffold: project.value.scaffold,

@@ -28,59 +28,34 @@
         </a>
 
         <!-- SETTINGS Heading -->
-        <div class="pt-4 pb-2">
-          <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-            Settings
-          </h3>
-        </div>
+        <NavigationSectionHeading>Settings</NavigationSectionHeading>
+
+        <a
+          href="#basics"
+          @click.prevent="activeSection = 'basics'"
+          :class="getSidebarLinkClasses('basics')"
+        >
+          <Cog6ToothIcon class="h-4 w-4" />
+          Basics
+        </a>
 
         <a
           href="#settings"
           @click.prevent="activeSection = 'settings'"
           :class="getSidebarLinkClasses('settings')"
         >
-          <Cog6ToothIcon class="h-4 w-4" />
-          Project Settings
+          <FolderIcon class="h-4 w-4" />
+          Project Structure
         </a>
 
-        <!-- Settings Sub-links -->
-        <div v-if="activeSection === 'settings'" class="ml-6 space-y-0.5 mt-1">
-          <a
-            href="#settings-project"
-            @click.prevent="scrollToSection('settings-project')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Project Information
-          </a>
-          <a
-            href="#settings-author"
-            @click.prevent="scrollToSection('settings-author')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Author Information
-          </a>
-          <a
-            href="#settings-options"
-            @click.prevent="scrollToSection('settings-options')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Project Options
-          </a>
-          <a
-            href="#settings-git"
-            @click.prevent="scrollToSection('settings-git')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Git Configuration
-          </a>
-          <a
-            href="#settings-ai"
-            @click.prevent="scrollToSection('settings-ai')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            AI Assistant
-          </a>
-        </div>
+        <a
+          href="#packages"
+          @click.prevent="activeSection = 'packages'"
+          :class="getSidebarLinkClasses('packages')"
+        >
+          <CubeIcon class="h-4 w-4" />
+          Packages
+        </a>
 
         <a
           href="#connections"
@@ -101,63 +76,6 @@
             class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
           >
             {{ name }}
-          </a>
-        </div>
-
-        <a
-          href="#packages"
-          @click.prevent="activeSection = 'packages'"
-          :class="getSidebarLinkClasses('packages')"
-        >
-          <CubeIcon class="h-4 w-4" />
-          Packages
-        </a>
-
-        <a
-          href="#directories"
-          @click.prevent="activeSection = 'directories'"
-          :class="getSidebarLinkClasses('directories')"
-        >
-          <FolderIcon class="h-4 w-4" />
-          Directories
-        </a>
-
-        <!-- Directory Sub-links -->
-        <div v-if="activeSection === 'directories'" class="ml-6 space-y-0.5 mt-1">
-          <a
-            href="#directory-work"
-            @click.prevent="scrollToSection('directory-work')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Work Directories
-          </a>
-          <a
-            href="#directory-inputs"
-            @click.prevent="scrollToSection('directory-inputs')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Input Directories
-          </a>
-          <a
-            href="#directory-private-outputs"
-            @click.prevent="scrollToSection('directory-private-outputs')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Private Outputs
-          </a>
-          <a
-            href="#directory-public-outputs"
-            @click.prevent="scrollToSection('directory-public-outputs')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Public Outputs
-          </a>
-          <a
-            href="#directory-other"
-            @click.prevent="scrollToSection('directory-other')"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            Other
           </a>
         </div>
 
@@ -193,13 +111,23 @@
           <KeyIcon class="h-4 w-4" />
           .env
         </a>
+      </div>
 
+      <!-- Save Button -->
+      <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+        <Button
+          variant="primary"
+          @click="saveCurrentSection"
+          :disabled="saving || savingPackages || savingConnections || savingEnv"
+          class="w-full"
+        >
+          {{ (saving || savingPackages || savingConnections || savingEnv) ? 'Saving...' : 'Save' }}
+        </Button>
+      </div>
+
+      <div class="space-y-1">
         <!-- OUTPUTS Heading -->
-        <div class="pt-4 pb-2">
-          <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-            Outputs
-          </h3>
-        </div>
+        <NavigationSectionHeading>Outputs</NavigationSectionHeading>
 
         <a
           href="#notebooks"
@@ -216,48 +144,127 @@
     <div class="flex-1 p-10">
       <!-- Overview Section -->
       <div v-show="activeSection === 'overview'" id="overview">
-        <div class="flex items-start justify-between mb-6">
-          <div>
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ project.name }}</h2>
-            <Badge variant="sky" class="mt-2">{{ project.type }}</Badge>
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Overview</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Quick overview of your project settings.
+        </p>
+
+        <div class="space-y-3">
+          <!-- Basics Card -->
+          <button
+            @click="activeSection = 'basics'"
+            class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Basics</div>
+                <div class="text-sm text-gray-900 dark:text-white">
+                  <span>{{ project.name || 'Untitled' }}</span>
+                  <template v-if="project.author">
+                    <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                    <span class="text-gray-600 dark:text-gray-400">{{ project.author }}</span>
+                  </template>
+                  <template v-if="editableSettings.scaffold?.notebook_format">
+                    <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                    <span class="text-gray-600 dark:text-gray-400">{{ editableSettings.scaffold.notebook_format }}</span>
+                  </template>
+                </div>
+              </div>
+              <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Basics Section -->
+      <div v-show="activeSection === 'basics'" id="basics">
+        <div v-if="settingsLoading">
+          <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+            Loading settings...
           </div>
         </div>
 
-        <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Project Information</h3>
+        <div v-else-if="settingsError">
+          <Alert type="error" title="Error Loading Settings" :description="settingsError" />
+        </div>
 
-          <div class="grid grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Project Type
-              </label>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ project.type }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Created
-              </label>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ project.created }}
-              </p>
-            </div>
-            <div v-if="project.author">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Author
-              </label>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ project.author }}
-              </p>
-            </div>
-            <div v-if="project.author_email">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ project.author_email }}
-              </p>
+        <div v-else>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Basics</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Essential project settings.
+          </p>
+
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+            <div v-if="editableSettings.scaffold" class="space-y-5">
+              <Input
+                v-model="project.name"
+                label="Project Name"
+                hint="Changing this will rename the project directory"
+              />
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Filesystem Location
+                </label>
+                <div class="flex items-center gap-2">
+                  <code class="flex-1 px-3 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md">
+                    {{ project.path }}
+                  </code>
+                  <CopyButton :value="project.path" successMessage="Path copied" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  Supported Editors
+                </label>
+                <Checkbox
+                  v-model="editableSettings.scaffold.positron"
+                  id="support-positron-edit"
+                  description="Enable Positron-specific workspace and settings files"
+                >
+                  Positron
+                </Checkbox>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                  RStudio supported by default
+                </p>
+              </div>
+
+              <Select
+                v-model="editableSettings.scaffold.notebook_format"
+                label="Default Notebook Format"
+                hint="Format used when creating new notebooks"
+              >
+                <option value="quarto">Quarto (.qmd)</option>
+                <option value="rmarkdown">R Markdown (.Rmd)</option>
+              </Select>
+
+              <!-- Author Information Subheading -->
+              <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                  Author Information
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
+                  Configure author details for this project.
+                </p>
+                <div v-if="editableSettings.author" class="space-y-5">
+                  <Input
+                    v-model="editableSettings.author.name"
+                    label="Author Name"
+                  />
+                  <Input
+                    v-model="editableSettings.author.email"
+                    label="Email"
+                    type="email"
+                  />
+                  <Input
+                    v-model="editableSettings.author.affiliation"
+                    label="Affiliation"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -276,189 +283,191 @@
         </div>
 
         <div v-else>
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Project Settings</h2>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Project Structure</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Configure settings for this project.
+            This project uses the <strong>{{ projectTypeLabel }}</strong> structure. Existing directories cannot be renamed or removed, but you can add custom directories below.
           </p>
 
-          <div class="space-y-6">
-            <!-- Project Info -->
-            <div id="settings-project" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Project Information</h3>
+          <!-- Workspace Directories -->
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Workspaces</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Functions, notebooks, and scripts scaffolded into every project.
+            </p>
 
-              <div class="space-y-4">
-                <Input
-                  v-model="editableSettings.project_name"
-                  label="Project Name"
-                  hint="Display name for this project"
-                />
-
-                <div>
-                  <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Project Type
+            <!-- Existing workspace directories -->
+            <div class="space-y-4 mb-6">
+              <div v-for="(value, key) in workspaceDirectories" :key="key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                    {{ formatDirectoryLabel(key) }}
                   </label>
-                  <div class="flex gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        v-model="editableSettings.project_type"
-                        value="project"
-                        class="text-sky-600 focus:ring-sky-500"
-                      />
-                      <span class="text-sm text-zinc-700 dark:text-zinc-300">Project</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        v-model="editableSettings.project_type"
-                        value="course"
-                        class="text-sky-600 focus:ring-sky-500"
-                      />
-                      <span class="text-sm text-zinc-700 dark:text-zinc-300">Course</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        v-model="editableSettings.project_type"
-                        value="presentation"
-                        class="text-sky-600 focus:ring-sky-500"
-                      />
-                      <span class="text-sm text-zinc-700 dark:text-zinc-300">Presentation</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        v-model="editableSettings.project_type"
-                        value="project_sensitive"
-                        class="text-sky-600 focus:ring-sky-500"
-                      />
-                      <span class="text-sm text-zinc-700 dark:text-zinc-300">Sensitive</span>
-                    </label>
-                  </div>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
                 </div>
               </div>
             </div>
 
-            <!-- Author Info -->
-            <div id="settings-author" v-if="editableSettings.author" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Author Information</h3>
-
-              <div class="grid grid-cols-2 gap-4">
-                <Input
-                  v-model="editableSettings.author.name"
-                  label="Author Name"
-                />
-                <Input
-                  v-model="editableSettings.author.email"
-                  label="Email"
-                  type="email"
-                />
-                <Input
-                  v-model="editableSettings.author.affiliation"
-                  label="Affiliation"
-                  class="col-span-2"
-                />
-              </div>
-            </div>
-
-            <!-- Options -->
-            <div id="settings-options" v-if="editableSettings.options" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Project Options</h3>
-
-              <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Default Notebook Format
-                    </label>
-                    <div class="flex gap-4">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          v-model="editableSettings.options.default_notebook_format"
-                          value="quarto"
-                          class="text-sky-600 focus:ring-sky-500"
-                        />
-                        <span class="text-sm text-zinc-700 dark:text-zinc-300">Quarto</span>
-                      </label>
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          v-model="editableSettings.options.default_notebook_format"
-                          value="rmarkdown"
-                          class="text-sky-600 focus:ring-sky-500"
-                        />
-                        <span class="text-sm text-zinc-700 dark:text-zinc-300">RMarkdown</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <Input
-                    v-model.number="editableSettings.options.seed"
-                    label="Random Seed"
-                    type="number"
-                    hint="For reproducibility (YYYYMMDD format)"
-                  />
-                </div>
-
-                <Toggle
-                  v-model="editableSettings.options.seed_on_scaffold"
-                  label="Set Seed on Scaffold"
-                  description="Automatically set random seed when loading project"
-                />
-              </div>
-            </div>
-
-            <!-- Git Settings -->
-            <div id="settings-git" v-if="editableSettings.git" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Git Configuration</h3>
-
-              <div class="space-y-4">
-                <Input
-                  v-model="editableSettings.git.url"
-                  label="Repository URL"
-                  hint="Git repository URL for this project"
-                />
-                <div class="grid grid-cols-2 gap-4">
-                  <Input
-                    v-model="editableSettings.git.author"
-                    label="Git Author"
-                  />
-                  <Input
-                    v-model="editableSettings.git.email"
-                    label="Git Email"
-                    type="email"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- AI Settings -->
-            <div id="settings-ai" v-if="editableSettings.ai" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">AI Assistant Configuration</h3>
-
-              <Input
-                v-model="editableSettings.ai.canonical_file"
-                label="Canonical AI File"
-                hint="Main file for AI context (e.g., CLAUDE.md)"
-              />
-            </div>
-
-            <!-- Save Button -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-              <Button
-                variant="secondary"
-                @click="loadProjectSettings"
+            <!-- Add custom workspace directories -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <Repeater
+                v-model="customWorkspaceDirectories"
+                add-label="Add Workspace Directory"
+                :default-item="() => ({ key: '', label: '', path: '', category: 'workspace', _id: Date.now() })"
               >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                @click="saveSettings"
-                :disabled="saving"
+                <template #default="{ item, index, update }">
+                  <div class="space-y-3">
+                    <Input
+                      :model-value="item.key"
+                      @update:model-value="update('key', $event)"
+                      label="Key"
+                      placeholder="e.g., helpers"
+                      size="sm"
+                      monospace
+                    />
+                    <Input
+                      :model-value="item.label"
+                      @update:model-value="update('label', $event)"
+                      label="Label"
+                      placeholder="e.g., Helper Scripts"
+                      size="sm"
+                    />
+                    <Input
+                      :model-value="item.path"
+                      @update:model-value="update('path', $event)"
+                      label="Path"
+                      placeholder="e.g., helpers"
+                      prefix="/"
+                      monospace
+                      size="sm"
+                    />
+                  </div>
+                </template>
+              </Repeater>
+            </div>
+          </div>
+
+          <!-- Input Directories -->
+          <div v-if="inputDirectories && Object.keys(inputDirectories).length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Inputs</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Define the read-only locations where raw and prepared data live.
+            </p>
+
+            <!-- Existing input directories -->
+            <div class="space-y-4 mb-6">
+              <div v-for="(value, key) in inputDirectories" :key="key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                    {{ formatDirectoryLabel(key) }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add custom input directories -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <Repeater
+                v-model="customInputDirectories"
+                add-label="Add Input Directory"
+                :default-item="() => ({ key: '', label: '', path: '', category: 'input', _id: Date.now() })"
               >
-                {{ saving ? 'Saving...' : 'Save Settings' }}
-              </Button>
+                <template #default="{ item, index, update }">
+                  <div class="space-y-3">
+                    <Input
+                      :model-value="item.key"
+                      @update:model-value="update('key', $event)"
+                      label="Key"
+                      placeholder="e.g., inputs_archive"
+                      size="sm"
+                      monospace
+                    />
+                    <Input
+                      :model-value="item.label"
+                      @update:model-value="update('label', $event)"
+                      label="Label"
+                      placeholder="e.g., Archived Inputs"
+                      size="sm"
+                    />
+                    <Input
+                      :model-value="item.path"
+                      @update:model-value="update('path', $event)"
+                      label="Path"
+                      placeholder="e.g., inputs/archive"
+                      prefix="/"
+                      monospace
+                      size="sm"
+                    />
+                  </div>
+                </template>
+              </Repeater>
+            </div>
+          </div>
+
+          <!-- Output Directories -->
+          <div v-if="outputDirectories && Object.keys(outputDirectories).length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Outputs</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Results, figures, tables, and rendered outputs.
+            </p>
+
+            <!-- Existing output directories -->
+            <div class="space-y-4 mb-6">
+              <div v-for="(value, key) in outputDirectories" :key="key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                    {{ formatDirectoryLabel(key) }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add custom output directories -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <Repeater
+                v-model="customOutputDirectories"
+                add-label="Add Output Directory"
+                :default-item="() => ({ key: '', label: '', path: '', category: 'output', _id: Date.now() })"
+              >
+                <template #default="{ item, index, update }">
+                  <div class="space-y-3">
+                    <Input
+                      :model-value="item.key"
+                      @update:model-value="update('key', $event)"
+                      label="Key"
+                      placeholder="e.g., outputs_animations"
+                      size="sm"
+                      monospace
+                    />
+                    <Input
+                      :model-value="item.label"
+                      @update:model-value="update('label', $event)"
+                      label="Label"
+                      placeholder="e.g., Animations"
+                      size="sm"
+                    />
+                    <Input
+                      :model-value="item.path"
+                      @update:model-value="update('path', $event)"
+                      label="Path"
+                      placeholder="e.g., outputs/animations"
+                      prefix="/"
+                      monospace
+                      size="sm"
+                    />
+                  </div>
+                </template>
+              </Repeater>
             </div>
           </div>
         </div>
@@ -678,23 +687,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Save Button -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-              <Button
-                variant="secondary"
-                @click="loadConnections"
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                @click="saveConnections"
-                :disabled="savingConnections"
-              >
-                {{ savingConnections ? 'Saving...' : 'Save Connections' }}
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -712,327 +704,64 @@
         </div>
 
         <div v-else>
-          <div class="mb-6">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Package Management</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Manage R packages for this project. Packages with auto-attach will be loaded when scaffold() runs.
-            </p>
-          </div>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Packages & Dependencies</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Configure package management and default packages for this project.
+          </p>
 
-          <!-- Empty State -->
-          <div v-if="packages.length === 0" class="rounded-lg bg-gray-50 p-12 dark:bg-gray-800/50 text-center mb-6">
-            <CubeIcon class="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              No packages configured
-            </p>
-            <Button variant="primary" @click="addPackage">
-              Add Your First Package
-            </Button>
-          </div>
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+            <div class="space-y-5">
+              <Toggle
+                v-model="editablePackages.use_renv"
+                label="Enable renv"
+                description="Use renv for package version management and reproducibility"
+              />
 
-          <!-- Package List -->
-          <div v-else class="space-y-6">
-            <!-- Top Actions -->
-            <div class="flex items-center justify-between">
-              <Button variant="primary" size="sm" @click="addPackage">
-                + Add Package
-              </Button>
-              <div class="flex gap-3">
-                <Button
-                  variant="secondary"
-                  @click="loadPackages"
-                >
-                  Reset
-                </Button>
-                <Button
-                  variant="primary"
-                  @click="savePackages"
-                  :disabled="savingPackages"
-                >
-                  {{ savingPackages ? 'Saving...' : 'Save Packages' }}
-                </Button>
-              </div>
-            </div>
+              <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">Use this list to preseed notebooks with your preferred helpers.</p>
 
-            <!-- Package Table -->
-            <div class="rounded-lg bg-gray-50 dark:bg-gray-800/50 overflow-hidden">
-              <table class="w-full">
-                <thead>
-                  <tr class="border-b border-gray-200 dark:border-gray-700">
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      Package Name
-                    </th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      Source
-                    </th>
-                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      Auto-attach
-                    </th>
-                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 w-20">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-900">
-                  <tr
-                    v-for="(pkg, index) in packages"
-                    :key="index"
-                    class="border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                <div class="space-y-3" v-if="editablePackages.default_packages && editablePackages.default_packages.length">
+                  <div
+                    v-for="(pkg, idx) in editablePackages.default_packages"
+                    :key="`pkg-${idx}`"
+                    class="rounded-md border border-gray-200 p-4 dark:border-gray-700"
                   >
-                    <!-- Package Name -->
-                    <td class="px-4 py-3">
-                      <input
-                        v-model="pkg.name"
-                        type="text"
-                        placeholder="dplyr"
-                        class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 font-mono focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                      />
-                    </td>
-
-                    <!-- Source -->
-                    <td class="px-4 py-3">
-                      <div class="relative">
-                        <select
-                          v-model="pkg.source"
-                          class="w-full appearance-none rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-10 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                        >
+                    <div class="flex flex-col gap-3">
+                      <div class="grid gap-3 grid-cols-[1fr_160px]">
+                        <PackageAutocomplete
+                          v-if="pkg.source === 'cran' || pkg.source === 'bioconductor'"
+                          v-model="pkg.name"
+                          :source="pkg.source"
+                          label="Package"
+                          :placeholder="pkg.source === 'cran' ? 'Search CRAN...' : 'Search Bioconductor...'"
+                          @select="(selectedPkg) => pkg.name = selectedPkg.name"
+                        />
+                        <Input
+                          v-else
+                          v-model="pkg.name"
+                          label="Package"
+                          placeholder="user/repo"
+                        />
+                        <Select v-model="pkg.source" label="Source">
                           <option value="cran">CRAN</option>
                           <option value="github">GitHub</option>
-                          <option value="bioc">Bioconductor</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                          <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
+                          <option value="bioconductor">Bioconductor</option>
+                        </Select>
                       </div>
-                    </td>
+                      <div class="flex items-center justify-between">
+                        <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() when scaffold() runs." />
+                        <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                    <!-- Auto-attach -->
-                    <td class="px-4 py-3 text-center">
-                      <input
-                        v-model="pkg.auto_attach"
-                        type="checkbox"
-                        style="accent-color: rgb(2, 132, 199)"
-                        class="h-4 w-4 rounded border-gray-300 focus:ring-sky-500 dark:border-gray-600"
-                      />
-                    </td>
+                <p v-else class="text-xs text-gray-500 dark:text-gray-400 mb-4">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
 
-                    <!-- Actions -->
-                    <td class="px-4 py-3 text-center">
-                      <button
-                        @click="removePackage(index)"
-                        class="text-xs text-gray-600 hover:text-gray-900 font-medium dark:text-gray-400 dark:hover:text-gray-200"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Bottom Actions -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button variant="primary" size="sm" @click="addPackage">
-                + Add Package
-              </Button>
-              <div class="flex gap-3">
-                <Button
-                  variant="secondary"
-                  @click="loadPackages"
-                >
-                  Reset
-                </Button>
-                <Button
-                  variant="primary"
-                  @click="savePackages"
-                  :disabled="savingPackages"
-                >
-                  {{ savingPackages ? 'Saving...' : 'Save Packages' }}
-                </Button>
+                <div class="mt-4">
+                  <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Directories Section -->
-      <div v-show="activeSection === 'directories'" id="directories">
-        <div v-if="directoriesLoading">
-          <div class="text-center py-12">
-            <div class="text-sm text-gray-500 dark:text-gray-400">Loading directories...</div>
-          </div>
-        </div>
-
-        <div v-else-if="directoriesError">
-          <Alert type="error" title="Error Loading Directories" :description="directoriesError" />
-        </div>
-
-        <div v-else>
-          <div class="mb-6">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Project Directories</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Override directory structure for this project. Leave empty to use global defaults.
-            </p>
-          </div>
-
-          <div class="space-y-6">
-            <!-- Work Directories -->
-            <div id="directory-work" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Work Directories</h3>
-              <div class="space-y-4">
-                <Input
-                  v-model="directories.notebooks"
-                  label="Notebooks"
-                  placeholder="notebooks"
-                />
-                <Input
-                  v-model="directories.scripts"
-                  label="Scripts"
-                  placeholder="scripts"
-                />
-                <Input
-                  v-model="directories.functions"
-                  label="Functions"
-                  placeholder="functions"
-                />
-              </div>
-            </div>
-
-            <!-- Input Directories -->
-            <div id="directory-inputs" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Input Directories</h3>
-              <div class="space-y-4">
-                <Input
-                  v-model="directories.inputs_raw"
-                  label="Raw Inputs"
-                  placeholder="inputs/raw"
-                />
-                <Input
-                  v-model="directories.inputs_intermediate"
-                  label="Intermediate Inputs"
-                  placeholder="inputs/intermediate"
-                />
-                <Input
-                  v-model="directories.inputs_final"
-                  label="Final Inputs"
-                  placeholder="inputs/final"
-                />
-                <Input
-                  v-model="directories.reference"
-                  label="Reference Materials"
-                  placeholder="reference"
-                />
-              </div>
-            </div>
-
-            <!-- Private Output Directories -->
-            <div id="directory-private-outputs" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Private Outputs</h3>
-              <div class="space-y-4">
-                <Input
-                  v-model="directories.outputs_tables"
-                  label="Tables"
-                  placeholder="outputs/private/tables"
-                />
-                <Input
-                  v-model="directories.outputs_figures"
-                  label="Figures"
-                  placeholder="outputs/private/figures"
-                />
-                <Input
-                  v-model="directories.outputs_models"
-                  label="Models"
-                  placeholder="outputs/private/models"
-                />
-                <Input
-                  v-model="directories.outputs_notebooks"
-                  label="Notebooks"
-                  placeholder="outputs/private/notebooks"
-                />
-                <Input
-                  v-model="directories.outputs_docs"
-                  label="Docs"
-                  placeholder="outputs/private/docs"
-                />
-                <Input
-                  v-model="directories.outputs_final"
-                  label="Final"
-                  placeholder="outputs/private/final"
-                />
-              </div>
-            </div>
-
-            <!-- Public Output Directories -->
-            <div id="directory-public-outputs" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Public Outputs</h3>
-              <div class="space-y-4">
-                <Input
-                  v-model="directories.outputs_tables_public"
-                  label="Tables"
-                  placeholder="outputs/public/tables"
-                />
-                <Input
-                  v-model="directories.outputs_figures_public"
-                  label="Figures"
-                  placeholder="outputs/public/figures"
-                />
-                <Input
-                  v-model="directories.outputs_models_public"
-                  label="Models"
-                  placeholder="outputs/public/models"
-                />
-                <Input
-                  v-model="directories.outputs_notebooks_public"
-                  label="Notebooks"
-                  placeholder="outputs/public/notebooks"
-                />
-                <Input
-                  v-model="directories.outputs_docs_public"
-                  label="Docs"
-                  placeholder="outputs/public/docs"
-                />
-                <Input
-                  v-model="directories.outputs_final_public"
-                  label="Final"
-                  placeholder="outputs/public/final"
-                />
-              </div>
-            </div>
-
-            <!-- Other Directories -->
-            <div id="directory-other" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 scroll-mt-6">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Other</h3>
-              <div class="space-y-4">
-                <Input
-                  v-model="directories.cache"
-                  label="Cache"
-                  placeholder="outputs/private/cache"
-                />
-                <Input
-                  v-model="directories.scratch"
-                  label="Scratch"
-                  placeholder="outputs/private/scratch"
-                />
-              </div>
-            </div>
-
-            <!-- Save Button -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-              <Button
-                variant="secondary"
-                @click="loadDirectories"
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                @click="saveDirectories"
-                :disabled="savingDirectories"
-              >
-                {{ savingDirectories ? 'Saving...' : 'Save Directories' }}
-              </Button>
             </div>
           </div>
         </div>
@@ -1203,23 +932,6 @@
                 description="⚠️ This will rewrite the entire file grouped by prefix and will lose all comments and original order."
               />
             </div>
-
-            <!-- Save Button -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-              <Button
-                variant="secondary"
-                @click="loadEnv"
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                @click="saveEnv"
-                :disabled="savingEnv"
-              >
-                {{ savingEnv ? 'Saving...' : 'Save .env' }}
-              </Button>
-            </div>
           </div>
 
           <!-- Raw View -->
@@ -1240,23 +952,6 @@
               <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Edit the .env file directly. Comments and formatting will be preserved.
               </p>
-            </div>
-
-            <!-- Save Button -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-              <Button
-                variant="secondary"
-                @click="loadEnv"
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                @click="saveEnv"
-                :disabled="savingEnv"
-              >
-                {{ savingEnv ? 'Saving...' : 'Save .env' }}
-              </Button>
             </div>
           </div>
         </div>
@@ -1394,14 +1089,20 @@ import EmptyState from '../components/ui/EmptyState.vue'
 import Input from '../components/ui/Input.vue'
 import Button from '../components/ui/Button.vue'
 import Toggle from '../components/ui/Toggle.vue'
+import Checkbox from '../components/ui/Checkbox.vue'
+import Select from '../components/ui/Select.vue'
 import Tabs from '../components/ui/Tabs.vue'
 import TabPanel from '../components/ui/TabPanel.vue'
 import Modal from '../components/ui/Modal.vue'
+import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
+import Repeater from '../components/ui/Repeater.vue'
+import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
 import DataCatalogTree from '../components/DataCatalogTree.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
 import {
   InformationCircleIcon,
+  UserIcon,
   Cog6ToothIcon,
   DocumentTextIcon,
   CircleStackIcon,
@@ -1436,12 +1137,17 @@ const editableSettings = ref({})
 const settingsLoading = ref(false)
 const settingsError = ref(null)
 const saving = ref(false)
+const customWorkspaceDirectories = ref([])
+const customInputDirectories = ref([])
+const customOutputDirectories = ref([])
+const savingCustomDirs = ref(false)
 const connections = ref(null)
 const connectionsLoading = ref(false)
 const connectionsError = ref(null)
 const savingConnections = ref(false)
 const connectionsToDelete = ref(new Set())
 const packages = ref([])
+const editablePackages = ref({ use_renv: false, default_packages: [] })
 const packagesLoading = ref(false)
 const packagesError = ref(null)
 const savingPackages = ref(false)
@@ -1451,10 +1157,6 @@ const packageSearchResults = ref([])
 const packageSearching = ref(false)
 const packageSearchHighlightIndex = ref(-1)
 const newPackage = ref({ name: '', source: 'cran', auto_attach: true })
-const directories = ref({})
-const directoriesLoading = ref(false)
-const directoriesError = ref(null)
-const savingDirectories = ref(false)
 const envVariables = ref({})
 const envGroups = ref({})
 const envRawContent = ref('')
@@ -1480,7 +1182,7 @@ const getSidebarLinkClasses = (section) => {
 // Initialize activeSection from URL query param
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'directories', 'env']
+  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'env']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   } else {
@@ -1492,8 +1194,8 @@ const initializeSection = () => {
 watch(activeSection, (newSection) => {
   router.replace({ query: { ...route.query, section: newSection } })
 
-  // Load settings when Settings section is activated
-  if (newSection === 'settings' && !projectSettings.value) {
+  // Load settings when Settings or Basics section is activated
+  if ((newSection === 'settings' || newSection === 'basics') && !projectSettings.value) {
     loadProjectSettings()
   }
 
@@ -1507,11 +1209,6 @@ watch(activeSection, (newSection) => {
     loadPackages()
   }
 
-  // Load directories when Directories section is activated
-  if (newSection === 'directories' && Object.keys(directories.value).length === 0) {
-    loadDirectories()
-  }
-
   // Load env when .env section is activated
   if (newSection === 'env' && Object.keys(envVariables.value).length === 0) {
     loadEnv()
@@ -1520,7 +1217,7 @@ watch(activeSection, (newSection) => {
 
 // Watch for URL query param changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'directories', 'env']
+  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'env']
   if (newSection && newSection !== activeSection.value && validSections.includes(newSection)) {
     activeSection.value = newSection
   }
@@ -1739,6 +1436,66 @@ const computeMaxDepth = (nodes) => {
 
 const maxDataDepth = computed(() => computeMaxDepth(dataTree.value))
 const useHierarchicalDataView = computed(() => maxDataDepth.value > 2)
+
+// Project Structure computed properties
+const workspaceDirectories = computed(() => {
+  const dirs = editableSettings.value.directories || {}
+  const workspace = {}
+  const workspaceKeys = ['functions', 'notebooks', 'scripts']
+
+  Object.keys(dirs).forEach(key => {
+    if (workspaceKeys.includes(key)) {
+      workspace[key] = dirs[key]
+    }
+  })
+
+  return workspace
+})
+
+const inputDirectories = computed(() => {
+  const dirs = editableSettings.value.directories || {}
+  const inputs = {}
+
+  Object.keys(dirs).forEach(key => {
+    if (key.startsWith('inputs_') || key.includes('_raw') || key.includes('_intermediate') || key.includes('_final')) {
+      inputs[key] = dirs[key]
+    }
+  })
+
+  return inputs
+})
+
+const outputDirectories = computed(() => {
+  const dirs = editableSettings.value.directories || {}
+  const outputs = {}
+
+  Object.keys(dirs).forEach(key => {
+    if ((key.startsWith('outputs_') || key.includes('_figures') || key.includes('_tables') || key.includes('_models') || key.includes('_reports') || key === 'cache' || key === 'scratch') && !key.startsWith('inputs_')) {
+      outputs[key] = dirs[key]
+    }
+  })
+
+  return outputs
+})
+
+const formatDirectoryLabel = (key) => {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+const projectTypeLabel = computed(() => {
+  const type = project.value?.type
+  if (!type) return 'Standard Project Structure'
+
+  // Map project types to their full labels
+  const typeLabels = {
+    'project': 'Standard Project Structure',
+    'project_sensitive': 'Privacy Sensitive Project Structure',
+    'presentation': 'Presentation Structure',
+    'course': 'Course Structure'
+  }
+
+  return typeLabels[type] || type
+})
 
 const upsertDataCatalogEntry = (catalog, fullKey, newValue) => {
   const segments = fullKey.split('.').filter(Boolean)
@@ -2036,6 +1793,14 @@ const loadProjectSettings = async () => {
     } else {
       projectSettings.value = data.settings
       editableSettings.value = JSON.parse(JSON.stringify(data.settings))
+
+      // Ensure scaffold object exists with defaults
+      if (!editableSettings.value.scaffold) {
+        editableSettings.value.scaffold = {
+          notebook_format: 'quarto',
+          positron: false
+        }
+      }
     }
   } catch (err) {
     settingsError.value = 'Failed to load settings: ' + err.message
@@ -2044,10 +1809,64 @@ const loadProjectSettings = async () => {
   }
 }
 
+const saveCurrentSection = async () => {
+  switch (activeSection.value) {
+    case 'author':
+    case 'settings':
+      await saveSettings()
+      break
+    case 'packages':
+      await savePackages()
+      break
+    case 'connections':
+      await saveConnections()
+      break
+    case 'env':
+      await saveEnv()
+      break
+    case 'overview':
+    case 'notebooks':
+    case 'data':
+      toast.info('No Changes to Save', 'This section has no editable settings')
+      break
+    default:
+      toast.info('No Changes to Save', 'This section has no editable settings')
+  }
+}
+
 const saveSettings = async () => {
   saving.value = true
 
   try {
+    // First, save custom directories if there are any
+    const allCustomDirectories = [
+      ...customWorkspaceDirectories.value,
+      ...customInputDirectories.value,
+      ...customOutputDirectories.value
+    ]
+
+    if (allCustomDirectories.length > 0) {
+      const dirResponse = await fetch(`/api/project/${route.params.id}/directories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ directories: allCustomDirectories })
+      })
+
+      const dirResult = await dirResponse.json()
+
+      if (!dirResult.success) {
+        toast.error('Directory Creation Failed', dirResult.error || 'Failed to create directories')
+        saving.value = false
+        return
+      }
+
+      // Clear the custom directory arrays after successful save
+      customWorkspaceDirectories.value = []
+      customInputDirectories.value = []
+      customOutputDirectories.value = []
+    }
+
+    // Then save settings
     const response = await fetch(`/api/project/${route.params.id}/settings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2057,9 +1876,13 @@ const saveSettings = async () => {
     const result = await response.json()
 
     if (result.success) {
-      toast.success('Settings Saved', 'Project settings have been updated')
+      const message = allCustomDirectories.length > 0
+        ? `Settings updated and ${allCustomDirectories.length} director${allCustomDirectories.length === 1 ? 'y' : 'ies'} created`
+        : 'Project settings have been updated'
+
+      toast.success('Settings Saved', message)
       projectSettings.value = JSON.parse(JSON.stringify(editableSettings.value))
-      // Reload settings to verify save
+      // Reload settings to verify save and show new directories
       await loadProjectSettings()
     } else {
       toast.error('Save Failed', result.error || 'Failed to save settings')
@@ -2118,6 +1941,52 @@ const toggleConnectionDelete = (name) => {
   }
 }
 
+const saveCustomDirectories = async (category) => {
+  // Get the appropriate ref based on category
+  let directoriesRef
+  let categoryLabel
+
+  if (category === 'workspace') {
+    directoriesRef = customWorkspaceDirectories
+    categoryLabel = 'workspace'
+  } else if (category === 'input') {
+    directoriesRef = customInputDirectories
+    categoryLabel = 'input'
+  } else if (category === 'output') {
+    directoriesRef = customOutputDirectories
+    categoryLabel = 'output'
+  } else {
+    return
+  }
+
+  if (directoriesRef.value.length === 0) return
+
+  savingCustomDirs.value = true
+
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/directories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ directories: directoriesRef.value })
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      const count = directoriesRef.value.length
+      toast.success('Directories Created', `${count} ${categoryLabel} director${count === 1 ? 'y' : 'ies'} created`)
+      directoriesRef.value = []
+      await loadProjectSettings() // Reload to show new directories
+    } else {
+      toast.error('Creation Failed', result.error || 'Failed to create directories')
+    }
+  } catch (err) {
+    toast.error('Creation Failed', err.message)
+  } finally {
+    savingCustomDirs.value = false
+  }
+}
+
 const saveConnections = async () => {
   savingConnections.value = true
 
@@ -2171,6 +2040,12 @@ const loadPackages = async () => {
         auto_attach: pkg.auto_attach !== undefined ? pkg.auto_attach : true,
         ref: pkg.ref || ''
       }))
+
+      // Also populate editablePackages for the new UI
+      editablePackages.value = {
+        use_renv: data.use_renv || false,
+        default_packages: JSON.parse(JSON.stringify(packages.value))
+      }
     }
   } catch (err) {
     packagesError.value = 'Failed to load packages: ' + err.message
@@ -2186,7 +2061,10 @@ const savePackages = async () => {
     const response = await fetch(`/api/project/${route.params.id}/packages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ packages: packages.value })
+      body: JSON.stringify({
+        use_renv: editablePackages.value.use_renv,
+        packages: editablePackages.value.default_packages
+      })
     })
 
     const result = await response.json()
@@ -2205,12 +2083,14 @@ const savePackages = async () => {
 }
 
 const addPackage = () => {
-  // Reset modal state
-  newPackage.value = { name: '', source: 'cran', auto_attach: true }
-  packageSearch.value = ''
-  packageSearchResults.value = []
-  packageSearchHighlightIndex.value = -1
-  showAddPackageModal.value = true
+  if (!editablePackages.value.default_packages) {
+    editablePackages.value.default_packages = []
+  }
+  editablePackages.value.default_packages.push({
+    name: '',
+    source: 'cran',
+    auto_attach: true
+  })
 }
 
 const searchPackages = async () => {
@@ -2284,52 +2164,7 @@ const confirmAddPackage = () => {
 }
 
 const removePackage = (index) => {
-  packages.value.splice(index, 1)
-}
-
-const loadDirectories = async () => {
-  directoriesLoading.value = true
-  directoriesError.value = null
-
-  try {
-    const response = await fetch(`/api/project/${route.params.id}/directories`)
-    const data = await response.json()
-
-    if (data.error) {
-      directoriesError.value = data.error
-    } else {
-      directories.value = data.directories || {}
-    }
-  } catch (err) {
-    directoriesError.value = 'Failed to load directories: ' + err.message
-  } finally {
-    directoriesLoading.value = false
-  }
-}
-
-const saveDirectories = async () => {
-  savingDirectories.value = true
-
-  try {
-    const response = await fetch(`/api/project/${route.params.id}/directories`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ directories: directories.value })
-    })
-
-    const result = await response.json()
-
-    if (result.success) {
-      toast.success('Directories Saved', 'Directory configuration has been updated')
-      await loadDirectories()
-    } else {
-      toast.error('Save Failed', result.error || 'Failed to save directories')
-    }
-  } catch (err) {
-    toast.error('Save Failed', err.message)
-  } finally {
-    savingDirectories.value = false
-  }
+  editablePackages.value.default_packages.splice(index, 1)
 }
 
 const loadEnv = async () => {
@@ -2437,5 +2272,24 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+})
+
+// Watch for route changes to reload project when switching between projects
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    // Reset state
+    activeSection.value = 'overview'
+    project.value = null
+    editableSettings.value = {}
+    connections.value = null
+    packages.value = []
+    directories.value = {}
+    dataCatalog.value = null
+
+    // Reload project data
+    initializeSection()
+    loadProject()
+    loadDataCatalog()
+  }
 })
 </script>

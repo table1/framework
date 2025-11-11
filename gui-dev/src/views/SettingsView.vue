@@ -2,20 +2,27 @@
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <nav class="w-64 shrink-0 border-r border-gray-200 p-6 dark:border-gray-800">
-      <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Settings</h2>
+      <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">New Project Defaults</h2>
 
       <div class="space-y-1">
         <div v-for="section in sections" :key="section.id">
+          <!-- Insert SETTINGS heading before Basics -->
+          <NavigationSectionHeading v-if="section.id === 'basics'">Settings</NavigationSectionHeading>
+
           <a
-            :href="buildSettingsHref(section.slug, section.id === 'structure' ? (projectTypeSlugMap[currentProjectTypeKey] || projectTypeSlugMap[defaultProjectTypeKey]) : undefined)"
+            :href="buildSettingsHref(section.slug)"
             @click.prevent="navigateToSection(section.id)"
             :class="[
-              'block px-3 py-2 rounded-md text-sm transition',
+              'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition',
               activeSection === section.id
                 ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
                 : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
             ]"
           >
+            <component v-if="section.icon" :is="section.icon" class="h-4 w-4" />
+            <svg v-else-if="section.svgIcon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="section.svgIcon" />
+            </svg>
             {{ section.label }}
           </a>
 
@@ -26,7 +33,7 @@
             <a
               v-for="item in projectStructureSubnav"
               :key="item.key"
-              :href="buildSettingsHref('project-defaults', item.slug)"
+              :href="buildSettingsHref('project-structure', item.slug)"
               @click.prevent="navigateToProjectType(item.key)"
               :class="[
                 'block rounded-md py-1 pl-4 pr-2 text-xs font-medium transition',
@@ -40,11 +47,11 @@
           </div>
 
           <div
-            v-else-if="section.id === 'notebooksScripts' && activeSection === 'notebooksScripts'"
+            v-else-if="section.id === 'templates' && activeSection === 'templates'"
             class="ml-4 mt-2 space-y-0.5 border-l border-gray-200 pl-3 dark:border-gray-700"
           >
             <a
-              v-for="item in notebookScriptSubnav"
+              v-for="item in templatesSubnav"
               :key="item.id"
               :href="`#${item.id}`"
               @click.prevent="scrollToSection(item.id)"
@@ -78,55 +85,126 @@
       />
 
       <div class="mt-8 space-y-10">
-        <!-- Author Information -->
-        <div id="author" v-show="activeSection === 'author'">
-          <SettingsPanel
-            description="Used as defaults when scaffold() creates README files and notebook headers, so every project starts with the right attribution."
-          >
-            <SettingsBlock>
-              <div class="space-y-5">
-                <Input v-model="settings.author.name" label="Your Name" placeholder="Your Name" />
-                <Input v-model="settings.author.email" type="email" label="Email" placeholder="your.email@example.com" />
-                <Input v-model="settings.author.affiliation" label="Affiliation" placeholder="Organization" />
-              </div>
-            </SettingsBlock>
-          </SettingsPanel>
+        <!-- Overview -->
+        <div id="overview" v-show="activeSection === 'overview'">
+          <div class="space-y-3">
+            <!-- Basics Card -->
+            <OverviewCard
+              title="Basics"
+              @click="activeSection = 'basics'"
+            >
+              <template v-if="settings.projects_root || (settings.author && settings.author.name)">
+                <span v-if="settings.projects_root" class="text-gray-600 dark:text-gray-400">{{ settings.projects_root }}</span>
+                <template v-if="settings.projects_root && settings.author && settings.author.name">
+                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                </template>
+                <span v-if="settings.author && settings.author.name">{{ settings.author.name }}</span>
+              </template>
+              <span v-else class="text-gray-600 dark:text-gray-400">Not set</span>
+            </OverviewCard>
+
+            <!-- Project Structure Card -->
+            <OverviewCard
+              title="Project Structure"
+              @click="activeSection = 'structure'"
+            >
+              <span v-if="settings.defaults && settings.defaults.project_type">{{ settings.defaults.project_type }}</span>
+              <span v-else class="text-gray-600 dark:text-gray-400">Not set</span>
+            </OverviewCard>
+
+            <!-- Notebooks & Scripts Card -->
+            <OverviewCard
+              title="Notebooks & Scripts"
+              @click="activeSection = 'notebooksScripts'"
+            >
+              <span v-if="settings.defaults && settings.defaults.notebook_format">{{ settings.defaults.notebook_format }}</span>
+              <span v-else class="text-gray-600 dark:text-gray-400">quarto</span>
+            </OverviewCard>
+
+            <!-- AI Assistants Card -->
+            <OverviewCard
+              title="AI Assistants"
+              @click="activeSection = 'ai'"
+            >
+              <span v-if="settings.ai_config && settings.ai_config.enabled" class="text-green-600 dark:text-green-400">Enabled</span>
+              <span v-else class="text-gray-600 dark:text-gray-400">Disabled</span>
+            </OverviewCard>
+
+            <!-- Git & Hooks Card -->
+            <OverviewCard
+              title="Git & Hooks"
+              @click="activeSection = 'git'"
+            >
+              <span v-if="settings.git && settings.git.auto_init" class="text-green-600 dark:text-green-400">Auto-initialize repositories</span>
+              <span v-else class="text-gray-600 dark:text-gray-400">Manual initialization</span>
+            </OverviewCard>
+
+            <!-- Packages Card -->
+            <OverviewCard
+              title="Packages"
+              @click="activeSection = 'packages'"
+            >
+              <span v-if="settings.packages && settings.packages.length > 0">
+                {{ settings.packages.length }} package{{ settings.packages.length !== 1 ? 's' : '' }}
+              </span>
+              <span v-else class="text-gray-600 dark:text-gray-400">No default packages</span>
+            </OverviewCard>
+          </div>
         </div>
 
-        <!-- Editor & Workflow -->
-        <div id="workflow" v-show="activeSection === 'workflow'">
+        <!-- Basics -->
+        <div id="basics" v-show="activeSection === 'basics'">
           <SettingsPanel
-            description="Control how Framework scaffolds projects in your preferred tools."
+            description="Essential project defaults that apply to all new projects."
           >
             <SettingsBlock>
               <div class="space-y-5">
                 <Input
                   v-model="settings.projects_root"
                   label="Default Projects Directory"
-                  placeholder="~/code"
-                  monospace
-                  hint="New projects default to this parent directory. Leave empty to choose a full path each time."
+                  hint="New projects will be created in this directory by default"
+                  placeholder="e.g., ~/projects or /Users/yourname/code"
                 />
 
-                <Select v-model="settings.defaults.ide" label="Primary Editor">
-                  <option value="vscode">Positron / VS Code</option>
-                  <option value="rstudio">RStudio</option>
-                  <option value="rstudio,vscode">Both</option>
-                  <option value="none">Other</option>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Supported Editors
+                  </label>
+                  <Checkbox
+                    v-model="settings.defaults.positron"
+                    id="support-positron-defaults"
+                    description="Enable Positron-specific workspace and settings files"
+                  >
+                    Positron
+                  </Checkbox>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                    RStudio supported by default
+                  </p>
+                </div>
+
+                <Select
+                  v-model="settings.defaults.notebook_format"
+                  label="Default Notebook Format"
+                  hint="Format used when creating new notebooks"
+                >
+                  <option value="quarto">Quarto (.qmd)</option>
+                  <option value="rmarkdown">R Markdown (.Rmd)</option>
                 </Select>
 
-                <Toggle
-                  v-model="settings.defaults.seed_on_scaffold"
-                  label="Call set.seed() when scaffold() runs"
-                  description="Ensures deterministic behavior when a project is loaded."
-                />
-
-                <Input
-                  v-model="settings.defaults.seed"
-                  label="Default Random Seed"
-                  placeholder="e.g., 1234"
-                  hint="Set to 1234 when automatic seeding is enabled and no value is provided."
-                />
+                <!-- Author Information Subheading -->
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                    Author Information
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
+                    Used as defaults when scaffold() creates README files and notebook headers, so every project starts with the right attribution.
+                  </p>
+                  <div class="space-y-5">
+                    <Input v-model="settings.author.name" label="Your Name" placeholder="Your Name" />
+                    <Input v-model="settings.author.email" type="email" label="Email" placeholder="your.email@example.com" />
+                    <Input v-model="settings.author.affiliation" label="Affiliation" placeholder="Organization" />
+                  </div>
+                </div>
               </div>
             </SettingsBlock>
           </SettingsPanel>
@@ -134,7 +212,33 @@
 
         <!-- Project Structure -->
         <div id="structure" v-show="activeSection === 'structure'" class="space-y-8">
-          <div v-if="currentProjectType" class="space-y-6">
+          <!-- Index page when no project type is selected -->
+          <div v-if="!currentProjectTypeKey" class="space-y-6">
+
+            <div class="space-y-3">
+              <button
+                v-for="item in projectStructureSubnav"
+                :key="item.key"
+                @click="navigateToProjectType(item.key)"
+                class="group relative w-full rounded-lg border border-gray-200 p-6 text-left transition hover:border-sky-300 dark:border-gray-700 dark:hover:border-sky-600"
+              >
+                <div class="flex items-start gap-3">
+                  <FolderIcon class="h-6 w-6 flex-shrink-0 text-gray-400 transition group-hover:text-sky-600 dark:group-hover:text-sky-400" />
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                      {{ item.label }}
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {{ settings.project_types[item.key]?.description || '' }}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing project type editor when a type is selected -->
+          <div v-else-if="currentProjectType" class="space-y-6">
             <div v-if="currentProjectTypeKey === 'project'" class="space-y-6">
               <!-- Project-specific settings (e.g., ggplot theme) -->
               <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
@@ -212,7 +316,7 @@
                     .gitignore
                   </button>
                 </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="resetProjectType(currentProjectTypeKey)">
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
                   Reset to Defaults
                 </Button>
               </div>
@@ -494,7 +598,7 @@
                     Utility
                   </button>
                 </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="resetProjectType(currentProjectTypeKey)">
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
                   Reset to Defaults
                 </Button>
               </div>
@@ -878,7 +982,7 @@
                     Optional folders
                   </button>
                 </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="resetProjectType(currentProjectTypeKey)">
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
                   Reset to Defaults
                 </Button>
               </div>
@@ -1053,7 +1157,7 @@
                     Quarto render directory
                   </button>
                 </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="resetProjectType(currentProjectTypeKey)">
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
                   Reset to Defaults
                 </Button>
               </div>
@@ -1183,54 +1287,67 @@
           </div>
         </div>
 
-        <!-- Notebooks & Scripts -->
-        <div id="notebooksScripts" v-show="activeSection === 'notebooksScripts'">
-          <SettingsPanel>
-            <div class="space-y-8">
-              <div id="notebooksScripts-format">
-                <Select v-model="settings.defaults.notebook_format" label="Default Format">
-                  <option value="quarto">Quarto (.qmd)</option>
-                  <option value="rmarkdown">RMarkdown (.Rmd)</option>
-                </Select>
-              </div>
+        <!-- Templates -->
+        <div id="templates" v-show="activeSection === 'templates'" class="space-y-8">
+          <div id="templates-notebook">
+            <SettingsPanel>
+              <SettingsBlock
+                title="Notebook Template"
+                description="Used by framework::make_notebook() to populate new notebooks."
+              >
+                <CodeEditor
+                  v-model="templateEditors.notebook.contents"
+                  language="markdown"
+                  min-height="500px"
+                  :disabled="templateEditors.notebook.loading"
+                />
+                <p v-if="templateEditors.notebook.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading notebook template…</p>
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('notebook')">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </SettingsPanel>
+          </div>
 
-              <div id="notebooksScripts-notebook-stub">
-                <SettingsBlock
-                  title="Notebook Stub"
-                  description="This template populates every new notebook."
-                >
-                  <CodeEditor
-                    v-model="templateEditors.notebook.contents"
-                    language="markdown"
-                    min-height="500px"
-                    :disabled="templateEditors.notebook.loading"
-                  />
-                  <p v-if="templateEditors.notebook.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading notebook stub…</p>
-                  <div class="flex justify-end mt-3">
-                    <Button size="sm" variant="secondary" @click="resetInlineTemplate('notebook')">Restore Default</Button>
-                  </div>
-                </SettingsBlock>
-              </div>
+          <div id="templates-script">
+            <SettingsPanel>
+              <SettingsBlock
+                title="Script Template"
+                description="Used by framework::make_script() for quick task scaffolds."
+              >
+                <CodeEditor
+                  v-model="templateEditors.script.contents"
+                  language="r"
+                  min-height="450px"
+                  :disabled="templateEditors.script.loading"
+                />
+                <p v-if="templateEditors.script.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading script template…</p>
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('script')">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </SettingsPanel>
+          </div>
 
-              <div id="notebooksScripts-script-stub">
-                <SettingsBlock
-                  title="Script Stub"
-                  description="Used by `framework make:script` for quick task scaffolds."
-                >
-                  <CodeEditor
-                    v-model="templateEditors.script.contents"
-                    language="r"
-                    min-height="450px"
-                    :disabled="templateEditors.script.loading"
-                  />
-                  <p v-if="templateEditors.script.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading script stub…</p>
-                  <div class="flex justify-end mt-3">
-                    <Button size="sm" variant="secondary" @click="resetInlineTemplate('script')">Restore Default</Button>
-                  </div>
-                </SettingsBlock>
-              </div>
-            </div>
-          </SettingsPanel>
+          <div id="templates-presentation">
+            <SettingsPanel>
+              <SettingsBlock
+                title="Presentation Template"
+                description="Used by framework::make_notebook(stub = 'revealjs') for slide decks."
+              >
+                <CodeEditor
+                  v-model="templateEditors.presentation.contents"
+                  language="markdown"
+                  min-height="500px"
+                  :disabled="templateEditors.presentation.loading"
+                />
+                <p v-if="templateEditors.presentation.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading presentation template…</p>
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('presentation')">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </SettingsPanel>
+          </div>
         </div>
 
         <!-- AI Assistants -->
@@ -1365,11 +1482,9 @@
           </SettingsPanel>
         </div>
 
-        <!-- Packages & Dependencies -->
+        <!-- Packages -->
         <div id="packages" v-show="activeSection === 'packages'">
-          <SettingsPanel
-            description="Define how Framework manages renv and which packages load automatically in new projects."
-          >
+          <SettingsPanel>
             <SettingsBlock>
               <Toggle
                 v-model="settings.defaults.packages.use_renv"
@@ -1382,10 +1497,7 @@
               title="Default packages"
               description="Installed (and optionally attached) when scaffold() runs."
             >
-              <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs text-gray-600 dark:text-gray-400">Use this list to preseed notebooks with your preferred helpers.</p>
-                <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
-              </div>
+              <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">Use this list to preseed notebooks with your preferred helpers.</p>
 
               <div class="space-y-3" v-if="settings.defaults.packages.default_packages && settings.defaults.packages.default_packages.length">
                 <div
@@ -1416,14 +1528,18 @@
                       </Select>
                     </div>
                     <div class="flex items-center justify-between">
-                      <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() in notebooks." />
+                      <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() when scaffold() runs." />
                       <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <p v-else class="text-xs text-gray-500 dark:text-gray-400">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
+              <p v-else class="text-xs text-gray-500 dark:text-gray-400 mb-4">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
+
+              <div class="mt-4">
+                <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
+              </div>
             </SettingsBlock>
           </SettingsPanel>
         </div>
@@ -1447,6 +1563,24 @@
         </div>
       </template>
     </Modal>
+
+    <!-- Reset to Defaults Confirmation Modal -->
+    <Modal v-model="resetConfirmModal.open" size="md" title="Reset to Defaults" icon="warning">
+      <template #default>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          Are you sure you want to reset <strong>{{ resetConfirmModal.projectTypeName }}</strong> to default settings?
+          This will discard all your customizations for this project type.
+        </p>
+      </template>
+      <template #actions>
+        <div class="flex gap-3 justify-end">
+          <Button variant="secondary" @click="resetConfirmModal.open = false">Cancel</Button>
+          <Button variant="primary" @click="resetProjectType">
+            Reset to Defaults
+          </Button>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -1460,6 +1594,9 @@ import Select from '../components/ui/Select.vue'
 import Toggle from '../components/ui/Toggle.vue'
 import Checkbox from '../components/ui/Checkbox.vue'
 import Button from '../components/ui/Button.vue'
+import CopyButton from '../components/ui/CopyButton.vue'
+import OverviewCard from '../components/ui/OverviewCard.vue'
+import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
 import Modal from '../components/ui/Modal.vue'
 import Textarea from '../components/ui/Textarea.vue'
 import CodeEditor from '../components/ui/CodeEditor.vue'
@@ -1467,28 +1604,36 @@ import Repeater from '../components/ui/Repeater.vue'
 import { useToast } from '../composables/useToast'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import SettingsBlock from '../components/settings/SettingsBlock.vue'
+import {
+  InformationCircleIcon,
+  UserIcon,
+  Cog6ToothIcon,
+  CubeIcon,
+  DocumentTextIcon,
+  FolderIcon
+} from '@heroicons/vue/24/outline'
 
 const toast = useToast()
 const router = useRouter()
 const route = useRoute()
 
 const sections = [
-  { id: 'author', label: 'Author Information', slug: 'author-information' },
-  { id: 'workflow', label: 'Editor & Workflow', slug: 'editor-workflow' },
-  { id: 'structure', label: 'Project Defaults', slug: 'project-defaults' },
-  { id: 'notebooksScripts', label: 'Notebooks & Scripts', slug: 'notebooks-scripts' },
-  { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants' },
-  { id: 'git', label: 'Git & Hooks', slug: 'git-hooks' },
-  { id: 'packages', label: 'Packages & Dependencies', slug: 'packages-dependencies' }
+  { id: 'overview', label: 'Overview', slug: 'overview', icon: InformationCircleIcon },
+  { id: 'basics', label: 'Basics', slug: 'basics', icon: Cog6ToothIcon },
+  { id: 'structure', label: 'Project Structure', slug: 'project-structure', icon: FolderIcon },
+  { id: 'packages', label: 'Packages', slug: 'packages-dependencies', icon: CubeIcon },
+  { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  { id: 'git', label: 'Git & Hooks', slug: 'git-hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+  { id: 'templates', label: 'Templates', slug: 'templates', icon: DocumentTextIcon }
 ]
 
 const sectionSlugMap = Object.fromEntries(sections.map(({ id, slug }) => [id, slug]))
 const sectionSlugToId = Object.fromEntries(sections.map(({ id, slug }) => [slug, id]))
-const defaultSectionId = 'author'
+const defaultSectionId = 'overview'
 
 const fallbackProjectTypes = {
   project: {
-    label: 'Standard Data Project',
+    label: 'Standard Project Structure',
     description: 'General-purpose analysis project with notebooks, scripts, and shared outputs.',
     directories: {
       functions: 'R/functions',
@@ -1511,7 +1656,7 @@ const fallbackProjectTypes = {
     extra_directories: []
   },
   project_sensitive: {
-    label: 'Privacy-First Project',
+    label: 'Privacy Sensitive Project Structure',
     description: 'Projects handling PHI/PII with dedicated private/public data flows.',
     directories: {
       functions: 'R/functions',
@@ -1541,7 +1686,7 @@ const fallbackProjectTypes = {
     extra_directories: []
   },
   presentation: {
-    label: 'Presentation',
+    label: 'Presentation Structure',
     description: 'Single talk or slide deck with minimal analysis scaffolding.',
     directories: {
       presentation_source: 'presentation.qmd',
@@ -1552,7 +1697,7 @@ const fallbackProjectTypes = {
     extra_directories: []
   },
   course: {
-    label: 'Course',
+    label: 'Course Structure',
     description: 'Courses with modules, assignments, and lecture materials.',
     directories: {
       data: 'data',
@@ -1726,6 +1871,7 @@ const settings = ref({
     project_type: 'project',
     notebook_format: 'quarto',
     ide: 'vscode',
+    ide_support_vscode: false,
     use_git: true,
     use_renv: false,
     seed: '',
@@ -1778,9 +1924,16 @@ const templateModal = reactive({
   loading: false
 })
 
+const resetConfirmModal = reactive({
+  open: false,
+  projectTypeKey: null,
+  projectTypeName: ''
+})
+
 const templateEditors = reactive({
   notebook: { loading: false, contents: '' },
   script: { loading: false, contents: '' },
+  presentation: { loading: false, contents: '' },
   canonical: { loading: false, contents: '' },
   gitignore_project: { loading: false, contents: '' },
   gitignore_project_sensitive: { loading: false, contents: '' },
@@ -1793,13 +1946,22 @@ const projectTypeEntries = computed(() => Object.entries(settings.value.project_
 const projectStructureSubnav = computed(() =>
   projectTypeEntries.value.map(([key, type]) => ({
     key,
-    label: type.label || formatProjectTypeName(key),
+    // Remove " Structure" suffix from labels for menu display
+    label: (type.label || formatProjectTypeName(key)).replace(/ Structure$/i, ''),
     slug: projectTypeSlugMap[key] || key
   }))
 )
 
+const templatesSubnav = [
+  { id: 'templates-notebook', label: 'Notebook' },
+  { id: 'templates-script', label: 'Script' },
+  { id: 'templates-presentation', label: 'Presentation' }
+]
+
 const currentProjectTypeKey = computed(() => {
   const slug = route.params.subsection
+  // Return null if no subsection to show index page
+  if (!slug) return null
   return projectSlugToKey[slug] || defaultProjectTypeKey
 })
 
@@ -1813,6 +1975,14 @@ const defaultPageTitle = 'Settings'
 const defaultPageDescription = 'Manage defaults shared across new projects.'
 
 const sectionHeaderMeta = {
+  overview: {
+    title: 'Overview',
+    description: 'Overview of your Framework global settings and preferences.'
+  },
+  basics: {
+    title: 'Basics',
+    description: 'Essential settings for new projects.'
+  },
   author: {
     title: 'Author Information',
     description: 'Defaults that populate README files and notebook headers when scaffold() runs.'
@@ -1822,12 +1992,12 @@ const sectionHeaderMeta = {
     description: 'Control how Framework scaffolds projects in your preferred tools.'
   },
   structure: {
-    title: 'Project Defaults',
-    description: 'Customize the directory layout, templates, and scaffolding for each project type.'
+    title: 'Project Structure Defaults',
+    description: 'Choose a project type to configure its directory structure and default settings.'
   },
-  notebooksScripts: {
-    title: 'Notebooks & Scripts',
-    description: 'Choose default notebook formats and edit the starter stubs Framework ships with.'
+  templates: {
+    title: 'Templates',
+    description: 'Edit the starter templates Framework uses for notebooks, scripts, and presentations.'
   },
   ai: {
     title: 'AI Assistants',
@@ -1925,7 +2095,7 @@ watch(
   () => route.params.section,
   (slug) => {
     if (!slug) {
-      pushSettingsRoute(sectionSlugMap[defaultSectionId], defaultSectionId === 'structure' ? projectTypeSlugMap[defaultProjectTypeKey] : undefined)
+      pushSettingsRoute(sectionSlugMap[defaultSectionId], undefined)
       return
     }
 
@@ -1933,26 +2103,18 @@ watch(
     activeSection.value = sectionId
 
     if (!sectionSlugToId[slug]) {
-      pushSettingsRoute(sectionSlugMap[sectionId], sectionId === 'structure' ? projectTypeSlugMap[defaultProjectTypeKey] : undefined)
+      pushSettingsRoute(sectionSlugMap[sectionId], undefined)
       return
     }
 
-    if (sectionId === 'structure' && !route.params.subsection) {
-      pushSettingsRoute('project-defaults', projectTypeSlugMap[defaultProjectTypeKey])
-    }
+    // Allow structure section without subsection to show index page
+    // No auto-redirect needed
   },
   { immediate: true }
 )
 
-watch(
-  () => route.params.subsection,
-  (slug) => {
-    if (activeSection.value !== 'structure') return
-    if (!slug || !projectSlugToKey[slug]) {
-      pushSettingsRoute('project-defaults', projectTypeSlugMap[defaultProjectTypeKey])
-    }
-  }
-)
+// Removed watcher that forced redirect when no subsection
+// Now allows index page to display when clicking Project Structure
 
 const toScalar = (value, fallback = '') => {
   if (Array.isArray(value)) {
@@ -2131,14 +2293,27 @@ const hasDirectory = (typeKey, field) => {
   return !!dirs && Object.prototype.hasOwnProperty.call(dirs, field)
 }
 
-const resetProjectType = (key) => {
+const showResetConfirm = (key) => {
   if (!defaultProjectTypes.value[key]) return
+  resetConfirmModal.projectTypeKey = key
+  resetConfirmModal.projectTypeName = settings.value.project_types[key]?.label || formatProjectTypeName(key)
+  resetConfirmModal.open = true
+}
+
+const resetProjectType = () => {
+  const key = resetConfirmModal.projectTypeKey
+  if (!defaultProjectTypes.value[key]) return
+
   settings.value.project_types[key] = JSON.parse(JSON.stringify(defaultProjectTypes.value[key]))
   if (key === 'presentation') {
     presentationOptions.includeInputs = false
     presentationOptions.includeScripts = false
     presentationOptions.includeFunctions = false
   }
+
+  // Close modal and show success
+  resetConfirmModal.open = false
+  toast.success('Reset Complete', `${resetConfirmModal.projectTypeName} has been reset to defaults`)
 }
 
 const openTemplateEditor = async (name, { title, description }) => {
@@ -2234,24 +2409,18 @@ const navigateToSection = async (sectionId) => {
   const section = sections.find((s) => s.id === sectionId)
   if (!section) return
 
-  const subsectionSlug = section.id === 'structure'
-    ? projectTypeSlugMap[currentProjectTypeKey.value || defaultProjectTypeKey]
-    : undefined
+  // For structure section, go to index page (no subsection)
+  const subsectionSlug = section.id === 'structure' ? undefined : undefined
 
   await pushSettingsRoute(section.slug, subsectionSlug)
   await nextTick()
 
-  if (section.id === 'structure') {
-    const key = currentProjectTypeKey.value || defaultProjectTypeKey
-    scrollToSection(defaultProjectSectionId(key))
-  } else {
-    scrollToSection(section.id)
-  }
+  scrollToSection(section.id)
 }
 
 const navigateToProjectType = async (key) => {
   const slug = projectTypeSlugMap[key] || projectTypeSlugMap[defaultProjectTypeKey]
-  await pushSettingsRoute('project-defaults', slug)
+  await pushSettingsRoute('project-structure', slug)
   await nextTick()
   scrollToSection(defaultProjectSectionId(key))
 }
@@ -2287,7 +2456,8 @@ const loadSettings = async () => {
 
     const data = await settingsResponse.json()
 
-    settings.value.projects_root = toScalar(data.projects_root, '')
+    // V2 format: projects_root is under global
+    settings.value.projects_root = toScalar(data.global?.projects_root || data.projects_root, '')
 
     if (data.project_types) {
       const merged = {}
@@ -2339,14 +2509,9 @@ const loadSettings = async () => {
         settings.value.privacy.secret_scan = settings.value.defaults.git_hooks.data_security
       }
 
-      console.log('[DEBUG LOAD] defaults.packages:', defaults.packages)
-      console.log('[DEBUG LOAD] Is array?', Array.isArray(defaults.packages))
-      console.log('[DEBUG LOAD] Type:', typeof defaults.packages)
-
       if (defaults.packages) {
         // New nested structure: packages: { use_renv: bool, default_packages: [...] }
         if (defaults.packages.default_packages) {
-          console.log('[DEBUG LOAD] Loading packages from nested structure (default_packages)')
           settings.value.defaults.packages = {
             use_renv: toBoolean(defaults.packages.use_renv, false),
             default_packages: (defaults.packages.default_packages || []).map((pkg) => ({
@@ -2355,11 +2520,9 @@ const loadSettings = async () => {
               auto_attach: toBoolean(pkg.auto_attach, false)
             }))
           }
-          console.log('[DEBUG LOAD] Loaded packages:', settings.value.defaults.packages)
         }
         // Old flat array structure (backward compatibility)
         else if (Array.isArray(defaults.packages)) {
-          console.log('[DEBUG LOAD] Loading packages from legacy array structure')
           settings.value.defaults.packages = {
             use_renv: false,
             default_packages: defaults.packages.map((pkg) => ({
@@ -2368,7 +2531,6 @@ const loadSettings = async () => {
               auto_attach: toBoolean(pkg.auto_attach, false)
             }))
           }
-          console.log('[DEBUG LOAD] Loaded packages:', settings.value.defaults.packages)
         }
       }
 
@@ -2504,16 +2666,18 @@ const saveSettings = async () => {
 
     const normalizedRoot = settings.value.projects_root?.trim() || ''
     const payload = JSON.parse(JSON.stringify(settings.value))
-    payload.projects_root = normalizedRoot ? normalizedRoot : null
+
+    // V2 format: projects_root goes under global, not at root
+    if (!payload.global) payload.global = {}
+    payload.global.projects_root = normalizedRoot ? normalizedRoot : null
+    delete payload.projects_root  // Remove root-level if it exists
 
     payload.defaults.seed = payload.defaults.seed === '' ? null : payload.defaults.seed
 
-    console.log('[DEBUG SAVE] Before filter - packages:', payload.defaults.packages)
     // Handle nested packages structure: { use_renv: bool, default_packages: [...] }
     if (payload.defaults.packages && payload.defaults.packages.default_packages) {
       payload.defaults.packages.default_packages = (payload.defaults.packages.default_packages || []).filter((pkg) => pkg.name && pkg.name.trim() !== '')
     }
-    console.log('[DEBUG SAVE] After filter - packages:', payload.defaults.packages)
 
     payload.defaults.directories = payload.project_types?.project?.directories || payload.defaults.directories
     payload.defaults.git_hooks.data_security = payload.privacy.secret_scan
@@ -2533,25 +2697,18 @@ const saveSettings = async () => {
       }
     }
 
-    console.log('[DEBUG SAVE] Sending payload to API:', payload)
-    console.log('[DEBUG SAVE] Payload.defaults.packages:', payload.defaults.packages)
-
     const response = await fetch('/api/settings/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
 
-    console.log('[DEBUG SAVE] API response status:', response.status, response.ok)
-
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[DEBUG SAVE] API error response:', errorText)
       throw new Error('Failed to save settings')
     }
 
     const responseData = await response.json()
-    console.log('[DEBUG SAVE] API response data:', responseData)
 
     const templateResponses = await Promise.all([
       fetch('/api/templates/notebook', {
@@ -2563,6 +2720,11 @@ const saveSettings = async () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: templateEditors.script.contents })
+      }),
+      fetch('/api/templates/presentation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: templateEditors.presentation.contents })
       }),
       fetch('/api/templates/gitignore-project', {
         method: 'POST',
@@ -2603,6 +2765,7 @@ onMounted(() => {
   loadSettings()
   loadTemplateInline('notebook')
   loadTemplateInline('script')
+  loadTemplateInline('presentation')
   loadTemplateInline('gitignore-project', 'gitignore_project')
   loadTemplateInline('gitignore-project_sensitive', 'gitignore_project_sensitive')
   loadTemplateInline('gitignore-course', 'gitignore_course')
