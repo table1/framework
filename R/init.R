@@ -840,6 +840,7 @@ init <- function(
   # Ensure author placeholders in starter notebooks use resolved name
   .replace_author_placeholders(target_dir)
   .initialize_framework_db(target_dir)
+  .initialize_env_file(target_dir)
 
   # Initialization complete (settings.yml/config.yml serves as marker)
   message(sprintf("Project '%s' initialized successfully!", project_name))
@@ -1334,6 +1335,27 @@ make_init <- function(output_file = "init.R") {
       message("\u2713 Initialized framework.db")
     }
   }
+
+  invisible(NULL)
+}
+
+.initialize_env_file <- function(target_dir = ".") {
+  env_path <- file.path(target_dir, ".env")
+
+  if (file.exists(env_path)) {
+    return(invisible(NULL))
+  }
+
+  template <- NULL
+  config <- try(read_frameworkrc(use_defaults = TRUE), silent = TRUE)
+  if (!inherits(config, "try-error") && !is.null(config$defaults$env)) {
+    template <- env_resolve_lines(config$defaults$env)
+  } else {
+    template <- env_default_template_lines()
+  }
+
+  writeLines(template, env_path)
+  message("\u2713 Created .env with default connection placeholders")
 
   invisible(NULL)
 }

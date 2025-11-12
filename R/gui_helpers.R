@@ -92,6 +92,12 @@ get_default_global_config <- function() {
 
   defaults$directories <- project_types$project$directories %||% list()
 
+  defaults$env <- defaults$env %||% list(
+    raw = paste(env_default_template_lines(), collapse = "\n")
+  )
+
+  defaults$connections <- defaults$connections %||% .default_connections_configuration()
+
   git_defaults <- catalog$git %||% list()
   privacy_defaults <- catalog$privacy %||% list()
 

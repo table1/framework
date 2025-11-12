@@ -32,7 +32,9 @@ project_create <- function(
     seed = "",
     set_theme_on_scaffold = TRUE,
     ggplot_theme = "theme_minimal"
-  )
+  ),
+  connections = NULL,
+  env = NULL
 ) {
   # Validate inputs
   checkmate::assert_string(name, min.chars = 1)
@@ -44,6 +46,15 @@ project_create <- function(
   checkmate::assert_list(ai)
   checkmate::assert_list(git)
   checkmate::assert_list(scaffold)
+  if (!is.null(connections)) {
+    checkmate::assert_list(connections)
+  }
+  if (!is.null(env)) {
+    checkmate::assert(
+      checkmate::check_character(env, len = 1),
+      checkmate::check_list(env)
+    )
+  }
 
   # Use location as the full project directory path
   project_dir <- path.expand(location)
@@ -60,7 +71,13 @@ project_create <- function(
   # Create subdirectories from directories config
   .create_project_directories(project_dir, directories, extra_directories)
 
+  # Ensure settings directory exists (connections/env files live here)
+  settings_dir <- file.path(project_dir, "settings")
+  dir.create(settings_dir, recursive = TRUE, showWarnings = FALSE)
+
   # Create config.yml with all settings
+  connections_rel_path <- "settings/connections.yml"
+
   .create_project_config(
     project_dir = project_dir,
     name = name,
@@ -71,7 +88,20 @@ project_create <- function(
     extra_directories = extra_directories,
     ai = ai,
     git = git,
-    scaffold = scaffold
+    scaffold = scaffold,
+    settings_dir = settings_dir,
+    connections_file = connections_rel_path
+  )
+
+  .create_connections_file(
+    project_dir = project_dir,
+    connections = connections,
+    relative_path = connections_rel_path
+  )
+
+  .create_env_file(
+    project_dir = project_dir,
+    env_config = env
   )
 
   # Create .gitignore from template content
@@ -169,15 +199,16 @@ project_create <- function(
   extra_directories,
   ai,
   git,
-  scaffold
+  scaffold,
+  settings_dir,
+  connections_file = "settings/connections.yml"
 ) {
   # For project and project_sensitive types, use split settings files
   # For presentation and course, use single settings.yml file
   use_split_files <- type %in% c("project", "project_sensitive")
 
   if (use_split_files) {
-    # Create settings/ directory
-    settings_dir <- file.path(project_dir, "settings")
+    # Ensure settings directory exists
     dir.create(settings_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Main settings.yml with references to split files
@@ -195,7 +226,8 @@ project_create <- function(
         packages = "settings/packages.yml",
         git = "settings/git.yml",
         ai = "settings/ai.yml",
-        scaffold = "settings/scaffold.yml"
+        scaffold = "settings/scaffold.yml",
+        connections = connections_file
       )
     )
 
@@ -279,7 +311,8 @@ project_create <- function(
           seed = scaffold$seed %||% "",
           set_theme_on_scaffold = scaffold$set_theme_on_scaffold %||% TRUE,
           ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal"
-        )
+        ),
+        connections = connections_file
       )
     )
 
@@ -287,6 +320,47 @@ project_create <- function(
     yaml::write_yaml(config, config_path)
     message("  Created: settings.yml")
   }
+}
+
+.default_connections_configuration <- function() {
+  list(
+    options = list(
+      default_connection = "framework"
+    ),
+    connections = list(
+      framework = list(
+        driver = "sqlite",
+        database = 'env("FRAMEWORK_DB_PATH", "framework.db")'
+      )
+    )
+  )
+}
+
+.create_connections_file <- function(project_dir, connections, relative_path) {
+  config <- connections
+
+  if (is.null(config) || length(config) == 0) {
+    config <- .default_connections_configuration()
+  } else {
+    config$options <- config$options %||% list()
+    config$connections <- config$connections %||% list()
+    if (is.null(config$options$default_connection) && length(config$connections) > 0) {
+      config$options$default_connection <- names(config$connections)[1]
+    }
+  }
+
+  target_path <- file.path(project_dir, relative_path)
+  dir.create(dirname(target_path), recursive = TRUE, showWarnings = FALSE)
+
+  yaml::write_yaml(config, target_path)
+  message("  Created: ", relative_path)
+}
+
+.create_env_file <- function(project_dir, env_config = NULL) {
+  env_lines <- env_resolve_lines(env_config)
+  env_path <- file.path(project_dir, ".env")
+  writeLines(env_lines, env_path)
+  message("  Created: .env")
 }
 
 #' Create .gitignore file

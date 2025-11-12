@@ -86,6 +86,106 @@ make_env <- function(..., comment = NULL, check_gitignore = TRUE) {
   invisible(TRUE)
 }
 
+#' Default Framework .env template lines
+#'
+#' Provides the baseline .env content that ships with Framework. Other helper
+#' functions (init(), project_create(), GUI scaffolders) reuse these lines when
+#' users haven't customized their own template.
+#'
+#' @keywords internal
+env_default_template_lines <- function() {
+  c(
+    "# Framework environment defaults",
+    "# Populate these values before running scaffold() or publishing.",
+    "",
+    "# ------------------------------------------------------------------",
+    "# Framework metadata database (SQLite)",
+    "# ------------------------------------------------------------------",
+    "FRAMEWORK_DB_PATH=framework.db",
+    "",
+    "# ------------------------------------------------------------------",
+    "# PostgreSQL connection (example)",
+    "# ------------------------------------------------------------------",
+    "POSTGRES_HOST=",
+    "POSTGRES_PORT=5432",
+    "POSTGRES_DB=",
+    "POSTGRES_SCHEMA=public",
+    "POSTGRES_USER=",
+    "POSTGRES_PASSWORD=",
+    "",
+    "# ------------------------------------------------------------------",
+    "# S3-compatible object storage (AWS S3, MinIO, etc.)",
+    "# ------------------------------------------------------------------",
+    "S3_ENDPOINT=",
+    "S3_BUCKET=",
+    "S3_REGION=",
+    "S3_ACCESS_KEY=",
+    "S3_SECRET_KEY=",
+    "S3_SESSION_TOKEN="
+  )
+}
+
+#' Convert env() configuration into file lines
+#' @keywords internal
+env_lines_from_variables <- function(vars) {
+  if (is.null(vars) || length(vars) == 0) {
+    return(character())
+  }
+
+  if (is.list(vars) && is.null(names(vars))) {
+    # Convert unnamed list (array of kv pairs) into named list
+    vars <- unlist(vars, recursive = FALSE, use.names = TRUE)
+  }
+
+  keys <- names(vars)
+  if (is.null(keys)) {
+    stop("Variables must be a named list when building .env content")
+  }
+
+  vapply(
+    keys,
+    function(key) {
+      value <- vars[[key]]
+      if (is.null(value)) value <- ""
+      sprintf("%s=%s", toupper(key), value)
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
+}
+
+#' Resolve env template lines from configuration
+#'
+#' @param env_config Either a character string (raw .env content) or a list with
+#'   `raw` and/or `variables`.
+#' @return Character vector of lines ready to be written to .env
+#' @keywords internal
+env_resolve_lines <- function(env_config = NULL) {
+  if (is.null(env_config)) {
+    return(env_default_template_lines())
+  }
+
+  # Allow raw string directly
+  if (is.character(env_config) && length(env_config) == 1) {
+    if (!nzchar(env_config)) {
+      return(env_default_template_lines())
+    }
+    return(strsplit(env_config, "\\r?\\n", perl = TRUE)[[1]])
+  }
+
+  # Lists may contain raw content or variables map
+  if (is.list(env_config)) {
+    if (!is.null(env_config$raw) && nzchar(env_config$raw)) {
+      return(strsplit(env_config$raw, "\\r?\\n", perl = TRUE)[[1]])
+    }
+    if (!is.null(env_config$variables) && length(env_config$variables) > 0) {
+      return(env_lines_from_variables(env_config$variables))
+    }
+  }
+
+  env_default_template_lines()
+}
+
 #' Check if .env is gitignored
 #'
 #' Checks if .env is listed in .gitignore and warns if not.

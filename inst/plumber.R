@@ -1906,7 +1906,9 @@ function(req) {
         seed = "",
         set_theme_on_scaffold = TRUE,
         ggplot_theme = "theme_minimal"
-      )
+      ),
+      connections = body$connections %||% NULL,
+      env = body$env %||% NULL
     )
 
     result

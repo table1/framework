@@ -85,28 +85,6 @@
         </a>
 
         <a
-          href="#connections"
-          @click.prevent="activeSection = 'connections'"
-          :class="getSidebarLinkClasses('connections')"
-        >
-          <ServerIcon class="h-4 w-4" />
-          Connections
-        </a>
-
-        <!-- Connection Sub-links -->
-        <div v-if="activeSection === 'connections' && connections && connections.connections" class="ml-6 space-y-0.5 mt-1">
-          <a
-            v-for="(conn, name) in connections.connections"
-            :key="name"
-            :href="`#connection-${name}`"
-            @click.prevent="scrollToConnection(name)"
-            class="flex items-center gap-2 px-3 py-1 rounded-md text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 transition"
-          >
-            {{ name }}
-          </a>
-        </div>
-
-        <a
           href="#data"
           @click.prevent="activeSection = 'data'"
           :class="getSidebarLinkClasses('data')"
@@ -145,11 +123,11 @@
         <Button
           variant="primary"
           @click="saveCurrentSection"
-          :disabled="saving || savingPackages || savingConnections || savingEnv || savingAI || savingGit"
+          :disabled="saving || savingPackages || savingEnv || savingAI || savingGit"
           class="w-full"
         >
           {{
-            (saving || savingPackages || savingConnections || savingEnv || savingAI || savingGit)
+            (saving || savingPackages || savingEnv || savingAI || savingGit)
               ? 'Saving...'
               : 'Save'
           }}
@@ -627,100 +605,6 @@
         @update:modelValue="handleDataModalVisibility"
       />
 
-      <!-- Connections Section -->
-      <div v-show="activeSection === 'connections'" id="connections">
-        <div v-if="connectionsLoading">
-          <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
-            Loading connections...
-          </div>
-        </div>
-
-        <div v-else-if="connectionsError">
-          <Alert type="error" title="Error Loading Connections" :description="connectionsError" />
-        </div>
-
-        <div v-else>
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Connections</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Manage database and external service connections for this project.
-          </p>
-
-          <div class="space-y-6">
-            <!-- Default Connection Option -->
-            <div v-if="connections && connections.options" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Connection Options</h3>
-              <Input
-                v-model="connections.options.default_connection"
-                label="Default Connection"
-                hint="Name of the default connection to use"
-              />
-            </div>
-
-            <!-- Connections List -->
-            <div v-if="connections && connections.connections">
-              <div v-if="Object.keys(connections.connections).length === 0" class="rounded-lg bg-gray-50 p-12 dark:bg-gray-800/50 text-center">
-                <ServerIcon class="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  No connections defined yet
-                </p>
-              </div>
-
-              <div v-else class="space-y-4">
-                <div
-                  v-for="(conn, name) in connections.connections"
-                  :key="name"
-                  :id="`connection-${name}`"
-                  :class="[
-                    'rounded-lg p-6 scroll-mt-6 relative transition',
-                    connectionsToDelete.has(name)
-                      ? 'bg-red-50 dark:bg-red-900/10 opacity-60'
-                      : 'bg-gray-50 dark:bg-gray-800/50'
-                  ]"
-                >
-                  <!-- Delete Button -->
-                  <button
-                    @click="toggleConnectionDelete(name)"
-                    :class="[
-                      'absolute top-3 right-3 p-1.5 rounded-md border border-gray-300 transition dark:border-gray-600',
-                      connectionsToDelete.has(name)
-                        ? 'text-gray-600 hover:bg-gray-100 hover:border-gray-400 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:border-gray-500'
-                        : 'text-red-700 hover:bg-gray-100 hover:border-red-600 dark:text-red-400 dark:hover:bg-gray-700 dark:hover:border-red-500'
-                    ]"
-                    :title="connectionsToDelete.has(name) ? 'Undo delete' : 'Delete connection'"
-                  >
-                    <svg v-if="connectionsToDelete.has(name)" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                    </svg>
-                    <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-
-                  <div :class="{ 'line-through opacity-50': connectionsToDelete.has(name) }">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 font-mono pr-8">
-                      {{ name }}
-                    </h3>
-
-                    <div class="space-y-4">
-                      <div v-for="(value, key) in conn" :key="key">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          {{ key }}
-                        </label>
-                        <input
-                          v-model="connections.connections[name][key]"
-                          type="text"
-                          :disabled="connectionsToDelete.has(name)"
-                          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Packages Section -->
       <div v-show="activeSection === 'packages'" id="packages">
@@ -941,195 +825,24 @@
 
       <!-- .env Section -->
       <div v-show="activeSection === 'env'" id="env">
-        <div v-if="envLoading">
-          <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
-            Loading environment variables...
-          </div>
-        </div>
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Environment Variables</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Manage environment variables for this project (.env file).
+        </p>
 
-        <div v-else-if="envError">
-          <Alert type="error" title="Error Loading .env" :description="envError" />
-        </div>
-
-        <div v-else>
-          <div class="mb-6">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Environment Variables</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Manage environment variables for this project (.env file).
-            </p>
-          </div>
-
-          <!-- Security Warning -->
-          <Alert type="warning" title="⚠️ Contains Sensitive Data" class="mb-6">
-            This file contains passwords and secrets. It is automatically excluded from version control (.gitignore).
-            <template #actions>
-              <Button
-                v-if="envViewMode === 'grouped'"
-                variant="soft"
-                size="sm"
-                @click="showEnvValues = !showEnvValues"
-              >
-                {{ showEnvValues ? 'Hide Values' : 'Show Values' }}
-              </Button>
-            </template>
-          </Alert>
-
-          <!-- View Tabs -->
-          <Tabs
-            v-model="envViewMode"
-            :tabs="[
-              { id: 'grouped', label: 'Grouped By Prefix' },
-              { id: 'raw', label: 'Raw' }
-            ]"
-            variant="pills"
-            class="mb-6"
-          />
-
-          <!-- Grouped View -->
-          <div v-if="envViewMode === 'grouped'" class="space-y-6">
-            <!-- Variables Grouped by Prefix -->
-            <div v-if="Object.keys(envGroups).length === 0" class="rounded-lg bg-gray-50 p-12 dark:bg-gray-800/50 text-center">
-              <KeyIcon class="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                No environment variables found
-              </p>
-              <Button variant="primary" @click="addEnvVariable">
-                Add Your First Variable
-              </Button>
-            </div>
-
-            <div v-else class="space-y-6">
-              <div
-                v-for="(vars, prefix) in envGroups"
-                :key="prefix"
-                class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50"
-              >
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
-                    {{ prefix === 'Other' ? 'Other Variables' : prefix.toUpperCase() + ' Variables' }}
-                  </h3>
-                  <Button variant="soft" size="sm" @click="addEnvVariable">
-                    + Add
-                  </Button>
-                </div>
-
-                <div class="space-y-4">
-                  <div
-                    v-for="(info, varName) in vars"
-                    :key="varName"
-                    class="space-y-2"
-                  >
-                    <div class="flex items-start gap-3">
-                      <!-- Status Badge -->
-                      <div class="mt-2">
-                        <Badge
-                          v-if="info.defined && info.used"
-                          variant="green"
-                          class="text-xs"
-                        >✓</Badge>
-                        <Badge
-                          v-else-if="!info.defined && info.used"
-                          variant="yellow"
-                          class="text-xs"
-                        >⚠</Badge>
-                        <Badge
-                          v-else
-                          variant="gray"
-                          class="text-xs"
-                        >✗</Badge>
-                      </div>
-
-                      <div class="flex-1 grid grid-cols-2 gap-3">
-                        <input
-                          :value="varName"
-                          @input="(e) => {
-                            const newKey = e.target.value
-                            if (newKey !== varName) {
-                              envVariables[newKey] = envVariables[varName] || ''
-                              delete envVariables[varName]
-                            }
-                          }"
-                          type="text"
-                          placeholder="VARIABLE_NAME"
-                          class="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono uppercase"
-                        />
-                        <div class="relative">
-                          <input
-                            v-model="envVariables[varName]"
-                            @input="info.value = envVariables[varName]"
-                            :type="isFieldVisible(varName) ? 'text' : 'password'"
-                            :placeholder="info.defined ? 'value' : '(not set)'"
-                            :class="[
-                              'w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono',
-                              isPasswordField(varName) ? 'pr-10' : ''
-                            ]"
-                          />
-                          <button
-                            v-if="isPasswordField(varName)"
-                            @click="toggleFieldVisibility(varName)"
-                            type="button"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-                          >
-                            <EyeIcon v-if="!isFieldVisible(varName)" class="h-4 w-4" />
-                            <EyeSlashIcon v-else class="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <Button
-                        variant="soft"
-                        size="sm"
-                        @click="removeEnvVariable(varName)"
-                      >
-                        ×
-                      </Button>
-                    </div>
-
-                    <!-- Usage Info -->
-                    <div v-if="info.used && info.used_in.length > 0" class="ml-10 text-xs text-zinc-500 dark:text-zinc-400">
-                      Used in: {{ info.used_in.join(', ') }}
-                    </div>
-                    <div v-else-if="info.defined && !info.used" class="ml-10 text-xs text-zinc-400 dark:text-zinc-500">
-                      Not referenced in any files
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Regroup Option -->
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50 border border-zinc-200 dark:border-zinc-700">
-              <Toggle
-                v-model="regroupOnSave"
-                label="Regroup .env file by prefix when saving"
-                description="⚠️ This will rewrite the entire file grouped by prefix and will lose all comments and original order."
-              />
-            </div>
-          </div>
-
-          <!-- Raw View -->
-          <div v-else-if="envViewMode === 'raw'" class="space-y-6">
-            <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                Raw .env File
-              </h3>
-              <textarea
-                v-model="envRawContent"
-                class="w-full h-96 font-mono text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                placeholder="# Environment variables
-# Example:
-# DB_HOST=localhost
-# DB_PORT=5432
-# API_KEY=your_key_here"
-              ></textarea>
-              <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Edit the .env file directly. Comments and formatting will be preserved.
-              </p>
-            </div>
-          </div>
-        </div>
+        <EnvEditor
+          :loading="envLoading"
+          :error="envError"
+          :groups="envGroups"
+          v-model:variables="envVariables"
+          v-model:raw-content="envRawContent"
+          v-model:view-mode="envViewMode"
+          v-model:regroup-on-save="regroupOnSave"
+          @save="saveEnv"
+        />
       </div>
     </div>
-    </div>
+  </div>
 
     <!-- Add Package Modal -->
     <Modal v-model="showAddPackageModal" title="Add Package" size="md" variant="left">
@@ -1254,7 +967,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast'
 import PageHeader from '../components/ui/PageHeader.vue'
 import Card from '../components/ui/Card.vue'
-import Badge from '../components/ui/Badge.vue'
 import Alert from '../components/ui/Alert.vue'
 import CopyButton from '../components/ui/CopyButton.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
@@ -1275,6 +987,7 @@ import DataCatalogTree from '../components/DataCatalogTree.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
+import EnvEditor from '../components/env/EnvEditor.vue'
 import {
   InformationCircleIcon,
   UserIcon,
@@ -1333,11 +1046,12 @@ const customWorkspaceDirectories = ref([])
 const customInputDirectories = ref([])
 const customOutputDirectories = ref([])
 const savingCustomDirs = ref(false)
-const connections = ref(null)
-const connectionsLoading = ref(false)
-const connectionsError = ref(null)
-const savingConnections = ref(false)
-const connectionsToDelete = ref(new Set())
+// DISABLED - connections removed
+// const connections = ref(null)
+// const connectionsLoading = ref(false)
+// const connectionsError = ref(null)
+// const savingConnections = ref(false)
+// const connectionsToDelete = ref(new Set())
 const packages = ref([])
 const editablePackages = ref({ use_renv: false, default_packages: [] })
 const packagesLoading = ref(false)
@@ -1355,8 +1069,6 @@ const envRawContent = ref('')
 const envLoading = ref(false)
 const envError = ref(null)
 const savingEnv = ref(false)
-const showEnvValues = ref(false)
-const visibleEnvFields = ref({})
 const envViewMode = ref('grouped') // 'grouped' or 'raw'
 const regroupOnSave = ref(false) // If true, regroup .env file by prefix (loses comments)
 const availableAssistants = [
@@ -1394,7 +1106,7 @@ const getSidebarLinkClasses = (section) => {
 // Initialize activeSection from URL query param
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'ai', 'git', 'scaffold', 'env']
+  const validSections = ['overview', 'settings', 'notebooks', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   } else {
@@ -1411,10 +1123,10 @@ watch(activeSection, (newSection) => {
     loadProjectSettings()
   }
 
-  // Load connections when Connections section is activated
-  if (newSection === 'connections' && !connections.value) {
-    loadConnections()
-  }
+  // DISABLED - connections removed
+  // if (newSection === 'connections' && !connections.value) {
+  //   loadConnections()
+  // }
 
   // Load packages when Packages section is activated
   if (newSection === 'packages' && packages.value.length === 0) {
@@ -1437,7 +1149,7 @@ watch(activeSection, (newSection) => {
 
 // Watch for URL query param changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'connections', 'packages', 'ai', 'git', 'scaffold', 'env']
+  const validSections = ['overview', 'settings', 'notebooks', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
   if (newSection && newSection !== activeSection.value && validSections.includes(newSection)) {
     activeSection.value = newSection
   }
@@ -2056,9 +1768,10 @@ const saveCurrentSection = async () => {
     case 'git':
       await saveGitSettings()
       break
-    case 'connections':
-      await saveConnections()
-      break
+    // DISABLED - connections removed
+    // case 'connections':
+    //   await saveConnections()
+    //   break
     case 'ai':
       await saveAISettings()
       break
@@ -2154,33 +1867,35 @@ const handleDataSublinkClick = (link) => {
   scrollToDataAnchor(link.anchorId, link.nodeKey)
 }
 
-const loadConnections = async () => {
-  connectionsLoading.value = true
-  connectionsError.value = null
+// DISABLED - connections removed
+// const loadConnections = async () => {
+//   connectionsLoading.value = true
+//   connectionsError.value = null
+//
+//   try {
+//     const response = await fetch(`/api/project/${route.params.id}/connections`)
+//     const data = await response.json()
+//
+//     if (data.error) {
+//       connectionsError.value = data.error
+//     } else {
+//       connections.value = data
+//     }
+//   } catch (err) {
+//     connectionsError.value = 'Failed to load connections: ' + err.message
+//   } finally {
+//     connectionsLoading.value = false
+//   }
+// }
 
-  try {
-    const response = await fetch(`/api/project/${route.params.id}/connections`)
-    const data = await response.json()
-
-    if (data.error) {
-      connectionsError.value = data.error
-    } else {
-      connections.value = data
-    }
-  } catch (err) {
-    connectionsError.value = 'Failed to load connections: ' + err.message
-  } finally {
-    connectionsLoading.value = false
-  }
-}
-
-const toggleConnectionDelete = (name) => {
-  if (connectionsToDelete.value.has(name)) {
-    connectionsToDelete.value.delete(name)
-  } else {
-    connectionsToDelete.value.add(name)
-  }
-}
+// DISABLED - connections removed
+// const toggleConnectionDelete = (name) => {
+//   if (connectionsToDelete.value.has(name)) {
+//     connectionsToDelete.value.delete(name)
+//   } else {
+//     connectionsToDelete.value.add(name)
+//   }
+// }
 
 const saveCustomDirectories = async (category) => {
   // Get the appropriate ref based on category
@@ -2228,40 +1943,41 @@ const saveCustomDirectories = async (category) => {
   }
 }
 
-const saveConnections = async () => {
-  savingConnections.value = true
-
-  try {
-    // Filter out connections marked for deletion
-    const connectionsToSave = { ...connections.value }
-    if (connectionsToSave.connections) {
-      connectionsToSave.connections = Object.fromEntries(
-        Object.entries(connectionsToSave.connections)
-          .filter(([name]) => !connectionsToDelete.value.has(name))
-      )
-    }
-
-    const response = await fetch(`/api/project/${route.params.id}/connections`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(connectionsToSave)
-    })
-
-    const result = await response.json()
-
-    if (result.success) {
-      connectionsToDelete.value.clear() // Clear staged deletions
-      toast.success('Connections Saved', 'Connection settings have been updated')
-      await loadConnections()
-    } else {
-      toast.error('Save Failed', result.error || 'Failed to save connections')
-    }
-  } catch (err) {
-    toast.error('Save Failed', err.message)
-  } finally {
-    savingConnections.value = false
-  }
-}
+// DISABLED - connections removed
+// const saveConnections = async () => {
+//   savingConnections.value = true
+//
+//   try {
+//     // Filter out connections marked for deletion
+//     const connectionsToSave = { ...connections.value }
+//     if (connectionsToSave.connections) {
+//       connectionsToSave.connections = Object.fromEntries(
+//         Object.entries(connectionsToSave.connections)
+//           .filter(([name]) => !connectionsToDelete.value.has(name))
+//       )
+//     }
+//
+//     const response = await fetch(`/api/project/${route.params.id}/connections`, {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify(connectionsToSave)
+//     })
+//
+//     const result = await response.json()
+//
+//     if (result.success) {
+//       connectionsToDelete.value.clear() // Clear staged deletions
+//       toast.success('Connections Saved', 'Connection settings have been updated')
+//       await loadConnections()
+//     } else {
+//       toast.error('Save Failed', result.error || 'Failed to save connections')
+//     }
+//   } catch (err) {
+//     toast.error('Save Failed', err.message)
+//   } finally {
+//     savingConnections.value = false
+//   }
+// }
 
 const loadPackages = async () => {
   packagesLoading.value = true
@@ -2698,28 +2414,6 @@ const saveEnv = async () => {
   }
 }
 
-const addEnvVariable = () => {
-  const newKey = `NEW_VARIABLE_${Object.keys(envVariables.value).length + 1}`
-  envVariables.value[newKey] = ''
-}
-
-const removeEnvVariable = (key) => {
-  delete envVariables.value[key]
-}
-
-const isPasswordField = (key) => {
-  const passwordKeys = ['PASSWORD', 'SECRET', 'KEY', 'TOKEN', 'CREDENTIAL']
-  return passwordKeys.some(pw => key.toUpperCase().includes(pw))
-}
-
-const toggleFieldVisibility = (key) => {
-  visibleEnvFields.value[key] = !visibleEnvFields.value[key]
-}
-
-const isFieldVisible = (key) => {
-  return showEnvValues.value || visibleEnvFields.value[key] || !isPasswordField(key)
-}
-
 // Keyboard shortcuts
 const handleKeydown = (e) => {
   // Cmd/Ctrl + S to save
@@ -2727,8 +2421,9 @@ const handleKeydown = (e) => {
     e.preventDefault()
     if (activeSection.value === 'settings' || activeSection.value === 'scaffold') {
       saveSettings()
-    } else if (activeSection.value === 'connections') {
-      saveConnections()
+    // DISABLED - connections removed
+    // } else if (activeSection.value === 'connections') {
+    //   saveConnections()
     } else if (activeSection.value === 'packages') {
       savePackages()
     } else if (activeSection.value === 'git') {
@@ -2764,10 +2459,11 @@ watch(() => route.params.id, (newId, oldId) => {
     editableSettings.value = {}
     settingsError.value = null
     settingsLoading.value = false
-    connections.value = null
-    connectionsError.value = null
-    connectionsToDelete.value = new Set()
-    connectionsLoading.value = false
+    // DISABLED - connections removed
+    // connections.value = null
+    // connectionsError.value = null
+    // connectionsToDelete.value = new Set()
+    // connectionsLoading.value = false
     packages.value = []
     editablePackages.value = { use_renv: false, default_packages: [] }
     packagesError.value = null
@@ -2781,8 +2477,6 @@ watch(() => route.params.id, (newId, oldId) => {
     envRawContent.value = ''
     envError.value = null
     envLoading.value = false
-    showEnvValues.value = false
-    visibleEnvFields.value = {}
     envViewMode.value = 'grouped'
     regroupOnSave.value = false
     gitSettings.value = {

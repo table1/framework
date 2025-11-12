@@ -50,6 +50,18 @@ test_that("project_create creates basic project structure", {
 
   # Check scaffold.R was created
   expect_true(file.exists(file.path(result$path, "scaffold.R")))
+
+  # Check .env template and connections defaults exist
+  env_path <- file.path(result$path, ".env")
+  expect_true(file.exists(env_path))
+  env_lines <- readLines(env_path)
+  expect_true(any(grepl("^FRAMEWORK_DB_PATH=", env_lines)))
+
+  connections_path <- file.path(result$path, "settings/connections.yml")
+  expect_true(file.exists(connections_path))
+  connections_yaml <- yaml::read_yaml(connections_path)
+  expect_equal(connections_yaml$options$default_connection, "framework")
+  expect_true("framework" %in% names(connections_yaml$connections))
 })
 
 test_that("project_create handles packages configuration", {
