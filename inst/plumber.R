@@ -736,14 +736,21 @@ function(id) {
   # Check if connections file exists
   connections_file <- file.path(project$path, "settings/connections.yml")
   if (!file.exists(connections_file)) {
-    return(list(connections = list(), options = list()))
+    return(list(
+      default_database = NULL,
+      default_storage_bucket = NULL,
+      databases = list(),
+      storage_buckets = list()
+    ))
   }
 
   tryCatch({
     connections_data <- yaml::read_yaml(connections_file)
     list(
-      connections = connections_data$connections %||% list(),
-      options = connections_data$options %||% list()
+      default_database = connections_data$default_database,
+      default_storage_bucket = connections_data$default_storage_bucket,
+      databases = connections_data$databases %||% list(),
+      storage_buckets = connections_data$storage_buckets %||% list()
     )
   }, error = function(e) {
     list(error = paste("Failed to read connections:", e$message))
@@ -777,10 +784,12 @@ function(id, req) {
   tryCatch({
     connections_file <- file.path(project$path, "settings/connections.yml")
 
-    # Save connections
+    # Save connections with new nested structure
     yaml::write_yaml(list(
-      options = body$options %||% list(),
-      connections = body$connections %||% list()
+      default_database = body$default_database,
+      default_storage_bucket = body$default_storage_bucket,
+      databases = body$databases %||% list(),
+      storage_buckets = body$storage_buckets %||% list()
     ), connections_file)
 
     list(success = TRUE)

@@ -402,7 +402,7 @@ init <- function(
 
   # Initialize git AFTER archiving so all files are in final state
   if (use_git) {
-    suppressMessages(.init_git_repo(target_dir))
+    suppressMessages(.init_git_repo(target_dir, hooks = NULL))
   }
 
   # Prompt for AI assistant support (if enabled by user)

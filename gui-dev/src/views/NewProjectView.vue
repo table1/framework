@@ -142,6 +142,27 @@
                 </template>
               </OverviewCard>
 
+              <!-- Connections Card -->
+              <OverviewCard
+                title="Connections"
+                @click="activeSection = 'connections'"
+              >
+                <template v-if="connectionsSummary.databases > 0 || connectionsSummary.buckets > 0">
+                  <span class="text-gray-600 dark:text-gray-400">
+                    {{ connectionsSummary.databases }} database{{ connectionsSummary.databases !== 1 ? 's' : '' }}
+                  </span>
+                  <template v-if="connectionsSummary.buckets > 0">
+                    <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                    <span class="text-gray-600 dark:text-gray-400">
+                      {{ connectionsSummary.buckets }} bucket{{ connectionsSummary.buckets !== 1 ? 's' : '' }}
+                    </span>
+                  </template>
+                </template>
+                <template v-else>
+                  <span class="text-gray-600 dark:text-gray-400">framework_db only</span>
+                </template>
+              </OverviewCard>
+
               <!-- Scaffold Behavior Card -->
               <OverviewCard
                 title="Scaffold Behavior"
@@ -1380,6 +1401,16 @@
             </div>
         </div>
 
+        <!-- Connections Section -->
+        <div v-show="activeSection === 'connections'">
+          <ConnectionsPanel
+            v-model:database-connections="project.connections.databaseConnections"
+            v-model:s3-connections="project.connections.s3Connections"
+            v-model:default-database="project.connections.defaultDatabase"
+            v-model:default-storage-bucket="project.connections.defaultStorageBucket"
+          />
+        </div>
+
         <!-- Packages Section -->
         <div v-show="activeSection === 'packages'">
           <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
@@ -1540,6 +1571,7 @@ import OverviewCard from '../components/ui/OverviewCard.vue'
 import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
+import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import { useToast } from '../composables/useToast'
 import {
   InformationCircleIcon,
@@ -1547,7 +1579,8 @@ import {
   FolderIcon,
   CubeIcon,
   DocumentCheckIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ServerStackIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -1588,6 +1621,7 @@ const sections = [
   { id: 'packages', label: 'Packages', icon: CubeIcon },
   { id: 'ai', label: 'AI Assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+  { id: 'connections', label: 'Connections', icon: ServerStackIcon },
   {
     id: 'scaffold',
     label: 'Scaffold Behavior',
@@ -1646,6 +1680,12 @@ const project = ref({
       data_security: false,
       check_sensitive_dirs: false
     }
+  },
+  connections: {
+    databaseConnections: [],  // framework_db is implicit/reserved
+    s3Connections: [],
+    defaultDatabase: null,
+    defaultStorageBucket: null
   },
   directories_enabled: {},
   directories: {},
@@ -1939,6 +1979,7 @@ const currentSectionTitle = computed(() => {
     author: 'Author & Metadata',
     scaffold: 'Scaffold Behavior',
     structure: 'Project Structure',
+    connections: 'Connections',
     packages: 'Packages & Dependencies',
     ai: 'AI Assistants',
     git: 'Git & Hooks',
@@ -1954,6 +1995,7 @@ const currentSectionDescription = computed(() => {
     author: 'Configure author information embedded in project templates.',
     scaffold: 'Runtime settings that control what happens when scaffold() runs.',
     structure: 'Customize which directories to create for this project type.',
+    connections: 'Database and storage connections for this project.',
     packages: 'Configure package management and default packages.',
     ai: 'Configure AI assistant integration for this project.',
     git: 'Configure version control and git hooks.',
@@ -1978,6 +2020,16 @@ const enabledGitHooks = computed(() => {
   if (project.value.git.hooks.data_security) hooks.push('Check for secrets')
   if (project.value.git.hooks.check_sensitive_dirs) hooks.push('Warn about sensitive dirs')
   return hooks
+})
+
+const connectionsSummary = computed(() => {
+  // Count databases (excluding framework_db which is implicit)
+  const databases = project.value.connections.databaseConnections.length
+
+  // Count S3 buckets
+  const buckets = project.value.connections.s3Connections.length
+
+  return { databases, buckets }
 })
 
 const gitPanelModel = computed({
@@ -2287,6 +2339,19 @@ const createProject = async () => {
       })
     }
 
+    // Convert connections arrays to nested object structure for saving
+    const databases = {}
+    project.value.connections.databaseConnections.forEach(conn => {
+      const { _id, name, ...fields } = conn
+      databases[name] = fields
+    })
+
+    const storage_buckets = {}
+    project.value.connections.s3Connections.forEach(conn => {
+      const { _id, name, ...fields } = conn
+      storage_buckets[name] = fields
+    })
+
     // Build request payload matching v2 structure
     // Location is the FULL path to the project directory
     const payload = {
@@ -2298,6 +2363,12 @@ const createProject = async () => {
       packages: project.value.packages,
       ai: project.value.ai,
       git: project.value.git,
+      connections: {
+        default_database: project.value.connections.defaultDatabase,
+        default_storage_bucket: project.value.connections.defaultStorageBucket,
+        databases,
+        storage_buckets
+      },
       directories
     }
 

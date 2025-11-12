@@ -183,87 +183,13 @@
         </div>
 
         <!-- Connections -->
-        <div id="connections-defaults" v-show="activeSection === 'connections-defaults'" class="space-y-6">
-          <SettingsPanel>
-            <SettingsBlock>
-              <!-- Databases -->
-              <div class="mb-8">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Databases</h3>
-                  <Button variant="secondary" size="sm" @click="addConnection('database')">
-                    Add Database
-                  </Button>
-                </div>
-
-                <div class="space-y-4">
-                  <div v-for="(conn, name) in databaseConnections" :key="name" class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ name }}</h4>
-                      <Button v-if="name !== 'framework'" variant="secondary" size="sm" @click="removeConnection(name)">
-                        Remove
-                      </Button>
-                    </div>
-
-                    <div class="space-y-3">
-                      <div v-for="(value, key) in conn" :key="key">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          {{ key }}
-                        </label>
-                        <input
-                          v-model="editableConnections[name][key]"
-                          type="text"
-                          :disabled="name === 'framework' && (key === 'driver' || key === 'database')"
-                          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 font-mono focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div v-if="Object.keys(databaseConnections).length === 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 text-center">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">No database connections defined</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- S3-compatible Buckets -->
-              <div>
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white">S3-compatible Buckets</h3>
-                  <Button variant="secondary" size="sm" @click="addConnection('s3')">
-                    Add Bucket
-                  </Button>
-                </div>
-
-                <div class="space-y-4">
-                  <div v-for="(conn, name) in s3Connections" :key="name" class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ name }}</h4>
-                      <Button variant="secondary" size="sm" @click="removeConnection(name)">
-                        Remove
-                      </Button>
-                    </div>
-
-                    <div class="space-y-3">
-                      <div v-for="(value, key) in conn" :key="key">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          {{ key }}
-                        </label>
-                        <input
-                          v-model="editableConnections[name][key]"
-                          type="text"
-                          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 font-mono focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div v-if="Object.keys(s3Connections).length === 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 text-center">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">No S3 buckets defined</p>
-                  </div>
-                </div>
-              </div>
-            </SettingsBlock>
-          </SettingsPanel>
+        <div id="connections-defaults" v-show="activeSection === 'connections-defaults'">
+          <ConnectionsPanel
+            v-model:database-connections="databaseConnections"
+            v-model:s3-connections="s3Connections"
+            v-model:default-database="defaultDatabase"
+            v-model:default-storage-bucket="defaultStorageBucket"
+          />
         </div>
         <!-- Basics -->
         <div id="basics" v-show="activeSection === 'basics'">
@@ -1677,6 +1603,7 @@ import Repeater from '../components/ui/Repeater.vue'
 import { useToast } from '../composables/useToast'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import SettingsBlock from '../components/settings/SettingsBlock.vue'
+import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
@@ -2037,18 +1964,15 @@ const templateModal = reactive({
 // const defaultEnvRegroup = ref(false)
 const envPreviewModal = ref(false)
 
-// Database connections as array for repeater
-const databaseConnections = ref([
-  {
-    _id: 'framework',
-    name: 'framework',
-    driver: 'sqlite',
-    database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
-  }
-])
+// Database connections as array for repeater (framework_db is implicit/reserved)
+const databaseConnections = ref([])
 
 // S3 connections as array for repeater
 const s3Connections = ref([])
+
+// Default connections
+const defaultDatabase = ref(null)
+const defaultStorageBucket = ref(null)
 
 const resetConfirmModal = reactive({
   open: false,
@@ -3011,48 +2935,31 @@ const initializeDefaultEnv = (envConfig) => {
 }
 
 const hydrateDefaultConnections = (connectionsConfig) => {
-  const nextConnections = (connectionsConfig && connectionsConfig.connections) || {
-    framework: {
-      driver: 'sqlite',
-      database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
-    }
-  }
-  editableConnections.value = clone(nextConnections)
-  ensureFrameworkConnection()
-}
+  // Handle nested structure: { default_database, default_storage_bucket, databases: {}, storage_buckets: {} }
+  const databases = connectionsConfig?.databases || {}
+  const storage_buckets = connectionsConfig?.storage_buckets || {}
 
-const ensureFrameworkConnection = () => {
-  const existing = editableConnections.value.framework
-  if (!existing) {
-    editableConnections.value.framework = {
-      driver: 'sqlite',
-      database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
-    }
-  } else {
-    existing.driver = 'sqlite'
-    existing.database = existing.database || 'env("FRAMEWORK_DB_PATH", "framework.db")'
-  }
-}
+  // Load defaults
+  defaultDatabase.value = connectionsConfig?.default_database || null
+  defaultStorageBucket.value = connectionsConfig?.default_storage_bucket || null
 
-// Get field list based on driver type
-const getDriverFields = (driver) => {
-  if (driver === 'sqlite') {
-    return ['database']
-  } else if (driver === 'postgres' || driver === 'postgresql') {
-    return ['host', 'port', 'database', 'schema', 'user', 'password']
-  }
-  return []
-}
+  // Convert objects to arrays for Repeater component, filtering out framework_db (reserved system connection)
+  const dbArray = Object.entries(databases)
+    .filter(([name]) => name !== 'framework_db')
+    .map(([name, conn]) => ({
+      _id: name,
+      name,
+      ...conn
+    }))
 
-// Helper to get unique connection name
-const generateUniqueConnectionName = (base, existingNames) => {
-  let counter = 1
-  let candidate = base
-  while (existingNames.includes(candidate)) {
-    counter += 1
-    candidate = `${base}_${counter}`
-  }
-  return candidate
+  const s3Array = Object.entries(storage_buckets).map(([name, conn]) => ({
+    _id: name,
+    name,
+    ...conn
+  }))
+
+  databaseConnections.value = dbArray
+  s3Connections.value = s3Array
 }
 
 // DISABLED - env defaults removed
@@ -3083,9 +2990,25 @@ const saveSettings = async () => {
 
     // DISABLED - env defaults removed
     // payload.defaults.env = { raw: defaultEnvRawContent.value || '' }
+
+    // Convert connections arrays to nested object structure for saving
+    const databases = {}
+    databaseConnections.value.forEach(conn => {
+      const { _id, name, ...fields } = conn
+      databases[name] = fields
+    })
+
+    const storage_buckets = {}
+    s3Connections.value.forEach(conn => {
+      const { _id, name, ...fields } = conn
+      storage_buckets[name] = fields
+    })
+
     payload.defaults.connections = {
-      options: { default_connection: 'framework' },
-      connections: clone(editableConnections.value)
+      default_database: defaultDatabase.value,
+      default_storage_bucket: defaultStorageBucket.value,
+      databases,
+      storage_buckets
     }
 
     payload.defaults.directories = payload.project_types?.project?.directories || payload.defaults.directories

@@ -71,8 +71,19 @@
           @click.prevent="activeSection = 'git'"
           :class="getSidebarLinkClasses('git')"
         >
-          <DocumentCheckIcon class="h-4 w-4" />
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
           Git & Hooks
+        </a>
+
+        <a
+          href="#connections"
+          @click.prevent="activeSection = 'connections'"
+          :class="getSidebarLinkClasses('connections')"
+        >
+          <ServerStackIcon class="h-4 w-4" />
+          Connections
         </a>
 
         <a
@@ -83,6 +94,9 @@
           <AdjustmentsVerticalIcon class="h-4 w-4" />
           Scaffold Behavior
         </a>
+
+        <!-- PROJECT Heading -->
+        <NavigationSectionHeading>Project</NavigationSectionHeading>
 
         <a
           href="#data"
@@ -109,6 +123,15 @@
         </div>
 
         <a
+          href="#notebooks"
+          @click.prevent="activeSection = 'notebooks'"
+          :class="getSidebarLinkClasses('notebooks')"
+        >
+          <DocumentTextIcon class="h-4 w-4" />
+          Notebooks
+        </a>
+
+        <a
           href="#env"
           @click.prevent="activeSection = 'env'"
           :class="getSidebarLinkClasses('env')"
@@ -123,29 +146,15 @@
         <Button
           variant="primary"
           @click="saveCurrentSection"
-          :disabled="saving || savingPackages || savingEnv || savingAI || savingGit"
+          :disabled="saving || savingPackages || savingEnv || savingAI || savingGit || savingConnections"
           class="w-full"
         >
           {{
-            (saving || savingPackages || savingEnv || savingAI || savingGit)
+            (saving || savingPackages || savingEnv || savingAI || savingGit || savingConnections)
               ? 'Saving...'
               : 'Save'
           }}
         </Button>
-      </div>
-
-      <div class="space-y-1">
-        <!-- OUTPUTS Heading -->
-        <NavigationSectionHeading>Outputs</NavigationSectionHeading>
-
-        <a
-          href="#notebooks"
-          @click.prevent="activeSection = 'notebooks'"
-          :class="getSidebarLinkClasses('notebooks')"
-        >
-          <DocumentTextIcon class="h-4 w-4" />
-          Notebooks
-        </a>
       </div>
     </nav>
 
@@ -605,6 +614,20 @@
         @update:modelValue="handleDataModalVisibility"
       />
 
+      <!-- Connections Section -->
+      <div v-show="activeSection === 'connections'" id="connections">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Connections</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Database and storage connections for this project.
+        </p>
+
+        <ConnectionsPanel
+          v-model:database-connections="databaseConnections"
+          v-model:s3-connections="s3Connections"
+          v-model:default-database="defaultDatabase"
+          v-model:default-storage-bucket="defaultStorageBucket"
+        />
+      </div>
 
       <!-- Packages Section -->
       <div v-show="activeSection === 'packages'" id="packages">
@@ -987,6 +1010,7 @@ import DataCatalogTree from '../components/DataCatalogTree.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
+import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
 import {
   InformationCircleIcon,
@@ -1003,7 +1027,8 @@ import {
   PlusIcon,
   SparklesIcon,
   DocumentCheckIcon,
-  AdjustmentsVerticalIcon
+  AdjustmentsVerticalIcon,
+  ServerStackIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -1046,12 +1071,11 @@ const customWorkspaceDirectories = ref([])
 const customInputDirectories = ref([])
 const customOutputDirectories = ref([])
 const savingCustomDirs = ref(false)
-// DISABLED - connections removed
-// const connections = ref(null)
-// const connectionsLoading = ref(false)
-// const connectionsError = ref(null)
-// const savingConnections = ref(false)
-// const connectionsToDelete = ref(new Set())
+const databaseConnections = ref([])  // framework_db is implicit/reserved
+const s3Connections = ref([])
+const defaultDatabase = ref(null)
+const defaultStorageBucket = ref(null)
+const savingConnections = ref(false)
 const packages = ref([])
 const editablePackages = ref({ use_renv: false, default_packages: [] })
 const packagesLoading = ref(false)
@@ -1106,7 +1130,7 @@ const getSidebarLinkClasses = (section) => {
 // Initialize activeSection from URL query param
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
+  const validSections = ['overview', 'basics', 'settings', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   } else {
@@ -1123,10 +1147,10 @@ watch(activeSection, (newSection) => {
     loadProjectSettings()
   }
 
-  // DISABLED - connections removed
-  // if (newSection === 'connections' && !connections.value) {
-  //   loadConnections()
-  // }
+  // Load connections when Connections section is activated
+  if (newSection === 'connections' && databaseConnections.value.length === 0 && s3Connections.value.length === 0) {
+    loadConnections()
+  }
 
   // Load packages when Packages section is activated
   if (newSection === 'packages' && packages.value.length === 0) {
@@ -1149,7 +1173,7 @@ watch(activeSection, (newSection) => {
 
 // Watch for URL query param changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'settings', 'notebooks', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
+  const validSections = ['overview', 'basics', 'settings', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
   if (newSection && newSection !== activeSection.value && validSections.includes(newSection)) {
     activeSection.value = newSection
   }
@@ -1768,10 +1792,9 @@ const saveCurrentSection = async () => {
     case 'git':
       await saveGitSettings()
       break
-    // DISABLED - connections removed
-    // case 'connections':
-    //   await saveConnections()
-    //   break
+    case 'connections':
+      await saveConnections()
+      break
     case 'ai':
       await saveAISettings()
       break
@@ -1868,25 +1891,37 @@ const handleDataSublinkClick = (link) => {
 }
 
 // DISABLED - connections removed
-// const loadConnections = async () => {
-//   connectionsLoading.value = true
-//   connectionsError.value = null
-//
-//   try {
-//     const response = await fetch(`/api/project/${route.params.id}/connections`)
-//     const data = await response.json()
-//
-//     if (data.error) {
-//       connectionsError.value = data.error
-//     } else {
-//       connections.value = data
-//     }
-//   } catch (err) {
-//     connectionsError.value = 'Failed to load connections: ' + err.message
-//   } finally {
-//     connectionsLoading.value = false
-//   }
-// }
+const loadConnections = async () => {
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/connections`)
+    const data = await response.json()
+
+    if (data.error) {
+      console.error('Failed to load connections:', data.error)
+    } else {
+      // Convert databases object to array for Repeater
+      const dbArray = Object.entries(data.databases || {}).map(([name, conn]) => ({
+        _id: name,
+        name,
+        ...conn
+      }))
+
+      // Convert storage_buckets object to array for Repeater
+      const s3Array = Object.entries(data.storage_buckets || {}).map(([name, conn]) => ({
+        _id: name,
+        name,
+        ...conn
+      }))
+
+      databaseConnections.value = dbArray
+      s3Connections.value = s3Array
+      defaultDatabase.value = data.default_database || null
+      defaultStorageBucket.value = data.default_storage_bucket || null
+    }
+  } catch (err) {
+    console.error('Failed to load connections:', err.message)
+  }
+}
 
 // DISABLED - connections removed
 // const toggleConnectionDelete = (name) => {
@@ -2036,6 +2071,48 @@ const savePackages = async () => {
     toast.error('Save Failed', err.message)
   } finally {
     savingPackages.value = false
+  }
+}
+
+const saveConnections = async () => {
+  savingConnections.value = true
+
+  try {
+    // Convert arrays to nested object structure for YAML storage
+    const databases = {}
+    databaseConnections.value.forEach(conn => {
+      const { _id, name, ...fields } = conn
+      databases[name] = fields
+    })
+
+    const storage_buckets = {}
+    s3Connections.value.forEach(conn => {
+      const { _id, name, ...fields } = conn
+      storage_buckets[name] = fields
+    })
+
+    const response = await fetch(`/api/project/${route.params.id}/connections`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        default_database: defaultDatabase.value,
+        default_storage_bucket: defaultStorageBucket.value,
+        databases,
+        storage_buckets
+      })
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      toast.success('Connections Saved', 'Connection configuration has been updated')
+    } else {
+      toast.error('Save Failed', result.error || 'Failed to save connections')
+    }
+  } catch (err) {
+    toast.error('Save Failed', err.message)
+  } finally {
+    savingConnections.value = false
   }
 }
 
@@ -2421,9 +2498,8 @@ const handleKeydown = (e) => {
     e.preventDefault()
     if (activeSection.value === 'settings' || activeSection.value === 'scaffold') {
       saveSettings()
-    // DISABLED - connections removed
-    // } else if (activeSection.value === 'connections') {
-    //   saveConnections()
+    } else if (activeSection.value === 'connections') {
+      saveConnections()
     } else if (activeSection.value === 'packages') {
       savePackages()
     } else if (activeSection.value === 'git') {
