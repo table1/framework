@@ -1,33 +1,7 @@
-connections:
-  default_connection: "db"
+options:
+  default_connection: "framework"
 
-  # Framework's internal SQLite database (no pooling needed)
+connections:
   framework:
     driver: "sqlite"
-    database: "framework.db"
-
-  # PostgreSQL connection (remote database example)
-  db:
-    driver: "postgres"
-    host: env("DB_HOST")
-    port: env("DB_PORT")
-    database: env("DB_DATABASE")
-    schema: env("DB_SCHEMA", "public")
-    user: env("DB_USERNAME")
-    password: env("DB_PASSWORD")
-
-    # Connection pooling (optional, recommended for remote databases)
-    # Uncomment to enable connection reuse across queries:
-    # pool: true
-    # pool_min_size: 1
-    # pool_max_size: 5
-    # pool_idle_timeout: 60
-    # pool_validation_interval: 60
-
-  # Network storagehow
-  nas:
-    driver: "cifs"
-    host: env("NAS_HOST") username: env("NAS_USERNAME")
-    password: env("NAS_PA
-    SSWORD")
-    path: env("NAS_PATH")
+    database: env("FRAMEWORK_DB_PATH", "framework.db")

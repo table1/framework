@@ -215,8 +215,12 @@ test_that("init from empty directory creates all necessary files", {
   # Check that settings.yml was created (serves as initialization marker)
   expect_true(file.exists("settings.yml"))
 
-  # Check that .env was NOT created (use make_env() instead)
-  expect_false(file.exists(".env"))
+  # Check that .env was created with default placeholders
+  expect_true(file.exists(".env"))
+  env_contents <- readLines(".env")
+  expect_true(any(grepl("^FRAMEWORK_DB_PATH=", env_contents)))
+  expect_true(any(grepl("^POSTGRES_HOST=", env_contents)))
+  expect_true(any(grepl("^S3_BUCKET=", env_contents)))
 
   # Check project files created
   expect_true(file.exists("EmptyDirProject.Rproj"))
@@ -336,8 +340,10 @@ test_that("init with subdir creates files in subdirectory", {
   expect_false(file.exists("subproject/init.R"))
   # settings.yml should exist (initialization marker)
   expect_true(file.exists("subproject/settings.yml"))
-  # .env should NOT exist (use make_env() instead)
-  expect_false(file.exists("subproject/.env"))
+  # .env should exist in subdirectory with defaults
+  expect_true(file.exists("subproject/.env"))
+  env_contents <- readLines("subproject/.env")
+  expect_true(any(grepl("^FRAMEWORK_DB_PATH=", env_contents)))
   # Project file should exist
   expect_true(file.exists("subproject/SubProject.Rproj"))
   # .initiated should NOT exist (settings.yml is the marker)

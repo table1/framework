@@ -73,6 +73,16 @@
             </a>
           </div>
         </div>
+
+        <Modal v-model="envPreviewModal" title=".env Variables Preview">
+          <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+            Copy these entries into your project’s <code>.env</code> file so the connections above resolve properly.
+          </p>
+          <pre class="rounded-md bg-gray-900 p-4 text-xs text-gray-200">{{ envPreviewText }}</pre>
+          <div class="mt-4 flex justify-end">
+            <Button variant="primary" @click="envPreviewModal = false">Close</Button>
+          </div>
+        </Modal>
       </div>
 
       <!-- Save Button in Sidebar -->
@@ -89,8 +99,16 @@
       </div>
     </nav>
 
+    <!-- Loading State -->
+    <div v-if="isLoadingSettings" class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-sky-600 border-r-transparent"></div>
+        <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading settings...</p>
+      </div>
+    </div>
+
     <!-- Main Content -->
-    <div class="flex-1 p-10 pb-24">
+    <div v-show="!isLoadingSettings" class="flex-1 p-10 pb-24">
       <PageHeader
         :title="pageHeaderTitle"
         :description="pageHeaderDescription"
@@ -164,6 +182,89 @@
           </div>
         </div>
 
+        <!-- Connections -->
+        <div id="connections-defaults" v-show="activeSection === 'connections-defaults'" class="space-y-6">
+          <SettingsPanel>
+            <SettingsBlock>
+              <!-- Databases -->
+              <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Databases</h3>
+                  <Button variant="secondary" size="sm" @click="addConnection('database')">
+                    Add Database
+                  </Button>
+                </div>
+
+                <div class="space-y-4">
+                  <div v-for="(conn, name) in databaseConnections" :key="name" class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ name }}</h4>
+                      <Button v-if="name !== 'framework'" variant="secondary" size="sm" @click="removeConnection(name)">
+                        Remove
+                      </Button>
+                    </div>
+
+                    <div class="space-y-3">
+                      <div v-for="(value, key) in conn" :key="key">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {{ key }}
+                        </label>
+                        <input
+                          v-model="editableConnections[name][key]"
+                          type="text"
+                          :disabled="name === 'framework' && (key === 'driver' || key === 'database')"
+                          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 font-mono focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="Object.keys(databaseConnections).length === 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 text-center">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">No database connections defined</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- S3-compatible Buckets -->
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white">S3-compatible Buckets</h3>
+                  <Button variant="secondary" size="sm" @click="addConnection('s3')">
+                    Add Bucket
+                  </Button>
+                </div>
+
+                <div class="space-y-4">
+                  <div v-for="(conn, name) in s3Connections" :key="name" class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ name }}</h4>
+                      <Button variant="secondary" size="sm" @click="removeConnection(name)">
+                        Remove
+                      </Button>
+                    </div>
+
+                    <div class="space-y-3">
+                      <div v-for="(value, key) in conn" :key="key">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {{ key }}
+                        </label>
+                        <input
+                          v-model="editableConnections[name][key]"
+                          type="text"
+                          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 font-mono focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="Object.keys(s3Connections).length === 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 text-center">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">No S3 buckets defined</p>
+                  </div>
+                </div>
+              </div>
+            </SettingsBlock>
+          </SettingsPanel>
+        </div>
         <!-- Basics -->
         <div id="basics" v-show="activeSection === 'basics'">
           <SettingsPanel
@@ -220,6 +321,7 @@
               </div>
             </SettingsBlock>
           </SettingsPanel>
+
         </div>
 
         <!-- Project Structure -->
@@ -1577,13 +1679,16 @@ import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import SettingsBlock from '../components/settings/SettingsBlock.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
+import EnvEditor from '../components/env/EnvEditor.vue'
 import {
   InformationCircleIcon,
   UserIcon,
   Cog6ToothIcon,
   CubeIcon,
   DocumentTextIcon,
-  FolderIcon
+  FolderIcon,
+  KeyIcon,
+  ServerStackIcon
 } from '@heroicons/vue/24/outline'
 
 const toast = useToast()
@@ -1597,6 +1702,8 @@ const sections = [
   { id: 'packages', label: 'Packages', slug: 'packages-dependencies', icon: CubeIcon },
   { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', slug: 'git-hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+  { id: 'connections-defaults', label: 'Connections', slug: 'connections', icon: ServerStackIcon },
+  // { id: 'env-defaults', label: '.env Defaults', slug: 'env', icon: KeyIcon },
   {
     id: 'scaffold',
     label: 'Scaffold Behavior',
@@ -1876,7 +1983,19 @@ const settings = ref({
         { name: 'dplyr', source: 'cran', auto_attach: true },
         { name: 'ggplot2', source: 'cran', auto_attach: true }
       ]
+    },
+    env: {
+      raw: ''
     }
+    // connections: {
+    //   options: { default_connection: 'framework' },
+    //   connections: {
+    //     framework: {
+    //       driver: 'sqlite',
+    //       database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
+    //     }
+    //   }
+    // }
   },
   git: {
     user_name: '',
@@ -1894,6 +2013,8 @@ const presentationOptions = reactive({
   includeFunctions: false
 })
 
+const isLoadingSettings = ref(false)
+
 const aiAssistants = reactive({
   claude: true,
   agents: false,
@@ -1908,6 +2029,26 @@ const templateModal = reactive({
   contents: '',
   loading: false
 })
+
+// DISABLED - env defaults removed
+// const defaultEnvRawContent = ref('')
+// const defaultEnvVariables = ref({})
+// const defaultEnvViewMode = ref('grouped')
+// const defaultEnvRegroup = ref(false)
+const envPreviewModal = ref(false)
+
+// Database connections as array for repeater
+const databaseConnections = ref([
+  {
+    _id: 'framework',
+    name: 'framework',
+    driver: 'sqlite',
+    database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
+  }
+])
+
+// S3 connections as array for repeater
+const s3Connections = ref([])
 
 const resetConfirmModal = reactive({
   open: false,
@@ -1943,6 +2084,45 @@ const templatesSubnav = [
   { id: 'templates-presentation', label: 'Presentation' }
 ]
 
+// DISABLED - env defaults removed
+// const defaultEnvGroups = computed(() => groupEnvByPrefix(defaultEnvVariables.value))
+
+// TEMPORARILY DISABLED - connections section removed for debugging
+// const databaseConnectionEntries = computed(() => {
+//   const connections = editableConnections.value || {}
+//   return Object.entries(connections).filter(([_, conn]) => (conn?.driver || '').toLowerCase() !== 's3')
+// })
+
+// const objectStorageConnectionEntries = computed(() => {
+//   const connections = editableConnections.value || {}
+//   return Object.entries(connections).filter(([_, conn]) => (conn?.driver || '').toLowerCase() === 's3')
+// })
+
+// TEMPORARILY DISABLED - connections section removed for debugging
+const envPreviewText = computed(() => {
+  return '# Connections section temporarily disabled for debugging'
+  // const entries = {}
+  // const regex = /env\(["']([^"']+)["'](?:,\s*["']([^"']*)["'])?\)/gi
+  // Object.values(editableConnections.value || {}).forEach((conn) => {
+  //   Object.values(conn || {}).forEach((value) => {
+  //     if (typeof value !== 'string') return
+  //     let match
+  //     while ((match = regex.exec(value)) !== null) {
+  //       const [, key, def] = match
+  //       if (key && !entries[key]) {
+  //         entries[key] = def ?? ''
+  //       }
+  //     }
+  //   })
+  // })
+  // if (!Object.keys(entries).length) {
+  //   return '# No env() references found in your connections.'
+  // }
+  // return Object.entries(entries)
+  //   .map(([key, val]) => `${key}=${val}`)
+  //   .join('\n')
+})
+
 const currentProjectTypeKey = computed(() => {
   const slug = route.params.subsection
   // Return null if no subsection to show index page
@@ -1963,6 +2143,10 @@ const sectionHeaderMeta = {
   overview: {
     title: 'Overview',
     description: 'Overview of your Framework global settings and preferences.'
+  },
+  'connections-defaults': {
+    title: 'Connections',
+    description: 'Database and storage connections that every new project will inherit.'
   },
   basics: {
     title: 'Basics',
@@ -1999,7 +2183,15 @@ const sectionHeaderMeta = {
   packages: {
     title: 'Packages & Dependencies',
     description: 'Define dependency defaults and auto-attach behavior for new projects.'
+  },
+  'env-defaults': {
+    title: '.env Defaults',
+    description: 'Template applied to every new project so core connections work immediately.'
   }
+  // 'connections-defaults': {
+  //   title: 'Connections',
+  //   description: 'Seed new projects with shared database or storage connections.'
+  // }
 }
 
 const currentSectionMeta = computed(() => sectionHeaderMeta[activeSection.value] || {
@@ -2239,6 +2431,11 @@ const resetCanonicalTemplateInline = () => {
 }
 
 watch(aiAssistants, (newVal) => {
+  if (isLoadingSettings.value) {
+    console.log('[watch:aiAssistants] Skipped - loading')
+    return
+  }
+  console.log('[watch:aiAssistants] Triggered', newVal)
   const assistants = []
   if (newVal.claude) assistants.push('claude')
   if (newVal.copilot) assistants.push('copilot')
@@ -2247,26 +2444,36 @@ watch(aiAssistants, (newVal) => {
 }, { deep: true })
 
 watch(() => settings.value.defaults.ai_canonical_file, async () => {
+  if (isLoadingSettings.value) return
   await loadTemplateInline(canonicalTemplateName.value, 'canonical')
 })
 
 watch(() => settings.value.defaults.git_hooks.data_security, (val) => {
-  settings.value.privacy.secret_scan = val
+  if (isLoadingSettings.value) return
+  if (settings.value.privacy.secret_scan !== val) {
+    settings.value.privacy.secret_scan = val
+  }
 })
 
 watch(() => settings.value.privacy.secret_scan, (val) => {
-  settings.value.defaults.git_hooks.data_security = val
+  if (isLoadingSettings.value) return
+  if (settings.value.defaults.git_hooks.data_security !== val) {
+    settings.value.defaults.git_hooks.data_security = val
+  }
 })
 
 watch(() => presentationOptions.includeInputs, (enabled) => {
+  if (isLoadingSettings.value) return
   setPresentationDirectory('inputs', enabled, presentationOptionalDefaults.value.inputs)
 })
 
 watch(() => presentationOptions.includeScripts, (enabled) => {
+  if (isLoadingSettings.value) return
   setPresentationDirectory('scripts', enabled, presentationOptionalDefaults.value.scripts)
 })
 
 watch(() => presentationOptions.includeFunctions, (enabled) => {
+  if (isLoadingSettings.value) return
   setPresentationDirectory('functions', enabled, presentationOptionalDefaults.value.functions)
 })
 
@@ -2426,6 +2633,8 @@ watch(
 
 const loadSettings = async () => {
   try {
+    console.log('[loadSettings] Starting load, setting isLoadingSettings = true')
+    isLoadingSettings.value = true
     const [catalogResponse, settingsResponse] = await Promise.all([
       fetch('/api/settings/catalog'),
       fetch('/api/settings/get')
@@ -2439,11 +2648,13 @@ const loadSettings = async () => {
       throw new Error('Failed to load settings payload')
     }
 
+    console.log('[loadSettings] Responses received, parsing JSON')
     const catalogData = await catalogResponse.json()
     catalog.value = catalogData
     hydrateDefaultsFromCatalog(catalogData)
 
     const data = await settingsResponse.json()
+    console.log('[loadSettings] Settings data:', data)
 
     // V2 format: projects_root is under global
     settings.value.projects_root = toScalar(data.global?.projects_root || data.projects_root, '')
@@ -2537,6 +2748,14 @@ const loadSettings = async () => {
           ...settings.value.project_types.project.directories
         }
       }
+
+      initializeDefaultEnv(defaults.env)
+      hydrateDefaultConnections(defaults.connections)
+    }
+
+    if (!data.defaults) {
+      initializeDefaultEnv(null)
+      hydrateDefaultConnections(null)
     }
 
     if (data.git) {
@@ -2554,9 +2773,13 @@ const loadSettings = async () => {
     }
 
     await loadTemplateInline(canonicalTemplateName.value, 'canonical')
+    console.log('[loadSettings] Load complete, about to set isLoadingSettings = false')
   } catch (error) {
-    console.error('Failed to load settings:', error)
+    console.error('[loadSettings] Error during load:', error)
     toast.error('Load Failed', 'Unable to load current settings.')
+  } finally {
+    isLoadingSettings.value = false
+    console.log('[loadSettings] isLoadingSettings now false')
   }
 }
 
@@ -2578,6 +2801,10 @@ const gitPanelModel = computed({
     }
   },
   set(val) {
+    if (isLoadingSettings.value) {
+      console.log('[gitPanelModel setter] Blocked during load')
+      return
+    }
     settings.value.defaults.use_git = val.initialize
     settings.value.git = settings.value.git || {}
     settings.value.git.user_name = val.user_name
@@ -2602,6 +2829,10 @@ const scaffoldPanelModel = computed({
     }
   },
   set(val) {
+    if (isLoadingSettings.value) {
+      console.log('[scaffoldPanelModel setter] Blocked during load')
+      return
+    }
     settings.value.defaults.scaffold = {
       ...(settings.value.defaults.scaffold || {}),
       source_all_functions: val.source_all_functions,
@@ -2702,6 +2933,135 @@ const validateExtraDirectoryLabel = (label) => {
   return null
 }
 
+// DISABLED - env defaults removed
+// watch(defaultEnvRawContent, (val) => {
+//   if (isLoadingSettings.value) return
+//   settings.value.defaults.env = { raw: val }
+// })
+
+const DEFAULT_ENV_TEMPLATE = `# Framework environment defaults
+# Populate these values before running scaffold() or publishing.
+
+# Framework metadata database (SQLite)
+FRAMEWORK_DB_PATH=framework.db
+
+# PostgreSQL connection (example)
+POSTGRES_HOST=
+POSTGRES_PORT=5432
+POSTGRES_DB=
+POSTGRES_SCHEMA=public
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+
+# S3-compatible storage (AWS S3, MinIO, etc.)
+S3_ENDPOINT=
+S3_BUCKET=
+S3_REGION=
+S3_ACCESS_KEY=
+S3_SECRET_KEY=
+S3_SESSION_TOKEN=`
+
+const parseEnvContent = (raw = '') => {
+  const result = {}
+  raw.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) return
+    const [key, ...rest] = trimmed.split('=')
+    result[key.trim()] = rest.join('=').replace(/^"|"$/g, '')
+  })
+  return result
+}
+
+const stringifyEnvVariables = (vars = {}) => Object.entries(vars)
+  .map(([key, value]) => `${key}=${value ?? ''}`)
+  .join('\n')
+
+function groupEnvByPrefix(vars = {}) {
+  const entries = Object.entries(vars)
+  if (!entries.length) return {}
+  return entries.reduce((acc, [key, value]) => {
+    const prefix = key.includes('_') ? key.split('_')[0] : 'Other'
+    if (!acc[prefix]) acc[prefix] = {}
+    acc[prefix][key] = {
+      defined: !!value,
+      used: false,
+      used_in: [],
+      value
+    }
+    return acc
+  }, {})
+}
+
+const clone = (value) => JSON.parse(JSON.stringify(value || {}))
+
+const initializeDefaultEnv = (envConfig) => {
+  let raw = DEFAULT_ENV_TEMPLATE
+  if (typeof envConfig === 'string') {
+    raw = envConfig
+  } else if (envConfig?.raw) {
+    raw = envConfig.raw
+  } else if (envConfig?.variables) {
+    raw = stringifyEnvVariables(envConfig.variables)
+  }
+
+  // DISABLED - env defaults removed
+  // defaultEnvRawContent.value = raw
+  // defaultEnvVariables.value = parseEnvContent(raw)
+  // defaultEnvViewMode.value = 'grouped'
+}
+
+const hydrateDefaultConnections = (connectionsConfig) => {
+  const nextConnections = (connectionsConfig && connectionsConfig.connections) || {
+    framework: {
+      driver: 'sqlite',
+      database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
+    }
+  }
+  editableConnections.value = clone(nextConnections)
+  ensureFrameworkConnection()
+}
+
+const ensureFrameworkConnection = () => {
+  const existing = editableConnections.value.framework
+  if (!existing) {
+    editableConnections.value.framework = {
+      driver: 'sqlite',
+      database: 'env("FRAMEWORK_DB_PATH", "framework.db")'
+    }
+  } else {
+    existing.driver = 'sqlite'
+    existing.database = existing.database || 'env("FRAMEWORK_DB_PATH", "framework.db")'
+  }
+}
+
+// Get field list based on driver type
+const getDriverFields = (driver) => {
+  if (driver === 'sqlite') {
+    return ['database']
+  } else if (driver === 'postgres' || driver === 'postgresql') {
+    return ['host', 'port', 'database', 'schema', 'user', 'password']
+  }
+  return []
+}
+
+// Helper to get unique connection name
+const generateUniqueConnectionName = (base, existingNames) => {
+  let counter = 1
+  let candidate = base
+  while (existingNames.includes(candidate)) {
+    counter += 1
+    candidate = `${base}_${counter}`
+  }
+  return candidate
+}
+
+// DISABLED - env defaults removed
+// const resetEnvDefaults = () => {
+//   defaultEnvRawContent.value = DEFAULT_ENV_TEMPLATE
+//   defaultEnvVariables.value = parseEnvContent(DEFAULT_ENV_TEMPLATE)
+//   defaultEnvViewMode.value = 'grouped'
+// }
+
 const saveSettings = async () => {
   try {
     saving.value = true
@@ -2719,6 +3079,13 @@ const saveSettings = async () => {
     // Handle nested packages structure: { use_renv: bool, default_packages: [...] }
     if (payload.defaults.packages && payload.defaults.packages.default_packages) {
       payload.defaults.packages.default_packages = (payload.defaults.packages.default_packages || []).filter((pkg) => pkg.name && pkg.name.trim() !== '')
+    }
+
+    // DISABLED - env defaults removed
+    // payload.defaults.env = { raw: defaultEnvRawContent.value || '' }
+    payload.defaults.connections = {
+      options: { default_connection: 'framework' },
+      connections: clone(editableConnections.value)
     }
 
     payload.defaults.directories = payload.project_types?.project?.directories || payload.defaults.directories

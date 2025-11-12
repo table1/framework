@@ -721,6 +721,38 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
     checkmate::assert_list(defaults$git_hooks)
   }
 
+  if (!is.null(defaults$env)) {
+    if (is.list(defaults$env)) {
+      if (!is.null(defaults$env$raw)) {
+        checkmate::assert_string(defaults$env$raw, min.chars = 0)
+      }
+      if (!is.null(defaults$env$variables)) {
+        checkmate::assert_list(defaults$env$variables)
+        if (length(defaults$env$variables) > 0 && is.null(names(defaults$env$variables))) {
+          stop("defaults.env.variables must be a named list of key/value pairs")
+        }
+      }
+    } else {
+      checkmate::assert_string(defaults$env, min.chars = 0)
+    }
+  }
+
+  if (!is.null(defaults$connections)) {
+    checkmate::assert_list(defaults$connections)
+    if (!is.null(defaults$connections$options)) {
+      checkmate::assert_list(defaults$connections$options)
+      if (!is.null(defaults$connections$options$default_connection)) {
+        checkmate::assert_string(defaults$connections$options$default_connection, min.chars = 1)
+      }
+    }
+    if (!is.null(defaults$connections$connections)) {
+      checkmate::assert_list(defaults$connections$connections)
+      if (length(defaults$connections$connections) > 0 && is.null(names(defaults$connections$connections))) {
+        stop("defaults.connections.connections must be a named list (connection entries keyed by name)")
+      }
+    }
+  }
+
   invisible(TRUE)
 }
 
@@ -947,6 +979,12 @@ configure_global <- function(settings = NULL, validate = TRUE) {
   # CRITICAL FIX: Same issue with defaults.packages array
   if (!is.null(settings$defaults$packages)) {
     updated$defaults$packages <- settings$defaults$packages
+  }
+  if (!is.null(settings$defaults$connections)) {
+    updated$defaults$connections <- settings$defaults$connections
+  }
+  if (!is.null(settings$defaults$env)) {
+    updated$defaults$env <- settings$defaults$env
   }
 
   # Validate if requested

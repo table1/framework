@@ -15,7 +15,9 @@ project_create(
   ai = list(enabled = FALSE, assistants = c(), canonical_content = ""),
   git = list(use_git = TRUE, hooks = list(), gitignore_content = ""),
   scaffold = list(seed_on_scaffold = FALSE, seed = "", set_theme_on_scaffold = TRUE,
-    ggplot_theme = "theme_minimal")
+    ggplot_theme = "theme_minimal"),
+  connections = NULL,
+  env = NULL
 )
 }
 \arguments{

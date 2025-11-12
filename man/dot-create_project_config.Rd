@@ -14,7 +14,9 @@
   extra_directories,
   ai,
   git,
-  scaffold
+  scaffold,
+  settings_dir,
+  connections_file = "settings/connections.yml"
 )
 }
 \description{
