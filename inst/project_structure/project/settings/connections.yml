@@ -1,8 +1,25 @@
-options:
-  default_connection: "framework"
+# Connection configuration
+# Note: framework_db is a reserved system connection that always points to framework.db
 
-connections:
-  # Framework metadata database (SQLite)
-  framework:
-    driver: "sqlite"
-    database: env("FRAMEWORK_DB_PATH", "framework.db")
+default_database: null
+default_storage_bucket: null
+
+databases: {}
+  # Example PostgreSQL connection:
+  # postgres_main:
+  #   driver: postgres
+  #   host: env("POSTGRES_HOST", "localhost")
+  #   port: env("POSTGRES_PORT", "5432")
+  #   database: env("POSTGRES_DB", "mydb")
+  #   schema: env("POSTGRES_SCHEMA", "public")
+  #   user: env("POSTGRES_USER", "postgres")
+  #   password: env("POSTGRES_PASSWORD", "")
+
+storage_buckets: {}
+  # Example S3 bucket:
+  # s3_data:
+  #   bucket: env("S3_BUCKET", "my-bucket")
+  #   region: env("S3_REGION", "us-east-1")
+  #   endpoint: env("S3_ENDPOINT", "")
+  #   access_key: env("S3_ACCESS_KEY", "")
+  #   secret_key: env("S3_SECRET_KEY", "")

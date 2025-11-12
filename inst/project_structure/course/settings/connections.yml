@@ -1,7 +1,9 @@
-options:
-  default_connection: "framework"
+# Connection configuration
+# Note: framework_db is a reserved system connection that always points to framework.db
 
-connections:
-  framework:
-    driver: "sqlite"
-    database: env("FRAMEWORK_DB_PATH", "framework.db")
+default_database: null
+default_storage_bucket: null
+
+databases: {}
+
+storage_buckets: {}
