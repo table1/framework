@@ -280,13 +280,18 @@ security_audit <- function(config_file = NULL,
   }
 
   # Add common fallback directories if not explicitly configured
-  fallback_inputs <- c("raw", "intermediate", "final", "reference")
+  fallback_inputs <- c("raw", "intermediate", "final")
   for (name in fallback_inputs) {
     key <- paste0("inputs_", name)
     path <- file.path("inputs", name)
     if (!key %in% names(dirs) && dir.exists(path)) {
       dirs[[key]] <- path
     }
+  }
+
+  # Check for docs directory at root level
+  if (!"docs" %in% names(dirs) && dir.exists("docs")) {
+    dirs[["docs"]] <- "docs"
   }
 
   fallback_outputs <- c("", "tables", "figures", "models", "notebooks", "docs", "final", "cache", "scratch")

@@ -39,7 +39,7 @@ project_create(
 
 \item{git}{List with use_git, hooks, gitignore_content}
 
-\item{scaffold}{List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme}
+\item{scaffold}{List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme, ide, positron}
 }
 \value{
 List with success status, project path, and project ID

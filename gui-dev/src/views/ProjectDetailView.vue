@@ -10,11 +10,13 @@
 
     <div v-else-if="project" class="flex min-h-screen">
     <!-- Left Sidebar -->
-    <nav class="w-64 shrink-0 border-r border-gray-200 p-6 dark:border-gray-800">
-      <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ project.name }}</h2>
-      <div class="flex items-center gap-2 mb-4">
-        <span class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{{ project.path }}</span>
-        <CopyButton :value="project.path" variant="ghost" successMessage="Path copied" class="shrink-0" />
+    <nav class="w-64 shrink-0 border-r border-gray-200 p-6 dark:border-gray-800 flex flex-col">
+      <div class="mb-4">
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ project.name }}</h2>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{{ project.path }}</span>
+          <CopyButton :value="project.path" variant="ghost" successMessage="Path copied" class="shrink-0" />
+        </div>
       </div>
 
       <div class="space-y-1">
@@ -141,8 +143,8 @@
         </a>
       </div>
 
-      <!-- Save Button -->
-      <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+      <!-- Save Button (right after navigation) -->
+      <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
         <Button
           variant="primary"
           @click="saveCurrentSection"
@@ -155,6 +157,18 @@
               : 'Save'
           }}
         </Button>
+      </div>
+
+      <!-- Delete Project Link (pushed to absolute bottom) -->
+      <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="text-center py-3">
+          <button
+            @click="showDeleteModal = true"
+            class="text-xs text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400 transition"
+          >
+            Delete Project
+          </button>
+        </div>
       </div>
     </nav>
 
@@ -981,6 +995,97 @@
       </Button>
     </template>
     </Modal>
+
+    <!-- Delete Project Modal -->
+    <Modal
+      v-model="showDeleteModal"
+      title="Delete Project"
+      size="md"
+    >
+      <div class="space-y-4 text-left">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Choose how you want to remove this project:
+        </p>
+
+        <!-- Option 1: Remove from Framework -->
+        <label :class="[
+          'block cursor-pointer rounded-lg border-2 p-4 transition',
+          deleteOption === 'untrack'
+            ? 'border-sky-500 bg-sky-50 dark:border-sky-600 dark:bg-sky-950/30'
+            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+        ]">
+          <div class="flex items-start gap-3">
+            <input
+              type="radio"
+              id="delete-untrack"
+              value="untrack"
+              v-model="deleteOption"
+              class="mt-1"
+            />
+            <div class="flex-1">
+              <div class="font-medium text-gray-900 dark:text-white">
+                Remove from Framework
+              </div>
+              <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Stop tracking this project in Framework. Files remain on disk.
+              </div>
+            </div>
+          </div>
+        </label>
+
+        <!-- Option 2: Delete Entire Project -->
+        <label :class="[
+          'block cursor-pointer rounded-lg border-2 p-4 transition',
+          deleteOption === 'delete'
+            ? 'border-red-500 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+        ]">
+          <div class="flex items-start gap-3">
+            <input
+              type="radio"
+              id="delete-files"
+              value="delete"
+              v-model="deleteOption"
+              class="mt-1"
+            />
+            <div class="flex-1">
+              <div class="font-medium text-red-700 dark:text-red-400">
+                Delete Entire Project
+              </div>
+              <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Permanently delete all files and folders. This cannot be undone.
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmation input for delete -->
+          <div v-if="deleteOption === 'delete'" class="mt-4">
+            <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Type <span class="font-mono font-bold">{{ project?.name }}</span> to confirm:
+            </div>
+            <Input
+              v-model="deleteConfirmation"
+              placeholder="Project name"
+              class="font-mono"
+            />
+          </div>
+        </label>
+      </div>
+
+      <template #actions>
+        <Button variant="secondary" @click="cancelDelete">
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          @click="confirmDelete"
+          :disabled="!canDelete"
+          class="bg-red-600 hover:bg-red-500 focus-visible:outline-red-600 dark:bg-red-500 dark:hover:bg-red-400"
+        >
+          {{ deleteOption === 'delete' ? 'Delete Project' : 'Remove from Framework' }}
+        </Button>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -1082,6 +1187,9 @@ const packagesLoading = ref(false)
 const packagesError = ref(null)
 const savingPackages = ref(false)
 const showAddPackageModal = ref(false)
+const showDeleteModal = ref(false)
+const deleteOption = ref('untrack') // 'untrack' or 'delete'
+const deleteConfirmation = ref('')
 const packageSearch = ref('')
 const packageSearchResults = ref([])
 const packageSearching = ref(false)
@@ -1092,6 +1200,7 @@ const envGroups = ref({})
 const envRawContent = ref('')
 const envLoading = ref(false)
 const envError = ref(null)
+const envLoaded = ref(false)
 const savingEnv = ref(false)
 const envViewMode = ref('grouped') // 'grouped' or 'raw'
 const regroupOnSave = ref(false) // If true, regroup .env file by prefix (loses comments)
@@ -1166,7 +1275,7 @@ watch(activeSection, (newSection) => {
   }
 
   // Load env when .env section is activated
-  if (newSection === 'env' && Object.keys(envVariables.value).length === 0) {
+  if (newSection === 'env' && !envLoaded.value) {
     loadEnv()
   }
 })
@@ -1180,6 +1289,7 @@ watch(() => route.query.section, (newSection) => {
 })
 
 let suppressCanonicalWatch = false
+let suppressEnvWatch = false
 
 watch(
   () => aiSettings.value.canonical_file,
@@ -1190,6 +1300,22 @@ watch(
     handleCanonicalFileChange(newFile)
   }
 )
+
+// Watch env changes (these trigger from EnvEditor v-model updates)
+watch(envVariables, (newVal) => {
+  if (suppressEnvWatch) return
+  console.log('[envVariables watcher] Value changed (not suppressed)')
+}, { deep: true })
+
+watch(envGroups, (newVal) => {
+  if (suppressEnvWatch) return
+  console.log('[envGroups watcher] Value changed (not suppressed)')
+}, { deep: true })
+
+watch(envRawContent, (newVal) => {
+  if (suppressEnvWatch) return
+  console.log('[envRawContent watcher] Value changed (not suppressed)')
+})
 
 // Debounce package search
 let searchTimeout = null
@@ -1463,6 +1589,16 @@ const projectTypeLabel = computed(() => {
   }
 
   return typeLabels[type] || type
+})
+
+const canDelete = computed(() => {
+  if (deleteOption.value === 'untrack') {
+    return true
+  }
+  if (deleteOption.value === 'delete') {
+    return deleteConfirmation.value === project.value?.name
+  }
+  return false
 })
 
 const upsertDataCatalogEntry = (catalog, fullKey, newValue) => {
@@ -2197,6 +2333,57 @@ const confirmAddPackage = () => {
   toast.success('Package Added', `${newPackage.value.name} added to package list`)
 }
 
+const cancelDelete = () => {
+  showDeleteModal.value = false
+  deleteOption.value = 'untrack'
+  deleteConfirmation.value = ''
+}
+
+const confirmDelete = async () => {
+  if (!canDelete.value) {
+    console.log('[DELETE] Cannot delete - canDelete is false')
+    return
+  }
+
+  console.log('[DELETE] Starting delete with option:', deleteOption.value)
+  console.log('[DELETE] Project ID:', route.params.id)
+
+  try {
+    const endpoint = deleteOption.value === 'delete'
+      ? `/api/projects/${route.params.id}/delete`
+      : `/api/projects/${route.params.id}/untrack`
+
+    console.log('[DELETE] Calling endpoint:', endpoint)
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    console.log('[DELETE] Response status:', response.status)
+
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('[DELETE] Error response:', error)
+      throw new Error(error.message || 'Failed to delete project')
+    }
+
+    const result = await response.json()
+    console.log('[DELETE] Success result:', result)
+
+    const action = deleteOption.value === 'delete' ? 'deleted' : 'removed from Framework'
+    toast.success('Project Removed', `${project.value.name} has been ${action}`)
+
+    // Full page reload to refresh sidebar menu
+    setTimeout(() => {
+      window.location.href = '/projects'
+    }, 500) // Small delay to show toast
+  } catch (error) {
+    console.error('[DELETE] Failed to delete project:', error)
+    toast.error('Delete Failed', error.message || 'Could not delete project')
+  }
+}
+
 const removePackage = (index) => {
   editablePackages.value.default_packages.splice(index, 1)
 }
@@ -2437,6 +2624,11 @@ const saveGitSettings = async () => {
 }
 
 const loadEnv = async () => {
+  if (envLoading.value || envLoaded.value) {
+    console.log('[loadEnv] Blocked: already loading or loaded', { loading: envLoading.value, loaded: envLoaded.value })
+    return
+  }
+
   envLoading.value = true
   envError.value = null
 
@@ -2446,14 +2638,25 @@ const loadEnv = async () => {
 
     if (data.error) {
       envError.value = data.error
+      envLoaded.value = false
     } else {
+      // Suppress watchers while updating reactive values
+      suppressEnvWatch = true
+      console.log('[loadEnv] Updating env values with suppressEnvWatch = true')
+
+      envLoaded.value = true
       envVariables.value = data.variables || {}
       envGroups.value = data.groups || {}
       envRawContent.value = data.raw_content || ''
+
+      suppressEnvWatch = false
+      console.log('[loadEnv] Env values updated, suppressEnvWatch = false')
     }
   } catch (err) {
     envError.value = 'Failed to load .env: ' + err.message
+    envLoaded.value = false
   } finally {
+    suppressEnvWatch = false
     envLoading.value = false
   }
 }
@@ -2480,6 +2683,7 @@ const saveEnv = async () => {
 
     if (result.success) {
       toast.success('.env Saved', 'Environment variables have been updated')
+      envLoaded.value = false
       await loadEnv()
     } else {
       toast.error('Save Failed', result.error || 'Failed to save .env')
@@ -2582,6 +2786,9 @@ watch(() => route.params.id, (newId, oldId) => {
     aiLoading.value = false
     canonicalContentLoading.value = false
     suppressCanonicalWatch = false
+    envLoaded.value = false
+    envError.value = null
+    envLoading.value = false
     dataCatalog.value = null
 
     // Reload project data

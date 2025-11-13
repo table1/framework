@@ -28,7 +28,7 @@ scaffold()
 - `make_script("etl")` → `scripts/etl.R`
 
 ### Data helpers
-- `data_load("catalog_entry")`
+- `data_read("catalog_entry")`
 - `data_save(object, "name", encrypt = TRUE)`
 - `data_list()` / `data_integrity_check()`
 

@@ -55,7 +55,7 @@ test_that("project_create creates basic project structure", {
   env_path <- file.path(result$path, ".env")
   expect_true(file.exists(env_path))
   env_lines <- readLines(env_path)
-  expect_true(any(grepl("^FRAMEWORK_DB_PATH=", env_lines)))
+  expect_false(any(grepl("^FRAMEWORK_DB_PATH=", env_lines)))
 
   connections_path <- file.path(result$path, "settings/connections.yml")
   expect_true(file.exists(connections_path))

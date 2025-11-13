@@ -4,4 +4,4 @@ options:
 connections:
   framework:
     driver: "sqlite"
-    database: env("FRAMEWORK_DB_PATH", "framework.db")
+    database: "framework.db"
