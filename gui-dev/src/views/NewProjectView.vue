@@ -110,6 +110,17 @@
                 </template>
               </OverviewCard>
 
+              <!-- .env Defaults Card -->
+              <OverviewCard
+                title=".env Defaults"
+                @click="activeSection = 'env'"
+              >
+                <span v-if="envVariableCount > 0" class="text-gray-600 dark:text-gray-400">
+                  {{ envVariableCount }} variable{{ envVariableCount === 1 ? '' : 's' }}
+                </span>
+                <span v-else class="text-gray-600 dark:text-gray-400">No defaults set</span>
+              </OverviewCard>
+
               <!-- AI Assistants Card -->
               <OverviewCard
                 title="AI Assistants"
@@ -1412,7 +1423,6 @@
         </div>
 
         <!-- .env Defaults Section -->
-        <!-- TEMPORARILY DISABLED - causing infinite recursion
         <div v-show="activeSection === 'env'">
           <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
@@ -1430,7 +1440,6 @@
             />
           </div>
         </div>
-        -->
 
         <!-- Packages Section -->
         <div v-show="activeSection === 'packages'">
@@ -1645,8 +1654,7 @@ const sections = [
   { id: 'ai', label: 'AI Assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
   { id: 'connections', label: 'Connections', icon: ServerStackIcon },
-  // TEMPORARILY DISABLED - .env section causing infinite recursion
-  // { id: 'env', label: '.env Defaults', icon: KeyIcon },
+  { id: 'env', label: '.env Defaults', icon: KeyIcon },
   {
     id: 'scaffold',
     label: 'Scaffold Behavior',
@@ -1714,14 +1722,16 @@ const project = ref({
   },
   env: {
     variables: {},
-    rawContent: `# PostgreSQL connection
+    rawContent: `# Framework environment defaults
+# Populate these values before running scaffold() or publishing.
+
+# PostgreSQL connection
 POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
 POSTGRES_DB=postgres
 POSTGRES_SCHEMA=public
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
-
 
 # S3-compatible storage (AWS S3, MinIO, etc.)
 S3_ACCESS_KEY=
@@ -1742,7 +1752,7 @@ S3_ENDPOINT=`,
 // Initialize section from URL query
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'author', 'scaffold', 'structure', 'packages', 'ai', 'git', 'connections']
+  const validSections = ['overview', 'author', 'scaffold', 'structure', 'connections', 'env', 'packages', 'ai', 'git']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   }
@@ -1750,7 +1760,7 @@ const initializeSection = () => {
 
 // Watch for URL changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'author', 'scaffold', 'structure', 'packages', 'ai', 'git', 'connections']
+  const validSections = ['overview', 'author', 'scaffold', 'structure', 'connections', 'env', 'packages', 'ai', 'git']
   if (newSection && validSections.includes(newSection)) {
     activeSection.value = newSection
   } else if (!newSection) {
@@ -2060,6 +2070,10 @@ const groupEnvByPrefix = (vars = {}) => {
   }, {})
 }
 
+watch(() => project.value.env.variables, (vars) => {
+  project.value.env.groups = groupEnvByPrefix(vars || {})
+}, { deep: true })
+
 // Initialize env variables from raw content
 const initializeEnvVariables = () => {
   if (project.value.env.rawContent) {
@@ -2067,9 +2081,6 @@ const initializeEnvVariables = () => {
     project.value.env.groups = groupEnvByPrefix(project.value.env.variables)
   }
 }
-
-// Note: Removed recursive watcher that was causing infinite updates
-// Groups are initialized in initializeEnvVariables() and managed by EnvEditor internally
 
 const currentSectionTitle = computed(() => {
   const titles = {
@@ -2131,6 +2142,11 @@ const connectionsSummary = computed(() => {
   const buckets = project.value.connections.s3Connections.length
 
   return { databases, buckets }
+})
+
+const envVariableCount = computed(() => {
+  const variables = project.value.env?.variables || {}
+  return Object.keys(variables).length
 })
 
 const gitPanelModel = computed({
