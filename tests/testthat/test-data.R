@@ -11,8 +11,8 @@ test_that("save_data creates data file and updates database", {
   # Create test data
   test_data <- data.frame(x = 1:5, y = letters[1:5])
 
-  # Save as CSV
-  suppressMessages(save_data(test_data, "test.public.sample", type = "csv"))
+  # Save as CSV (force = TRUE to create directory structure)
+  suppressMessages(save_data(test_data, "test.public.sample", type = "csv", force = TRUE))
 
   # Check file was created
   expect_true(file.exists("data/test/public/sample.csv"))
@@ -39,7 +39,7 @@ test_that("save_data creates RDS files", {
 
   test_data <- data.frame(x = 1:5, y = letters[1:5])
 
-  suppressMessages(save_data(test_data, "test.rds_data", type = "rds"))
+  suppressMessages(save_data(test_data, "test.rds_data", type = "rds", force = TRUE))
 
   expect_true(file.exists("data/test/rds_data.rds"))
 })
@@ -56,7 +56,7 @@ test_that("load_data reads saved CSV data", {
 
   # Create and save test data
   original_data <- data.frame(x = 1:5, y = letters[1:5])
-  suppressMessages(save_data(original_data, "test.csv_load", type = "csv"))
+  suppressMessages(save_data(original_data, "test.csv_load", type = "csv", force = TRUE))
 
   # Add to config
   config <- read_config()
@@ -90,7 +90,7 @@ test_that("load_data reads saved RDS data", {
 
   # Create and save test data
   original_data <- data.frame(x = 1:5, y = letters[1:5])
-  suppressMessages(save_data(original_data, "test.rds_load", type = "rds"))
+  suppressMessages(save_data(original_data, "test.rds_load", type = "rds", force = TRUE))
 
   # Add to config
   config <- read_config()
@@ -286,4 +286,158 @@ test_that("data_spec_get detects Excel file type", {
 
   expect_equal(spec$type, "excel")
   expect_null(spec$delimiter)
+})
+
+# New path resolution tests
+test_that("data_save resolves dot notation to configured directories", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create inputs/intermediate directory
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
+
+  # Create test data
+  test_data <- data.frame(x = 1:5, y = letters[1:5])
+
+  # Save using dot notation (intermediate.filename)
+  suppressMessages(data_save(test_data, "intermediate.test_file"))
+
+  # Should resolve to inputs/intermediate/test_file.rds
+  expect_true(file.exists("inputs/intermediate/test_file.rds"))
+})
+
+test_that("data_save accepts direct file paths", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create directory
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
+
+  # Create test data
+  test_data <- data.frame(x = 1:5, y = letters[1:5])
+
+  # Save using direct path
+  suppressMessages(data_save(test_data, "inputs/intermediate/direct_path.csv"))
+
+  # Should save to exact path
+  expect_true(file.exists("inputs/intermediate/direct_path.csv"))
+})
+
+test_that("data_save auto-detects type from file extension", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
+  test_data <- data.frame(x = 1:5)
+
+  # CSV extension
+  suppressMessages(data_save(test_data, "inputs/intermediate/file1.csv"))
+  expect_true(file.exists("inputs/intermediate/file1.csv"))
+
+  # RDS extension
+  suppressMessages(data_save(test_data, "inputs/intermediate/file2.rds"))
+  expect_true(file.exists("inputs/intermediate/file2.rds"))
+})
+
+test_that("data_save errors when directory doesn't exist without force", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  test_data <- data.frame(x = 1:5)
+
+  # Should error because inputs/nonexistent doesn't exist
+  expect_error(
+    data_save(test_data, "inputs/nonexistent/file.csv"),
+    "Directory.*does not exist.*force = TRUE"
+  )
+})
+
+test_that("data_save creates directory with force = TRUE", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  test_data <- data.frame(x = 1:5)
+
+  # Should create directory and save
+  suppressMessages(
+    data_save(test_data, "inputs/new_dir/file.rds", force = TRUE)
+  )
+
+  expect_true(dir.exists("inputs/new_dir"))
+  expect_true(file.exists("inputs/new_dir/file.rds"))
+})
+
+test_that("data_save errors for simple filename without directory", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  test_data <- data.frame(x = 1:5)
+
+  # Should error - no directory specified
+  expect_error(
+    data_save(test_data, "just_a_filename"),
+    "has no directory.*dot notation.*full path"
+  )
+})
+
+test_that("data_save updates database with normalized name", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
+  test_data <- data.frame(x = 1:5)
+
+  # Save with dot notation
+  suppressMessages(data_save(test_data, "intermediate.my_data"))
+
+  # Check database record uses original path as name
+  conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'intermediate.my_data'")
+  expect_equal(nrow(record), 1)
+  expect_equal(record$path, "inputs/intermediate/my_data.rds")
+  expect_equal(record$type, "rds")
 })

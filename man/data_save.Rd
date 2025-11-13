@@ -2,24 +2,30 @@
 % Please edit documentation in R/data_write.R
 \name{data_save}
 \alias{data_save}
-\title{Save data using dot notation path}
+\title{Save data using dot notation or file path}
 \usage{
 data_save(
   data,
   path,
-  type = "csv",
+  type = NULL,
   delimiter = "comma",
   locked = TRUE,
   encrypted = FALSE,
-  password = NULL
+  password = NULL,
+  force = FALSE
 )
 }
 \arguments{
 \item{data}{Data frame to save}
 
-\item{path}{Dot notation path to save data (e.g. "source.private.example")}
+\item{path}{Either:
+\itemize{
+\item Dot notation: "intermediate.filename" resolves to inputs/intermediate/filename.{type}
+\item Direct path: "inputs/intermediate/filename.csv" uses path as-is
+\item Simple filename: "filename" requires force = TRUE or errors
+}}
 
-\item{type}{Type of data file ("csv" or "rds")}
+\item{type}{Type of data file ("csv" or "rds"). Auto-detected from extension if path includes one.}
 
 \item{delimiter}{Delimiter for CSV files ("comma", "tab", "semicolon", "space")}
 
@@ -28,7 +34,9 @@ data_save(
 \item{encrypted}{Whether the file should be encrypted}
 
 \item{password}{Optional password for encryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts}
+
+\item{force}{If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.}
 }
 \description{
-Save data using dot notation path
+Save data using dot notation or file path
 }
