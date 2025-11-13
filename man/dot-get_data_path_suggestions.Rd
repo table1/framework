@@ -14,6 +14,6 @@ Character vector of available data paths
 }
 \description{
 Helper function that extracts all available data paths from config.
-Used to provide helpful suggestions when data_load() fails.
+Used to provide helpful suggestions when data_read() fails.
 }
 \keyword{internal}

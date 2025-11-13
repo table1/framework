@@ -36,11 +36,23 @@ defaults:
   packages:
     use_renv: false                      # Use renv for package management
     default_packages:
+      # Core tidyverse (auto-attached for immediate use)
       - name: "dplyr"
         auto_attach: true
       - name: "ggplot2"
         auto_attach: true
+      - name: "tidyr"
+        auto_attach: true
+      - name: "stringr"
+        auto_attach: true
       - name: "readr"
+        auto_attach: true
+      # Utility packages (installed but not auto-attached)
+      - name: "lubridate"
+        auto_attach: false
+      - name: "glue"
+        auto_attach: false
+      - name: "here"
         auto_attach: false
 
   # AI Assistants
@@ -56,9 +68,6 @@ defaults:
     raw: |-
       # Framework environment defaults
       # Populate these values before running scaffold() or publishing.
-
-      # Framework metadata database (SQLite)
-      FRAMEWORK_DB_PATH=framework.db
 
       # PostgreSQL connection (example)
       POSTGRES_HOST=
@@ -83,7 +92,7 @@ defaults:
     connections:
       framework:
         driver: "sqlite"
-        database: env("FRAMEWORK_DB_PATH", "framework.db")
+        database: "framework.db"
 
   # Git & Hooks
   git:
@@ -122,7 +131,7 @@ project_types:
       inputs_raw: "inputs/raw"
       inputs_intermediate: "inputs/intermediate"
       inputs_final: "inputs/final"
-      reference: "reference"
+      docs: "docs"
       outputs_notebooks: "outputs/notebooks"
       outputs_tables: "outputs/tables"
       outputs_figures: "outputs/figures"

@@ -179,6 +179,17 @@
               </span>
               <span v-else class="text-gray-600 dark:text-gray-400">No default packages</span>
             </OverviewCard>
+
+            <!-- .env Defaults Card -->
+            <OverviewCard
+              title=".env Defaults"
+              @click="activeSection = 'env-defaults'"
+            >
+              <span v-if="defaultEnvVariableCount > 0" class="text-gray-600 dark:text-gray-400">
+                {{ defaultEnvVariableCount }} variable{{ defaultEnvVariableCount === 1 ? '' : 's' }}
+              </span>
+              <span v-else class="text-gray-600 dark:text-gray-400">No defaults set</span>
+            </OverviewCard>
           </div>
         </div>
 
@@ -191,6 +202,28 @@
             v-model:default-storage-bucket="defaultStorageBucket"
           />
         </div>
+
+        <!-- .env Defaults -->
+        <div id="env-defaults" v-show="activeSection === 'env-defaults'">
+          <SettingsPanel flush>
+            <EnvEditor
+              :groups="defaultEnvGroups"
+              v-model:variables="defaultEnvVariables"
+              v-model:raw-content="defaultEnvRawContent"
+              v-model:view-mode="defaultEnvViewMode"
+              v-model:regroup-on-save="defaultEnvRegroup"
+              :show-save-button="false"
+              :allow-show-values-toggle="true"
+            />
+
+            <div class="mt-6 flex justify-end">
+              <Button variant="primary" @click="saveSettings" :disabled="saving">
+                {{ saving ? 'Saving…' : 'Save Changes' }}
+              </Button>
+            </div>
+          </SettingsPanel>
+        </div>
+
         <!-- Basics -->
         <div id="basics" v-show="activeSection === 'basics'">
           <SettingsPanel
@@ -1630,7 +1663,7 @@ const sections = [
   { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', slug: 'git-hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
   { id: 'connections-defaults', label: 'Connections', slug: 'connections', icon: ServerStackIcon },
-  // { id: 'env-defaults', label: '.env Defaults', slug: 'env', icon: KeyIcon },
+  { id: 'env-defaults', label: '.env Defaults', slug: 'env', icon: KeyIcon },
   {
     id: 'scaffold',
     label: 'Scaffold Behavior',
@@ -1661,7 +1694,7 @@ const fallbackProjectTypes = {
       inputs_raw: 'inputs/raw',
       inputs_intermediate: 'inputs/intermediate',
       inputs_final: 'inputs/final',
-      reference: 'reference',
+      docs: 'docs',
       outputs_notebooks: 'outputs/notebooks',
       outputs_tables: 'outputs/tables',
       outputs_figures: 'outputs/figures',
@@ -1772,9 +1805,9 @@ const generalWorkspaceFallback = [
     hint: 'Reusable R scripts, job runners, or automation tasks.'
   },
   {
-    key: 'reference',
-    label: 'Reference materials',
-    hint: 'Codebooks, documentation, and other background resources.'
+    key: 'docs',
+    label: 'Documentation',
+    hint: 'Codebooks, documentation, and other reference materials.'
   }
 ]
 
@@ -1890,7 +1923,7 @@ const settings = ref({
     project_type: 'project',
     notebook_format: 'quarto',
     ide: 'vscode',
-    ide_support_vscode: false,
+    positron: false,
     use_git: true,
     use_renv: false,
     seed: '',
@@ -1898,6 +1931,13 @@ const settings = ref({
     ai_support: true,
     ai_assistants: ['claude'],
     ai_canonical_file: 'CLAUDE.md',
+    scaffold: {
+      source_all_functions: true,
+      set_theme_on_scaffold: true,
+      ggplot_theme: 'theme_minimal',
+      seed_on_scaffold: false,
+      seed: ''
+    },
     directories: JSON.parse(JSON.stringify(defaultProjectTypes.value.project.directories)),
     git_hooks: {
       ai_sync: false,
@@ -1957,12 +1997,14 @@ const templateModal = reactive({
   loading: false
 })
 
-// DISABLED - env defaults removed
-// const defaultEnvRawContent = ref('')
-// const defaultEnvVariables = ref({})
-// const defaultEnvViewMode = ref('grouped')
-// const defaultEnvRegroup = ref(false)
+// .env defaults
+const defaultEnvRawContent = ref('')
+const defaultEnvVariables = ref({})
+const defaultEnvViewMode = ref('grouped')
+const defaultEnvRegroup = ref(false)
+const defaultEnvGroups = ref({})
 const envPreviewModal = ref(false)
+const defaultEnvVariableCount = computed(() => Object.keys(defaultEnvVariables.value || {}).length)
 
 // Database connections as array for repeater (framework_db is implicit/reserved)
 const databaseConnections = ref([])
@@ -2112,10 +2154,6 @@ const sectionHeaderMeta = {
     title: '.env Defaults',
     description: 'Template applied to every new project so core connections work immediately.'
   }
-  // 'connections-defaults': {
-  //   title: 'Connections',
-  //   description: 'Seed new projects with shared database or storage connections.'
-  // }
 }
 
 const currentSectionMeta = computed(() => sectionHeaderMeta[activeSection.value] || {
@@ -2401,6 +2439,12 @@ watch(() => presentationOptions.includeFunctions, (enabled) => {
   setPresentationDirectory('functions', enabled, presentationOptionalDefaults.value.functions)
 })
 
+// Watch env variables to update groups
+watch(defaultEnvVariables, (vars) => {
+  if (isLoadingSettings.value) return
+  defaultEnvGroups.value = groupEnvByPrefix(vars)
+}, { deep: true })
+
 const handleKeyDown = (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === 's') {
     event.preventDefault()
@@ -2609,10 +2653,10 @@ const loadSettings = async () => {
       settings.value.defaults.project_type = toScalar(defaults.project_type, 'project')
       settings.value.defaults.notebook_format = toScalar(defaults.notebook_format, 'quarto')
       settings.value.defaults.ide = toScalar(defaults.ide, 'vscode')
+      settings.value.defaults.positron = toBoolean(defaults.positron, false)
       settings.value.defaults.use_git = toBoolean(defaults.use_git, true)
       settings.value.defaults.use_renv = toBoolean(defaults.use_renv, false)
-      settings.value.defaults.seed_on_scaffold = toBoolean(defaults.seed_on_scaffold, false)
-      settings.value.defaults.seed = toScalar(defaults.seed, '')
+      // seed_on_scaffold and seed are now loaded from nested scaffold object below
       settings.value.defaults.ai_support = toBoolean(defaults.ai_support, true)
       settings.value.defaults.ai_canonical_file = toScalar(defaults.ai_canonical_file, 'CLAUDE.md')
       const assistants = flattenArray(defaults.ai_assistants)
@@ -2631,6 +2675,17 @@ const loadSettings = async () => {
           )
         }
         settings.value.privacy.secret_scan = settings.value.defaults.git_hooks.data_security
+      }
+
+      // Load scaffold settings (v2 nested structure)
+      if (defaults.scaffold) {
+        settings.value.defaults.scaffold = {
+          source_all_functions: toBoolean(defaults.scaffold.source_all_functions, true),
+          set_theme_on_scaffold: toBoolean(defaults.scaffold.set_theme_on_scaffold, true),
+          ggplot_theme: toScalar(defaults.scaffold.ggplot_theme, 'theme_minimal'),
+          seed_on_scaffold: toBoolean(defaults.scaffold.seed_on_scaffold, false),
+          seed: toScalar(defaults.scaffold.seed, '')
+        }
       }
 
       if (defaults.packages) {
@@ -2866,24 +2921,21 @@ const validateExtraDirectoryLabel = (label) => {
 const DEFAULT_ENV_TEMPLATE = `# Framework environment defaults
 # Populate these values before running scaffold() or publishing.
 
-# Framework metadata database (SQLite)
-FRAMEWORK_DB_PATH=framework.db
-
-# PostgreSQL connection (example)
-POSTGRES_HOST=
+# PostgreSQL connection
+POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
-POSTGRES_DB=
+POSTGRES_DB=postgres
 POSTGRES_SCHEMA=public
-POSTGRES_USER=
+POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
 
+
 # S3-compatible storage (AWS S3, MinIO, etc.)
-S3_ENDPOINT=
-S3_BUCKET=
-S3_REGION=
 S3_ACCESS_KEY=
 S3_SECRET_KEY=
-S3_SESSION_TOKEN=`
+S3_BUCKET=
+S3_REGION=us-east-1
+S3_ENDPOINT=`
 
 const parseEnvContent = (raw = '') => {
   const result = {}
@@ -2928,10 +2980,10 @@ const initializeDefaultEnv = (envConfig) => {
     raw = stringifyEnvVariables(envConfig.variables)
   }
 
-  // DISABLED - env defaults removed
-  // defaultEnvRawContent.value = raw
-  // defaultEnvVariables.value = parseEnvContent(raw)
-  // defaultEnvViewMode.value = 'grouped'
+  defaultEnvRawContent.value = raw
+  defaultEnvVariables.value = parseEnvContent(raw)
+  defaultEnvGroups.value = groupEnvByPrefix(parseEnvContent(raw))
+  defaultEnvViewMode.value = 'grouped'
 }
 
 const hydrateDefaultConnections = (connectionsConfig) => {
@@ -2962,12 +3014,12 @@ const hydrateDefaultConnections = (connectionsConfig) => {
   s3Connections.value = s3Array
 }
 
-// DISABLED - env defaults removed
-// const resetEnvDefaults = () => {
-//   defaultEnvRawContent.value = DEFAULT_ENV_TEMPLATE
-//   defaultEnvVariables.value = parseEnvContent(DEFAULT_ENV_TEMPLATE)
-//   defaultEnvViewMode.value = 'grouped'
-// }
+const resetEnvDefaults = () => {
+  defaultEnvRawContent.value = DEFAULT_ENV_TEMPLATE
+  defaultEnvVariables.value = parseEnvContent(DEFAULT_ENV_TEMPLATE)
+  defaultEnvGroups.value = groupEnvByPrefix(parseEnvContent(DEFAULT_ENV_TEMPLATE))
+  defaultEnvViewMode.value = 'grouped'
+}
 
 const saveSettings = async () => {
   try {
@@ -2981,6 +3033,11 @@ const saveSettings = async () => {
     payload.global.projects_root = normalizedRoot ? normalizedRoot : null
     delete payload.projects_root  // Remove root-level if it exists
 
+    // Handle scaffold seed (v2 nested structure)
+    if (payload.defaults.scaffold) {
+      payload.defaults.scaffold.seed = payload.defaults.scaffold.seed === '' ? null : payload.defaults.scaffold.seed
+    }
+    // Also handle flat structure for backward compatibility
     payload.defaults.seed = payload.defaults.seed === '' ? null : payload.defaults.seed
 
     // Handle nested packages structure: { use_renv: bool, default_packages: [...] }
@@ -2988,8 +3045,8 @@ const saveSettings = async () => {
       payload.defaults.packages.default_packages = (payload.defaults.packages.default_packages || []).filter((pkg) => pkg.name && pkg.name.trim() !== '')
     }
 
-    // DISABLED - env defaults removed
-    // payload.defaults.env = { raw: defaultEnvRawContent.value || '' }
+    // Save .env defaults
+    payload.defaults.env = { raw: defaultEnvRawContent.value || '' }
 
     // Convert connections arrays to nested object structure for saving
     const databases = {}

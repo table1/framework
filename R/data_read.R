@@ -1,4 +1,4 @@
-#' Load data using dot notation path or direct file path
+#' Read data using dot notation path or direct file path
 #'
 #' Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
 #' and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
@@ -9,7 +9,7 @@
 #' @param password Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @param ... Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)
 #' @export
-data_load <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
+data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_choice(delim, c("comma", "tab", "semicolon", "space", ",", "\t", ";", " "), null.ok = TRUE)
@@ -317,24 +317,24 @@ data_load <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
 }
 
 #' Alias for backward compatibility
-#' @inheritParams data_load
+#' @inheritParams data_read
+#' @export
+data_load <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
+  data_read(path, delim, keep_attributes, password, ...)
+}
+
+#' Alias for backward compatibility
+#' @inheritParams data_read
 #' @export
 load_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
-  data_load(path, delim, keep_attributes, password, ...)
+  data_read(path, delim, keep_attributes, password, ...)
 }
 
-#' Alias for readability
-#' @inheritParams data_load
-#' @export
-data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
-  data_load(path, delim, keep_attributes, password, ...)
-}
-
-#' Alias for readability
-#' @inheritParams data_load
+#' Alias for backward compatibility
+#' @inheritParams data_read
 #' @export
 read_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
-  data_load(path, delim, keep_attributes, password, ...)
+  data_read(path, delim, keep_attributes, password, ...)
 }
 
 #' List all data entries from config
@@ -459,7 +459,7 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
   cache_fetch(cache_key,
     {
       message(sprintf("Loading data from file: %s (cached as %s)", path, cache_key))
-      load_data(path)
+      data_read(path)
     },
     expire_after = expire_after,
     refresh = refresh
@@ -700,7 +700,7 @@ data_spec_get <- function(path) {
 #' Get suggestions for available data paths
 #'
 #' Helper function that extracts all available data paths from config.
-#' Used to provide helpful suggestions when data_load() fails.
+#' Used to provide helpful suggestions when data_read() fails.
 #'
 #' @param attempted_path The path that the user tried (optional, for future fuzzy matching)
 #' @return Character vector of available data paths

@@ -48,9 +48,6 @@ defaults:
       # Framework environment defaults
       # Populate these values before running scaffold() or publishing.
 
-      # Framework metadata database (SQLite)
-      FRAMEWORK_DB_PATH=framework.db
-
       # PostgreSQL connection (example)
       POSTGRES_HOST=
       POSTGRES_PORT=5432
@@ -74,7 +71,7 @@ defaults:
     connections:
       framework:
         driver: "sqlite"
-        database: env("FRAMEWORK_DB_PATH", "framework.db")
+        database: "framework.db"
 
   # AI Assistants
   ai:
@@ -149,11 +146,11 @@ project_types:
         default: "inputs/final"
         enabled_by_default: true
         hint: "Final inputs ready for modeling or reporting."
-      reference:
-        label: "Reference materials"
-        default: "reference"
-        enabled_by_default: false
-        hint: "Codebooks, documentation, and other background resources."
+      docs:
+        label: "Documentation"
+        default: "docs"
+        enabled_by_default: true
+        hint: "Codebooks, documentation, and other reference materials."
       outputs_notebooks:
         label: "Rendered notebooks"
         default: "outputs/notebooks"

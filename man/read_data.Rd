@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_read.R
 \name{read_data}
 \alias{read_data}
-\title{Alias for readability}
+\title{Alias for backward compatibility}
 \usage{
 read_data(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 }
@@ -18,5 +18,5 @@ read_data(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 \item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
 \description{
-Alias for readability
+Alias for backward compatibility
 }

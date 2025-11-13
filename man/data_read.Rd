@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_read.R
 \name{data_read}
 \alias{data_read}
-\title{Alias for readability}
+\title{Read data using dot notation path or direct file path}
 \usage{
 data_read(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 }
@@ -18,5 +18,6 @@ data_read(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 \item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
 \description{
-Alias for readability
+Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
+and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
 }

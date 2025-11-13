@@ -1975,6 +1975,57 @@ function(req) {
   list(resolved_path = project_dir)
 }
 
+#* Remove project from Framework (untrack)
+#* @post /api/projects/<id>/untrack
+#* @param id The project ID
+function(id) {
+  tryCatch({
+    # Get project path from registry
+    projects <- framework::list_projects()
+    project <- projects[projects$id == id, ]
+
+    if (nrow(project) == 0) {
+      return(list(success = FALSE, error = "Project not found"))
+    }
+
+    # Remove from registry
+    framework::remove_project_from_config(id)
+
+    list(success = TRUE, message = "Project removed from Framework")
+  }, error = function(e) {
+    list(success = FALSE, error = e$message)
+  })
+}
+
+#* Delete project entirely (files and registry)
+#* @post /api/projects/<id>/delete
+#* @param id The project ID
+function(id) {
+  tryCatch({
+    # Get project path from registry
+    projects <- framework::list_projects()
+    project <- projects[projects$id == id, ]
+
+    if (nrow(project) == 0) {
+      return(list(success = FALSE, error = "Project not found"))
+    }
+
+    project_path <- project$path[1]
+
+    # Delete directory
+    if (dir.exists(project_path)) {
+      unlink(project_path, recursive = TRUE)
+    }
+
+    # Remove from registry
+    framework::remove_project_from_config(id)
+
+    list(success = TRUE, message = "Project deleted")
+  }, error = function(e) {
+    list(success = FALSE, error = e$message)
+  })
+}
+
 #* Import an existing Framework project
 #* @post /api/project/import
 #* @param req The request object
