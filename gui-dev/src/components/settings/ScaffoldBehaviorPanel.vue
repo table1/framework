@@ -78,12 +78,18 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
+const toScalar = (value, fallback = '') => {
+  if (value == null) return fallback
+  if (typeof value === 'number' || typeof value === 'string') return String(value)
+  return fallback
+}
+
 const normalize = () => ({
   source_all_functions: props.modelValue?.source_all_functions ?? true,
   set_theme_on_scaffold: props.modelValue?.set_theme_on_scaffold ?? true,
   ggplot_theme: props.modelValue?.ggplot_theme ?? 'theme_minimal',
   seed_on_scaffold: props.modelValue?.seed_on_scaffold ?? false,
-  seed: props.modelValue?.seed ?? ''
+  seed: toScalar(props.modelValue?.seed, '')
 })
 
 const state = computed(normalize)

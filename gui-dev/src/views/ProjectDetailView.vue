@@ -87,7 +87,14 @@
           <ServerStackIcon class="h-4 w-4" />
           Connections
         </a>
-
+        <a
+          href="#env"
+          @click.prevent="activeSection = 'env'"
+          :class="getSidebarLinkClasses('env')"
+        >
+          <KeyIcon class="h-4 w-4" />
+          .env Defaults
+        </a>
         <a
           href="#scaffold"
           @click.prevent="activeSection = 'scaffold'"
@@ -133,14 +140,6 @@
           Notebooks
         </a>
 
-        <a
-          href="#env"
-          @click.prevent="activeSection = 'env'"
-          :class="getSidebarLinkClasses('env')"
-        >
-          <KeyIcon class="h-4 w-4" />
-          .env
-        </a>
       </div>
 
       <!-- Save Button (right after navigation) -->
@@ -182,31 +181,48 @@
         </p>
 
         <div class="space-y-3">
-          <!-- Basics Card -->
-          <button
-            @click="activeSection = 'basics'"
-            class="w-full text-left px-4 py-3 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-700 transition"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Basics</div>
-                <div class="text-sm text-gray-900 dark:text-white">
-                  <span>{{ project.name || 'Untitled' }}</span>
-                  <template v-if="project.author">
-                    <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                    <span class="text-gray-600 dark:text-gray-400">{{ project.author }}</span>
-                  </template>
-                  <template v-if="editableSettings.scaffold?.notebook_format">
-                    <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                    <span class="text-gray-600 dark:text-gray-400">{{ editableSettings.scaffold.notebook_format }}</span>
-                  </template>
-                </div>
-              </div>
-              <svg class="h-5 w-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
+          <OverviewCard title="Basics" @click="activeSection = 'basics'">
+            <div class="text-gray-900 dark:text-white">
+              {{ basicsOverview.name }}
+              <template v-if="basicsOverview.author">
+                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ basicsOverview.author }}</span>
+              </template>
             </div>
-          </button>
+            <p v-if="basicsOverview.path" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {{ basicsOverview.path }}
+            </p>
+          </OverviewCard>
+
+          <OverviewCard title="Project Structure" @click="activeSection = 'settings'">
+            <span class="text-gray-600 dark:text-gray-400">
+              {{ projectStructureLabel }}
+            </span>
+          </OverviewCard>
+
+          <OverviewCard title="Notebooks & Scripts" @click="activeSection = 'scaffold'">
+            <span class="text-gray-600 dark:text-gray-400">
+              {{ notebookFormatLabel }}
+            </span>
+          </OverviewCard>
+
+          <OverviewCard title="AI Assistants" @click="activeSection = 'ai'">
+            <span :class="aiSettings.enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'">
+              {{ aiOverviewText }}
+            </span>
+          </OverviewCard>
+
+          <OverviewCard title="Git & Hooks" @click="activeSection = 'git'">
+            <span class="text-gray-600 dark:text-gray-400">{{ gitOverviewText }}</span>
+          </OverviewCard>
+
+          <OverviewCard title="Packages" @click="activeSection = 'packages'">
+            <span class="text-gray-600 dark:text-gray-400">{{ packagesOverviewText }}</span>
+          </OverviewCard>
+
+          <OverviewCard title=".env" @click="activeSection = 'env'">
+            <span class="text-gray-600 dark:text-gray-400">{{ envOverviewText }}</span>
+          </OverviewCard>
         </div>
       </div>
 
@@ -641,6 +657,7 @@
           v-model:default-database="defaultDatabase"
           v-model:default-storage-bucket="defaultStorageBucket"
         />
+
       </div>
 
       <!-- Packages Section -->
@@ -878,6 +895,7 @@
           @save="saveEnv"
         />
       </div>
+
     </div>
   </div>
 
@@ -1110,6 +1128,7 @@ import Modal from '../components/ui/Modal.vue'
 import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
 import Repeater from '../components/ui/Repeater.vue'
 import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
+import OverviewCard from '../components/ui/OverviewCard.vue'
 import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
 import DataCatalogTree from '../components/DataCatalogTree.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
@@ -1124,7 +1143,6 @@ import {
   DocumentTextIcon,
   CircleStackIcon,
   ServerIcon,
-  KeyIcon,
   EyeIcon,
   EyeSlashIcon,
   CubeIcon,
@@ -1133,7 +1151,8 @@ import {
   SparklesIcon,
   DocumentCheckIcon,
   AdjustmentsVerticalIcon,
-  ServerStackIcon
+  ServerStackIcon,
+  KeyIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -1143,6 +1162,8 @@ const project = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeSection = ref('overview')
+const VALID_SECTIONS = ['overview', 'basics', 'settings', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
+
 const dataCatalog = ref(null)
 const dataSearch = ref('')
 const expandedDataKeys = ref(new Set())
@@ -1224,6 +1245,65 @@ const aiContentMeta = ref({
   file: 'CLAUDE.md',
   exists: true
 })
+const envVariableCount = computed(() => Object.keys(envVariables.value || {}).length)
+const basicsOverview = computed(() => {
+  const name = project.value?.name || 'Untitled'
+  const path = project.value?.path || ''
+  const author = editableSettings.value?.author?.name || projectSettings.value?.author?.name || project.value?.author || ''
+  return { name, path, author }
+})
+const projectStructureLabel = computed(() => {
+  return project.value?.type || projectSettings.value?.project_type || 'Not set'
+})
+const notebookFormatLabel = computed(() => {
+  return editableSettings.value?.scaffold?.notebook_format ||
+    projectSettings.value?.scaffold?.notebook_format ||
+    'quarto'
+})
+const formatAssistantLabel = (value) => {
+  if (!value) return ''
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+const aiOverviewText = computed(() => {
+  if (!aiSettings.value.enabled) {
+    return 'Disabled'
+  }
+  const assistants = Array.isArray(aiSettings.value.assistants) ? aiSettings.value.assistants : []
+  const assistantText = assistants.length
+    ? assistants.map(formatAssistantLabel).join(', ')
+    : 'Enabled'
+  const canonical = aiSettings.value.canonical_file || 'CLAUDE.md'
+  return `${assistantText} · ${canonical}`
+})
+const gitHookLabels = {
+  ai_sync: 'AI sync',
+  data_security: 'Secret scan',
+  check_sensitive_dirs: 'Sensitive dirs'
+}
+const enabledGitHooks = computed(() => {
+  const hooks = gitSettings.value?.hooks || {}
+  return Object.entries(hooks)
+    .filter(([, enabled]) => Boolean(enabled))
+    .map(([key]) => gitHookLabels[key] || key)
+})
+const gitOverviewText = computed(() => {
+  const base = gitSettings.value.initialize ? 'Auto-initialize repositories' : 'Manual initialization'
+  return enabledGitHooks.value.length ? `${base} · ${enabledGitHooks.value.join(', ')}` : base
+})
+const packagesCount = computed(() => {
+  return editablePackages.value?.default_packages?.length || 0
+})
+const packagesOverviewText = computed(() => {
+  const renvText = editablePackages.value?.use_renv ? 'renv enabled' : 'renv disabled'
+  return packagesCount.value > 0
+    ? `${packagesCount.value} package${packagesCount.value === 1 ? '' : 's'} · ${renvText}`
+    : `No default packages · ${renvText}`
+})
+const envOverviewText = computed(() => {
+  return envVariableCount.value > 0
+    ? `${envVariableCount.value} variable${envVariableCount.value === 1 ? '' : 's'}`
+    : 'No variables defined'
+})
 
 // Sidebar link classes
 const getSidebarLinkClasses = (section) => {
@@ -1236,12 +1316,25 @@ const getSidebarLinkClasses = (section) => {
   ]
 }
 
+const getNestedLinkClasses = (section) => {
+  const isActive = activeSection.value === section
+  return [
+    'flex items-center gap-2 rounded-md px-3 py-1 text-xs font-medium transition',
+    isActive
+      ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
+      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+  ]
+}
+
 // Initialize activeSection from URL query param
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'basics', 'settings', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
-  if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
+  if (sectionFromUrl && VALID_SECTIONS.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
+    if (sectionFromUrl === 'env') {
+      loadEnv()
+      nextTick(() => scrollToEnvSection())
+    }
   } else {
     activeSection.value = 'overview'
   }
@@ -1257,8 +1350,10 @@ watch(activeSection, (newSection) => {
   }
 
   // Load connections when Connections section is activated
-  if (newSection === 'connections' && databaseConnections.value.length === 0 && s3Connections.value.length === 0) {
-    loadConnections()
+  if (newSection === 'connections') {
+    if (databaseConnections.value.length === 0 && s3Connections.value.length === 0) {
+      loadConnections()
+    }
   }
 
   // Load packages when Packages section is activated
@@ -1274,7 +1369,6 @@ watch(activeSection, (newSection) => {
     loadAISettings()
   }
 
-  // Load env when .env section is activated
   if (newSection === 'env' && !envLoaded.value) {
     loadEnv()
   }
@@ -1282,9 +1376,16 @@ watch(activeSection, (newSection) => {
 
 // Watch for URL query param changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'basics', 'settings', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
-  if (newSection && newSection !== activeSection.value && validSections.includes(newSection)) {
+  if (newSection && VALID_SECTIONS.includes(newSection)) {
     activeSection.value = newSection
+    if (newSection === 'env') {
+      nextTick(() => scrollToEnvSection())
+      if (!envLoaded.value) {
+        loadEnv()
+      }
+    }
+  } else if (!newSection) {
+    activeSection.value = 'overview'
   }
 })
 
@@ -2026,6 +2127,13 @@ const handleDataSublinkClick = (link) => {
   scrollToDataAnchor(link.anchorId, link.nodeKey)
 }
 
+const scrollToEnvSection = () => {
+  const element = document.getElementById('env')
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
 // DISABLED - connections removed
 const loadConnections = async () => {
   try {
@@ -2722,6 +2830,11 @@ onMounted(() => {
   initializeSection()
   loadProject()
   loadDataCatalog()
+  loadProjectSettings()
+  loadPackages()
+  loadAISettings()
+  loadGitSettings()
+  loadEnv()
   window.addEventListener('keydown', handleKeydown)
 })
 
@@ -2795,6 +2908,11 @@ watch(() => route.params.id, (newId, oldId) => {
     initializeSection()
     loadProject()
     loadDataCatalog()
+    loadProjectSettings()
+    loadPackages()
+    loadAISettings()
+    loadGitSettings()
+    loadEnv()
   }
 })
 </script>

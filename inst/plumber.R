@@ -1612,9 +1612,10 @@ function(id) {
         # Parse KEY=VALUE
         if (grepl("=", line)) {
           parts <- strsplit(line, "=", fixed = TRUE)[[1]]
-          if (length(parts) >= 2) {
-            key <- trimws(parts[1])
-            value <- trimws(paste(parts[-1], collapse = "="))
+          key <- trimws(parts[1])
+
+          if (nzchar(key)) {
+            value <- if (length(parts) > 1) trimws(paste(parts[-1], collapse = "=")) else ""
 
             # Remove quotes if present
             value <- gsub('^"(.*)"$', '\\1', value)
