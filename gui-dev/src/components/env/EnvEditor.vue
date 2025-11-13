@@ -45,16 +45,11 @@
           :key="prefix"
           class="rounded-lg bg-gray-50 p-5 dark:bg-gray-800/40"
         >
-          <div class="mb-4 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                {{ prefix === 'Other' ? 'Uncategorized' : prefix.toUpperCase() }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Variables with the {{ prefix }} prefix.</p>
-            </div>
-            <Button v-if="allowAdd" variant="soft" size="sm" @click="addVariable">
-              + Add
-            </Button>
+          <div class="mb-4">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              {{ prefix === 'Other' ? 'Uncategorized' : prefix.toUpperCase() }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Variables with the {{ prefix }} prefix.</p>
           </div>
 
           <div class="space-y-3">
@@ -64,24 +59,6 @@
               class="space-y-2"
             >
               <div class="flex items-start gap-3">
-                <div class="mt-2 w-16">
-                  <Badge
-                    v-if="info.defined && info.used"
-                    variant="green"
-                    class="text-xs"
-                  >✓</Badge>
-                  <Badge
-                    v-else-if="!info.defined && info.used"
-                    variant="yellow"
-                    class="text-xs"
-                  >⚠</Badge>
-                  <Badge
-                    v-else
-                    variant="gray"
-                    class="text-xs"
-                  >✗</Badge>
-                </div>
-
                 <div class="grid flex-1 grid-cols-2 gap-3">
                   <input
                     :value="varName"
@@ -111,22 +88,24 @@
                   </div>
                 </div>
 
-                <Button
+                <button
                   v-if="allowRemove"
-                  variant="soft"
-                  size="sm"
-                  class="text-xs"
+                  type="button"
+                  class="mt-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   @click="removeVariable(varName)"
                 >
-                  ×
-                </Button>
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-
-              <p v-if="info.used && info.used_in?.length" class="ml-16 text-xs text-gray-500">
-                Used in: {{ info.used_in.join(', ') }}
-              </p>
-              <p v-else-if="info.defined && !info.used" class="ml-16 text-xs text-gray-400">Not referenced in any files</p>
             </div>
+          </div>
+
+          <div v-if="allowAdd" class="mt-4">
+            <Button variant="secondary" size="sm" @click="addVariable">
+              + Add Variable
+            </Button>
           </div>
         </div>
       </div>
@@ -142,7 +121,7 @@
 
     <div v-else class="space-y-3">
       <textarea
-        v-model="internalRaw"
+        v-model="localRaw"
         class="h-80 w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
         :disabled="loading"
       ></textarea>
@@ -158,7 +137,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import Alert from '../ui/Alert.vue'
 import Button from '../ui/Button.vue'
 import Tabs from '../ui/Tabs.vue'
@@ -193,11 +172,17 @@ const internalViewMode = ref(props.viewMode || 'grouped')
 const internalRegroup = ref(!!props.regroupOnSave)
 const showEnvValues = ref(false)
 const visibleFields = ref({})
+let syncingVariablesFromProps = false
+let syncingRawFromProps = false
 
 watch(
   () => props.variables,
   (val) => {
+    syncingVariablesFromProps = true
     localVariables.value = clone(val)
+    nextTick(() => {
+      syncingVariablesFromProps = false
+    })
   },
   { deep: true }
 )
@@ -205,10 +190,13 @@ watch(
 watch(
   () => props.rawContent,
   (val) => {
-    if (internalViewMode.value === 'raw') {
-      localRaw.value = val || ''
-    }
-  }
+    syncingRawFromProps = true
+    localRaw.value = val || ''
+    nextTick(() => {
+      syncingRawFromProps = false
+    })
+  },
+  { immediate: true }
 )
 
 watch(
@@ -226,16 +214,17 @@ watch(
 )
 
 watch(localVariables, (val) => {
+  if (syncingVariablesFromProps) return
   emit('update:variables', clone(val))
   if (internalViewMode.value !== 'raw') {
-    localRaw.value = Object.entries(val || {})
-      .map(([key, value]) => `${key}=${value ?? ''}`)
-      .join('\n')
+    // Smart update: preserve original order and structure (or regroup if enabled)
+    localRaw.value = updateRawContentPreservingOrder(localRaw.value, val, internalRegroup.value)
     emit('update:rawContent', localRaw.value)
   }
 }, { deep: true })
 
 watch(localRaw, (val) => {
+  if (syncingRawFromProps) return
   if (internalViewMode.value === 'raw') {
     emit('update:rawContent', val)
     const parsed = parseRaw(val)
@@ -244,8 +233,19 @@ watch(localRaw, (val) => {
   }
 })
 
-watch(internalViewMode, (val) => {
+watch(internalViewMode, (val, oldVal) => {
   emit('update:viewMode', val)
+  // When switching TO raw mode, ensure localRaw is synced
+  if (val === 'raw' && oldVal !== 'raw') {
+    // Sync from variables if we have any
+    if (Object.keys(localVariables.value).length > 0) {
+      localRaw.value = updateRawContentPreservingOrder(localRaw.value, localVariables.value, internalRegroup.value)
+    }
+    // Or from props if localRaw is still empty
+    else if (!localRaw.value && props.rawContent) {
+      localRaw.value = props.rawContent
+    }
+  }
 })
 
 watch(internalRegroup, (val) => {
@@ -287,6 +287,101 @@ const activeGroups = computed(() => {
   }
   return buildGroupsFromVariables(localVariables.value)
 })
+
+const updateRawContentPreservingOrder = (rawContent, variables, shouldRegroup = false) => {
+  // If regrouping is enabled, rebuild the entire file grouped by prefix
+  if (shouldRegroup) {
+    const grouped = {}
+    for (const [key, value] of Object.entries(variables)) {
+      const prefix = key.includes('_') ? key.split('_')[0] : 'Other'
+      if (!grouped[prefix]) grouped[prefix] = []
+      grouped[prefix].push([key, value])
+    }
+
+    const result = []
+    const prefixes = Object.keys(grouped).sort()
+
+    for (let i = 0; i < prefixes.length; i++) {
+      const prefix = prefixes[i]
+      const vars = grouped[prefix]
+
+      // Add two blank lines between groups (but not before the first group)
+      if (i > 0) {
+        result.push('')
+        result.push('')
+      }
+
+      result.push(`# ${prefix === 'Other' ? 'Other variables' : prefix.toUpperCase()}`)
+      for (const [key, value] of vars) {
+        result.push(`${key}=${value ?? ''}`)
+      }
+    }
+
+    return result.join('\n')
+  }
+
+  // Otherwise, preserve the original order and do find-and-replace
+  const lines = (rawContent || '').split(/\r?\n/)
+  const updatedKeys = new Set()
+  const result = []
+
+  // First pass: update existing lines
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    // Preserve comments and empty lines
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) {
+      result.push(line)
+      continue
+    }
+
+    // Parse the key and value
+    const [key, ...valueParts] = trimmed.split('=')
+    const cleanKey = key.trim()
+    const originalValue = valueParts.join('=').trim()
+
+    // If this key still exists in variables, update its value
+    if (cleanKey in variables) {
+      const value = variables[cleanKey] ?? ''
+      result.push(`${cleanKey}=${value}`)
+      updatedKeys.add(cleanKey)
+    } else if (Object.keys(variables).length === 0 || originalValue === '') {
+      // Preserve the line if:
+      // 1. Variables object is empty (no edits made yet), OR
+      // 2. Original value was empty (preserve empty variable declarations)
+      result.push(line)
+    }
+    // Otherwise, skip this line (variable was explicitly removed by user)
+  }
+
+  // Second pass: add new variables that weren't in the original content
+  // Group them by prefix and add with spacing
+  const newVars = Object.entries(variables).filter(([key]) => !updatedKeys.has(key))
+
+  if (newVars.length > 0) {
+    // Group by prefix
+    const grouped = {}
+    for (const [key, value] of newVars) {
+      const prefix = key.includes('_') ? key.split('_')[0] : 'Other'
+      if (!grouped[prefix]) grouped[prefix] = []
+      grouped[prefix].push([key, value])
+    }
+
+    // Add each group with spacing
+    for (const [prefix, vars] of Object.entries(grouped)) {
+      if (result.length > 0 && result[result.length - 1] !== '') {
+        result.push('') // Add blank line before new group
+        result.push('') // Two blank lines between groups
+      }
+      result.push(`# ${prefix === 'Other' ? 'Other variables' : prefix.toUpperCase()}`)
+      for (const [key, value] of vars) {
+        result.push(`${key}=${value ?? ''}`)
+      }
+    }
+  }
+
+  return result.join('\n')
+}
 
 const addVariable = () => {
   if (!props.allowAdd) return

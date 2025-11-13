@@ -26,7 +26,7 @@ Describe the purpose of this notebook and the questions you are answering.
 
 ```{r load-data}
 # Load data from catalog
-# my_data <- data_load("inputs.raw.example")
+# my_data <- data_read("inputs.raw.example")
 
 # Or load directly
 # my_data <- read_csv(config("inputs_raw") %+% "/example.csv")

@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_read.R
 \name{data_load}
 \alias{data_load}
-\title{Load data using dot notation path or direct file path}
+\title{Alias for backward compatibility}
 \usage{
 data_load(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 }
@@ -18,6 +18,5 @@ data_load(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 \item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
 \description{
-Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
-and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
+Alias for backward compatibility
 }

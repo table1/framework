@@ -326,7 +326,7 @@ const loadSettings = async () => {
 
     // Always load projects if they exist, regardless of global author settings
     settings.value.projects = data.projects || []
-    projectsRoot.value = data.projects_root && data.projects_root !== '' ? data.projects_root : ''
+    projectsRoot.value = data.global?.projects_root && data.global.projects_root !== '' ? data.global.projects_root : ''
   } catch (error) {
     console.error('Failed to load settings:', error)
   }

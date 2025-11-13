@@ -448,7 +448,7 @@
               <div class="space-y-3">
                   <!-- Default directories -->
                   <div
-                    v-for="dirKey in ['inputs_raw', 'inputs_intermediate', 'inputs_final', 'reference']"
+                    v-for="dirKey in ['inputs_raw', 'inputs_intermediate', 'inputs_final', 'docs']"
                     :key="dirKey"
                   >
                     <Toggle
@@ -1411,6 +1411,27 @@
           />
         </div>
 
+        <!-- .env Defaults Section -->
+        <!-- TEMPORARILY DISABLED - causing infinite recursion
+        <div v-show="activeSection === 'env'">
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Environment variables template for this project. These defaults help connections work immediately.
+            </p>
+
+            <EnvEditor
+              :groups="project.env.groups"
+              v-model:variables="project.env.variables"
+              v-model:raw-content="project.env.rawContent"
+              v-model:view-mode="project.env.viewMode"
+              v-model:regroup-on-save="project.env.regroupOnSave"
+              :show-save-button="false"
+              :allow-show-values-toggle="true"
+            />
+          </div>
+        </div>
+        -->
+
         <!-- Packages Section -->
         <div v-show="activeSection === 'packages'">
           <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
@@ -1572,6 +1593,7 @@ import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
+import EnvEditor from '../components/env/EnvEditor.vue'
 import { useToast } from '../composables/useToast'
 import {
   InformationCircleIcon,
@@ -1580,7 +1602,8 @@ import {
   CubeIcon,
   DocumentCheckIcon,
   Cog6ToothIcon,
-  ServerStackIcon
+  ServerStackIcon,
+  KeyIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -1622,6 +1645,8 @@ const sections = [
   { id: 'ai', label: 'AI Assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
   { id: 'connections', label: 'Connections', icon: ServerStackIcon },
+  // TEMPORARILY DISABLED - .env section causing infinite recursion
+  // { id: 'env', label: '.env Defaults', icon: KeyIcon },
   {
     id: 'scaffold',
     label: 'Scaffold Behavior',
@@ -1687,6 +1712,27 @@ const project = ref({
     defaultDatabase: null,
     defaultStorageBucket: null
   },
+  env: {
+    variables: {},
+    rawContent: `# PostgreSQL connection
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+POSTGRES_DB=postgres
+POSTGRES_SCHEMA=public
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=
+
+
+# S3-compatible storage (AWS S3, MinIO, etc.)
+S3_ACCESS_KEY=
+S3_SECRET_KEY=
+S3_BUCKET=
+S3_REGION=us-east-1
+S3_ENDPOINT=`,
+    viewMode: 'grouped',
+    regroupOnSave: false,
+    groups: {}
+  },
   directories_enabled: {},
   directories: {},
   extra_directories: [],
@@ -1696,7 +1742,7 @@ const project = ref({
 // Initialize section from URL query
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'author', 'scaffold', 'structure', 'packages', 'ai', 'git']
+  const validSections = ['overview', 'author', 'scaffold', 'structure', 'packages', 'ai', 'git', 'connections']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   }
@@ -1704,7 +1750,7 @@ const initializeSection = () => {
 
 // Watch for URL changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'author', 'scaffold', 'structure', 'packages', 'ai', 'git']
+  const validSections = ['overview', 'author', 'scaffold', 'structure', 'packages', 'ai', 'git', 'connections']
   if (newSection && validSections.includes(newSection)) {
     activeSection.value = newSection
   } else if (!newSection) {
@@ -1756,6 +1802,11 @@ onMounted(async () => {
           project.value.scaffold = { ...globalSettings.value.defaults.scaffold }
         }
 
+        // Load positron setting (stored at defaults.positron, not defaults.scaffold.positron)
+        if (globalSettings.value.defaults?.positron !== undefined) {
+          project.value.scaffold.positron = globalSettings.value.defaults.positron
+        }
+
         // Load package defaults
         if (globalSettings.value.defaults?.packages) {
           // Handle flat array structure from SettingsView (current format)
@@ -1805,6 +1856,16 @@ onMounted(async () => {
           project.value.git.hooks = { ...globalSettings.value.defaults.git_hooks }
         }
 
+        // Load .env defaults from Framework Project Defaults
+        if (globalSettings.value.defaults?.env) {
+          const envConfig = globalSettings.value.defaults.env
+          if (typeof envConfig === 'string') {
+            project.value.env.rawContent = envConfig
+          } else if (envConfig?.raw) {
+            project.value.env.rawContent = envConfig.raw
+          }
+        }
+
         // Initialize gitignore template based on project type
         const gitignoreTemplateMap = {
           'project': 'gitignore-project',
@@ -1829,6 +1890,9 @@ onMounted(async () => {
 
     // Initialize directories for current project type
     loadProjectTypeDefaults()
+
+    // Initialize env variables from default template
+    initializeEnvVariables()
   } catch (error) {
     console.error('[DEBUG] Failed to load settings:', error)
     console.error('[DEBUG] Error details:', error.message, error.stack)
@@ -1864,13 +1928,10 @@ watch(() => project.value.type, (newType) => {
   project.value.git.gitignore_template = gitignoreTemplateMap[newType] || 'gitignore-project'
 })
 
-// DEBUG: Watch packages changes
-watch(() => project.value.packages.default_packages, (newVal, oldVal) => {
-  console.log('[DEBUG PACKAGES WATCH] Packages changed!')
-  console.log('[DEBUG PACKAGES WATCH] Old:', oldVal)
-  console.log('[DEBUG PACKAGES WATCH] New:', newVal)
-  console.trace('[DEBUG PACKAGES WATCH] Stack trace:')
-}, { deep: true })
+// DEBUG: Removed debug watcher that was adding console noise
+// watch(() => project.value.packages.default_packages, (newVal, oldVal) => {
+//   console.log('[DEBUG PACKAGES WATCH] Packages changed!')
+// }, { deep: true })
 
 // Watch for gitignore template changes and reload content
 watch(() => project.value.git.gitignore_template, (newTemplate) => {
@@ -1972,6 +2033,44 @@ const getProjectTypeDescription = (type) => {
   return settingsCatalog.value?.project_types?.[type]?.description || ''
 }
 
+const parseEnvContent = (raw = '') => {
+  const result = {}
+  raw.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) return
+    const [key, ...rest] = trimmed.split('=')
+    result[key.trim()] = rest.join('=').replace(/^"|"$/g, '')
+  })
+  return result
+}
+
+const groupEnvByPrefix = (vars = {}) => {
+  const entries = Object.entries(vars)
+  if (!entries.length) return {}
+  return entries.reduce((acc, [key, value]) => {
+    const prefix = key.includes('_') ? key.split('_')[0] : 'Other'
+    if (!acc[prefix]) acc[prefix] = {}
+    acc[prefix][key] = {
+      defined: !!value,
+      used: false,
+      used_in: [],
+      value
+    }
+    return acc
+  }, {})
+}
+
+// Initialize env variables from raw content
+const initializeEnvVariables = () => {
+  if (project.value.env.rawContent) {
+    project.value.env.variables = parseEnvContent(project.value.env.rawContent)
+    project.value.env.groups = groupEnvByPrefix(project.value.env.variables)
+  }
+}
+
+// Note: Removed recursive watcher that was causing infinite updates
+// Groups are initialized in initializeEnvVariables() and managed by EnvEditor internally
+
 const currentSectionTitle = computed(() => {
   const titles = {
     overview: 'Overview',
@@ -1980,6 +2079,7 @@ const currentSectionTitle = computed(() => {
     scaffold: 'Scaffold Behavior',
     structure: 'Project Structure',
     connections: 'Connections',
+    env: '.env Defaults',
     packages: 'Packages & Dependencies',
     ai: 'AI Assistants',
     git: 'Git & Hooks',
@@ -1996,6 +2096,7 @@ const currentSectionDescription = computed(() => {
     scaffold: 'Runtime settings that control what happens when scaffold() runs.',
     structure: 'Customize which directories to create for this project type.',
     connections: 'Database and storage connections for this project.',
+    env: 'Environment variables template for this project.',
     packages: 'Configure package management and default packages.',
     ai: 'Configure AI assistant integration for this project.',
     git: 'Configure version control and git hooks.',
@@ -2368,6 +2469,9 @@ const createProject = async () => {
         default_storage_bucket: project.value.connections.defaultStorageBucket,
         databases,
         storage_buckets
+      },
+      env: {
+        raw: project.value.env.rawContent || ''
       },
       directories
     }

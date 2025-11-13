@@ -1,3 +1,27 @@
+#' Extract package list from config
+#'
+#' Handles two config structures:
+#' 1. New: packages = list(use_renv = ..., default_packages = [...])
+#' 2. Old: packages = [list of package specs]
+#'
+#' @param config Configuration object from read_config()
+#' @return List of package specifications, or empty list if none
+#' @keywords internal
+.get_package_list_from_config <- function(config) {
+  if (is.null(config$packages)) {
+    return(list())
+  }
+
+  # New structure: packages$default_packages
+  if (!is.null(config$packages$default_packages)) {
+    return(config$packages$default_packages)
+  }
+
+  # Old structure: packages as flat list
+  # Filter out non-package entries (like use_renv boolean)
+  config$packages
+}
+
 #' Parse package specification with source detection
 #'
 #' Parses package specifications that may include explicit sources, version pins,
@@ -324,12 +348,13 @@
     return(invisible(FALSE))
   })
 
-  if (is.null(config$packages) || length(config$packages) == 0) {
+  package_list <- .get_package_list_from_config(config)
+  if (length(package_list) == 0) {
     return(invisible(TRUE))
   }
 
   # Install each package via renv
-  for (pkg_spec in config$packages) {
+  for (pkg_spec in package_list) {
     spec <- tryCatch(
       .parse_package_spec(pkg_spec),
       error = function(e) {
@@ -589,7 +614,8 @@ renv_update <- function(packages = NULL) {
 packages_install <- function() {
   config <- read_config()
 
-  if (is.null(config$packages) || length(config$packages) == 0) {
+  package_list <- .get_package_list_from_config(config)
+  if (length(package_list) == 0) {
     message("No packages found in configuration")
     return(invisible(TRUE))
   }
@@ -659,17 +685,18 @@ packages_update <- function(packages = NULL) {
 packages_list <- function() {
   config <- read_config()
 
-  if (is.null(config$packages) || length(config$packages) == 0) {
+  package_list <- .get_package_list_from_config(config)
+  if (length(package_list) == 0) {
     message("No packages found in configuration")
     return(invisible(NULL))
   }
 
   # Print formatted output
   message(sprintf("\n%d %s found:\n",
-                  length(config$packages),
-                  if (length(config$packages) == 1) "package" else "packages"))
+                  length(package_list),
+                  if (length(package_list) == 1) "package" else "packages"))
 
-  for (pkg_spec in config$packages) {
+  for (pkg_spec in package_list) {
     spec <- tryCatch(
       .parse_package_spec(pkg_spec),
       error = function(e) {

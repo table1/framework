@@ -179,7 +179,7 @@ capture_output(expr)             # Capture console output
 | `cache_get()` | Retrieve from cache |
 | `capture_output()` | Capture console output |
 | `configure_ai_agents()` | Configure AI assistant support |
-| `data_load()` | Load data (internal) |
+| `data_read()` | Read data (internal) |
 | `data_save()` | Save data (internal) |
 | `db_find()` | Find record by ID |
 | `framework_view()` | View framework database |

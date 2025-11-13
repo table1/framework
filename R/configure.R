@@ -221,7 +221,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
   message(sprintf("  File: %s", file))
   message(sprintf("  Type: %s", type))
   if (locked) message("  Locked: yes")
-  message(sprintf("\nLoad with: data_load(\"%s\")", path))
+  message(sprintf("\nLoad with: data_read(\"%s\")", path))
 
   invisible(config)
 }
@@ -479,12 +479,25 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
     config$packages <- list()
   }
 
+  # Determine which list to work with (new vs old structure)
+  has_nested_structure <- !is.null(config$packages$default_packages)
+  package_list <- if (has_nested_structure) {
+    config$packages$default_packages
+  } else {
+    config$packages
+  }
+
+  # Initialize if empty
+  if (is.null(package_list)) {
+    package_list <- list()
+  }
+
   # Check if package already exists
   package_base <- sub("@.*$", "", package)
   existing_idx <- NULL
-  if (is.list(config$packages) && length(config$packages) > 0) {
-    for (i in seq_along(config$packages)) {
-      pkg <- config$packages[[i]]
+  if (is.list(package_list) && length(package_list) > 0) {
+    for (i in seq_along(package_list)) {
+      pkg <- package_list[[i]]
       if (is.character(pkg)) {
         if (sub("@.*$", "", pkg) == package_base) {
           existing_idx <- i
@@ -503,11 +516,18 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
   pkg_entry <- list(name = package, auto_attach = auto_attach)
 
   if (!is.null(existing_idx)) {
-    config$packages[[existing_idx]] <- pkg_entry
+    package_list[[existing_idx]] <- pkg_entry
     message(sprintf("\u2713 Updated package '%s' in %s", package, basename(config_path)))
   } else {
-    config$packages <- c(config$packages, list(pkg_entry))
+    package_list <- c(package_list, list(pkg_entry))
     message(sprintf("\u2713 Added package '%s' to %s", package, basename(config_path)))
+  }
+
+  # Write back to the correct location
+  if (has_nested_structure) {
+    config$packages$default_packages <- package_list
+  } else {
+    config$packages <- package_list
   }
 
   message(sprintf("  Auto-attach: %s", if (auto_attach) "yes" else "no"))

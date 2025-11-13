@@ -48,7 +48,7 @@ Add "Network Shares / NAS" section alongside Databases and S3-compatible Storage
 connections:
   framework:
     driver: sqlite
-    database: env("FRAMEWORK_DB_PATH", "framework.db")
+    database: framework.db
 
   nas_backup:
     driver: nas

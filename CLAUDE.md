@@ -595,14 +595,16 @@ Both project structures include a pre-configured "framework" connection:
 Framework uses a consistent naming pattern where namespaced functions (with prefixes like `data_`, `result_`, `cache_`) are the primary API:
 
 **Primary (Namespaced)**:
-- `data_load()`, `data_save()`, `data_list()`
+- `data_read()`, `data_save()`, `data_list()`
 - `result_save()`, `result_get()`, `result_list()`
 - `cache_fetch()`, `cache_get()`, `cache_flush()`
 - `query_get()`, `query_execute()`
 - `scratch_capture()`, `scratch_clean()`
 
 **Aliases (Backward Compatibility)**:
-- `load_data()` → `data_load()`
+- `data_load()` → `data_read()` (legacy name)
+- `load_data()` → `data_read()`
+- `read_data()` → `data_read()`
 - `save_data()` → `data_save()`
 - `list_data()` → `data_list()`
 
@@ -674,7 +676,8 @@ The `framework.db` SQLite database contains:
 - API is unstable (pre-1.0) - breaking changes expected
 - **Config system is production-ready** with comprehensive test coverage (74 tests passing)
 - `renv` support is **implemented and tested** (opt-in, disabled by default)
-- **Alias cleanup completed**: Removed 8 backward-compatibility aliases, kept only `load_data()`/`save_data()`
+- **Canonical function naming**: Use `data_read()` as primary (not `data_load()` or `load_data()`)
+  - `data_load()`, `load_data()`, `read_data()` are backward-compatible aliases
   - Use `result_save()`, `result_get()`, `result_list()` (not `save_result`, `get_result`, `list_results`)
   - Use `query_get()`, `query_execute()` (not `get_query`, `execute_query`)
   - Use `scratch_capture()`, `scratch_clean()` (not `capture`, `clean_scratch`)
