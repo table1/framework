@@ -7,19 +7,20 @@
 save_data(
   data,
   path,
-  type = "csv",
+  type = NULL,
   delimiter = "comma",
   locked = TRUE,
   encrypted = FALSE,
-  password = NULL
+  password = NULL,
+  force = FALSE
 )
 }
 \arguments{
 \item{data}{Data frame to save}
 
-\item{path}{Dot notation path to save data (e.g. "source.private.example")}
+\item{path}{Either dot notation, direct path, or simple filename}
 
-\item{type}{Type of data file ("csv" or "rds")}
+\item{type}{Type of data file ("csv" or "rds"). Auto-detected from extension if path includes one.}
 
 \item{delimiter}{Delimiter for CSV files ("comma", "tab", "semicolon", "space")}
 
@@ -28,6 +29,8 @@ save_data(
 \item{encrypted}{Whether the file should be encrypted}
 
 \item{password}{Optional password for encryption}
+
+\item{force}{If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.}
 }
 \description{
 Alias for backward compatibility
