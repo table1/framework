@@ -102,7 +102,6 @@ get_default_global_config <- function() {
   privacy_defaults <- catalog$privacy %||% list()
 
   list(
-    projects_root = path.expand(catalog$global$projects_root %||% "~/framework-projects"),
     project_types = project_types,
     author = list(
       name = .catalog_field_default(catalog, "author.name", "Your Name"),
@@ -110,16 +109,21 @@ get_default_global_config <- function() {
       affiliation = .catalog_field_default(catalog, "author.affiliation", "Your Institution")
     ),
     defaults = defaults,
-    git = list(
-      user_name = {
-        value <- git_defaults$user_name %||% NULL
-        if (is.character(value) && identical(value, "")) NULL else value
-      },
-      user_email = {
-        value <- git_defaults$user_email %||% NULL
-        if (is.character(value) && identical(value, "")) NULL else value
+    git = {
+      result <- list()
+      if (!is.null(git_defaults$user_name) && is.character(git_defaults$user_name) && nzchar(git_defaults$user_name)) {
+        result$user_name <- git_defaults$user_name
       }
-    ),
+      if (!is.null(git_defaults$user_email) && is.character(git_defaults$user_email) && nzchar(git_defaults$user_email)) {
+        result$user_email <- git_defaults$user_email
+      }
+      # Force to be JSON object instead of array when empty
+      if (length(result) == 0) {
+        structure(list(), names = character(0))
+      } else {
+        result
+      }
+    },
     privacy = list(
       secret_scan = if (is.null(privacy_defaults$secret_scan)) FALSE else isTRUE(privacy_defaults$secret_scan),
       gitignore_template = privacy_defaults$gitignore_template %||% "gitignore"
@@ -318,12 +322,12 @@ add_project_to_config <- function(project_dir, project_name = NULL, project_type
     }
   }
 
-  # Generate next ID
+  # Generate next ID (ensure it's an integer)
   if (is.null(config$projects) || length(config$projects) == 0) {
-    next_id <- 1
+    next_id <- 1L
   } else {
-    existing_ids <- sapply(config$projects, function(p) p$id %||% 0)
-    next_id <- max(existing_ids) + 1
+    existing_ids <- sapply(config$projects, function(p) as.integer(p$id %||% 0))
+    next_id <- as.integer(max(existing_ids) + 1)
   }
 
   new_project <- list(
@@ -341,4 +345,65 @@ add_project_to_config <- function(project_dir, project_name = NULL, project_type
 
   write_frameworkrc(config)
   invisible(next_id)
+}
+
+#' List all projects in global configuration
+#'
+#' @return Data frame with project information
+#' @export
+#' @keywords internal
+list_projects <- function() {
+  config <- read_frameworkrc()
+
+  if (is.null(config$projects) || length(config$projects) == 0) {
+    return(data.frame(
+      id = integer(0),
+      path = character(0),
+      created = character(0),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  # Convert to data frame and ensure IDs are integers
+  do.call(rbind, lapply(config$projects, function(p) {
+    data.frame(
+      id = as.integer(p$id),
+      path = as.character(p$path),
+      created = as.character(p$created %||% ""),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+#' Remove project from global configuration
+#'
+#' @param project_id Project ID to remove
+#' @return Invisibly returns NULL
+#' @export
+#' @keywords internal
+remove_project_from_config <- function(project_id) {
+  config <- read_frameworkrc()
+
+  # Find project with matching ID
+  if (is.null(config$projects) || length(config$projects) == 0) {
+    warning("No projects in registry")
+    return(invisible(NULL))
+  }
+
+  # Convert project_id to integer for comparison (handles floats like 1.0)
+  target_id <- as.integer(project_id)
+
+  # Filter out the project with matching ID
+  config$projects <- Filter(function(p) {
+    as.integer(p$id) != target_id
+  }, config$projects)
+
+  # Convert all IDs to integers while we're here (migration)
+  config$projects <- lapply(config$projects, function(p) {
+    p$id <- as.integer(p$id)
+    p
+  })
+
+  write_frameworkrc(config)
+  invisible(NULL)
 }

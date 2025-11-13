@@ -13,7 +13,7 @@
 #' @param extra_directories List of additional custom directories
 #' @param ai List with enabled, assistants, canonical_content
 #' @param git List with use_git, hooks, gitignore_content
-#' @param scaffold List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme
+#' @param scaffold List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme, ide, positron
 #'
 #' @return List with success status, project path, and project ID
 #' @export
@@ -122,7 +122,8 @@ project_create <- function(
 
   # Create .code-workspace file for VSCode/Positron users
   ide <- scaffold$ide %||% ""
-  if (grepl("vscode|positron", ide, ignore.case = TRUE)) {
+  positron <- scaffold$positron %||% FALSE
+  if (grepl("vscode|positron", ide, ignore.case = TRUE) || isTRUE(positron)) {
     .create_code_workspace(project_dir, name)
   }
 
@@ -330,7 +331,7 @@ project_create <- function(
     connections = list(
       framework = list(
         driver = "sqlite",
-        database = 'env("FRAMEWORK_DB_PATH", "framework.db")'
+        database = "framework.db"
       )
     )
   )
@@ -640,7 +641,7 @@ Edit this file or create new presentations with `make_notebook(stub = "revealjs"
 
 ```{r}
 # Load and analyze data
-# data <- load_data("example")
+# data <- data_read("example")
 summary(mtcars[, 1:3])
 ```
 

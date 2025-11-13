@@ -189,8 +189,11 @@ scaffold <- function(config_file = NULL) {
     return(character())
   }
 
+  # Get package list (handles both old and new config structures)
+  package_list <- .get_package_list_from_config(config)
+
   # Extract package names and their loading behavior
-  packages <- lapply(config$packages, function(pkg) {
+  packages <- lapply(package_list, function(pkg) {
     spec <- tryCatch(
       .parse_package_spec(pkg),
       error = function(e) {
