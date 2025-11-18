@@ -332,3 +332,59 @@ test_that("configure functions require settings file", {
     "settings.yml or config.yml not found"
   )
 })
+
+
+# Tests for .path_to_tilde() helper function
+test_that(".path_to_tilde handles NULL and empty paths", {
+  # NULL returns NULL
+  expect_null(framework:::.path_to_tilde(NULL))
+
+  # Empty string returns empty string
+  expect_equal(framework:::.path_to_tilde(""), "")
+})
+
+
+test_that(".path_to_tilde handles paths already with tilde", {
+  # Already tilde notation returns unchanged
+  expect_equal(framework:::.path_to_tilde("~/code"), "~/code")
+  expect_equal(framework:::.path_to_tilde("~/Documents/project"), "~/Documents/project")
+  expect_equal(framework:::.path_to_tilde("~"), "~")
+})
+
+
+test_that(".path_to_tilde converts home directory paths to tilde", {
+  # Get actual home directory for reliable testing
+  home <- path.expand("~")
+
+  # Path under home directory should convert to tilde
+  test_path <- file.path(home, "code")
+  result <- framework:::.path_to_tilde(test_path)
+  expect_match(result, "^~/code$")
+
+  # Nested path under home
+  test_path2 <- file.path(home, "Documents", "projects", "my-app")
+  result2 <- framework:::.path_to_tilde(test_path2)
+  expect_match(result2, "^~/Documents/projects/my-app$")
+
+  # Home directory itself returns just tilde
+  result_home <- framework:::.path_to_tilde(home)
+  expect_equal(result_home, "~")
+})
+
+
+test_that(".path_to_tilde leaves non-home paths unchanged", {
+  # Paths outside home directory should return unchanged
+  expect_equal(framework:::.path_to_tilde("/usr/local/bin"), "/usr/local/bin")
+  expect_equal(framework:::.path_to_tilde("/tmp/test"), "/tmp/test")
+  expect_equal(framework:::.path_to_tilde("/opt/software"), "/opt/software")
+})
+
+
+test_that(".path_to_tilde handles paths with trailing slashes", {
+  home <- path.expand("~")
+
+  # Path with trailing slash
+  test_path <- paste0(file.path(home, "code"), "/")
+  result <- framework:::.path_to_tilde(test_path)
+  expect_match(result, "^~/code$")
+})

@@ -208,22 +208,1489 @@
             </div>
           </div>
 
-          <!-- Project type editor when a type is selected -->
-          <div v-else-if="currentProjectType && catalog">
-            <ProjectStructureEditor
-              :project-type="currentProjectTypeKey"
-              v-model:directories="settings.project_types[currentProjectTypeKey].directories"
-              v-model:render-dirs="settings.project_types[currentProjectTypeKey].render_dirs"
-              v-model:enabled="directoriesEnabled[currentProjectTypeKey]"
-              v-model:extra-directories="settings.project_types[currentProjectTypeKey].extra_directories"
-              v-model:settings="settings.project_types[currentProjectTypeKey]"
-              v-model:gitignore="settings.project_types[currentProjectTypeKey].gitignore"
-              :catalog="catalog.project_types[currentProjectTypeKey] || {}"
-              :new-extra-ids="newExtraDirectoryIds"
-              @update:newExtraIds="newExtraDirectoryIds = $event"
-              @reset="showResetConfirm(currentProjectTypeKey)"
-            />
+          <!-- Existing project type editor when a type is selected -->
+          <div v-else-if="currentProjectType" class="space-y-6">
+            <div v-if="currentProjectTypeKey === 'project'" class="space-y-6">
+              <!-- Project-specific settings (e.g., ggplot theme) -->
+              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
+                <SettingsPanel
+                  title="Project Settings"
+                  description="Default settings applied when creating new projects of this type."
+                >
+                  <SettingsBlock>
+                    <div class="space-y-5">
+                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
+                        <Toggle
+                          v-if="setting.control === 'toggle'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :description="setting.description"
+                        />
+                        <Select
+                          v-else-if="setting.control === 'select'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                        >
+                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </Select>
+                        <Input
+                          v-else-if="setting.control === 'text'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                          :placeholder="setting.placeholder"
+                        />
+                      </template>
+                    </div>
+                  </SettingsBlock>
+                </SettingsPanel>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-inputs`)"
+                  >
+                  Inputs
+                </button>
+                <button
+                  type="button"
+                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="scrollToSection(`project-${currentProjectTypeKey}-workspaces`)"
+                >
+                  Workspaces
+                </button>
+                <button
+                  type="button"
+                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="scrollToSection(`project-${currentProjectTypeKey}-outputs`)"
+                >
+                  Outputs
+                </button>
+                <button
+                  type="button"
+                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="scrollToSection(`project-${currentProjectTypeKey}-utility`)"
+                  >
+                    Utility
+                  </button>
+                <button
+                  type="button"
+                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="scrollToSection(`project-${currentProjectTypeKey}-gitignore`)"
+                  >
+                    .gitignore
+                  </button>
+                </div>
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
+                  Reset to Defaults
+                </Button>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-inputs`">
+                <SettingsPanel
+                  title="Inputs"
+                  description="Define the read-only locations where raw and prepared data live."
+                >
+                  <div class="space-y-5">
+                    <div v-for="field in generalInputFields" :key="field.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Input Directories</h4>
+
+                    <!-- Saved directories with toggles -->
+                    <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'input').length > 0" class="space-y-3 mb-4">
+                      <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'input')" :key="dir.key" class="space-y-1.5">
+                        <Toggle
+                          :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                          @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                          :label="dir.label"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                          :model-value="dir.path"
+                          @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- New directories with repeater -->
+                    <Repeater
+                      v-model="newInputDirectories"
+                      addLabel="Add Input Directory"
+                      :defaultItem="() => ({ key: '', label: '', path: '', type: 'input', _id: Date.now() })"
+                    >
+                      <template #default="{ item, update }">
+                        <div class="space-y-3">
+                          <Input
+                            :model-value="item.key"
+                            @update:model-value="update('key', $event)"
+                            label="Key"
+                            placeholder="inputs_archive"
+                            hint="Unique identifier (alphanumeric and underscores)"
+                          />
+                          <Input
+                            :model-value="item.label"
+                            @update:model-value="update('label', $event)"
+                            label="Label"
+                            placeholder="Archive"
+                          />
+                          <Input
+                            :model-value="item.path"
+                            @update:model-value="update('path', $event)"
+                            label="Path"
+                            prefix="/"
+                            placeholder="inputs/archive"
+                            monospace
+                          />
+                        </div>
+                      </template>
+                    </Repeater>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-workspaces`">
+                <SettingsPanel
+                  title="Workspaces"
+                  description="Functions, notebooks, and scripts scaffolded into every project."
+                >
+                  <div class="space-y-5">
+                    <!-- Renderable directories (Notebooks, Docs) with two-column layout -->
+                    <div v-for="field in generalWorkspaceRenderableFields" :key="field.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <div v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false" class="grid grid-cols-2 gap-3">
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                          label="Source files"
+                          prefix="/"
+                          monospace
+                        />
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].render_dirs[field.key]"
+                          label="Quarto render directory"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Non-renderable directories (Functions, Scripts) with single-column layout -->
+                    <div v-for="field in generalWorkspaceNonRenderableFields" :key="field.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
+
+                    <!-- Saved directories with toggles -->
+                    <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace').length > 0" class="space-y-3 mb-4">
+                      <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace')" :key="dir.key" class="space-y-1.5">
+                        <Toggle
+                          :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                          @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                          :label="dir.label"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                          :model-value="dir.path"
+                          @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- New directories with repeater -->
+                    <Repeater
+                      v-model="newWorkspaceDirectories"
+                      addLabel="Add Workspace Directory"
+                      :defaultItem="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                    >
+                      <template #default="{ item, update }">
+                        <div class="space-y-3">
+                          <Input
+                            :model-value="item.key"
+                            @update:model-value="update('key', $event)"
+                            label="Key"
+                            placeholder="tests"
+                            hint="Unique identifier (alphanumeric and underscores)"
+                          />
+                          <Input
+                            :model-value="item.label"
+                            @update:model-value="update('label', $event)"
+                            label="Label"
+                            placeholder="Tests"
+                          />
+                          <Input
+                            :model-value="item.path"
+                            @update:model-value="update('path', $event)"
+                            label="Path"
+                            prefix="/"
+                            placeholder="tests"
+                            monospace
+                          />
+                        </div>
+                      </template>
+                    </Repeater>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-outputs`">
+                <SettingsPanel
+                  title="Outputs"
+                  description="Outputs are public by default so results are easy to share."
+                >
+                  <div class="space-y-5">
+                    <div v-for="field in generalOutputFields" :key="field.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Output Directories</h4>
+
+                    <!-- Saved directories with toggles -->
+                    <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'output').length > 0" class="space-y-3 mb-4">
+                      <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'output')" :key="dir.key" class="space-y-1.5">
+                        <Toggle
+                          :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                          @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                          :label="dir.label"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                          :model-value="dir.path"
+                          @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- New directories with repeater -->
+                    <Repeater
+                      v-model="newOutputDirectories"
+                      addLabel="Add Output Directory"
+                      :defaultItem="() => ({ key: '', label: '', path: '', type: 'output', _id: Date.now() })"
+                    >
+                      <template #default="{ item, update }">
+                        <div class="space-y-3">
+                          <Input
+                            :model-value="item.key"
+                            @update:model-value="update('key', $event)"
+                            label="Key"
+                            placeholder="outputs_animations"
+                            hint="Unique identifier (alphanumeric and underscores)"
+                          />
+                          <Input
+                            :model-value="item.label"
+                            @update:model-value="update('label', $event)"
+                            label="Label"
+                            placeholder="Animations"
+                          />
+                          <Input
+                            :model-value="item.path"
+                            @update:model-value="update('path', $event)"
+                            label="Path"
+                            prefix="/"
+                            placeholder="outputs/animations"
+                            monospace
+                          />
+                        </div>
+                      </template>
+                    </Repeater>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-utility`">
+                <SettingsPanel
+                  title="Utility directories"
+                  description="Cache and scratch folders are gitignored so temporary artifacts never leak into version control."
+                >
+                  <div class="space-y-5">
+                    <div v-for="field in generalUtilityFields" :key="field.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+            </div>
+
+            <div v-else-if="currentProjectTypeKey === 'project_sensitive'" class="space-y-6">
+              <!-- Project-specific settings (e.g., ggplot theme) -->
+              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
+                <SettingsPanel
+                  title="Project Settings"
+                  description="Default settings applied when creating new projects of this type."
+                >
+                  <SettingsBlock>
+                    <div class="space-y-5">
+                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
+                        <Toggle
+                          v-if="setting.control === 'toggle'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :description="setting.description"
+                        />
+                        <Select
+                          v-else-if="setting.control === 'select'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                        >
+                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </Select>
+                        <Input
+                          v-else-if="setting.control === 'text'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                          :placeholder="setting.placeholder"
+                        />
+                      </template>
+                    </div>
+                  </SettingsBlock>
+                </SettingsPanel>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-inputs-private`)"
+                  >
+                    Inputs
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-workspaces`)"
+                  >
+                    Workspaces
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-outputs-private`)"
+                  >
+                    Outputs
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-utility`)"
+                  >
+                    Utility
+                  </button>
+                </div>
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
+                  Reset to Defaults
+                </Button>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-inputs-private`">
+                <SettingsPanel
+                  title="Inputs"
+                  description="Keep private inputs compartmentalized; publish processed outputs into public folders when ready."
+                >
+                  <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+                    <div>Private</div>
+                    <div>Public</div>
+                  </div>
+                  <div class="space-y-5">
+                    <div v-for="pair in sensitiveInputPairs" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
+                      <div class="space-y-2">
+                        <Toggle
+                          :id="`${currentProjectTypeKey}-${pair.privateKey}-toggle`"
+                          v-model="getDirectoriesEnabled(currentProjectTypeKey)[pair.privateKey]"
+                          :label="pair.privateLabel || `${pair.label} (private)`"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[pair.privateKey] !== false"
+                          v-model="settings.project_types[currentProjectTypeKey].directories[pair.privateKey]"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                      <div class="space-y-2">
+                        <Toggle
+                          :id="`${currentProjectTypeKey}-${pair.publicKey}-toggle`"
+                          v-model="getDirectoriesEnabled(currentProjectTypeKey)[pair.publicKey]"
+                          :label="pair.publicLabel || `${pair.label} (public)`"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[pair.publicKey] !== false"
+                          v-model="settings.project_types[currentProjectTypeKey].directories[pair.publicKey]"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Private Inputs</h4>
+
+                        <!-- Saved directories with toggles -->
+                        <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'input_private').length > 0" class="space-y-3 mb-4">
+                          <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'input_private')" :key="dir.key" class="space-y-1.5">
+                            <Toggle
+                              :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                              @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                              :label="dir.label"
+                            />
+                            <Input
+                              v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                              :model-value="dir.path"
+                              @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                              prefix="/"
+                              monospace
+                            />
+                          </div>
+                        </div>
+
+                        <!-- New directories with repeater -->
+                        <Repeater
+                          v-model="newInputPrivateDirectories"
+                          addLabel="Add Private Input"
+                          :defaultItem="() => ({ key: '', label: '', path: '', type: 'input_private', _id: Date.now() })"
+                        >
+                          <template #default="{ item, update }">
+                            <div class="space-y-3">
+                              <Input
+                                :model-value="item.key"
+                                @update:model-value="update('key', $event)"
+                                label="Key"
+                                placeholder="inputs_private_archive"
+                                hint="Unique identifier (alphanumeric and underscores)"
+                              />
+                              <Input
+                                :model-value="item.label"
+                                @update:model-value="update('label', $event)"
+                                label="Label"
+                                placeholder="Archive"
+                              />
+                              <Input
+                                :model-value="item.path"
+                                @update:model-value="update('path', $event)"
+                                label="Path"
+                                prefix="/"
+                                placeholder="inputs/private/archive"
+                                monospace
+                              />
+                            </div>
+                          </template>
+                        </Repeater>
+                      </div>
+
+                      <div>
+                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Public Inputs</h4>
+
+                        <!-- Saved directories with toggles -->
+                        <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'input_public').length > 0" class="space-y-3 mb-4">
+                          <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'input_public')" :key="dir.key" class="space-y-1.5">
+                            <Toggle
+                              :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                              @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                              :label="dir.label"
+                            />
+                            <Input
+                              v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                              :model-value="dir.path"
+                              @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                              prefix="/"
+                              monospace
+                            />
+                          </div>
+                        </div>
+
+                        <!-- New directories with repeater -->
+                        <Repeater
+                          v-model="newInputPublicDirectories"
+                          addLabel="Add Public Input"
+                          :defaultItem="() => ({ key: '', label: '', path: '', type: 'input_public', _id: Date.now() })"
+                        >
+                          <template #default="{ item, update }">
+                            <div class="space-y-3">
+                              <Input
+                                :model-value="item.key"
+                                @update:model-value="update('key', $event)"
+                                label="Key"
+                                placeholder="inputs_public_archive"
+                                hint="Unique identifier (alphanumeric and underscores)"
+                              />
+                              <Input
+                                :model-value="item.label"
+                                @update:model-value="update('label', $event)"
+                                label="Label"
+                                placeholder="Archive"
+                              />
+                              <Input
+                                :model-value="item.path"
+                                @update:model-value="update('path', $event)"
+                                label="Path"
+                                prefix="/"
+                                placeholder="inputs/public/archive"
+                                monospace
+                              />
+                            </div>
+                          </template>
+                        </Repeater>
+                      </div>
+                    </div>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-workspaces`">
+                <SettingsPanel
+                  title="Workspaces"
+                  description="Module locations for notebooks, scripts, and helper functions."
+                >
+                  <div class="space-y-5">
+                    <!-- Renderable directories (Notebooks, Docs) with two-column layout -->
+                    <div v-for="field in generalWorkspaceRenderableFields" :key="`sensitive-${field.key}`" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <div v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false" class="grid grid-cols-2 gap-3">
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                          label="Source files"
+                          prefix="/"
+                          monospace
+                        />
+                        <Input
+                          v-if="settings.project_types[currentProjectTypeKey].render_dirs"
+                          v-model="settings.project_types[currentProjectTypeKey].render_dirs[field.key]"
+                          label="Quarto render directory"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Non-renderable directories (Functions, Scripts) with single-column layout -->
+                    <div v-for="field in generalWorkspaceNonRenderableFields" :key="`sensitive-${field.key}`" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
+
+                    <!-- Saved directories with toggles -->
+                    <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace').length > 0" class="space-y-3 mb-4">
+                      <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace')" :key="dir.key" class="space-y-1.5">
+                        <Toggle
+                          :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                          @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                          :label="dir.label"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                          :model-value="dir.path"
+                          @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- New directories with repeater -->
+                    <Repeater
+                      v-model="newWorkspaceDirectories"
+                      addLabel="Add Workspace Directory"
+                      :defaultItem="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                    >
+                      <template #default="{ item, update }">
+                        <div class="space-y-3">
+                          <Input
+                            :model-value="item.key"
+                            @update:model-value="update('key', $event)"
+                            label="Key"
+                            placeholder="tests"
+                            hint="Unique identifier (alphanumeric and underscores)"
+                          />
+                          <Input
+                            :model-value="item.label"
+                            @update:model-value="update('label', $event)"
+                            label="Label"
+                            placeholder="Tests"
+                          />
+                          <Input
+                            :model-value="item.path"
+                            @update:model-value="update('path', $event)"
+                            label="Path"
+                            prefix="/"
+                            placeholder="tests"
+                            monospace
+                          />
+                        </div>
+                      </template>
+                    </Repeater>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-outputs-private`">
+                <SettingsPanel
+                  title="Outputs"
+                  description="Review outputs before promotion; private folders remain gitignored while public copies are ready to share."
+                >
+                  <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+                    <div>Private</div>
+                    <div>Public</div>
+                  </div>
+                  <div class="space-y-5">
+                    <div v-for="pair in sensitiveOutputPairs" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
+                      <div class="space-y-2">
+                        <Toggle
+                          :id="`${currentProjectTypeKey}-${pair.privateKey}-toggle`"
+                          v-model="getDirectoriesEnabled(currentProjectTypeKey)[pair.privateKey]"
+                          :label="pair.privateLabel || `${pair.label} (private)`"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[pair.privateKey] !== false"
+                          v-model="settings.project_types[currentProjectTypeKey].directories[pair.privateKey]"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                      <div class="space-y-2">
+                        <Toggle
+                          :id="`${currentProjectTypeKey}-${pair.publicKey}-toggle`"
+                          v-model="getDirectoriesEnabled(currentProjectTypeKey)[pair.publicKey]"
+                          :label="pair.publicLabel || `${pair.label} (public)`"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[pair.publicKey] !== false"
+                          v-model="settings.project_types[currentProjectTypeKey].directories[pair.publicKey]"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Private Outputs</h4>
+
+                        <!-- Saved directories with toggles -->
+                        <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'output_private').length > 0" class="space-y-3 mb-4">
+                          <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'output_private')" :key="dir.key" class="space-y-1.5">
+                            <Toggle
+                              :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                              @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                              :label="dir.label"
+                            />
+                            <Input
+                              v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                              :model-value="dir.path"
+                              @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                              prefix="/"
+                              monospace
+                            />
+                          </div>
+                        </div>
+
+                        <!-- New directories with repeater -->
+                        <Repeater
+                          v-model="newOutputPrivateDirectories"
+                          addLabel="Add Private Output"
+                          :defaultItem="() => ({ key: '', label: '', path: '', type: 'output_private', _id: Date.now() })"
+                        >
+                          <template #default="{ item, update }">
+                            <div class="space-y-3">
+                              <Input
+                                :model-value="item.key"
+                                @update:model-value="update('key', $event)"
+                                label="Key"
+                                placeholder="outputs_private_archive"
+                                hint="Unique identifier (alphanumeric and underscores)"
+                              />
+                              <Input
+                                :model-value="item.label"
+                                @update:model-value="update('label', $event)"
+                                label="Label"
+                                placeholder="Archive"
+                              />
+                              <Input
+                                :model-value="item.path"
+                                @update:model-value="update('path', $event)"
+                                label="Path"
+                                prefix="/"
+                                placeholder="outputs/private/archive"
+                                monospace
+                              />
+                            </div>
+                          </template>
+                        </Repeater>
+                      </div>
+
+                      <div>
+                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Public Outputs</h4>
+
+                        <!-- Saved directories with toggles -->
+                        <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'output_public').length > 0" class="space-y-3 mb-4">
+                          <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'output_public')" :key="dir.key" class="space-y-1.5">
+                            <Toggle
+                              :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                              @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                              :label="dir.label"
+                            />
+                            <Input
+                              v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                              :model-value="dir.path"
+                              @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                              prefix="/"
+                              monospace
+                            />
+                          </div>
+                        </div>
+
+                        <!-- New directories with repeater -->
+                        <Repeater
+                          v-model="newOutputPublicDirectories"
+                          addLabel="Add Public Output"
+                          :defaultItem="() => ({ key: '', label: '', path: '', type: 'output_public', _id: Date.now() })"
+                        >
+                          <template #default="{ item, update }">
+                            <div class="space-y-3">
+                              <Input
+                                :model-value="item.key"
+                                @update:model-value="update('key', $event)"
+                                label="Key"
+                                placeholder="outputs_public_archive"
+                                hint="Unique identifier (alphanumeric and underscores)"
+                              />
+                              <Input
+                                :model-value="item.label"
+                                @update:model-value="update('label', $event)"
+                                label="Label"
+                                placeholder="Archive"
+                              />
+                              <Input
+                                :model-value="item.path"
+                                @update:model-value="update('path', $event)"
+                                label="Path"
+                                prefix="/"
+                                placeholder="outputs/public/archive"
+                                monospace
+                              />
+                            </div>
+                          </template>
+                        </Repeater>
+                      </div>
+                    </div>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-utility`">
+                <SettingsPanel
+                  title="Utility directories"
+                  description="Keep cache and scratch in private space for safety; both remain gitignored."
+                >
+                  <div class="space-y-5">
+                    <div v-for="field in generalUtilityFields" :key="`sensitive-${field.key}`" class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey)[field.key]"
+                        :label="field.label"
+                        :description="field.hint"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey)[field.key] !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+            </div>
+
+            <div v-else-if="currentProjectTypeKey === 'presentation'" class="space-y-6">
+              <!-- Project-specific settings (e.g., ggplot theme) -->
+              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
+                <SettingsPanel
+                  title="Project Settings"
+                  description="Default settings applied when creating new projects of this type."
+                >
+                  <SettingsBlock>
+                    <div class="space-y-5">
+                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
+                        <Toggle
+                          v-if="setting.control === 'toggle'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :description="setting.description"
+                        />
+                        <Select
+                          v-else-if="setting.control === 'select'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                        >
+                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </Select>
+                        <Input
+                          v-else-if="setting.control === 'text'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                          :placeholder="setting.placeholder"
+                        />
+                      </template>
+                    </div>
+                  </SettingsBlock>
+                </SettingsPanel>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-primary`)"
+                  >
+                    Primary files
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-optional`)"
+                  >
+                    Optional folders
+                  </button>
+                </div>
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
+                  Reset to Defaults
+                </Button>
+              </div>
+              <div :id="`project-${currentProjectTypeKey}-primary`">
+                <SettingsPanel title="Primary files">
+                  <div class="space-y-3">
+                    <Input
+                      v-model="settings.project_types[currentProjectTypeKey].directories.presentation_source"
+                      label="Presentation source file"
+                      hint="Relative path to your primary presentation.qmd."
+                      monospace
+                    />
+                    <Input
+                      v-model="settings.project_types[currentProjectTypeKey].directories.rendered_slides"
+                      label="Rendered slides directory"
+                      hint="Rendered slides write to the project root by default ('.')."
+                      monospace
+                    />
+                  </div>
+                </SettingsPanel>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-optional`">
+                <SettingsPanel title="Optional folders" description="Toggle extra scaffolding when you need supporting data, scripts, or helper utilities.">
+                  <div class="space-y-4">
+                    <div class="space-y-2">
+                      <Toggle
+                        v-model="presentationOptions.includeInputs"
+                        label="Include data directory"
+                        description="Adds a data/ folder for sample data used in the presentation."
+                      />
+                      <Input
+                        v-if="presentationOptions.includeInputs"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.inputs"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+
+                    <div class="space-y-2">
+                      <Toggle
+                        v-model="presentationOptions.includeScripts"
+                        label="Include scripts directory"
+                        description="Adds a scripts/ folder for demo code or automation."
+                      />
+                      <Input
+                        v-if="presentationOptions.includeScripts"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.scripts"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+
+                    <div class="space-y-2">
+                      <Toggle
+                        v-model="presentationOptions.includeFunctions"
+                        label="Include functions directory"
+                        description="Adds functions/ for helper utilities that should load automatically."
+                      />
+                      <Input
+                        v-if="presentationOptions.includeFunctions"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.functions"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                      <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Custom Directories</h4>
+                      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Add any additional directories you need for your presentations.</p>
+
+                      <!-- Saved directories with toggles -->
+                      <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace').length > 0" class="space-y-3 mb-4">
+                        <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace')" :key="dir.key" class="space-y-1.5">
+                          <Toggle
+                            :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                            @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                            :label="dir.label"
+                          />
+                          <Input
+                            v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                            :model-value="dir.path"
+                            @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                            prefix="/"
+                            monospace
+                          />
+                        </div>
+                      </div>
+
+                      <!-- New directories with repeater -->
+                      <Repeater
+                        v-model="newWorkspaceDirectories"
+                        addLabel="Add Directory"
+                        :defaultItem="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                      >
+                        <template #default="{ item, update }">
+                          <div class="space-y-3">
+                            <Input
+                              :model-value="item.key"
+                              @update:model-value="update('key', $event)"
+                              label="Key"
+                              placeholder="assets"
+                              hint="Unique identifier (alphanumeric and underscores)"
+                            />
+                            <Input
+                              :model-value="item.label"
+                              @update:model-value="update('label', $event)"
+                              label="Label"
+                              placeholder="Assets"
+                            />
+                            <Input
+                              :model-value="item.path"
+                              @update:model-value="update('path', $event)"
+                              label="Path"
+                              prefix="/"
+                              placeholder="assets"
+                              monospace
+                            />
+                          </div>
+                        </template>
+                      </Repeater>
+                    </div>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+            </div>
+
+            <div v-else-if="currentProjectTypeKey === 'course'" class="space-y-6">
+              <!-- Project-specific settings (e.g., ggplot theme) -->
+              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
+                <SettingsPanel
+                  title="Project Settings"
+                  description="Default settings applied when creating new projects of this type."
+                >
+                  <SettingsBlock>
+                    <div class="space-y-5">
+                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
+                        <Toggle
+                          v-if="setting.control === 'toggle'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :description="setting.description"
+                        />
+                        <Select
+                          v-else-if="setting.control === 'select'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                        >
+                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </Select>
+                        <Input
+                          v-else-if="setting.control === 'text'"
+                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
+                          :label="setting.label"
+                          :hint="setting.hint"
+                          :placeholder="setting.placeholder"
+                        />
+                      </template>
+                    </div>
+                  </SettingsBlock>
+                </SettingsPanel>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click="scrollToSection(`project-${currentProjectTypeKey}-workspaces`)"
+                  >
+                    Workspaces
+                  </button>
+                </div>
+                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
+                  Reset to Defaults
+                </Button>
+              </div>
+
+              <div :id="`project-${currentProjectTypeKey}-workspaces`">
+                <SettingsPanel
+                  title="Workspaces"
+                  description="Course materials, data, and helper code."
+                >
+                  <div class="space-y-5">
+                    <!-- Renderable directories (Slides, Assignments, Course Docs) -->
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).slides"
+                        label="Slides"
+                        description="Lecture slide sources"
+                      />
+                      <div v-if="getDirectoriesEnabled(currentProjectTypeKey).slides !== false && settings.project_types[currentProjectTypeKey].render_dirs" class="grid grid-cols-2 gap-3">
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].directories.slides"
+                          label="Source files"
+                          prefix="/"
+                          monospace
+                        />
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].render_dirs.slides"
+                          label="Quarto render directory"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).assignments"
+                        label="Assignments"
+                        description="Homework or lab materials"
+                      />
+                      <div v-if="getDirectoriesEnabled(currentProjectTypeKey).assignments !== false && settings.project_types[currentProjectTypeKey].render_dirs" class="grid grid-cols-2 gap-3">
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].directories.assignments"
+                          label="Source files"
+                          prefix="/"
+                          monospace
+                        />
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].render_dirs.assignments"
+                          label="Quarto render directory"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).course_docs"
+                        label="Course documents"
+                        description="Syllabus, policies, grading guides"
+                      />
+                      <div v-if="getDirectoriesEnabled(currentProjectTypeKey).course_docs !== false && settings.project_types[currentProjectTypeKey].render_dirs" class="grid grid-cols-2 gap-3">
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].directories.course_docs"
+                          label="Source files"
+                          prefix="/"
+                          monospace
+                        />
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].render_dirs.course_docs"
+                          label="Quarto render directory"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Modules (notebooks) -->
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).notebooks"
+                        label="Modules"
+                        description="Module notebooks or workshop materials"
+                      />
+                      <div v-if="getDirectoriesEnabled(currentProjectTypeKey).notebooks !== false && settings.project_types[currentProjectTypeKey].render_dirs" class="grid grid-cols-2 gap-3">
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].directories.notebooks"
+                          label="Source files"
+                          prefix="/"
+                          monospace
+                        />
+                        <Input
+                          v-model="settings.project_types[currentProjectTypeKey].render_dirs.modules"
+                          label="Quarto render directory"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Reference materials -->
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).readings"
+                        label="Readings"
+                        description="Assigned readings and references"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey).readings !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.readings"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).data"
+                        label="Course data"
+                        description="Shared datasets distributed with the course"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey).data !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.data"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+
+                    <!-- Helper code directories -->
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).functions"
+                        label="Functions"
+                        description="R/functions for helper utilities that should load automatically"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey).functions !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.functions"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <Toggle
+                        v-model="getDirectoriesEnabled(currentProjectTypeKey).scripts"
+                        label="Scripts"
+                        description="Reusable R scripts or automation tasks"
+                      />
+                      <Input
+                        v-if="getDirectoriesEnabled(currentProjectTypeKey).scripts !== false"
+                        v-model="settings.project_types[currentProjectTypeKey].directories.scripts"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Custom Workspace Directories -->
+                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Custom Directories</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Add any additional directories you need for your courses.</p>
+
+                    <!-- Saved directories with toggles -->
+                    <div v-if="savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace').length > 0" class="space-y-3 mb-4">
+                      <div v-for="dir in savedExtraDirectoriesByType(currentProjectTypeKey, 'workspace')" :key="dir.key" class="space-y-1.5">
+                        <Toggle
+                          :model-value="getDirectoriesEnabled(currentProjectTypeKey)[dir.key]"
+                          @update:model-value="setDirectoryEnabled(currentProjectTypeKey, dir.key, $event)"
+                          :label="dir.label"
+                        />
+                        <Input
+                          v-if="getDirectoriesEnabled(currentProjectTypeKey)[dir.key] !== false"
+                          :model-value="dir.path"
+                          @update:model-value="updateExtraDirectoryPath(currentProjectTypeKey, dir.key, $event)"
+                          prefix="/"
+                          monospace
+                        />
+                      </div>
+                    </div>
+
+                    <!-- New directories with repeater -->
+                    <Repeater
+                      v-model="newWorkspaceDirectories"
+                      addLabel="Add Directory"
+                      :defaultItem="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                    >
+                      <template #default="{ item, update }">
+                        <div class="space-y-3">
+                          <Input
+                            :model-value="item.key"
+                            @update:model-value="update('key', $event)"
+                            label="Key"
+                            placeholder="resources"
+                            hint="Unique identifier (alphanumeric and underscores)"
+                          />
+                          <Input
+                            :model-value="item.label"
+                            @update:model-value="update('label', $event)"
+                            label="Label"
+                            placeholder="Resources"
+                          />
+                          <Input
+                            :model-value="item.path"
+                            @update:model-value="update('path', $event)"
+                            label="Path"
+                            prefix="/"
+                            placeholder="resources"
+                            monospace
+                          />
+                        </div>
+                      </template>
+                    </Repeater>
+                  </div>
+                </SettingsPanel>
+              </div>
+
+            </div>
+
+            <div :id="`project-${currentProjectTypeKey}-gitignore`">
+              <SettingsPanel
+                title=".gitignore Template"
+                description="Patterns applied to all new projects of this type."
+              >
+                <CodeEditor
+                  v-model="templateEditors[`gitignore_${currentProjectTypeKey}`].contents"
+                  language="text"
+                  min-height="400px"
+                  :disabled="templateEditors[`gitignore_${currentProjectTypeKey}`].loading"
+                />
+                <p v-if="templateEditors[`gitignore_${currentProjectTypeKey}`].loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading .gitignore template…</p>
+
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate(`gitignore-${currentProjectTypeKey}`, `gitignore_${currentProjectTypeKey}`)">Restore Default</Button>
+                </div>
+              </SettingsPanel>
+            </div>
           </div>
+        </div>
+
+        <!-- Templates -->
+        <div id="templates" v-show="activeSection === 'templates'" class="space-y-8">
+          <div id="templates-notebook">
+            <SettingsPanel>
+              <SettingsBlock
+                title="Notebook Template"
+                description="Used by framework::make_notebook() to populate new notebooks."
+              >
+                <CodeEditor
+                  v-model="templateEditors.notebook.contents"
+                  language="markdown"
+                  min-height="500px"
+                  :disabled="templateEditors.notebook.loading"
+                />
+                <p v-if="templateEditors.notebook.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading notebook template…</p>
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('notebook')">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </SettingsPanel>
+          </div>
+
+          <div id="templates-script">
+            <SettingsPanel>
+              <SettingsBlock
+                title="Script Template"
+                description="Used by framework::make_script() for quick task scaffolds."
+              >
+                <CodeEditor
+                  v-model="templateEditors.script.contents"
+                  language="r"
+                  min-height="450px"
+                  :disabled="templateEditors.script.loading"
+                />
+                <p v-if="templateEditors.script.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading script template…</p>
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('script')">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </SettingsPanel>
+          </div>
+
+          <div id="templates-presentation">
+            <SettingsPanel>
+              <SettingsBlock
+                title="Presentation Template"
+                description="Used by framework::make_notebook(stub = 'revealjs') for slide decks."
+              >
+                <CodeEditor
+                  v-model="templateEditors.presentation.contents"
+                  language="markdown"
+                  min-height="500px"
+                  :disabled="templateEditors.presentation.loading"
+                />
+                <p v-if="templateEditors.presentation.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading presentation template…</p>
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('presentation')">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </SettingsPanel>
+          </div>
+        </div>
+
+        <!-- AI Assistants -->
+        <div id="ai" v-show="activeSection === 'ai'">
+          <SettingsPanel
+            description="Framework maintains context files for selected assistants and keeps them in sync before commits."
+          >
+            <SettingsBlock>
+              <Toggle
+                v-model="settings.defaults.ai_support"
+                label="Enable AI Support"
+                description="Generate and sync assistant-specific context files."
+              />
+            </SettingsBlock>
+
+            <SettingsBlock
+              title="Canonical context file"
+              description="This file is the source of truth; other instructions files are synced to it when AI hooks run."
+            >
+              <Select
+                v-model="settings.defaults.ai_canonical_file"
+                :disabled="!settings.defaults.ai_support"
+                label="Canonical Context File"
+              >
+                <option value="AGENTS.md">AGENTS.md (multi-agent orchestrator)</option>
+                <option value="CLAUDE.md">CLAUDE.md</option>
+                <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
+              </Select>
+            </SettingsBlock>
+
+            <template v-if="settings.defaults.ai_support">
+              <SettingsBlock
+                title="Assistants"
+                description="Choose which assistants receive context updates."
+              >
+                <div class="space-y-2">
+                  <Checkbox
+                    v-for="assistant in availableAssistants"
+                    :key="assistant.id"
+                    :id="`ai-${assistant.id}`"
+                    v-model="aiAssistants[assistant.id]"
+                    :description="assistant.description"
+                  >
+                    {{ assistant.label }}
+                  </Checkbox>
+                </div>
+              </SettingsBlock>
+
+              <SettingsBlock
+                title="Canonical instructions"
+                description="Edit the canonical file directly. Restore defaults if you want to start over."
+              >
+                <CodeEditor
+                  v-model="templateEditors.canonical.contents"
+                  language="markdown"
+                  min-height="500px"
+                  :disabled="templateEditors.canonical.loading || !settings.defaults.ai_support"
+                />
+                <div class="flex justify-end mt-3">
+                  <Button size="sm" variant="secondary" :disabled="templateEditors.canonical.loading" @click="resetCanonicalTemplateInline">Restore Default</Button>
+                </div>
+              </SettingsBlock>
+            </template>
+          </SettingsPanel>
         </div>
 
         <!-- Git & Hooks -->
@@ -2366,7 +3833,8 @@ const saveSettings = async () => {
           items: projectType.extra_directories.map(d => d.key)
         })
 
-        // Keep directories_enabled in payload so new projects can inherit these defaults
+        // Remove directories_enabled from payload (it's UI state, not saved to server)
+        delete projectType.directories_enabled
       }
     }
 

@@ -270,32 +270,247 @@
           <Alert type="error" title="Error Loading Settings" :description="settingsError" />
         </div>
 
-        <div v-else-if="projectSettings">
+        <div v-else>
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Project Structure</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            This project uses the <strong>{{ projectTypeLabel }}</strong> structure. View-only mode.
+            This project uses the <strong>{{ projectTypeLabel }}</strong> structure. Existing directories cannot be renamed or removed, but you can add custom directories below.
           </p>
 
-          <Alert
-            type="info"
-            title="View Only"
-            description="Project structure settings are read-only in this view. To modify structure, edit the project's configuration files directly."
-            class="mb-6"
-          />
+          <!-- Workspace Directories -->
+          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Workspaces</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Functions, notebooks, and scripts scaffolded into every project.
+            </p>
 
-          <div class="opacity-60 pointer-events-none">
-            <ProjectStructureEditor
-              :project-type="project.type"
-              :directories="projectSettings.directories || {}"
-              :render-dirs="projectSettings.render_dirs || {}"
-              :enabled="directoriesEnabledForDisplay"
-              :extra-directories="projectSettings.extra_directories || []"
-              :settings="projectSettings"
-              :gitignore="projectSettings.gitignore || ''"
-              :catalog="settingsCatalog?.project_types?.[project.type] || {}"
-              :new-extra-ids="new Set()"
-              :disabled="true"
-            />
+            <!-- Existing workspace directories -->
+            <div class="space-y-4 mb-6">
+              <div v-for="(value, key) in workspaceDirectories" :key="key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                    {{ formatDirectoryLabel(key) }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing custom workspace directories (from extra_directories) -->
+            <div v-if="existingCustomWorkspaceDirectories.length > 0" class="space-y-4 mb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300">Custom Workspace Directories</h4>
+              </div>
+              <div v-for="dir in existingCustomWorkspaceDirectories" :key="dir.key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300">
+                    {{ dir.label }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="dir.path" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add custom workspace directories -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <Repeater
+                v-model="customWorkspaceDirectories"
+                add-label="Add Workspace Directory"
+                :default-item="() => ({ key: '', label: '', path: '', category: 'workspace', _id: Date.now() })"
+              >
+                <template #default="{ item, index, update }">
+                  <div class="space-y-3">
+                    <Input
+                      :model-value="item.key"
+                      @update:model-value="update('key', $event)"
+                      label="Key"
+                      placeholder="e.g., helpers"
+                      size="sm"
+                      monospace
+                    />
+                    <Input
+                      :model-value="item.label"
+                      @update:model-value="update('label', $event)"
+                      label="Label"
+                      placeholder="e.g., Helper Scripts"
+                      size="sm"
+                    />
+                    <Input
+                      :model-value="item.path"
+                      @update:model-value="update('path', $event)"
+                      label="Path"
+                      placeholder="e.g., helpers"
+                      prefix="/"
+                      monospace
+                      size="sm"
+                    />
+                  </div>
+                </template>
+              </Repeater>
+            </div>
+          </div>
+
+          <!-- Input Directories -->
+          <div v-if="inputDirectories && Object.keys(inputDirectories).length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Inputs</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Define the read-only locations where raw and prepared data live.
+            </p>
+
+            <!-- Existing input directories -->
+            <div class="space-y-4 mb-6">
+              <div v-for="(value, key) in inputDirectories" :key="key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                    {{ formatDirectoryLabel(key) }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing custom input directories (from extra_directories) -->
+            <div v-if="existingCustomInputDirectories.length > 0" class="space-y-4 mb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300">Custom Input Directories</h4>
+              </div>
+              <div v-for="dir in existingCustomInputDirectories" :key="dir.key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300">
+                    {{ dir.label }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="dir.path" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add custom input directories -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <Repeater
+                v-model="customInputDirectories"
+                add-label="Add Input Directory"
+                :default-item="() => ({ key: '', label: '', path: '', category: 'input', _id: Date.now() })"
+              >
+                <template #default="{ item, index, update }">
+                  <div class="space-y-3">
+                    <Input
+                      :model-value="item.key"
+                      @update:model-value="update('key', $event)"
+                      label="Key"
+                      placeholder="e.g., inputs_archive"
+                      size="sm"
+                      monospace
+                    />
+                    <Input
+                      :model-value="item.label"
+                      @update:model-value="update('label', $event)"
+                      label="Label"
+                      placeholder="e.g., Archived Inputs"
+                      size="sm"
+                    />
+                    <Input
+                      :model-value="item.path"
+                      @update:model-value="update('path', $event)"
+                      label="Path"
+                      placeholder="e.g., inputs/archive"
+                      prefix="/"
+                      monospace
+                      size="sm"
+                    />
+                  </div>
+                </template>
+              </Repeater>
+            </div>
+          </div>
+
+          <!-- Output Directories -->
+          <div v-if="outputDirectories && Object.keys(outputDirectories).length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Outputs</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Results, figures, tables, and rendered outputs.
+            </p>
+
+            <!-- Existing output directories -->
+            <div class="space-y-4 mb-6">
+              <div v-for="(value, key) in outputDirectories" :key="key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
+                    {{ formatDirectoryLabel(key) }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing custom output directories (from extra_directories) -->
+            <div v-if="existingCustomOutputDirectories.length > 0" class="space-y-4 mb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300">Custom Output Directories</h4>
+              </div>
+              <div v-for="dir in existingCustomOutputDirectories" :key="dir.key" class="flex items-start gap-4">
+                <div class="flex items-center gap-2 w-32 shrink-0">
+                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
+                  <label class="text-sm text-gray-700 dark:text-gray-300">
+                    {{ dir.label }}
+                  </label>
+                </div>
+                <div class="flex-1">
+                  <Input :model-value="dir.path" disabled prefix="/" monospace class="opacity-75" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add custom output directories -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <Repeater
+                v-model="customOutputDirectories"
+                add-label="Add Output Directory"
+                :default-item="() => ({ key: '', label: '', path: '', category: 'output', _id: Date.now() })"
+              >
+                <template #default="{ item, index, update }">
+                  <div class="space-y-3">
+                    <Input
+                      :model-value="item.key"
+                      @update:model-value="update('key', $event)"
+                      label="Key"
+                      placeholder="e.g., outputs_animations"
+                      size="sm"
+                      monospace
+                    />
+                    <Input
+                      :model-value="item.label"
+                      @update:model-value="update('label', $event)"
+                      label="Label"
+                      placeholder="e.g., Animations"
+                      size="sm"
+                    />
+                    <Input
+                      :model-value="item.path"
+                      @update:model-value="update('path', $event)"
+                      label="Path"
+                      placeholder="e.g., outputs/animations"
+                      prefix="/"
+                      monospace
+                      size="sm"
+                    />
+                  </div>
+                </template>
+              </Repeater>
+            </div>
           </div>
         </div>
       </div>
@@ -857,7 +1072,6 @@ const isCreatingDataEntry = ref(false)
 const dataEntriesToDelete = ref(new Set())
 const savingDataDeletes = ref(false)
 const projectSettings = ref(null)
-const settingsCatalog = ref(null)
 const editableSettings = ref({})
 const settingsLoading = ref(false)
 const settingsError = ref(null)
@@ -1454,26 +1668,6 @@ const projectTypeLabel = computed(() => {
   return typeLabels[type] || type
 })
 
-// Create enabled map from existing directories (for read-only display)
-const directoriesEnabledForDisplay = computed(() => {
-  if (!projectSettings.value?.directories) return {}
-
-  const enabled = {}
-  // All directories in the config are enabled
-  Object.keys(projectSettings.value.directories).forEach(key => {
-    enabled[key] = true
-  })
-
-  // Also mark extra directories as enabled
-  if (projectSettings.value.extra_directories) {
-    projectSettings.value.extra_directories.forEach(dir => {
-      enabled[dir.key] = true
-    })
-  }
-
-  return enabled
-})
-
 const canDelete = computed(() => {
   if (deleteOption.value === 'untrack') {
     return true
@@ -1772,15 +1966,8 @@ const loadProjectSettings = async () => {
   settingsError.value = null
 
   try {
-    const [settingsResponse, catalogResponse] = await Promise.all([
-      fetch(`/api/project/${route.params.id}/settings`),
-      fetch('/api/settings/catalog')
-    ])
-
-    const data = await settingsResponse.json()
-    const catalogData = await catalogResponse.json()
-
-    settingsCatalog.value = catalogData
+    const response = await fetch(`/api/project/${route.params.id}/settings`)
+    const data = await response.json()
 
     if (data.error) {
       settingsError.value = data.error
