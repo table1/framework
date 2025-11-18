@@ -117,80 +117,10 @@
       <div class="mt-8 space-y-10">
         <!-- Overview -->
         <div id="overview" v-show="activeSection === 'overview'">
-          <div class="space-y-3">
-            <!-- Basics Card -->
-            <OverviewCard
-              title="Basics"
-              @click="activeSection = 'basics'"
-            >
-              <template v-if="settings.projects_root || (settings.author && settings.author.name)">
-                <span v-if="settings.projects_root" class="text-gray-600 dark:text-gray-400">{{ settings.projects_root }}</span>
-                <template v-if="settings.projects_root && settings.author && settings.author.name">
-                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                </template>
-                <span v-if="settings.author && settings.author.name">{{ settings.author.name }}</span>
-              </template>
-              <span v-else class="text-gray-600 dark:text-gray-400">Not set</span>
-            </OverviewCard>
-
-            <!-- Project Structure Card -->
-            <OverviewCard
-              title="Project Structure"
-              @click="activeSection = 'structure'"
-            >
-              <span v-if="settings.defaults && settings.defaults.project_type">{{ settings.defaults.project_type }}</span>
-              <span v-else class="text-gray-600 dark:text-gray-400">Not set</span>
-            </OverviewCard>
-
-            <!-- Notebooks & Scripts Card -->
-            <OverviewCard
-              title="Notebooks & Scripts"
-              @click="activeSection = 'notebooksScripts'"
-            >
-              <span v-if="settings.defaults && settings.defaults.notebook_format">{{ settings.defaults.notebook_format }}</span>
-              <span v-else class="text-gray-600 dark:text-gray-400">quarto</span>
-            </OverviewCard>
-
-            <!-- AI Assistants Card -->
-            <OverviewCard
-              title="AI Assistants"
-              @click="activeSection = 'ai'"
-            >
-              <span v-if="settings.ai_config && settings.ai_config.enabled" class="text-green-600 dark:text-green-400">Enabled</span>
-              <span v-else class="text-gray-600 dark:text-gray-400">Disabled</span>
-            </OverviewCard>
-
-            <!-- Git & Hooks Card -->
-            <OverviewCard
-              title="Git & Hooks"
-              @click="activeSection = 'git'"
-            >
-              <span v-if="settings.git && settings.git.auto_init" class="text-green-600 dark:text-green-400">Auto-initialize repositories</span>
-              <span v-else class="text-gray-600 dark:text-gray-400">Manual initialization</span>
-            </OverviewCard>
-
-            <!-- Packages Card -->
-            <OverviewCard
-              title="Packages"
-              @click="activeSection = 'packages'"
-            >
-              <span v-if="settings.packages && settings.packages.length > 0">
-                {{ settings.packages.length }} package{{ settings.packages.length !== 1 ? 's' : '' }}
-              </span>
-              <span v-else class="text-gray-600 dark:text-gray-400">No default packages</span>
-            </OverviewCard>
-
-            <!-- .env Defaults Card -->
-            <OverviewCard
-              title=".env Defaults"
-              @click="activeSection = 'env-defaults'"
-            >
-              <span v-if="defaultEnvVariableCount > 0" class="text-gray-600 dark:text-gray-400">
-                {{ defaultEnvVariableCount }} variable{{ defaultEnvVariableCount === 1 ? '' : 's' }}
-              </span>
-              <span v-else class="text-gray-600 dark:text-gray-400">No defaults set</span>
-            </OverviewCard>
-          </div>
+          <OverviewSummary
+            :cards="overviewCards"
+            @navigate="(section) => activeSection = section"
+          />
         </div>
 
         <!-- Connections -->
@@ -226,9 +156,7 @@
 
         <!-- Basics -->
         <div id="basics" v-show="activeSection === 'basics'">
-          <SettingsPanel
-            description="Essential project defaults that apply to all new projects."
-          >
+          <SettingsPanel>
             <SettingsBlock>
               <div class="space-y-5">
                 <Input
@@ -238,44 +166,14 @@
                   placeholder="e.g., ~/projects or /Users/yourname/code"
                 />
 
-                <div>
-                  <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                    Supported Editors
-                  </label>
-                  <Checkbox
-                    v-model="settings.defaults.positron"
-                    id="support-positron-defaults"
-                    description="Enable Positron-specific workspace and settings files"
-                  >
-                    Positron
-                  </Checkbox>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                    RStudio supported by default
-                  </p>
-                </div>
+                <EditorAndNotebookPanel
+                  v-model:positron="settings.defaults.positron"
+                  v-model:notebook-format="settings.defaults.notebook_format"
+                />
 
-                <Select
-                  v-model="settings.defaults.notebook_format"
-                  label="Default Notebook Format"
-                  hint="Format used when creating new notebooks"
-                >
-                  <option value="quarto">Quarto (.qmd)</option>
-                  <option value="rmarkdown">R Markdown (.Rmd)</option>
-                </Select>
-
-                <!-- Author Information Subheading -->
-                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                    Author Information
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
-                    Used as defaults when scaffold() creates README files and notebook headers, so every project starts with the right attribution.
-                  </p>
-                  <div class="space-y-5">
-                    <Input v-model="settings.author.name" label="Your Name" placeholder="Your Name" />
-                    <Input v-model="settings.author.email" type="email" label="Email" placeholder="your.email@example.com" />
-                    <Input v-model="settings.author.affiliation" label="Affiliation" placeholder="Organization" />
-                  </div>
+                <!-- Author Information -->
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <AuthorInformationPanel v-model="settings.author" />
                 </div>
               </div>
             </SettingsBlock>
@@ -310,1181 +208,22 @@
             </div>
           </div>
 
-          <!-- Existing project type editor when a type is selected -->
-          <div v-else-if="currentProjectType" class="space-y-6">
-            <div v-if="currentProjectTypeKey === 'project'" class="space-y-6">
-              <!-- Project-specific settings (e.g., ggplot theme) -->
-              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
-                <SettingsPanel
-                  title="Project Settings"
-                  description="Default settings applied when creating new projects of this type."
-                >
-                  <SettingsBlock>
-                    <div class="space-y-5">
-                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
-                        <Toggle
-                          v-if="setting.control === 'toggle'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :description="setting.description"
-                        />
-                        <Select
-                          v-else-if="setting.control === 'select'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                        >
-                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                          </option>
-                        </Select>
-                        <Input
-                          v-else-if="setting.control === 'text'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                          :placeholder="setting.placeholder"
-                        />
-                      </template>
-                    </div>
-                  </SettingsBlock>
-                </SettingsPanel>
-              </div>
-
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  <button
-                    type="button"
-                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="scrollToSection(`project-${currentProjectTypeKey}-inputs`)"
-                  >
-                  Inputs
-                </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-workspaces`)"
-                >
-                  Workspaces
-                </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-outputs`)"
-                >
-                  Outputs
-                </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-utility`)"
-                  >
-                    Utility
-                  </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-gitignore`)"
-                  >
-                    .gitignore
-                  </button>
-                </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
-                  Reset to Defaults
-                </Button>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-inputs`">
-                <SettingsPanel
-                  title="Inputs"
-                  description="Define the read-only locations where raw and prepared data live."
-                >
-                  <template v-for="field in generalInputFields" :key="field.key">
-                    <Input
-                      v-if="hasDirectory(currentProjectTypeKey, field.key)"
-                      v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
-                      :label="field.label"
-                      :hint="field.hint"
-                      prefix="/"
-                      monospace
-                    />
-                  </template>
-
-                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Input Directories</h4>
-                    <Repeater
-                      :model-value="extraDirectoriesByType(currentProjectTypeKey, 'input')"
-                      @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'input', $event)"
-                      add-label="Add Input Directory"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'input', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="grid grid-cols-2 gap-3">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., inputs_archive"
-                            :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'input', index)"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Archive"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., inputs/archive"
-                            :error="validateExtraDirectoryPath(item.path)"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                            class="col-span-2"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-workspaces`">
-                <SettingsPanel
-                  title="Workspaces"
-                  description="Functions, notebooks, and scripts scaffolded into every project."
-                >
-                  <template v-for="field in generalWorkspaceFields" :key="field.key">
-                    <Input
-                      v-if="hasDirectory(currentProjectTypeKey, field.key)"
-                      v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
-                      :label="field.label"
-                      :hint="field.hint"
-                      prefix="/"
-                      monospace
-                    />
-                  </template>
-
-                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
-                    <Repeater
-                      :model-value="extraDirectoriesByType(currentProjectTypeKey, 'workspace')"
-                      @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'workspace', $event)"
-                      add-label="Add Workspace Directory"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="grid grid-cols-2 gap-3">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., tests"
-                            :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'workspace', index)"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Tests"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., tests"
-                            :error="validateExtraDirectoryPath(item.path)"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                            class="col-span-2"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-outputs`">
-                <SettingsPanel
-                  title="Outputs"
-                  description="Outputs are public by default so results are easy to share."
-                >
-                  <template v-for="field in generalOutputFields" :key="field.key">
-                    <Input
-                      v-if="hasDirectory(currentProjectTypeKey, field.key)"
-                      v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
-                      :label="field.label"
-                      :hint="field.hint"
-                      prefix="/"
-                      monospace
-                    />
-                  </template>
-                  <Input
-                    v-model="settings.project_types[currentProjectTypeKey].quarto.render_dir"
-                    label="Notebook output directory"
-                    hint="Rendered notebooks and reports are written here by default."
-                    prefix="/"
-                    monospace
-                  />
-
-                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Output Directories</h4>
-                    <Repeater
-                      :model-value="extraDirectoriesByType(currentProjectTypeKey, 'output')"
-                      @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'output', $event)"
-                      add-label="Add Output Directory"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'output', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="grid grid-cols-2 gap-3">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., outputs_animations"
-                            :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'output', index)"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Animations"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., outputs/animations"
-                            :error="validateExtraDirectoryPath(item.path)"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                            class="col-span-2"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-utility`">
-                <SettingsPanel
-                  title="Utility directories"
-                  description="Cache and scratch folders are gitignored so temporary artifacts never leak into version control."
-                >
-                  <template v-for="field in generalUtilityFields" :key="field.key">
-                    <Input
-                      v-if="hasDirectory(currentProjectTypeKey, field.key)"
-                      v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
-                      :label="field.label"
-                      :hint="field.hint"
-                      prefix="/"
-                      monospace
-                    />
-                  </template>
-                </SettingsPanel>
-              </div>
-
-            </div>
-
-            <div v-else-if="currentProjectTypeKey === 'project_sensitive'" class="space-y-6">
-              <!-- Project-specific settings (e.g., ggplot theme) -->
-              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
-                <SettingsPanel
-                  title="Project Settings"
-                  description="Default settings applied when creating new projects of this type."
-                >
-                  <SettingsBlock>
-                    <div class="space-y-5">
-                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
-                        <Toggle
-                          v-if="setting.control === 'toggle'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :description="setting.description"
-                        />
-                        <Select
-                          v-else-if="setting.control === 'select'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                        >
-                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                          </option>
-                        </Select>
-                        <Input
-                          v-else-if="setting.control === 'text'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                          :placeholder="setting.placeholder"
-                        />
-                      </template>
-                    </div>
-                  </SettingsBlock>
-                </SettingsPanel>
-              </div>
-
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  <button
-                    type="button"
-                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="scrollToSection(`project-${currentProjectTypeKey}-workspaces`)"
-                  >
-                    Workspaces
-                  </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-inputs-private`)"
-                >
-                  Inputs
-                </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-outputs-private`)"
-                >
-                  Outputs
-                </button>
-                <button
-                  type="button"
-                  class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="scrollToSection(`project-${currentProjectTypeKey}-utility`)"
-                  >
-                    Utility
-                  </button>
-                </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
-                  Reset to Defaults
-                </Button>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-workspaces`">
-                <SettingsPanel
-                  title="Workspaces"
-                  description="Module locations for notebooks, scripts, and helper functions."
-                >
-                  <div class="space-y-3">
-                    <template v-for="field in generalWorkspaceFields" :key="`sensitive-${field.key}`">
-                      <Input
-                        v-if="hasDirectory(currentProjectTypeKey, field.key)"
-                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
-                        :label="field.label"
-                        :hint="field.hint"
-                        prefix="/"
-                        monospace
-                      />
-                    </template>
-                  </div>
-
-                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
-                    <Repeater
-                      :model-value="extraDirectoriesByType(currentProjectTypeKey, 'workspace')"
-                      @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'workspace', $event)"
-                      add-label="Add Workspace Directory"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="grid grid-cols-2 gap-3">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., tests"
-                            :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'workspace', index)"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Tests"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., tests"
-                            :error="validateExtraDirectoryPath(item.path)"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                            class="col-span-2"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-inputs-private`">
-                <SettingsPanel
-                  title="Inputs"
-                  description="Keep private inputs compartmentalized; publish processed outputs into public folders when ready."
-                >
-                  <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                    <div>Private</div>
-                    <div>Public</div>
-                  </div>
-                  <div v-for="pair in sensitiveInputPairs" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
-                    <template v-if="hasDirectory(currentProjectTypeKey, pair.privateKey)">
-                      <Input
-                        v-model="settings.project_types[currentProjectTypeKey].directories[pair.privateKey]"
-                        :label="pair.privateLabel || `${pair.label} (private)`"
-                        prefix="/"
-                        monospace
-                      />
-                    </template>
-                    <template v-if="hasDirectory(currentProjectTypeKey, pair.publicKey)">
-                      <Input
-                        v-model="settings.project_types[currentProjectTypeKey].directories[pair.publicKey]"
-                        :label="pair.publicLabel || `${pair.label} (public)`"
-                        prefix="/"
-                        monospace
-                      />
-                    </template>
-                  </div>
-
-                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <div class="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Private Inputs</h4>
-                        <Repeater
-                          :model-value="extraDirectoriesByType(currentProjectTypeKey, 'input_private')"
-                          @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'input_private', $event)"
-                          add-label="Add Private Input"
-                          :default-item="() => ({ key: '', label: '', path: '', type: 'input_private', _id: Date.now() })"
-                        >
-                          <template #default="{ item, index, update }">
-                            <div class="space-y-3">
-                              <Input
-                                :model-value="item.key"
-                                @update:model-value="update('key', $event)"
-                                label="Key"
-                                placeholder="e.g., inputs_archive"
-                                :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'input_private', index)"
-                                monospace
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.label"
-                                @update:model-value="update('label', $event)"
-                                label="Label"
-                                placeholder="e.g., Archive"
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.path"
-                                @update:model-value="update('path', $event)"
-                                label="Path"
-                                placeholder="e.g., inputs/archive"
-                                :error="validateExtraDirectoryPath(item.path)"
-                                prefix="/"
-                                monospace
-                                size="sm"
-                              />
-                            </div>
-                          </template>
-                        </Repeater>
-                      </div>
-
-                      <div>
-                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Public Inputs</h4>
-                        <Repeater
-                          :model-value="extraDirectoriesByType(currentProjectTypeKey, 'input_public')"
-                          @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'input_public', $event)"
-                          add-label="Add Public Input"
-                          :default-item="() => ({ key: '', label: '', path: '', type: 'input_public', _id: Date.now() })"
-                        >
-                          <template #default="{ item, index, update }">
-                            <div class="space-y-3">
-                              <Input
-                                :model-value="item.key"
-                                @update:model-value="update('key', $event)"
-                                label="Key"
-                                placeholder="e.g., inputs_public_archive"
-                                :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'input_public', index)"
-                                monospace
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.label"
-                                @update:model-value="update('label', $event)"
-                                label="Label"
-                                placeholder="e.g., Archive (Public)"
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.path"
-                                @update:model-value="update('path', $event)"
-                                label="Path"
-                                placeholder="e.g., inputs_public/archive"
-                                :error="validateExtraDirectoryPath(item.path)"
-                                prefix="/"
-                                monospace
-                                size="sm"
-                              />
-                            </div>
-                          </template>
-                        </Repeater>
-                      </div>
-                    </div>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-outputs-private`">
-                <SettingsPanel
-                  title="Outputs"
-                  description="Review outputs before promotion; private folders remain gitignored while public copies are ready to share."
-                >
-                  <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                    <div>Private</div>
-                    <div>Public</div>
-                  </div>
-                  <div v-for="pair in sensitiveOutputPairs" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
-                    <template v-if="hasDirectory(currentProjectTypeKey, pair.privateKey)">
-                      <Input
-                        v-model="settings.project_types[currentProjectTypeKey].directories[pair.privateKey]"
-                        :label="pair.privateLabel || `${pair.label} (private)`"
-                        prefix="/"
-                        monospace
-                      />
-                    </template>
-                    <template v-if="hasDirectory(currentProjectTypeKey, pair.publicKey)">
-                      <Input
-                        v-model="settings.project_types[currentProjectTypeKey].directories[pair.publicKey]"
-                        :label="pair.publicLabel || `${pair.label} (public)`"
-                        prefix="/"
-                        monospace
-                      />
-                    </template>
-                  </div>
-                  <Input
-                    v-model="settings.project_types[currentProjectTypeKey].quarto.render_dir"
-                    label="Notebook output directory"
-                    hint="Rendered docs default to a public location but can be moved if needed."
-                    prefix="/"
-                    monospace
-                  />
-
-                  <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <div class="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Private Outputs</h4>
-                        <Repeater
-                          :model-value="extraDirectoriesByType(currentProjectTypeKey, 'output_private')"
-                          @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'output_private', $event)"
-                          add-label="Add Private Output"
-                          :default-item="() => ({ key: '', label: '', path: '', type: 'output_private', _id: Date.now() })"
-                        >
-                          <template #default="{ item, index, update }">
-                            <div class="space-y-3">
-                              <Input
-                                :model-value="item.key"
-                                @update:model-value="update('key', $event)"
-                                label="Key"
-                                placeholder="e.g., outputs_animations"
-                                :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'output_private', index)"
-                                monospace
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.label"
-                                @update:model-value="update('label', $event)"
-                                label="Label"
-                                placeholder="e.g., Animations"
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.path"
-                                @update:model-value="update('path', $event)"
-                                label="Path"
-                                placeholder="e.g., outputs/animations"
-                                :error="validateExtraDirectoryPath(item.path)"
-                                prefix="/"
-                                monospace
-                                size="sm"
-                              />
-                            </div>
-                          </template>
-                        </Repeater>
-                      </div>
-
-                      <div>
-                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Public Outputs</h4>
-                        <Repeater
-                          :model-value="extraDirectoriesByType(currentProjectTypeKey, 'output_public')"
-                          @update:model-value="updateExtraDirectories(currentProjectTypeKey, 'output_public', $event)"
-                          add-label="Add Public Output"
-                          :default-item="() => ({ key: '', label: '', path: '', type: 'output_public', _id: Date.now() })"
-                        >
-                          <template #default="{ item, index, update }">
-                            <div class="space-y-3">
-                              <Input
-                                :model-value="item.key"
-                                @update:model-value="update('key', $event)"
-                                label="Key"
-                                placeholder="e.g., outputs_public_animations"
-                                :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'output_public', index)"
-                                monospace
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.label"
-                                @update:model-value="update('label', $event)"
-                                label="Label"
-                                placeholder="e.g., Animations (Public)"
-                                size="sm"
-                              />
-                              <Input
-                                :model-value="item.path"
-                                @update:model-value="update('path', $event)"
-                                label="Path"
-                                placeholder="e.g., outputs_public/animations"
-                                :error="validateExtraDirectoryPath(item.path)"
-                                prefix="/"
-                                monospace
-                                size="sm"
-                              />
-                            </div>
-                          </template>
-                        </Repeater>
-                      </div>
-                    </div>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-utility`">
-                <SettingsPanel
-                  title="Utility directories"
-                  description="Keep cache and scratch in private space for safety; both remain gitignored."
-                >
-                  <div class="space-y-3">
-                    <template v-for="field in generalUtilityFields" :key="`sensitive-${field.key}`">
-                      <Input
-                        v-if="hasDirectory(currentProjectTypeKey, field.key)"
-                        v-model="settings.project_types[currentProjectTypeKey].directories[field.key]"
-                        :label="field.label"
-                        :hint="field.hint"
-                        prefix="/"
-                        monospace
-                      />
-                    </template>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-            </div>
-
-            <div v-else-if="currentProjectTypeKey === 'presentation'" class="space-y-6">
-              <!-- Project-specific settings (e.g., ggplot theme) -->
-              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
-                <SettingsPanel
-                  title="Project Settings"
-                  description="Default settings applied when creating new projects of this type."
-                >
-                  <SettingsBlock>
-                    <div class="space-y-5">
-                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
-                        <Toggle
-                          v-if="setting.control === 'toggle'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :description="setting.description"
-                        />
-                        <Select
-                          v-else-if="setting.control === 'select'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                        >
-                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                          </option>
-                        </Select>
-                        <Input
-                          v-else-if="setting.control === 'text'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                          :placeholder="setting.placeholder"
-                        />
-                      </template>
-                    </div>
-                  </SettingsBlock>
-                </SettingsPanel>
-              </div>
-
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  <button
-                    type="button"
-                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="scrollToSection(`project-${currentProjectTypeKey}-primary`)"
-                  >
-                    Primary files
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="scrollToSection(`project-${currentProjectTypeKey}-optional`)"
-                  >
-                    Optional folders
-                  </button>
-                </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
-                  Reset to Defaults
-                </Button>
-              </div>
-              <div :id="`project-${currentProjectTypeKey}-primary`">
-                <SettingsPanel title="Primary files">
-                  <div class="space-y-3">
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.presentation_source"
-                      label="Presentation source file"
-                      hint="Relative path to your primary presentation.qmd."
-                      monospace
-                    />
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.rendered_slides"
-                      label="Rendered slides directory"
-                      hint="Rendered slides write to the project root by default ('.')."
-                      monospace
-                    />
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-optional`">
-                <SettingsPanel title="Optional folders" description="Toggle extra scaffolding when you need supporting data, scripts, or helper utilities.">
-                  <div class="space-y-4">
-                    <div class="space-y-2">
-                      <Toggle
-                        v-model="presentationOptions.includeInputs"
-                        label="Include inputs directory"
-                        description="Adds an inputs/ folder for sample data used in the presentation."
-                      />
-                      <Input
-                        v-if="presentationOptions.includeInputs"
-                        v-model="settings.project_types[currentProjectTypeKey].directories.inputs"
-                        label="Inputs directory"
-                        prefix="/"
-                        monospace
-                      />
-                    </div>
-
-                    <div class="space-y-2">
-                      <Toggle
-                        v-model="presentationOptions.includeScripts"
-                        label="Include scripts directory"
-                        description="Adds a scripts/ folder for demo code or automation."
-                      />
-                      <Input
-                        v-if="presentationOptions.includeScripts"
-                        v-model="settings.project_types[currentProjectTypeKey].directories.scripts"
-                        label="Scripts directory"
-                        prefix="/"
-                        monospace
-                      />
-                    </div>
-
-                    <div class="space-y-2">
-                      <Toggle
-                        v-model="presentationOptions.includeFunctions"
-                        label="Include functions directory"
-                        description="Adds R/functions for helper utilities that should load automatically."
-                      />
-                      <Input
-                        v-if="presentationOptions.includeFunctions"
-                        v-model="settings.project_types[currentProjectTypeKey].directories.functions"
-                        label="Functions directory"
-                        prefix="/"
-                        monospace
-                      />
-                    </div>
-
-                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Custom Directories</h4>
-                      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Add any additional directories you need for your presentations.</p>
-                      <Repeater
-                        :model-value="settings.project_types[currentProjectTypeKey].extra_directories || []"
-                        @update:model-value="settings.project_types[currentProjectTypeKey].extra_directories = $event"
-                        add-label="Add Directory"
-                        :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                      >
-                        <template #default="{ item, index, update }">
-                          <div class="grid grid-cols-2 gap-3">
-                            <Input
-                              :model-value="item.key"
-                              @update:model-value="update('key', $event)"
-                              label="Key"
-                              placeholder="e.g., assets"
-                              :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'workspace', index)"
-                              monospace
-                              size="sm"
-                            />
-                            <Input
-                              :model-value="item.label"
-                              @update:model-value="update('label', $event)"
-                              label="Label"
-                              placeholder="e.g., Assets"
-                              size="sm"
-                            />
-                            <Input
-                              :model-value="item.path"
-                              @update:model-value="update('path', $event)"
-                              label="Path"
-                              placeholder="e.g., assets"
-                              :error="validateExtraDirectoryPath(item.path)"
-                              prefix="/"
-                              monospace
-                              size="sm"
-                              class="col-span-2"
-                            />
-                          </div>
-                        </template>
-                      </Repeater>
-                    </div>
-                  </div>
-                </SettingsPanel>
-              </div>
-
-            </div>
-
-            <div v-else-if="currentProjectTypeKey === 'course'" class="space-y-6">
-              <!-- Project-specific settings (e.g., ggplot theme) -->
-              <div v-if="currentProjectTypeSettings && currentProjectTypeSettings.length > 0">
-                <SettingsPanel
-                  title="Project Settings"
-                  description="Default settings applied when creating new projects of this type."
-                >
-                  <SettingsBlock>
-                    <div class="space-y-5">
-                      <template v-for="setting in currentProjectTypeSettings" :key="setting.id">
-                        <Toggle
-                          v-if="setting.control === 'toggle'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :description="setting.description"
-                        />
-                        <Select
-                          v-else-if="setting.control === 'select'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                        >
-                          <option v-for="opt in setting.options" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                          </option>
-                        </Select>
-                        <Input
-                          v-else-if="setting.control === 'text'"
-                          v-model="settings.project_types[currentProjectTypeKey][setting.id]"
-                          :label="setting.label"
-                          :hint="setting.hint"
-                          :placeholder="setting.placeholder"
-                        />
-                      </template>
-                    </div>
-                  </SettingsBlock>
-                </SettingsPanel>
-              </div>
-
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  <button
-                    type="button"
-                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="scrollToSection(`project-${currentProjectTypeKey}-core`)"
-                  >
-                    Core folders
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="scrollToSection(`project-${currentProjectTypeKey}-quarto`)"
-                  >
-                    Quarto render directory
-                  </button>
-                </div>
-                <Button variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="showResetConfirm(currentProjectTypeKey)">
-                  Reset to Defaults
-                </Button>
-              </div>
-              <div :id="`project-${currentProjectTypeKey}-core`">
-                <SettingsPanel title="Core folders" description="Configure folders for course datasets, slide decks, assignments, and readings.">
-                  <div class="space-y-3">
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.data"
-                      label="Course data"
-                      prefix="/"
-                      monospace
-                      hint="Shared datasets distributed with the course."
-                    />
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.slides"
-                      label="Slides"
-                      prefix="/"
-                      monospace
-                      hint="Lecture slide sources."
-                    />
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.assignments"
-                      label="Assignments"
-                      prefix="/"
-                      monospace
-                      hint="Homework or lab materials."
-                    />
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.course_docs"
-                      label="Course documents"
-                      prefix="/"
-                      monospace
-                      hint="Syllabus, policies, grading guides."
-                    />
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.readings"
-                      label="Readings"
-                      prefix="/"
-                      monospace
-                      hint="Assigned readings and references."
-                    />
-                    <Input
-                      v-model="settings.project_types[currentProjectTypeKey].directories.notebooks"
-                      label="Module notebooks"
-                      prefix="/"
-                      monospace
-                      hint="Module notebooks or workshop materials."
-                    />
-                  </div>
-                </SettingsPanel>
-              </div>
-
-              <div :id="`project-${currentProjectTypeKey}-quarto`">
-                <SettingsPanel title="Quarto render directory" description="Default location for rendered course documentation.">
-                  <Input
-                    v-model="settings.project_types[currentProjectTypeKey].quarto.render_dir"
-                    label="Render directory"
-                    prefix="/"
-                    monospace
-                  />
-                </SettingsPanel>
-
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Custom Directories</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Add any additional directories you need for your courses.</p>
-                  <Repeater
-                    :model-value="settings.project_types[currentProjectTypeKey].extra_directories || []"
-                    @update:model-value="settings.project_types[currentProjectTypeKey].extra_directories = $event"
-                    add-label="Add Directory"
-                    :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                  >
-                    <template #default="{ item, index, update }">
-                      <div class="grid grid-cols-2 gap-3">
-                        <Input
-                          :model-value="item.key"
-                          @update:model-value="update('key', $event)"
-                          label="Key"
-                          placeholder="e.g., resources"
-                          :error="validateExtraDirectoryKey(item.key, currentProjectTypeKey, 'workspace', index)"
-                          monospace
-                          size="sm"
-                        />
-                        <Input
-                          :model-value="item.label"
-                          @update:model-value="update('label', $event)"
-                          label="Label"
-                          placeholder="e.g., Resources"
-                          size="sm"
-                        />
-                        <Input
-                          :model-value="item.path"
-                          @update:model-value="update('path', $event)"
-                          label="Path"
-                          placeholder="e.g., resources"
-                          :error="validateExtraDirectoryPath(item.path)"
-                          prefix="/"
-                          monospace
-                          size="sm"
-                          class="col-span-2"
-                        />
-                      </div>
-                    </template>
-                  </Repeater>
-                </div>
-              </div>
-
-            </div>
-
-            <div :id="`project-${currentProjectTypeKey}-gitignore`">
-              <SettingsPanel
-                title=".gitignore Template"
-                description="Patterns applied to all new projects of this type."
-              >
-                <CodeEditor
-                  v-model="templateEditors[`gitignore_${currentProjectTypeKey}`].contents"
-                  language="text"
-                  min-height="400px"
-                  :disabled="templateEditors[`gitignore_${currentProjectTypeKey}`].loading"
-                />
-                <p v-if="templateEditors[`gitignore_${currentProjectTypeKey}`].loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading .gitignore template…</p>
-
-                <div class="flex justify-end mt-3">
-                  <Button size="sm" variant="secondary" @click="resetInlineTemplate(`gitignore-${currentProjectTypeKey}`, `gitignore_${currentProjectTypeKey}`)">Restore Default</Button>
-                </div>
-              </SettingsPanel>
-            </div>
+          <!-- Project type editor when a type is selected -->
+          <div v-else-if="currentProjectType && catalog">
+            <ProjectStructureEditor
+              :project-type="currentProjectTypeKey"
+              v-model:directories="settings.project_types[currentProjectTypeKey].directories"
+              v-model:render-dirs="settings.project_types[currentProjectTypeKey].render_dirs"
+              v-model:enabled="directoriesEnabled[currentProjectTypeKey]"
+              v-model:extra-directories="settings.project_types[currentProjectTypeKey].extra_directories"
+              v-model:settings="settings.project_types[currentProjectTypeKey]"
+              v-model:gitignore="settings.project_types[currentProjectTypeKey].gitignore"
+              :catalog="catalog.project_types[currentProjectTypeKey] || {}"
+              :new-extra-ids="newExtraDirectoryIds"
+              @update:newExtraIds="newExtraDirectoryIds = $event"
+              @reset="showResetConfirm(currentProjectTypeKey)"
+            />
           </div>
-        </div>
-
-        <!-- Templates -->
-        <div id="templates" v-show="activeSection === 'templates'" class="space-y-8">
-          <div id="templates-notebook">
-            <SettingsPanel>
-              <SettingsBlock
-                title="Notebook Template"
-                description="Used by framework::make_notebook() to populate new notebooks."
-              >
-                <CodeEditor
-                  v-model="templateEditors.notebook.contents"
-                  language="markdown"
-                  min-height="500px"
-                  :disabled="templateEditors.notebook.loading"
-                />
-                <p v-if="templateEditors.notebook.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading notebook template…</p>
-                <div class="flex justify-end mt-3">
-                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('notebook')">Restore Default</Button>
-                </div>
-              </SettingsBlock>
-            </SettingsPanel>
-          </div>
-
-          <div id="templates-script">
-            <SettingsPanel>
-              <SettingsBlock
-                title="Script Template"
-                description="Used by framework::make_script() for quick task scaffolds."
-              >
-                <CodeEditor
-                  v-model="templateEditors.script.contents"
-                  language="r"
-                  min-height="450px"
-                  :disabled="templateEditors.script.loading"
-                />
-                <p v-if="templateEditors.script.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading script template…</p>
-                <div class="flex justify-end mt-3">
-                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('script')">Restore Default</Button>
-                </div>
-              </SettingsBlock>
-            </SettingsPanel>
-          </div>
-
-          <div id="templates-presentation">
-            <SettingsPanel>
-              <SettingsBlock
-                title="Presentation Template"
-                description="Used by framework::make_notebook(stub = 'revealjs') for slide decks."
-              >
-                <CodeEditor
-                  v-model="templateEditors.presentation.contents"
-                  language="markdown"
-                  min-height="500px"
-                  :disabled="templateEditors.presentation.loading"
-                />
-                <p v-if="templateEditors.presentation.loading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading presentation template…</p>
-                <div class="flex justify-end mt-3">
-                  <Button size="sm" variant="secondary" @click="resetInlineTemplate('presentation')">Restore Default</Button>
-                </div>
-              </SettingsBlock>
-            </SettingsPanel>
-          </div>
-        </div>
-
-        <!-- AI Assistants -->
-        <div id="ai" v-show="activeSection === 'ai'">
-          <SettingsPanel
-            description="Framework maintains context files for selected assistants and keeps them in sync before commits."
-          >
-            <SettingsBlock>
-              <Toggle
-                v-model="settings.defaults.ai_support"
-                label="Enable AI Support"
-                description="Generate and sync assistant-specific context files."
-              />
-            </SettingsBlock>
-
-            <SettingsBlock
-              title="Canonical context file"
-              description="This file is the source of truth; other instructions files are synced to it when AI hooks run."
-            >
-              <Select
-                v-model="settings.defaults.ai_canonical_file"
-                :disabled="!settings.defaults.ai_support"
-                label="Canonical Context File"
-              >
-                <option value="AGENTS.md">AGENTS.md (multi-agent orchestrator)</option>
-                <option value="CLAUDE.md">CLAUDE.md</option>
-                <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
-              </Select>
-            </SettingsBlock>
-
-            <template v-if="settings.defaults.ai_support">
-              <SettingsBlock
-                title="Assistants"
-                description="Choose which assistants receive context updates."
-              >
-                <div class="space-y-2">
-                  <Checkbox
-                    v-for="assistant in availableAssistants"
-                    :key="assistant.id"
-                    :id="`ai-${assistant.id}`"
-                    v-model="aiAssistants[assistant.id]"
-                    :description="assistant.description"
-                  >
-                    {{ assistant.label }}
-                  </Checkbox>
-                </div>
-              </SettingsBlock>
-
-              <SettingsBlock
-                title="Canonical instructions"
-                description="Edit the canonical file directly. Restore defaults if you want to start over."
-              >
-                <CodeEditor
-                  v-model="templateEditors.canonical.contents"
-                  language="markdown"
-                  min-height="500px"
-                  :disabled="templateEditors.canonical.loading || !settings.defaults.ai_support"
-                />
-                <div class="flex justify-end mt-3">
-                  <Button size="sm" variant="secondary" :disabled="templateEditors.canonical.loading" @click="resetCanonicalTemplateInline">Restore Default</Button>
-                </div>
-              </SettingsBlock>
-            </template>
-          </SettingsPanel>
         </div>
 
         <!-- Git & Hooks -->
@@ -1628,6 +367,7 @@ import Checkbox from '../components/ui/Checkbox.vue'
 import Button from '../components/ui/Button.vue'
 import CopyButton from '../components/ui/CopyButton.vue'
 import OverviewCard from '../components/ui/OverviewCard.vue'
+import OverviewSummary from '../components/OverviewSummary.vue'
 import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
 import Modal from '../components/ui/Modal.vue'
 import Textarea from '../components/ui/Textarea.vue'
@@ -1639,6 +379,9 @@ import SettingsBlock from '../components/settings/SettingsBlock.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
+import AuthorInformationPanel from '../components/settings/AuthorInformationPanel.vue'
+import EditorAndNotebookPanel from '../components/settings/EditorAndNotebookPanel.vue'
+import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
 import {
   InformationCircleIcon,
@@ -1695,13 +438,16 @@ const fallbackProjectTypes = {
       inputs_intermediate: 'inputs/intermediate',
       inputs_final: 'inputs/final',
       docs: 'docs',
-      outputs_notebooks: 'outputs/notebooks',
       outputs_tables: 'outputs/tables',
       outputs_figures: 'outputs/figures',
       outputs_models: 'outputs/models',
       outputs_reports: 'outputs/reports',
       cache: 'outputs/cache',
       scratch: 'scratch'
+    },
+    render_dirs: {
+      notebooks: 'outputs/notebooks',
+      docs: 'outputs/docs'
     },
     quarto: { render_dir: 'outputs/notebooks' },
     notebook_template: 'notebook',
@@ -1788,27 +534,40 @@ const formatProjectTypeName = (key) => String(key).replace(/_/g, ' ').replace(/\
 
 const catalog = ref(null)
 
-const generalWorkspaceFallback = [
+// Workspace directories that support Quarto rendering
+const generalWorkspaceRenderableFallback = [
+  {
+    key: 'notebooks',
+    label: 'Notebooks',
+    hint: 'Quarto or R Markdown notebooks for analysis.',
+    defaultRenderDir: 'outputs/notebooks'
+  },
+  {
+    key: 'docs',
+    label: 'Documentation',
+    hint: 'Codebooks, documentation, and other reference materials.',
+    defaultRenderDir: 'outputs/docs'
+  }
+]
+
+// Workspace directories without Quarto rendering
+const generalWorkspaceNonRenderableFallback = [
   {
     key: 'functions',
     label: 'Functions',
     hint: 'R files here are sourced by scaffold(), so helper functions are available in every project session.'
   },
   {
-    key: 'notebooks',
-    label: 'Notebooks',
-    hint: 'Where Quarto or R Markdown analysis notebooks live.'
-  },
-  {
     key: 'scripts',
     label: 'Scripts',
     hint: 'Reusable R scripts, job runners, or automation tasks.'
-  },
-  {
-    key: 'docs',
-    label: 'Documentation',
-    hint: 'Codebooks, documentation, and other reference materials.'
   }
+]
+
+// Combined for compatibility
+const generalWorkspaceFallback = [
+  ...generalWorkspaceRenderableFallback,
+  ...generalWorkspaceNonRenderableFallback
 ]
 
 const generalInputFallback = [
@@ -1818,7 +577,6 @@ const generalInputFallback = [
 ]
 
 const generalOutputFallback = [
-  { key: 'outputs_notebooks', label: 'Rendered notebooks', hint: 'Compiled Quarto/R Markdown notebooks.' },
   { key: 'outputs_tables', label: 'Tables', hint: 'Publishable tables ready for reports or manuscripts.' },
   { key: 'outputs_figures', label: 'Figures', hint: 'Final plots and graphics.' },
   { key: 'outputs_models', label: 'Models', hint: 'Serialized models or model summaries.' },
@@ -1840,8 +598,7 @@ const sensitiveOutputFallback = [
   { privateKey: 'outputs_private_tables', publicKey: 'outputs_public_tables', label: 'Tables', privateLabel: 'Tables (private)', publicLabel: 'Tables (public)' },
   { privateKey: 'outputs_private_figures', publicKey: 'outputs_public_figures', label: 'Figures', privateLabel: 'Figures (private)', publicLabel: 'Figures (public)' },
   { privateKey: 'outputs_private_models', publicKey: 'outputs_public_models', label: 'Models', privateLabel: 'Models (private)', publicLabel: 'Models (public)' },
-  { privateKey: 'outputs_private_docs', publicKey: 'outputs_public_docs', label: 'Docs & reports', privateLabel: 'Docs (private)', publicLabel: 'Docs (public)' },
-  { privateKey: 'outputs_private_data_final', publicKey: 'outputs_public_data_final', label: 'Final data', privateLabel: 'Final data (private)', publicLabel: 'Final data (public)' }
+  { privateKey: 'outputs_private_reports', publicKey: 'outputs_public_reports', label: 'Reports', privateLabel: 'Reports (private)', publicLabel: 'Reports (public)' }
 ]
 
 const getDirectoryMeta = (typeKey, dirKey) => catalog.value?.project_types?.[typeKey]?.directories?.[dirKey] || {}
@@ -1857,6 +614,11 @@ const buildDirectoryFields = (typeKey, fallback) =>
   })
 
 const generalWorkspaceFields = computed(() => buildDirectoryFields('project', generalWorkspaceFallback))
+const generalWorkspaceRenderableFields = computed(() => buildDirectoryFields('project', generalWorkspaceRenderableFallback).map(field => ({
+  ...field,
+  defaultRenderDir: generalWorkspaceRenderableFallback.find(f => f.key === field.key)?.defaultRenderDir || ''
+})))
+const generalWorkspaceNonRenderableFields = computed(() => buildDirectoryFields('project', generalWorkspaceNonRenderableFallback))
 const generalInputFields = computed(() => buildDirectoryFields('project', generalInputFallback))
 const generalOutputFields = computed(() => buildDirectoryFields('project', generalOutputFallback))
 const generalUtilityFields = computed(() => buildDirectoryFields('project', generalUtilityFallback))
@@ -1882,9 +644,9 @@ const currentProjectTypeSettings = computed(() => {
 })
 
 const presentationToggleFallbacks = {
-  include_inputs: 'inputs',
+  include_inputs: 'data',
   include_scripts: 'scripts',
-  include_functions: 'R/functions'
+  include_functions: 'functions'
 }
 
 const presentationOptionalDefaults = computed(() => {
@@ -1910,6 +672,9 @@ const availableAssistants = [
 
 const activeSection = ref(defaultSectionId)
 const saving = ref(false)
+
+// Track new (unsaved) extra_directories by their _id
+const newExtraDirectoryIds = ref(new Set())
 
 const settings = ref({
   projects_root: '',
@@ -1980,6 +745,32 @@ const presentationOptions = reactive({
   includeFunctions: false
 })
 
+// Reactive state for directory toggles across all project types
+const directoriesEnabled = reactive({
+  project: {},
+  project_sensitive: {},
+  course: {},
+  presentation: {}
+})
+
+// Helper function to safely access directories_enabled for a project type
+const getDirectoriesEnabled = (projectType) => {
+  if (!directoriesEnabled[projectType]) {
+    directoriesEnabled[projectType] = {}
+  }
+  return directoriesEnabled[projectType]
+}
+
+// Helper function to set directory enabled state with proper Vue reactivity
+const setDirectoryEnabled = (projectTypeKey, key, value) => {
+  if (!directoriesEnabled[projectTypeKey]) {
+    directoriesEnabled[projectTypeKey] = {}
+  }
+
+  directoriesEnabled[projectTypeKey][key] = value
+  console.log(`[Toggle] Set ${key} to ${value}`)
+}
+
 const isLoadingSettings = ref(false)
 
 const aiAssistants = reactive({
@@ -2005,6 +796,73 @@ const defaultEnvRegroup = ref(false)
 const defaultEnvGroups = ref({})
 const envPreviewModal = ref(false)
 const defaultEnvVariableCount = computed(() => Object.keys(defaultEnvVariables.value || {}).length)
+
+// Helper to get project type label
+const getProjectTypeLabel = (type) => {
+  return catalog.value?.project_types?.[type]?.label || type
+}
+
+// Overview data for OverviewSummary component
+const overviewCards = computed(() => {
+  const path = settings.value.projects_root || ''
+  const author = settings.value.author?.name || ''
+  const projectType = settings.value.defaults?.project_type || 'project'
+  const projectTypeLabel = getProjectTypeLabel(projectType)
+  const notebookFormat = settings.value.defaults?.notebook_format || 'quarto'
+  const aiEnabled = settings.value.ai_config?.enabled || false
+  const aiProvider = settings.value.ai_config?.provider || ''
+  const aiCanonical = settings.value.ai_config?.canonical_file || ''
+  const gitInit = settings.value.git?.auto_init || false
+  const packagesCount = settings.value.packages?.length || 0
+  const envCount = defaultEnvVariableCount.value
+
+  return [
+    {
+      id: 'basics',
+      title: 'Basics',
+      section: 'basics',
+      content: `${path} · ${author}`
+    },
+    {
+      id: 'structure',
+      title: 'Project Structure',
+      section: 'structure',
+      content: projectTypeLabel
+    },
+    {
+      id: 'notebooks',
+      title: 'Notebooks & Scripts',
+      section: 'scaffold',
+      content: notebookFormat
+    },
+    {
+      id: 'packages',
+      title: 'Packages',
+      section: 'packages',
+      content: packagesCount === 0 ? 'No default packages' : `${packagesCount} packages`
+    },
+    {
+      id: 'env',
+      title: '.env Defaults',
+      section: 'env-defaults',
+      content: `${envCount} variables`
+    },
+    {
+      id: 'ai',
+      title: 'AI Assistants',
+      section: 'ai',
+      content: aiEnabled
+        ? `<span class="text-green-600 dark:text-green-400">${aiProvider} · ${aiCanonical}</span>`
+        : '<span class="text-gray-600 dark:text-gray-400">Disabled</span>'
+    },
+    {
+      id: 'git',
+      title: 'Git & Hooks',
+      section: 'git',
+      content: gitInit ? 'Auto-initialize repositories' : 'Manual initialization'
+    }
+  ]
+})
 
 // Database connections as array for repeater (framework_db is implicit/reserved)
 const databaseConnections = ref([])
@@ -2296,6 +1154,7 @@ const normalizeDirectories = (dirs = {}, fallback = {}) => {
 const normalizeProjectType = (key, type) => {
   const fallback = defaultProjectTypes.value[key] || {
     directories: {},
+    render_dirs: {},
     quarto: {},
     extra_directories: []
   }
@@ -2304,7 +1163,10 @@ const normalizeProjectType = (key, type) => {
     description: toScalar(type?.description, fallback.description || ''),
     ggplot_theme: toScalar(type?.ggplot_theme, 'theme_minimal'),
     set_theme_on_scaffold: toBoolean(type?.set_theme_on_scaffold, true),
-    directories: normalizeDirectories(type?.directories, fallback.directories),
+    // Don't merge with fallback - only use explicitly saved directories
+    directories: normalizeDirectories(type?.directories, {}),
+    // For render_dirs, merge with fallback defaults when empty
+    render_dirs: normalizeDirectories(type?.render_dirs, fallback.render_dirs || {}),
     quarto: {
       render_dir: toScalar(type?.quarto?.render_dir, fallback.quarto?.render_dir || '.')
     },
@@ -2325,10 +1187,17 @@ const hydrateDefaultsFromCatalog = (catalogData) => {
       directories[dirKey] = toScalar(dirMeta?.default, fallbackDir)
     }
 
+    const render_dirs = {}
+    for (const [dirKey, dirMeta] of Object.entries(type.render_dirs || {})) {
+      const fallbackRenderDir = fallback.render_dirs?.[dirKey] || ''
+      render_dirs[dirKey] = toScalar(dirMeta?.default, fallbackRenderDir)
+    }
+
     normalized[key] = {
       label: toScalar(type.label, fallback.label || formatProjectTypeName(key)),
       description: toScalar(type.description, fallback.description || ''),
       directories,
+      render_dirs,
       quarto: {
         render_dir: toScalar(type.quarto?.render_dir?.default, fallback.quarto?.render_dir || '.')
       },
@@ -2438,6 +1307,46 @@ watch(() => presentationOptions.includeFunctions, (enabled) => {
   if (isLoadingSettings.value) return
   setPresentationDirectory('functions', enabled, presentationOptionalDefaults.value.functions)
 })
+
+// Watch directories enabled state and sync with settings
+watch(directoriesEnabled, (newState) => {
+  if (isLoadingSettings.value) return
+
+  for (const [projectType, directories] of Object.entries(newState)) {
+    if (!settings.value.project_types?.[projectType]) continue
+
+    const settingsDirs = settings.value.project_types[projectType].directories || {}
+    const settingsRenderDirs = settings.value.project_types[projectType].render_dirs || {}
+    const catalogDirs = catalog.value?.project_types?.[projectType]?.directories || {}
+    const catalogRenderDirs = catalog.value?.project_types?.[projectType]?.render_dirs || {}
+
+    for (const [dirKey, enabled] of Object.entries(directories)) {
+      if (enabled === false) {
+        // Remove directory when disabled
+        if (Object.prototype.hasOwnProperty.call(settingsDirs, dirKey)) {
+          delete settings.value.project_types[projectType].directories[dirKey]
+        }
+        // Also remove render_dir if it exists
+        if (Object.prototype.hasOwnProperty.call(settingsRenderDirs, dirKey)) {
+          delete settings.value.project_types[projectType].render_dirs[dirKey]
+        }
+      } else if (enabled === true) {
+        // Add directory when enabled (if not already present)
+        if (!Object.prototype.hasOwnProperty.call(settingsDirs, dirKey)) {
+          const defaultValue = catalogDirs[dirKey]?.default || ''
+          settings.value.project_types[projectType].directories[dirKey] = defaultValue
+        }
+        // Add render_dir if this directory has one in the catalog
+        if (catalogRenderDirs[dirKey] && !Object.prototype.hasOwnProperty.call(settingsRenderDirs, dirKey)) {
+          const defaultRenderDir = catalogRenderDirs[dirKey]?.default || ''
+          if (defaultRenderDir) {
+            settings.value.project_types[projectType].render_dirs[dirKey] = defaultRenderDir
+          }
+        }
+      }
+    }
+  }
+}, { deep: true })
 
 // Watch env variables to update groups
 watch(defaultEnvVariables, (vars) => {
@@ -2634,11 +1543,52 @@ const loadSettings = async () => {
         merged[key] = normalizeProjectType(key, value)
       }
       settings.value.project_types = merged
+
+      // Ensure render_dirs exists for all project types
+      for (const key of Object.keys(settings.value.project_types)) {
+        if (!settings.value.project_types[key].render_dirs) {
+          settings.value.project_types[key].render_dirs = {}
+        }
+      }
     }
 
     presentationOptions.includeInputs = hasDirectory('presentation', 'inputs')
     presentationOptions.includeScripts = hasDirectory('presentation', 'scripts')
     presentationOptions.includeFunctions = hasDirectory('presentation', 'functions')
+
+    // Initialize directories enabled state for all project types
+    for (const projectType of ['project', 'project_sensitive', 'course', 'presentation']) {
+      const dirs = settings.value.project_types?.[projectType]?.directories || {}
+      const catalogDirs = catalogData?.project_types?.[projectType]?.directories || {}
+      const enabled = getDirectoriesEnabled(projectType)
+
+      // Set all known directories from catalog
+      for (const dirKey of Object.keys(catalogDirs)) {
+        // Directory exists in settings = enabled, otherwise disabled
+        enabled[dirKey] = Object.prototype.hasOwnProperty.call(dirs, dirKey)
+      }
+
+      // Also check for any extra directories in settings not in catalog
+      for (const dirKey of Object.keys(dirs)) {
+        if (!Object.prototype.hasOwnProperty.call(catalogDirs, dirKey)) {
+          enabled[dirKey] = true
+        }
+      }
+
+      // Initialize extra_directories as enabled by default
+      const extraDirs = settings.value.project_types?.[projectType]?.extra_directories || []
+      extraDirs.forEach(dir => {
+        if (dir.key) {
+          // Check if explicitly disabled, otherwise enable
+          if (settings.value.project_types[projectType].directories_enabled &&
+              settings.value.project_types[projectType].directories_enabled[dir.key] === false) {
+            enabled[dir.key] = false
+          } else {
+            enabled[dir.key] = true
+          }
+        }
+      })
+    }
 
     if (data.author) {
       settings.value.author = {
@@ -2823,13 +1773,35 @@ const scaffoldPanelModel = computed({
   }
 })
 
-// Helper functions for extra_directories with type field
+// Helper functions for extra_directories
+// Generic function for non-sensitive project types (returns all directories of a type)
 const extraDirectoriesByType = (projectTypeKey, type) => {
   const projectType = settings.value.project_types[projectTypeKey]
   if (!projectType || !Array.isArray(projectType.extra_directories)) {
     return []
   }
   return projectType.extra_directories.filter(dir => dir.type === type)
+}
+
+// Sensitive project type functions - distinguish between saved and new
+const savedExtraDirectoriesByType = (projectTypeKey, type) => {
+  const projectType = settings.value.project_types[projectTypeKey]
+  if (!projectType || !Array.isArray(projectType.extra_directories)) {
+    return []
+  }
+  return projectType.extra_directories.filter(dir =>
+    dir.type === type && !newExtraDirectoryIds.value.has(dir._id)
+  )
+}
+
+const newExtraDirectoriesByType = (projectTypeKey, type) => {
+  const projectType = settings.value.project_types[projectTypeKey]
+  if (!projectType || !Array.isArray(projectType.extra_directories)) {
+    return []
+  }
+  return projectType.extra_directories.filter(dir =>
+    dir.type === type && newExtraDirectoryIds.value.has(dir._id)
+  )
 }
 
 const updateExtraDirectories = (projectTypeKey, type, updatedItems) => {
@@ -2850,6 +1822,290 @@ const updateExtraDirectories = (projectTypeKey, type, updatedItems) => {
   // Replace entire array
   projectType.extra_directories = [...otherTypes, ...itemsWithType]
 }
+
+const updateExtraDirectoryPath = (projectTypeKey, key, newPath) => {
+  const projectType = settings.value.project_types[projectTypeKey]
+  if (!projectType || !Array.isArray(projectType.extra_directories)) return
+
+  const dir = projectType.extra_directories.find(d => d.key === key)
+  if (dir) {
+    dir.path = newPath
+  }
+}
+
+const updateNewExtraDirectoryField = (projectTypeKey, index, field, value) => {
+  const projectType = settings.value.project_types[projectTypeKey]
+  if (!projectType || !Array.isArray(projectType.extra_directories)) return
+
+  const newDirs = projectType.extra_directories.filter(dir =>
+    newExtraDirectoryIds.value.has(dir._id)
+  )
+
+  if (newDirs[index]) {
+    newDirs[index][field] = value
+  }
+}
+
+const addExtraDirectory = (projectTypeKey, type) => {
+  const projectType = settings.value.project_types[projectTypeKey]
+  if (!projectType) return
+
+  if (!Array.isArray(projectType.extra_directories)) {
+    projectType.extra_directories = []
+  }
+
+  // Create new directory entry
+  const newDir = {
+    key: '',
+    label: '',
+    path: '',
+    type,
+    _id: Date.now()
+  }
+
+  projectType.extra_directories.push(newDir)
+  newExtraDirectoryIds.value.add(newDir._id)
+}
+
+const removeExtraDirectory = (projectTypeKey, index) => {
+  const projectType = settings.value.project_types[projectTypeKey]
+  if (!projectType || !Array.isArray(projectType.extra_directories)) return
+
+  const newDirs = projectType.extra_directories.filter(dir =>
+    newExtraDirectoryIds.value.has(dir._id)
+  )
+
+  if (newDirs[index]) {
+    const dirToRemove = newDirs[index]
+    // Remove from tracking
+    newExtraDirectoryIds.value.delete(dirToRemove._id)
+    // Remove from array
+    const idx = projectType.extra_directories.indexOf(dirToRemove)
+    if (idx !== -1) {
+      projectType.extra_directories.splice(idx, 1)
+    }
+  }
+}
+
+// Computed properties for v-model binding with Repeater component
+const newInputPrivateDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'input_private')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    // Get the current new items before update
+    const currentNewItems = newExtraDirectoriesByType(currentProjectTypeKey.value, 'input_private')
+
+    // Find items that were deleted
+    const deletedItems = currentNewItems.filter(current =>
+      !value.some(v => v._id === current._id)
+    )
+
+    // Remove deleted items from tracking
+    deletedItems.forEach(item => {
+      if (item._id) {
+        newExtraDirectoryIds.value.delete(item._id)
+      }
+    })
+
+    // Get saved items of this type (not in the new Set)
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'input_private')
+
+    // Merge saved + new items
+    const merged = [...savedItems, ...value]
+
+    // Update with merged array
+    updateExtraDirectories(currentProjectTypeKey.value, 'input_private', merged)
+
+    // Track new items
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
+
+const newInputPublicDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'input_public')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    const currentNewItems = newExtraDirectoriesByType(currentProjectTypeKey.value, 'input_public')
+    const deletedItems = currentNewItems.filter(current =>
+      !value.some(v => v._id === current._id)
+    )
+    deletedItems.forEach(item => {
+      if (item._id) {
+        newExtraDirectoryIds.value.delete(item._id)
+      }
+    })
+
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'input_public')
+    const merged = [...savedItems, ...value]
+    updateExtraDirectories(currentProjectTypeKey.value, 'input_public', merged)
+
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
+
+const newOutputPrivateDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'output_private')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'output_private')
+    const merged = [...savedItems, ...value]
+    updateExtraDirectories(currentProjectTypeKey.value, 'output_private', merged)
+
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
+
+const newOutputPublicDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'output_public')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'output_public')
+    const merged = [...savedItems, ...value]
+    updateExtraDirectories(currentProjectTypeKey.value, 'output_public', merged)
+
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
+
+const newWorkspaceDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'workspace')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    // Get the current new items before update
+    const currentNewItems = newExtraDirectoriesByType(currentProjectTypeKey.value, 'workspace')
+
+    // Find items that were deleted (in current but not in new value)
+    const deletedItems = currentNewItems.filter(current =>
+      !value.some(v => v._id === current._id)
+    )
+
+    // Remove deleted items from tracking
+    deletedItems.forEach(item => {
+      if (item._id) {
+        newExtraDirectoryIds.value.delete(item._id)
+      }
+    })
+
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'workspace')
+    const merged = [...savedItems, ...value]
+    updateExtraDirectories(currentProjectTypeKey.value, 'workspace', merged)
+
+    // Track new items
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
+
+const newInputDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'input')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    // Get the current new items before update
+    const currentNewItems = newExtraDirectoriesByType(currentProjectTypeKey.value, 'input')
+
+    // Find items that were deleted (in current but not in new value)
+    const deletedItems = currentNewItems.filter(current =>
+      !value.some(v => v._id === current._id)
+    )
+
+    // Remove deleted items from tracking
+    deletedItems.forEach(item => {
+      if (item._id) {
+        newExtraDirectoryIds.value.delete(item._id)
+      }
+    })
+
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'input')
+    const merged = [...savedItems, ...value]
+    updateExtraDirectories(currentProjectTypeKey.value, 'input', merged)
+
+    // Track new items
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
+
+const newOutputDirectories = computed({
+  get() {
+    return newExtraDirectoriesByType(currentProjectTypeKey.value, 'output')
+  },
+  set(value) {
+    const projectType = settings.value.project_types[currentProjectTypeKey.value]
+    if (!projectType) return
+
+    // Get the current new items before update
+    const currentNewItems = newExtraDirectoriesByType(currentProjectTypeKey.value, 'output')
+
+    // Find items that were deleted (in current but not in new value)
+    const deletedItems = currentNewItems.filter(current =>
+      !value.some(v => v._id === current._id)
+    )
+
+    // Remove deleted items from tracking
+    deletedItems.forEach(item => {
+      if (item._id) {
+        newExtraDirectoryIds.value.delete(item._id)
+      }
+    })
+
+    const savedItems = savedExtraDirectoriesByType(currentProjectTypeKey.value, 'output')
+    const merged = [...savedItems, ...value]
+    updateExtraDirectories(currentProjectTypeKey.value, 'output', merged)
+
+    // Track new items
+    value.forEach(item => {
+      if (item._id && !newExtraDirectoryIds.value.has(item._id)) {
+        newExtraDirectoryIds.value.add(item._id)
+      }
+    })
+  }
+})
 
 // Validation helpers for extra_directories
 const validateExtraDirectoryKey = (key, projectTypeKey, type, currentIndex) => {
@@ -3072,17 +2328,45 @@ const saveSettings = async () => {
     payload.defaults.git_hooks.data_security = payload.privacy.secret_scan
     payload.git = payload.git || { user_name: '', user_email: '' }
 
-    // Filter out incomplete extra_directories entries (missing required fields)
+    // Sync toggle states from directoriesEnabled into payload
+    for (const projectTypeKey in directoriesEnabled) {
+      if (payload.project_types[projectTypeKey]) {
+        payload.project_types[projectTypeKey].directories_enabled = { ...directoriesEnabled[projectTypeKey] }
+      }
+    }
+
+    // Filter out incomplete and disabled extra_directories entries
     for (const projectTypeKey in payload.project_types) {
       const projectType = payload.project_types[projectTypeKey]
       if (projectType.extra_directories && Array.isArray(projectType.extra_directories)) {
-        projectType.extra_directories = projectType.extra_directories.filter(dir => {
-          // Keep only entries with all required fields filled
-          return dir.key && dir.key.trim() !== '' &&
-                 dir.label && dir.label.trim() !== '' &&
-                 dir.path && dir.path.trim() !== '' &&
-                 dir.type && dir.type.trim() !== ''
+        console.log(`[Save] Before filter (${projectTypeKey}):`, {
+          count: projectType.extra_directories.length,
+          items: projectType.extra_directories.map(d => ({ key: d.key, enabled: projectType.directories_enabled?.[d.key] }))
         })
+
+        projectType.extra_directories = projectType.extra_directories.filter(dir => {
+          // Remove if incomplete
+          if (!dir.key || dir.key.trim() === '' ||
+              !dir.label || dir.label.trim() === '' ||
+              !dir.path || dir.path.trim() === '' ||
+              !dir.type || dir.type.trim() === '') {
+            console.log(`[Save] Filtering out incomplete item:`, dir.key)
+            return false
+          }
+          // Remove if toggled off (disabled)
+          if (projectType.directories_enabled && projectType.directories_enabled[dir.key] === false) {
+            console.log(`[Save] Filtering out disabled item:`, dir.key)
+            return false
+          }
+          return true
+        })
+
+        console.log(`[Save] After filter (${projectTypeKey}):`, {
+          count: projectType.extra_directories.length,
+          items: projectType.extra_directories.map(d => d.key)
+        })
+
+        // Keep directories_enabled in payload so new projects can inherit these defaults
       }
     }
 
@@ -3140,6 +2424,12 @@ const saveSettings = async () => {
     if (templateResponses.some((res) => !res.ok)) {
       throw new Error('Template save failed')
     }
+
+    // Clear new directory tracking - they're now saved
+    newExtraDirectoryIds.value.clear()
+
+    // Reload settings to get fresh data from server
+    await loadSettings()
 
     toast.success('Settings Saved', 'Your global defaults were updated.')
   } catch (error) {

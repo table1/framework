@@ -47,17 +47,37 @@ model <- get_or_cache("model_v1", {
 
 ### 5. Save Results
 
-```r
-# Save data (adds catalog entry if missing, maps to outputs/private/tables/)
-data_save(processed_df, "outputs.tables.clean", type = "csv")
+**Save data files** using smart path resolution:
 
-# Save analysis output
+```r
+# Dot notation (resolves to configured directories)
+data_save(processed_df, "intermediate.cleaned_data")
+# → saves to inputs/intermediate/cleaned_data.rds
+
+data_save(final_df, "final.analysis_ready", type = "csv")
+# → saves to inputs/final/analysis_ready.csv
+
+# Direct path
+data_save(processed_df, "inputs/intermediate/my_data.csv")
+# → saves to inputs/intermediate/my_data.csv
+
+# Legacy: nested dot notation (creates data/ subdirectories)
+data_save(df, "outputs.tables.clean", type = "csv", force = TRUE)
+# → saves to data/outputs/tables/clean.csv
+```
+
+**Save analysis outputs:**
+
+```r
+# Save models and results
 result_save("regression_model", model, type = "model")
 
 # Save notebook (blinded)
 result_save("report", file = "report.html", type = "notebook",
             blind = TRUE, public = FALSE)
 ```
+
+**Note:** Directories must exist unless `force = TRUE`. File type is auto-detected from extension.
 
 ### 6. Query Databases
 

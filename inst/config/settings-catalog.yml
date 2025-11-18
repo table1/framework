@@ -151,11 +151,6 @@ project_types:
         default: "docs"
         enabled_by_default: true
         hint: "Codebooks, documentation, and other reference materials."
-      outputs_notebooks:
-        label: "Rendered notebooks"
-        default: "outputs/notebooks"
-        enabled_by_default: true
-        hint: "Compiled Quarto/R Markdown notebooks."
       outputs_tables:
         label: "Tables"
         default: "outputs/tables"
@@ -187,6 +182,17 @@ project_types:
         enabled_by_default: true
         hint: "Short-lived explorations (gitignored)."
 
+    # Quarto render directories (per workspace directory)
+    render_dirs:
+      notebooks:
+        label: "Notebooks render directory"
+        default: "outputs/notebooks"
+        hint: "Where Quarto/RMarkdown notebooks are rendered to."
+      docs:
+        label: "Documentation render directory"
+        default: "outputs/docs"
+        hint: "Where documentation is rendered to."
+
     quarto:
       render_dir:
         label: "Quarto render directory"
@@ -216,6 +222,11 @@ project_types:
         label: "Scripts"
         default: "scripts"
         enabled_by_default: true
+      docs:
+        label: "Documentation"
+        default: "docs"
+        enabled_by_default: true
+        hint: "Codebooks, documentation, and other reference materials."
       inputs_private_raw:
         label: "Raw data (private)"
         default: "inputs/private/raw"
@@ -239,14 +250,6 @@ project_types:
       inputs_public_final:
         label: "Analysis-ready data (public)"
         default: "inputs/public/final"
-        enabled_by_default: true
-      outputs_private_notebooks:
-        label: "Rendered notebooks (private)"
-        default: "outputs/private/notebooks"
-        enabled_by_default: true
-      outputs_public_notebooks:
-        label: "Rendered notebooks (public)"
-        default: "outputs/public/notebooks"
         enabled_by_default: true
       outputs_private_tables:
         label: "Tables (private)"
@@ -289,6 +292,17 @@ project_types:
         default: "scratch"
         enabled_by_default: true
 
+    # Quarto render directories (per workspace directory)
+    render_dirs:
+      notebooks:
+        label: "Notebooks render directory"
+        default: "outputs/private/notebooks"
+        hint: "Where Quarto/RMarkdown notebooks are rendered to."
+      docs:
+        label: "Documentation render directory"
+        default: "outputs/private/docs"
+        hint: "Where documentation is rendered to."
+
     quarto:
       render_dir:
         label: "Quarto render directory"
@@ -318,14 +332,22 @@ project_types:
         label: "Data"
         default: "data"
         enabled_by_default: true
+        hint: "Data files for the presentation."
       scripts:
         label: "Scripts"
         default: "scripts"
         enabled_by_default: false
+        hint: "Data processing or analysis scripts."
       functions:
         label: "Functions"
         default: "functions"
         enabled_by_default: false
+        hint: "Helper functions for analysis or visualization."
+      outputs:
+        label: "Outputs"
+        default: "outputs"
+        enabled_by_default: false
+        hint: "Figures, tables, and other presentation outputs."
 
     quarto:
       render_dir:
@@ -367,12 +389,29 @@ project_types:
       notebooks:
         label: "Module notebooks"
         default: "modules"
-        enabled_by_default: true
+        enabled_by_default: false
+      functions:
+        label: "Functions"
+        default: "functions"
+        enabled_by_default: false
+      scripts:
+        label: "Scripts"
+        default: "scripts"
+        enabled_by_default: false
 
-    quarto:
-      render_dir:
-        label: "Quarto render directory"
-        default: "course_docs"
+    render_dirs:
+      slides:
+        label: "Slides render directory"
+        default: "rendered/slides"
+      assignments:
+        label: "Assignments render directory"
+        default: "rendered/assignments"
+      course_docs:
+        label: "Course documents render directory"
+        default: "rendered/course_docs"
+      modules:
+        label: "Modules render directory"
+        default: "rendered/modules"
 
     notebook_template:
       default: "notebook"

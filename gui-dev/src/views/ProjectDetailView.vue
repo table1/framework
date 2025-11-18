@@ -180,50 +180,10 @@
           Quick overview of your project settings.
         </p>
 
-        <div class="space-y-3">
-          <OverviewCard title="Basics" @click="activeSection = 'basics'">
-            <div class="text-gray-900 dark:text-white">
-              {{ basicsOverview.name }}
-              <template v-if="basicsOverview.author">
-                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                <span class="text-gray-600 dark:text-gray-400">{{ basicsOverview.author }}</span>
-              </template>
-            </div>
-            <p v-if="basicsOverview.path" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {{ basicsOverview.path }}
-            </p>
-          </OverviewCard>
-
-          <OverviewCard title="Project Structure" @click="activeSection = 'settings'">
-            <span class="text-gray-600 dark:text-gray-400">
-              {{ projectStructureLabel }}
-            </span>
-          </OverviewCard>
-
-          <OverviewCard title="Notebooks & Scripts" @click="activeSection = 'scaffold'">
-            <span class="text-gray-600 dark:text-gray-400">
-              {{ notebookFormatLabel }}
-            </span>
-          </OverviewCard>
-
-          <OverviewCard title="AI Assistants" @click="activeSection = 'ai'">
-            <span :class="aiSettings.enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'">
-              {{ aiOverviewText }}
-            </span>
-          </OverviewCard>
-
-          <OverviewCard title="Git & Hooks" @click="activeSection = 'git'">
-            <span class="text-gray-600 dark:text-gray-400">{{ gitOverviewText }}</span>
-          </OverviewCard>
-
-          <OverviewCard title="Packages" @click="activeSection = 'packages'">
-            <span class="text-gray-600 dark:text-gray-400">{{ packagesOverviewText }}</span>
-          </OverviewCard>
-
-          <OverviewCard title=".env" @click="activeSection = 'env'">
-            <span class="text-gray-600 dark:text-gray-400">{{ envOverviewText }}</span>
-          </OverviewCard>
-        </div>
+        <OverviewSummary
+          :cards="overviewCards"
+          @navigate="(section) => activeSection = section"
+        />
       </div>
 
       <!-- Basics Section -->
@@ -290,28 +250,8 @@
               </Select>
 
               <!-- Author Information Subheading -->
-              <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                  Author Information
-                </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
-                  Configure author details for this project.
-                </p>
-                <div v-if="editableSettings.author" class="space-y-5">
-                  <Input
-                    v-model="editableSettings.author.name"
-                    label="Author Name"
-                  />
-                  <Input
-                    v-model="editableSettings.author.email"
-                    label="Email"
-                    type="email"
-                  />
-                  <Input
-                    v-model="editableSettings.author.affiliation"
-                    label="Affiliation"
-                  />
-                </div>
+              <div v-if="editableSettings.author" class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <AuthorInformationPanel v-model="editableSettings.author" />
               </div>
             </div>
           </div>
@@ -330,193 +270,32 @@
           <Alert type="error" title="Error Loading Settings" :description="settingsError" />
         </div>
 
-        <div v-else>
+        <div v-else-if="projectSettings">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Project Structure</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            This project uses the <strong>{{ projectTypeLabel }}</strong> structure. Existing directories cannot be renamed or removed, but you can add custom directories below.
+            This project uses the <strong>{{ projectTypeLabel }}</strong> structure. View-only mode.
           </p>
 
-          <!-- Workspace Directories -->
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Workspaces</h3>
-            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
-              Functions, notebooks, and scripts scaffolded into every project.
-            </p>
+          <Alert
+            type="info"
+            title="View Only"
+            description="Project structure settings are read-only in this view. To modify structure, edit the project's configuration files directly."
+            class="mb-6"
+          />
 
-            <!-- Existing workspace directories -->
-            <div class="space-y-4 mb-6">
-              <div v-for="(value, key) in workspaceDirectories" :key="key" class="flex items-start gap-4">
-                <div class="flex items-center gap-2 w-32 shrink-0">
-                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
-                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {{ formatDirectoryLabel(key) }}
-                  </label>
-                </div>
-                <div class="flex-1">
-                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Add custom workspace directories -->
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <Repeater
-                v-model="customWorkspaceDirectories"
-                add-label="Add Workspace Directory"
-                :default-item="() => ({ key: '', label: '', path: '', category: 'workspace', _id: Date.now() })"
-              >
-                <template #default="{ item, index, update }">
-                  <div class="space-y-3">
-                    <Input
-                      :model-value="item.key"
-                      @update:model-value="update('key', $event)"
-                      label="Key"
-                      placeholder="e.g., helpers"
-                      size="sm"
-                      monospace
-                    />
-                    <Input
-                      :model-value="item.label"
-                      @update:model-value="update('label', $event)"
-                      label="Label"
-                      placeholder="e.g., Helper Scripts"
-                      size="sm"
-                    />
-                    <Input
-                      :model-value="item.path"
-                      @update:model-value="update('path', $event)"
-                      label="Path"
-                      placeholder="e.g., helpers"
-                      prefix="/"
-                      monospace
-                      size="sm"
-                    />
-                  </div>
-                </template>
-              </Repeater>
-            </div>
-          </div>
-
-          <!-- Input Directories -->
-          <div v-if="inputDirectories && Object.keys(inputDirectories).length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Inputs</h3>
-            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
-              Define the read-only locations where raw and prepared data live.
-            </p>
-
-            <!-- Existing input directories -->
-            <div class="space-y-4 mb-6">
-              <div v-for="(value, key) in inputDirectories" :key="key" class="flex items-start gap-4">
-                <div class="flex items-center gap-2 w-32 shrink-0">
-                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
-                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {{ formatDirectoryLabel(key) }}
-                  </label>
-                </div>
-                <div class="flex-1">
-                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Add custom input directories -->
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <Repeater
-                v-model="customInputDirectories"
-                add-label="Add Input Directory"
-                :default-item="() => ({ key: '', label: '', path: '', category: 'input', _id: Date.now() })"
-              >
-                <template #default="{ item, index, update }">
-                  <div class="space-y-3">
-                    <Input
-                      :model-value="item.key"
-                      @update:model-value="update('key', $event)"
-                      label="Key"
-                      placeholder="e.g., inputs_archive"
-                      size="sm"
-                      monospace
-                    />
-                    <Input
-                      :model-value="item.label"
-                      @update:model-value="update('label', $event)"
-                      label="Label"
-                      placeholder="e.g., Archived Inputs"
-                      size="sm"
-                    />
-                    <Input
-                      :model-value="item.path"
-                      @update:model-value="update('path', $event)"
-                      label="Path"
-                      placeholder="e.g., inputs/archive"
-                      prefix="/"
-                      monospace
-                      size="sm"
-                    />
-                  </div>
-                </template>
-              </Repeater>
-            </div>
-          </div>
-
-          <!-- Output Directories -->
-          <div v-if="outputDirectories && Object.keys(outputDirectories).length > 0" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 mb-6">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Outputs</h3>
-            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
-              Results, figures, tables, and rendered outputs.
-            </p>
-
-            <!-- Existing output directories -->
-            <div class="space-y-4 mb-6">
-              <div v-for="(value, key) in outputDirectories" :key="key" class="flex items-start gap-4">
-                <div class="flex items-center gap-2 w-32 shrink-0">
-                  <Toggle :model-value="true" disabled class="pointer-events-none opacity-50" />
-                  <label class="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {{ formatDirectoryLabel(key) }}
-                  </label>
-                </div>
-                <div class="flex-1">
-                  <Input :model-value="value" disabled prefix="/" monospace class="opacity-75" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Add custom output directories -->
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <Repeater
-                v-model="customOutputDirectories"
-                add-label="Add Output Directory"
-                :default-item="() => ({ key: '', label: '', path: '', category: 'output', _id: Date.now() })"
-              >
-                <template #default="{ item, index, update }">
-                  <div class="space-y-3">
-                    <Input
-                      :model-value="item.key"
-                      @update:model-value="update('key', $event)"
-                      label="Key"
-                      placeholder="e.g., outputs_animations"
-                      size="sm"
-                      monospace
-                    />
-                    <Input
-                      :model-value="item.label"
-                      @update:model-value="update('label', $event)"
-                      label="Label"
-                      placeholder="e.g., Animations"
-                      size="sm"
-                    />
-                    <Input
-                      :model-value="item.path"
-                      @update:model-value="update('path', $event)"
-                      label="Path"
-                      placeholder="e.g., outputs/animations"
-                      prefix="/"
-                      monospace
-                      size="sm"
-                    />
-                  </div>
-                </template>
-              </Repeater>
-            </div>
+          <div class="opacity-60 pointer-events-none">
+            <ProjectStructureEditor
+              :project-type="project.type"
+              :directories="projectSettings.directories || {}"
+              :render-dirs="projectSettings.render_dirs || {}"
+              :enabled="directoriesEnabledForDisplay"
+              :extra-directories="projectSettings.extra_directories || []"
+              :settings="projectSettings"
+              :gitignore="projectSettings.gitignore || ''"
+              :catalog="settingsCatalog?.project_types?.[project.type] || {}"
+              :new-extra-ids="new Set()"
+              :disabled="true"
+            />
           </div>
         </div>
       </div>
@@ -678,61 +457,11 @@
             Configure package management and default packages for this project.
           </p>
 
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <div class="space-y-5">
-              <Toggle
-                v-model="editablePackages.use_renv"
-                label="Enable renv"
-                description="Use renv for package version management and reproducibility"
-              />
-
-              <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">Use this list to preseed notebooks with your preferred helpers.</p>
-
-                <div class="space-y-3" v-if="editablePackages.default_packages && editablePackages.default_packages.length">
-                  <div
-                    v-for="(pkg, idx) in editablePackages.default_packages"
-                    :key="`pkg-${idx}`"
-                    class="rounded-md border border-gray-200 p-4 dark:border-gray-700"
-                  >
-                    <div class="flex flex-col gap-3">
-                      <div class="grid gap-3 grid-cols-[1fr_160px]">
-                        <PackageAutocomplete
-                          v-if="pkg.source === 'cran' || pkg.source === 'bioconductor'"
-                          v-model="pkg.name"
-                          :source="pkg.source"
-                          label="Package"
-                          :placeholder="pkg.source === 'cran' ? 'Search CRAN...' : 'Search Bioconductor...'"
-                          @select="(selectedPkg) => pkg.name = selectedPkg.name"
-                        />
-                        <Input
-                          v-else
-                          v-model="pkg.name"
-                          label="Package"
-                          placeholder="user/repo"
-                        />
-                        <Select v-model="pkg.source" label="Source">
-                          <option value="cran">CRAN</option>
-                          <option value="github">GitHub</option>
-                          <option value="bioconductor">Bioconductor</option>
-                        </Select>
-                      </div>
-                      <div class="flex items-center justify-between">
-                        <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() when scaffold() runs." />
-                        <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <p v-else class="text-xs text-gray-500 dark:text-gray-400 mb-4">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
-
-                <div class="mt-4">
-                  <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PackagesEditor
+            v-model="editablePackages"
+            :show-renv-toggle="true"
+            :flush="false"
+          />
         </div>
       </div>
 
@@ -752,76 +481,24 @@
             Framework maintains context files for selected assistants and keeps them in sync before commits.
           </p>
 
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50 space-y-6">
-            <Toggle
-              v-model="aiSettings.enabled"
-              label="Enable AI Support"
-              description="Generate and sync assistant-specific context files."
-            />
-
-            <div
-              v-if="aiSettings.enabled"
-              class="space-y-6 pt-6 border-t border-gray-200 dark:border-gray-700"
-            >
-              <div>
-                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical context file</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  This file is the source of truth; other instructions files are synced to it when AI hooks run.
-                </p>
-                <Select
-                  v-model="aiSettings.canonical_file"
-                  label="Canonical Context File"
-                  @change="handleCanonicalFileChange($event?.target?.value)"
-                >
-                  <option value="AGENTS.md">AGENTS.md (multi-agent orchestrator)</option>
-                  <option value="CLAUDE.md">CLAUDE.md</option>
-                  <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
-                </Select>
-              </div>
-
-              <div>
-                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Assistants</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Choose which assistants receive context updates.
-                </p>
-                <div class="space-y-2">
-                  <Checkbox
-                    v-for="assistant in availableAssistants"
-                    :key="assistant.id"
-                    :id="`project-ai-${assistant.id}`"
-                    :model-value="aiSettings.assistants.includes(assistant.id)"
-                    @update:model-value="(value) => toggleAiAssistant(assistant.id, value)"
-                    :description="assistant.description"
-                  >
-                    {{ assistant.label }}
-                  </Checkbox>
-                </div>
-              </div>
-
-              <div>
-                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical instructions</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Edit the canonical file directly. Framework mirrors this content to other assistant files.
-                </p>
-                <Alert
-                  v-if="!aiContentMeta.exists"
-                  type="info"
-                  title="New canonical file"
-                  :description="`Saving copies the current instructions into ${aiSettings.canonical_file || 'CLAUDE.md'}. The original file stays on disk; if AI sync hooks are enabled they mirror everything from the new canonical file.`"
-                  class="mb-4"
-                />
-                <CodeEditor
-                  v-model="aiSettings.canonical_content"
-                  language="markdown"
-                  min-height="400px"
-                  :disabled="canonicalContentLoading"
-                />
-                <p v-if="canonicalContentLoading" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Loading {{ aiSettings.canonical_file }}…
-                </p>
-              </div>
-            </div>
-          </div>
+          <AIAssistantsPanel
+            v-model="aiSettings"
+            :flush="false"
+            :show-editor="true"
+            editor-height="400px"
+            :editor-disabled="canonicalContentLoading"
+            :editor-loading="canonicalContentLoading"
+          >
+            <template #editor-alert>
+              <Alert
+                v-if="!aiContentMeta.exists"
+                type="info"
+                title="New canonical file"
+                :description="`Saving copies the current instructions into ${aiSettings.canonical_file || 'CLAUDE.md'}. The original file stays on disk; if AI sync hooks are enabled they mirror everything from the new canonical file.`"
+                class="mb-4"
+              />
+            </template>
+          </AIAssistantsPanel>
         </div>
       </div>
 
@@ -1129,11 +806,16 @@ import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.
 import Repeater from '../components/ui/Repeater.vue'
 import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import OverviewCard from '../components/ui/OverviewCard.vue'
+import OverviewSummary from '../components/OverviewSummary.vue'
 import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
 import DataCatalogTree from '../components/DataCatalogTree.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
+import AuthorInformationPanel from '../components/settings/AuthorInformationPanel.vue'
+import PackagesEditor from '../components/settings/PackagesEditor.vue'
+import AIAssistantsPanel from '../components/settings/AIAssistantsPanel.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
+import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
 import {
@@ -1175,6 +857,7 @@ const isCreatingDataEntry = ref(false)
 const dataEntriesToDelete = ref(new Set())
 const savingDataDeletes = ref(false)
 const projectSettings = ref(null)
+const settingsCatalog = ref(null)
 const editableSettings = ref({})
 const settingsLoading = ref(false)
 const settingsError = ref(null)
@@ -1225,11 +908,6 @@ const envLoaded = ref(false)
 const savingEnv = ref(false)
 const envViewMode = ref('grouped') // 'grouped' or 'raw'
 const regroupOnSave = ref(false) // If true, regroup .env file by prefix (loses comments)
-const availableAssistants = [
-  { id: 'claude', label: 'Claude Code', description: "Anthropic's IDE-focused assistant." },
-  { id: 'copilot', label: 'GitHub Copilot', description: 'Complements VS Code and JetBrains editors.' },
-  { id: 'agents', label: 'Multi-Agent (OpenAI Codex, Cursor, etc.)', description: 'Shared instructions for multi-model orchestrators.' }
-]
 const aiSettings = ref({
   enabled: false,
   canonical_file: 'CLAUDE.md',
@@ -1303,6 +981,74 @@ const envOverviewText = computed(() => {
   return envVariableCount.value > 0
     ? `${envVariableCount.value} variable${envVariableCount.value === 1 ? '' : 's'}`
     : 'No variables defined'
+})
+
+// Overview data for OverviewSummary component
+const overviewCards = computed(() => {
+  const name = basicsOverview.value.name
+  const path = basicsOverview.value.path
+  const author = basicsOverview.value.author
+  const projectType = projectStructureLabel.value
+  const notebookFormat = notebookFormatLabel.value
+  const aiEnabled = aiSettings.value.enabled
+  const aiProvider = aiSettings.value.enabled ? (Array.isArray(aiSettings.value.assistants) ? aiSettings.value.assistants.map(formatAssistantLabel).join(', ') : 'Enabled') : ''
+  const aiCanonical = aiSettings.value.canonical_file || 'CLAUDE.md'
+  const gitInit = gitSettings.value.initialize
+  const gitHooks = enabledGitHooks.value
+  const pkgCount = packagesCount.value
+  const renvEnabled = editablePackages.value?.use_renv || false
+  const envCount = envVariableCount.value
+
+  return [
+    {
+      id: 'basics',
+      title: 'Basics',
+      section: 'basics',
+      content: `<div>${name} · ${author}</div><div class="text-sm text-gray-600 dark:text-gray-400 mt-1">${path}</div>`
+    },
+    {
+      id: 'structure',
+      title: 'Project Structure',
+      section: 'settings',
+      content: projectType
+    },
+    {
+      id: 'notebooks',
+      title: 'Notebooks & Scripts',
+      section: 'scaffold',
+      content: notebookFormat
+    },
+    {
+      id: 'packages',
+      title: 'Packages',
+      section: 'packages',
+      content: pkgCount > 0
+        ? `${pkgCount} packages · renv ${renvEnabled ? 'enabled' : 'disabled'}`
+        : `renv: ${renvEnabled ? 'enabled' : 'disabled'}`
+    },
+    {
+      id: 'env',
+      title: '.env',
+      section: 'env',
+      content: envCount > 0 ? `${envCount} variable${envCount === 1 ? '' : 's'}` : 'No variables defined'
+    },
+    {
+      id: 'ai',
+      title: 'AI Assistants',
+      section: 'ai',
+      content: aiEnabled
+        ? `<span class="text-green-600 dark:text-green-400">${aiProvider} · ${aiCanonical}</span>`
+        : '<span class="text-gray-600 dark:text-gray-400">Disabled</span>'
+    },
+    {
+      id: 'git',
+      title: 'Git & Hooks',
+      section: 'git',
+      content: gitInit
+        ? `Auto-initialize repositories${gitHooks.length ? ` · ${gitHooks.join(', ')}` : ''}`
+        : 'Manual initialization'
+    }
+  ]
 })
 
 // Sidebar link classes
@@ -1673,6 +1419,22 @@ const outputDirectories = computed(() => {
   return outputs
 })
 
+// Existing custom directories by type
+const existingCustomInputDirectories = computed(() => {
+  const extraDirs = editableSettings.value.extra_directories || []
+  return extraDirs.filter(dir => dir.type === 'input')
+})
+
+const existingCustomOutputDirectories = computed(() => {
+  const extraDirs = editableSettings.value.extra_directories || []
+  return extraDirs.filter(dir => dir.type === 'output')
+})
+
+const existingCustomWorkspaceDirectories = computed(() => {
+  const extraDirs = editableSettings.value.extra_directories || []
+  return extraDirs.filter(dir => dir.type === 'workspace')
+})
+
 const formatDirectoryLabel = (key) => {
   return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
@@ -1690,6 +1452,26 @@ const projectTypeLabel = computed(() => {
   }
 
   return typeLabels[type] || type
+})
+
+// Create enabled map from existing directories (for read-only display)
+const directoriesEnabledForDisplay = computed(() => {
+  if (!projectSettings.value?.directories) return {}
+
+  const enabled = {}
+  // All directories in the config are enabled
+  Object.keys(projectSettings.value.directories).forEach(key => {
+    enabled[key] = true
+  })
+
+  // Also mark extra directories as enabled
+  if (projectSettings.value.extra_directories) {
+    projectSettings.value.extra_directories.forEach(dir => {
+      enabled[dir.key] = true
+    })
+  }
+
+  return enabled
 })
 
 const canDelete = computed(() => {
@@ -1990,8 +1772,15 @@ const loadProjectSettings = async () => {
   settingsError.value = null
 
   try {
-    const response = await fetch(`/api/project/${route.params.id}/settings`)
-    const data = await response.json()
+    const [settingsResponse, catalogResponse] = await Promise.all([
+      fetch(`/api/project/${route.params.id}/settings`),
+      fetch('/api/settings/catalog')
+    ])
+
+    const data = await settingsResponse.json()
+    const catalogData = await catalogResponse.json()
+
+    settingsCatalog.value = catalogData
 
     if (data.error) {
       settingsError.value = data.error
@@ -2360,17 +2149,6 @@ const saveConnections = async () => {
   }
 }
 
-const addPackage = () => {
-  if (!editablePackages.value.default_packages) {
-    editablePackages.value.default_packages = []
-  }
-  editablePackages.value.default_packages.push({
-    name: '',
-    source: 'cran',
-    auto_attach: true
-  })
-}
-
 const searchPackages = async () => {
   if (packageSearch.value.length < 2) {
     packageSearchResults.value = []
@@ -2490,10 +2268,6 @@ const confirmDelete = async () => {
     console.error('[DELETE] Failed to delete project:', error)
     toast.error('Delete Failed', error.message || 'Could not delete project')
   }
-}
-
-const removePackage = (index) => {
-  editablePackages.value.default_packages.splice(index, 1)
 }
 
 const normalizeAssistantList = (value) => {
@@ -2656,17 +2430,6 @@ const loadCanonicalContent = async (fileName, { preserveContentIfMissing = true 
 const handleCanonicalFileChange = (value) => {
   const nextValue = typeof value === 'string' && value.length > 0 ? value : 'CLAUDE.md'
   loadCanonicalContent(nextValue, { preserveContentIfMissing: true })
-}
-
-const toggleAiAssistant = (assistantId, enabled) => {
-  if (!assistantId) return
-  const current = new Set(aiSettings.value.assistants)
-  if (enabled) {
-    current.add(assistantId)
-  } else {
-    current.delete(assistantId)
-  }
-  aiSettings.value.assistants = Array.from(current)
 }
 
 const saveAISettings = async () => {

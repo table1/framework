@@ -164,8 +164,6 @@ project_types:
       presentation_source: "presentation.qmd"
       rendered_slides: "."
       data: "data"
-      scripts: "scripts"
-      functions: "functions"
 
   project_sensitive:
     label: "Privacy Sensitive Project"
