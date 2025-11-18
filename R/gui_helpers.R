@@ -235,7 +235,32 @@ read_frameworkrc <- function(use_defaults = TRUE) {
       } else if (key == "defaults" && is.list(config[[key]])) {
         config[[key]] <- modifyList(defaults[[key]], config[[key]], keep.null = TRUE)
       } else if (key == "project_types" && is.list(config[[key]])) {
+        # CRITICAL FIX: modifyList() merges nested objects, so deleted directory fields persist.
+        # We need to merge project_types, BUT completely replace directories for each type
+        # to allow user deletions to override package defaults.
+
+        # Save user's directories BEFORE merge (to preserve deletions)
+        user_directories <- list()
+        user_extra_directories <- list()
+        for (type_name in names(config[[key]])) {
+          if (!is.null(config[[key]][[type_name]]$directories)) {
+            user_directories[[type_name]] <- config[[key]][[type_name]]$directories
+          }
+          if (!is.null(config[[key]][[type_name]]$extra_directories)) {
+            user_extra_directories[[type_name]] <- config[[key]][[type_name]]$extra_directories
+          }
+        }
+
+        # Merge with defaults (gets labels, descriptions, etc.)
         config[[key]] <- modifyList(defaults[[key]], config[[key]], keep.null = TRUE)
+
+        # Restore user's directories (completely replace merged defaults)
+        for (type_name in names(user_directories)) {
+          config[[key]][[type_name]]$directories <- user_directories[[type_name]]
+        }
+        for (type_name in names(user_extra_directories)) {
+          config[[key]][[type_name]]$extra_directories <- user_extra_directories[[type_name]]
+        }
       }
     }
 

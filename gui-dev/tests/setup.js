@@ -1,14 +1,8 @@
 import { expect, afterEach, vi } from 'vitest'
-import { cleanup } from '@vue/test-utils'
-import matchers from '@testing-library/jest-dom/matchers'
+import * as matchers from '@testing-library/jest-dom/matchers'
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers)
-
-// Cleanup after each test
-afterEach(() => {
-  cleanup()
-})
 
 // Mock window.matchMedia (needed for dark mode)
 Object.defineProperty(window, 'matchMedia', {

@@ -808,21 +808,28 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   for (type_name in names(project_types)) {
     entry <- project_types[[type_name]]
     checkmate::assert_list(entry, names = "unique")
-    if (!is.null(entry$label)) checkmate::assert_string(entry$label, min.chars = 1)
-    if (!is.null(entry$description)) checkmate::assert_string(entry$description, min.chars = 1)
+    if (!is.null(entry$label) && nzchar(entry$label)) checkmate::assert_string(entry$label, min.chars = 1)
+    if (!is.null(entry$description) && nzchar(entry$description)) checkmate::assert_string(entry$description, min.chars = 1)
     if (!is.null(entry$directories)) {
-      checkmate::assert_list(entry$directories)
+      # Accept both list and character vector (JSON arrays become character vectors)
+      checkmate::assert(
+        checkmate::check_list(entry$directories),
+        checkmate::check_character(entry$directories)
+      )
       for (dir_value in entry$directories) {
-        if (!is.null(dir_value)) checkmate::assert_string(dir_value, min.chars = 1)
+        # Skip empty strings (sent by GUI when field is cleared)
+        if (!is.null(dir_value) && nzchar(dir_value)) {
+          checkmate::assert_string(dir_value, min.chars = 1)
+        }
       }
     }
     if (!is.null(entry$quarto)) {
       checkmate::assert_list(entry$quarto)
-      if (!is.null(entry$quarto$render_dir)) {
+      if (!is.null(entry$quarto$render_dir) && nzchar(entry$quarto$render_dir)) {
         checkmate::assert_string(entry$quarto$render_dir, min.chars = 1)
       }
     }
-    if (!is.null(entry$notebook_template)) {
+    if (!is.null(entry$notebook_template) && nzchar(entry$notebook_template)) {
       checkmate::assert_string(entry$notebook_template, min.chars = 1)
     }
 
@@ -908,7 +915,9 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
 
   checkmate::assert_list(privacy)
   if (!is.null(privacy$secret_scan)) checkmate::assert_flag(privacy$secret_scan)
-  if (!is.null(privacy$gitignore_template)) checkmate::assert_string(privacy$gitignore_template, min.chars = 1)
+  if (!is.null(privacy$gitignore_template) && nzchar(privacy$gitignore_template)) {
+    checkmate::assert_string(privacy$gitignore_template, min.chars = 1)
+  }
 
   invisible(TRUE)
 }
@@ -985,11 +994,25 @@ configure_global <- function(settings = NULL, validate = TRUE) {
 
   # CRITICAL FIX: modifyList() doesn't handle unnamed lists (arrays) correctly
   # It replaces them with empty lists. We need to manually restore extra_directories
-  # for all project types after the merge
+  # for all project types after the merge.
+  # ALSO: modifyList() merges nested objects, so deleted directory fields persist.
+  # We need to completely replace directories and extra_directories from settings.
   if (!is.null(settings$project_types)) {
     for (type_name in names(settings$project_types)) {
+      # Replace directories completely (don't merge, to allow deletions)
+      if (!is.null(settings$project_types[[type_name]]$directories)) {
+        # Filter out empty strings sent by GUI when fields are cleared
+        dirs <- settings$project_types[[type_name]]$directories
+        # Handle both character vectors (from JSON) and lists
+        if (is.character(dirs)) {
+          dirs <- as.list(dirs[nzchar(dirs)])
+        } else {
+          dirs <- Filter(function(x) !is.null(x) && nzchar(x), dirs)
+        }
+        updated$project_types[[type_name]]$directories <- dirs
+      }
+      # Replace extra_directories completely (bypassing modifyList's broken array behavior)
       if (!is.null(settings$project_types[[type_name]]$extra_directories)) {
-        # Directly assign the extra_directories from settings (bypassing modifyList's broken behavior)
         updated$project_types[[type_name]]$extra_directories <-
           settings$project_types[[type_name]]$extra_directories
       }
@@ -1026,12 +1049,28 @@ configure_global <- function(settings = NULL, validate = TRUE) {
     }
   }
 
+  # Handle v2 global.projects_root
+  if (!is.null(updated$global$projects_root)) {
+    if (!nzchar(updated$global$projects_root)) {
+      updated$global$projects_root <- NULL
+    }
+  }
+
   if (!is.null(updated$project_types) && !is.null(updated$project_types$project$directories)) {
     updated$defaults$directories <- updated$project_types$project$directories
   }
 
+  # Convert paths to tilde notation before saving (for portability)
+  updated_for_save <- updated
+  if (!is.null(updated_for_save$projects_root)) {
+    updated_for_save$projects_root <- .path_to_tilde(updated_for_save$projects_root)
+  }
+  if (!is.null(updated_for_save$global$projects_root)) {
+    updated_for_save$global$projects_root <- .path_to_tilde(updated_for_save$global$projects_root)
+  }
+
   # Write updated config
-  write_frameworkrc(updated)
+  write_frameworkrc(updated_for_save)
 
   if (validate) {
     message("\u2713 Global settings updated in ~/.config/framework/settings.yml")
@@ -1097,4 +1136,56 @@ get_global_setting <- function(key, default = "", print = TRUE) {
   }
 
   invisible(result)
+}
+
+#' Convert Path to Tilde Notation
+#'
+#' Internal helper to convert absolute paths to tilde notation for portable storage.
+#' Paths like "/Users/username/code" become "~/code" for cross-platform compatibility.
+#'
+#' @param path Character. Absolute path to convert
+#'
+#' @return Character. Path with tilde notation if under home directory, otherwise unchanged
+#'
+#' @keywords internal
+#' @noRd
+.path_to_tilde <- function(path) {
+  # Return unchanged if NULL, empty, or already uses tilde
+  if (is.null(path) || path == "" || grepl("^~", path)) {
+    return(path)
+  }
+
+  # Get home directory (cross-platform)
+  home <- path.expand("~")
+
+  # Fallback to environment variables if path.expand fails
+  if (is.null(home) || home == "~") {
+    home <- Sys.getenv("HOME")
+    if (home == "") {
+      home <- Sys.getenv("USERPROFILE")  # Windows fallback
+    }
+  }
+
+  # Normalize paths for comparison (handle trailing slashes, etc.)
+  home <- normalizePath(home, mustWork = FALSE)
+  path_normalized <- normalizePath(path, mustWork = FALSE)
+
+  # Replace home directory with tilde if path starts with home
+  if (startsWith(path_normalized, home)) {
+    # Get the relative portion after home directory
+    relative_part <- substr(path_normalized, nchar(home) + 1, nchar(path_normalized))
+
+    # Remove leading slash if present
+    relative_part <- sub("^[/\\\\]", "", relative_part)
+
+    # Construct tilde path
+    if (relative_part == "") {
+      return("~")
+    } else {
+      return(file.path("~", relative_part))
+    }
+  }
+
+  # Return unchanged if not under home directory
+  return(path)
 }

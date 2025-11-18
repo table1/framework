@@ -94,104 +94,158 @@ function(pr) {
 #* @get /api/settings
 #* @serializer unboxedJSON
 function() {
+  cat("[DEBUG] Using plumber.R at:", getwd(), "\n", file = stderr())
   settings_path <- path.expand("~/.config/framework/settings.yml")
   first_run <- !file.exists(settings_path)
 
   settings <- framework::read_frameworkrc()
+  cat("[DEBUG] Author object:", names(settings$author), "\n", file = stderr())
 
-  # Check if v1 format (no meta.version or version < 2)
-  needs_migration <- is.null(settings$meta$version) || settings$meta$version < 2
-
-  if (needs_migration) {
-    message("Auto-migrating settings from v1 to v2...")
-
-    # Build v2 structure
-    settings_v2 <- list(
-      meta = list(version = 2, description = "Framework global settings"),
-      author = settings$author %||% list(
-        name = "Your Name",
-        email = "your.email@example.com",
-        affiliation = "Your Institution"
-      ),
-      global = list(
-        projects_root = settings$projects_root %||% "~/projects"
-      ),
-      defaults = list(
-        project_type = settings$defaults$project_type %||% "project",
-        scaffold = list(
-          seed_on_scaffold = settings$defaults$seed_on_scaffold %||% FALSE,
-          seed = settings$defaults$seed %||% "",
-          set_theme_on_scaffold = settings$defaults$set_theme_on_scaffold %||% TRUE,
-          ggplot_theme = settings$defaults$ggplot_theme %||% "theme_minimal",
-          notebook_format = settings$defaults$notebook_format %||% "quarto",
-          ide = settings$defaults$ide %||% "vscode"
-        ),
-        packages = list(
-          use_renv = settings$defaults$use_renv %||% FALSE,
-          default_packages = if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages)) {
-            # Convert to proper structure if needed, filtering out malformed entries
-            result <- lapply(settings$defaults$packages, function(pkg) {
-              if (is.character(pkg) && length(pkg) == 1) {
-                # Single string like "dplyr"
-                list(name = pkg, auto_attach = TRUE)
-              } else if (is.list(pkg) && !is.null(pkg$name)) {
-                # Already proper format
-                list(name = as.character(pkg$name), auto_attach = isTRUE(pkg$auto_attach))
-              } else {
-                # Skip arrays, malformed entries, etc.
-                NULL
-              }
-            })
-            # Filter out NULLs and unbox to force JSON array
-            filtered <- Filter(Negate(is.null), result)
-            if (length(filtered) == 0) character(0) else filtered
-          } else {
-            character(0)
-          }
-        ),
-        ai = list(
-          enabled = settings$defaults$ai_support %||% TRUE,
-          canonical_file = settings$defaults$ai_canonical_file %||% "CLAUDE.md",
-          preferred_assistant = settings$defaults$ai_assistants %||% "claude",
-          assistants = I(if (is.character(settings$defaults$ai_assistants)) {
-            strsplit(settings$defaults$ai_assistants, ",\\s*")[[1]]
-          } else {
-            c("claude")
-          })
-        ),
-        git = list(
-          initialize = settings$defaults$use_git %||% TRUE,
-          gitignore_template = settings$privacy$gitignore_template %||% "gitignore-project",
-          hooks = list(
-            ai_sync = settings$defaults$git_hooks$ai_sync %||% FALSE,
-            data_security = settings$defaults$git_hooks$data_security %||% FALSE
-          )
-        )
-      ),
-      templates = settings$templates %||% list(),
-      project_types = settings$project_types %||% list()
-    )
-
-    settings <- settings_v2
-
-    # Save migrated settings back to disk
-    framework::write_frameworkrc(settings)
-  }
-
-  # Expand ~ in projects_root for frontend display
+  # Expand ~ in projects_root for frontend display and provide home directory
+  settings$global$home_dir <- path.expand("~")
   if (!is.null(settings$global$projects_root)) {
     settings$global$projects_root <- path.expand(settings$global$projects_root)
+  }
+
+  # Flatten nested v2 structure to v1 flat structure for UI compatibility
+  # UI expects flat defaults.* fields, not nested defaults.scaffold.*, etc.
+  if (!is.null(settings$defaults)) {
+    defaults_flat <- list()
+
+    # Basic fields
+    defaults_flat$project_type <- settings$defaults$project_type %||% "project"
+
+    # Scaffold fields - flatten to root of defaults
+    # IMPORTANT: Use field names that UI expects (notebook_format not default_format)
+    if (!is.null(settings$defaults$scaffold)) {
+      defaults_flat$seed_on_scaffold <- isTRUE(settings$defaults$scaffold$seed_on_scaffold)
+      defaults_flat$seed <- settings$defaults$scaffold$seed %||% settings$defaults$seed
+      defaults_flat$ide <- settings$defaults$scaffold$ide %||% settings$defaults$ide %||% "vscode"
+      defaults_flat$positron <- isTRUE(settings$defaults$scaffold$positron %||% settings$defaults$positron)
+      defaults_flat$notebook_format <- settings$defaults$scaffold$notebook_format %||% settings$defaults$notebook_format %||% "quarto"
+    } else {
+      # Fallback to flat fields if no nested scaffold
+      defaults_flat$seed_on_scaffold <- isTRUE(settings$defaults$seed_on_scaffold)
+      defaults_flat$seed <- settings$defaults$seed
+      defaults_flat$ide <- settings$defaults$ide %||% "vscode"
+      defaults_flat$positron <- isTRUE(settings$defaults$positron)
+      defaults_flat$notebook_format <- settings$defaults$notebook_format %||% "quarto"
+    }
+
+    # renv - flatten from packages.use_renv to use_renv
+    defaults_flat$use_renv <- if (!is.null(settings$defaults$packages$use_renv)) {
+      isTRUE(settings$defaults$packages$use_renv)
+    } else {
+      isTRUE(settings$defaults$use_renv)
+    }
+
+    # Packages - convert to flat array
+    defaults_flat$default_packages <- if (!is.null(settings$defaults$packages$default_packages)) {
+      # Already structured from v2
+      pkg_list <- settings$defaults$packages$default_packages
+    } else if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages)) {
+      # v1 format - packages is the list itself
+      pkg_list <- settings$defaults$packages
+    } else {
+      list()
+    }
+
+    # Normalize packages to array of objects
+    if (is.list(pkg_list) && length(pkg_list) > 0) {
+      result <- lapply(pkg_list, function(pkg) {
+        if (is.character(pkg) && length(pkg) == 1) {
+          # Single string like "dplyr"
+          list(name = pkg, auto_attach = TRUE)
+        } else if (is.list(pkg) && !is.null(pkg$name)) {
+          # Already proper format
+          list(
+            name = as.character(pkg$name),
+            auto_attach = isTRUE(pkg$auto_attach)
+          )
+        } else {
+          NULL
+        }
+      })
+      defaults_flat$default_packages <- I(Filter(Negate(is.null), result))
+    } else {
+      defaults_flat$default_packages <- I(list())
+    }
+
+    # AI assistants - ensure it's an array at root defaults.ai_assistants
+    ai_assistants_value <- settings$defaults$ai$assistants %||%
+                           settings$defaults$ai_assistants %||%
+                           "claude"
+
+    if (is.character(ai_assistants_value)) {
+      # Split comma-separated string or wrap single value
+      if (grepl(",", ai_assistants_value)) {
+        defaults_flat$ai_assistants <- I(strsplit(ai_assistants_value, ",\\s*")[[1]])
+      } else {
+        defaults_flat$ai_assistants <- I(c(ai_assistants_value))
+      }
+    } else if (is.list(ai_assistants_value) || is.vector(ai_assistants_value)) {
+      defaults_flat$ai_assistants <- I(as.character(ai_assistants_value))
+    } else {
+      defaults_flat$ai_assistants <- I(c("claude"))
+    }
+
+    # AI support boolean
+    defaults_flat$ai_support <- isTRUE(settings$defaults$ai$enabled %||%
+                                       settings$defaults$ai_support %||%
+                                       TRUE)
+
+    defaults_flat$ai_canonical_file <- settings$defaults$ai$canonical_file %||%
+                                       settings$defaults$ai_canonical_file %||%
+                                       "CLAUDE.md"
+
+    # Git hooks - flatten
+    if (!is.null(settings$defaults$git$hooks)) {
+      defaults_flat$git_hooks <- list(
+        ai_sync = isTRUE(settings$defaults$git$hooks$ai_sync),
+        data_security = isTRUE(settings$defaults$git$hooks$data_security),
+        check_sensitive_dirs = isTRUE(settings$defaults$git$hooks$check_sensitive_dirs)
+      )
+    } else if (!is.null(settings$defaults$git_hooks)) {
+      defaults_flat$git_hooks <- list(
+        ai_sync = isTRUE(settings$defaults$git_hooks$ai_sync),
+        data_security = isTRUE(settings$defaults$git_hooks$data_security),
+        check_sensitive_dirs = isTRUE(settings$defaults$git_hooks$check_sensitive_dirs)
+      )
+    } else {
+      defaults_flat$git_hooks <- list(
+        ai_sync = FALSE,
+        data_security = FALSE,
+        check_sensitive_dirs = FALSE
+      )
+    }
+
+    # Author info - check both defaults and author object (author object takes precedence)
+    defaults_flat$author_name <- if (!is.null(settings$defaults$author_name)) settings$defaults$author_name else settings$author$name
+    defaults_flat$author_email <- if (!is.null(settings$defaults$author_email)) settings$defaults$author_email else settings$author$email
+    defaults_flat$author_affiliation <- if (!is.null(settings$defaults$author_affiliation)) settings$defaults$author_affiliation else settings$author$affiliation
+
+    # Directories - preserve as-is
+    defaults_flat$directories <- settings$defaults$directories %||% list()
+
+    # Add alias for backwards compatibility (tests/UI may expect default_format)
+    defaults_flat$default_format <- defaults_flat$notebook_format
+
+    # Scaffold object for compatibility with new UI
+    defaults_flat$scaffold <- list(
+      seed_on_scaffold = defaults_flat$seed_on_scaffold,
+      seed = defaults_flat$seed,
+      ide = defaults_flat$ide,
+      ides = defaults_flat$ide,  # Alias for backwards compatibility
+      positron = defaults_flat$positron
+    )
+
+    # Replace nested structure with flat
+    settings$defaults <- defaults_flat
   }
 
   # Add metadata about settings state
   settings$meta$first_run <- first_run
   settings$meta$settings_path <- settings_path
-
-  # CRITICAL FIX: Empty packages list becomes {} in JSON instead of []
-  # Force it to be an array by using I() wrapper
-  if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages) && length(settings$defaults$packages) == 0) {
-    settings$defaults$packages <- I(list())
-  }
 
   return(settings)
 }
@@ -612,6 +666,15 @@ function(id) {
 
     settings_resolved <- resolve_file_refs(settings, project$path)
 
+    # Read .gitignore file if it exists
+    gitignore_path <- file.path(project$path, ".gitignore")
+    if (file.exists(gitignore_path)) {
+      gitignore_content <- paste(readLines(gitignore_path, warn = FALSE), collapse = "\n")
+      settings_resolved$gitignore <- gitignore_content
+    } else {
+      settings_resolved$gitignore <- ""
+    }
+
     # Return full settings
     list(settings = settings_resolved, project_path = project$path)
   }, error = function(e) {
@@ -782,15 +845,35 @@ function(id, req) {
   body <- jsonlite::fromJSON(req$postBody)
 
   tryCatch({
-    connections_file <- file.path(project$path, "settings/connections.yml")
+    # Check if using split file or inline approach
+    split_info <- .uses_split_file(project$path, "connections")
 
-    # Save connections with new nested structure
-    yaml::write_yaml(list(
+    connections_data <- list(
       default_database = body$default_database,
       default_storage_bucket = body$default_storage_bucket,
       databases = body$databases %||% list(),
       storage_buckets = body$storage_buckets %||% list()
-    ), connections_file)
+    )
+
+    if (split_info$use_split) {
+      # Write to split file: settings/connections.yml
+      dir.create(dirname(split_info$split_file), recursive = TRUE, showWarnings = FALSE)
+      yaml::write_yaml(list(connections = connections_data), split_info$split_file)
+    } else {
+      # Write inline to main settings file
+      settings_raw <- yaml::read_yaml(split_info$main_file)
+      has_default <- !is.null(settings_raw$default)
+      settings <- settings_raw$default %||% settings_raw
+
+      settings$connections <- connections_data
+
+      if (has_default) {
+        settings_raw$default <- settings
+        yaml::write_yaml(settings_raw, split_info$main_file)
+      } else {
+        yaml::write_yaml(settings, split_info$main_file)
+      }
+    }
 
     list(success = TRUE)
   }, error = function(e) {
@@ -1068,7 +1151,8 @@ function(id, req) {
   body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
 
   tryCatch({
-    packages_file <- file.path(project$path, "settings/packages.yml")
+    # Check if using split file or inline approach
+    split_info <- .uses_split_file(project$path, "packages")
 
     # Extract use_renv flag and packages list
     use_renv <- as.logical(body$use_renv %||% FALSE)[1]
@@ -1089,17 +1173,34 @@ function(id, req) {
       names(packages_list) <- NULL
     }
 
-    # Write with new structure: packages.use_renv and packages.default_packages
-    yaml::write_yaml(
-      list(
-        packages = list(
-          use_renv = use_renv,
-          default_packages = packages_list
-        )
-      ),
-      packages_file,
-      column.major = FALSE  # Prevent column-major format
+    packages_data <- list(
+      use_renv = use_renv,
+      default_packages = packages_list
     )
+
+    if (split_info$use_split) {
+      # Write to split file: settings/packages.yml
+      dir.create(dirname(split_info$split_file), recursive = TRUE, showWarnings = FALSE)
+      yaml::write_yaml(
+        list(packages = packages_data),
+        split_info$split_file,
+        column.major = FALSE
+      )
+    } else {
+      # Write inline to main settings file
+      settings_raw <- yaml::read_yaml(split_info$main_file)
+      has_default <- !is.null(settings_raw$default)
+      settings <- settings_raw$default %||% settings_raw
+
+      settings$packages <- packages_data
+
+      if (has_default) {
+        settings_raw$default <- settings
+        yaml::write_yaml(settings_raw, split_info$main_file)
+      } else {
+        yaml::write_yaml(settings, split_info$main_file)
+      }
+    }
 
     list(success = TRUE)
   }, error = function(e) {
@@ -1149,36 +1250,26 @@ function(id, req) {
 
     canonical_path <- file.path(project$path, canonical_relative)
 
-    # Find settings file
-    settings_file <- NULL
-    if (file.exists(file.path(project$path, "settings.yml"))) {
-      settings_file <- file.path(project$path, "settings.yml")
-    } else if (file.exists(file.path(project$path, "config.yml"))) {
-      settings_file <- file.path(project$path, "config.yml")
+    # Check if using split file or inline approach
+    split_info <- .uses_split_file(project$path, "ai")
+
+    if (split_info$use_split) {
+      # Write to split file
+      dir.create(dirname(split_info$split_file), recursive = TRUE, showWarnings = FALSE)
+      yaml::write_yaml(list(ai = new_ai_config), split_info$split_file)
     } else {
-      return(list(error = "No settings file found"))
-    }
+      # Write inline to main settings file
+      settings_raw <- yaml::read_yaml(split_info$main_file)
+      has_default <- !is.null(settings_raw$default)
+      settings <- settings_raw$default %||% settings_raw
 
-    # Read current settings
-    settings_raw <- yaml::read_yaml(settings_file)
-    has_default <- !is.null(settings_raw$default)
-    settings <- settings_raw$default %||% settings_raw
-
-    ai_reference <- settings$ai
-    use_split_file <- is.character(ai_reference) && length(ai_reference) == 1 && grepl("\\.yml$", ai_reference)
-
-    if (use_split_file) {
-      ai_file <- file.path(project$path, ai_reference)
-      dir.create(dirname(ai_file), recursive = TRUE, showWarnings = FALSE)
-      yaml::write_yaml(list(ai = new_ai_config), ai_file)
-    } else {
       settings$ai <- new_ai_config
 
       if (has_default) {
         settings_raw$default <- settings
-        yaml::write_yaml(settings_raw, settings_file)
+        yaml::write_yaml(settings_raw, split_info$main_file)
       } else {
-        yaml::write_yaml(settings, settings_file)
+        yaml::write_yaml(settings, split_info$main_file)
       }
     }
 
@@ -1220,60 +1311,39 @@ function(id, req) {
   body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
 
   tryCatch({
-    # Find settings file (prefer settings/git.yml if using split config)
-    git_file <- file.path(project$path, "settings/git.yml")
-    main_settings_file <- NULL
-
-    # Determine if using split config or main config
-    if (file.exists(file.path(project$path, "settings.yml"))) {
-      main_settings_file <- file.path(project$path, "settings.yml")
-    } else if (file.exists(file.path(project$path, "config.yml"))) {
-      main_settings_file <- file.path(project$path, "config.yml")
-    } else {
-      return(list(error = "No settings file found"))
-    }
-
-    # Check if main config references git as a split file
-    settings_raw <- yaml::read_yaml(main_settings_file)
-    has_default <- !is.null(settings_raw$default)
-    settings <- settings_raw$default %||% settings_raw
-    use_split_file <- is.character(settings$git) && grepl("\\.yml$", settings$git)
+    # Check if using split file or inline approach
+    split_info <- .uses_split_file(project$path, "git")
 
     hooks_payload <- body$hooks %||% list()
 
-    if (use_split_file && file.exists(git_file)) {
-      # Update split file
-      git_data <- list(
-        git = list(
-          initialize = as.logical(body$initialize %||% TRUE)[1],
-          user_name = as.character(body$user_name %||% "")[1],
-          user_email = as.character(body$user_email %||% "")[1],
-          hooks = list(
-            ai_sync = as.logical(hooks_payload$ai_sync %||% FALSE)[1],
-            data_security = as.logical(hooks_payload$data_security %||% FALSE)[1],
-            check_sensitive_dirs = as.logical(hooks_payload$check_sensitive_dirs %||% FALSE)[1]
-          )
-        )
+    git_data <- list(
+      initialize = as.logical(body$initialize %||% TRUE)[1],
+      user_name = as.character(body$user_name %||% "")[1],
+      user_email = as.character(body$user_email %||% "")[1],
+      hooks = list(
+        ai_sync = as.logical(hooks_payload$ai_sync %||% FALSE)[1],
+        data_security = as.logical(hooks_payload$data_security %||% FALSE)[1],
+        check_sensitive_dirs = as.logical(hooks_payload$check_sensitive_dirs %||% FALSE)[1]
       )
-      yaml::write_yaml(git_data, git_file)
+    )
+
+    if (split_info$use_split) {
+      # Write to split file: settings/git.yml
+      dir.create(dirname(split_info$split_file), recursive = TRUE, showWarnings = FALSE)
+      yaml::write_yaml(list(git = git_data), split_info$split_file)
     } else {
-      # Update main settings file
-      settings$git <- list(
-        initialize = as.logical(body$initialize %||% TRUE)[1],
-        user_name = as.character(body$user_name %||% "")[1],
-        user_email = as.character(body$user_email %||% "")[1],
-        hooks = list(
-          ai_sync = as.logical(hooks_payload$ai_sync %||% FALSE)[1],
-          data_security = as.logical(hooks_payload$data_security %||% FALSE)[1],
-          check_sensitive_dirs = as.logical(hooks_payload$check_sensitive_dirs %||% FALSE)[1]
-        )
-      )
+      # Write inline to main settings file
+      settings_raw <- yaml::read_yaml(split_info$main_file)
+      has_default <- !is.null(settings_raw$default)
+      settings <- settings_raw$default %||% settings_raw
+
+      settings$git <- git_data
 
       if (has_default) {
         settings_raw$default <- settings
-        yaml::write_yaml(settings_raw, main_settings_file)
+        yaml::write_yaml(settings_raw, split_info$main_file)
       } else {
-        yaml::write_yaml(settings, main_settings_file)
+        yaml::write_yaml(settings, split_info$main_file)
       }
     }
 
@@ -1899,6 +1969,14 @@ function(id, req) {
 function(req) {
   body <- jsonlite::fromJSON(req$postBody)
 
+  # Convert extra_directories from data frame to list of lists if needed
+  extra_dirs <- body$extra_directories %||% list()
+  if (is.data.frame(extra_dirs)) {
+    extra_dirs <- lapply(seq_len(nrow(extra_dirs)), function(i) {
+      as.list(extra_dirs[i, , drop = FALSE])
+    })
+  }
+
   tryCatch({
     # Call new project_create() function with full configuration
     result <- framework::project_create(
@@ -1908,7 +1986,7 @@ function(req) {
       author = body$author %||% list(name = "", email = "", affiliation = ""),
       packages = body$packages %||% list(use_renv = FALSE, default_packages = list()),
       directories = body$directories %||% list(),
-      extra_directories = body$extra_directories %||% list(),
+      extra_directories = extra_dirs,
       ai = body$ai %||% list(enabled = FALSE, assistants = c(), canonical_content = ""),
       git = body$git %||% list(use_git = TRUE, hooks = list(), gitignore_content = ""),
       scaffold = body$scaffold %||% list(

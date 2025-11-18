@@ -264,7 +264,9 @@ project_create <- function(
       seed_on_scaffold = scaffold$seed_on_scaffold %||% FALSE,
       seed = scaffold$seed %||% "",
       set_theme_on_scaffold = scaffold$set_theme_on_scaffold %||% TRUE,
-      ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal"
+      ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal",
+      notebook_format = scaffold$notebook_format %||% "quarto",
+      positron = scaffold$positron %||% FALSE
     )), file.path(settings_dir, "scaffold.yml"))
 
     message("  Created: settings/ directory with split configuration files")
@@ -311,7 +313,9 @@ project_create <- function(
           seed_on_scaffold = scaffold$seed_on_scaffold %||% FALSE,
           seed = scaffold$seed %||% "",
           set_theme_on_scaffold = scaffold$set_theme_on_scaffold %||% TRUE,
-          ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal"
+          ggplot_theme = scaffold$ggplot_theme %||% "theme_minimal",
+          notebook_format = scaffold$notebook_format %||% "quarto",
+          positron = scaffold$positron %||% FALSE
         ),
         connections = connections_file
       )
