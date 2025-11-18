@@ -21,14 +21,31 @@
 #' @export
 #' @rdname gui
 framework_gui <- function(port = 8080, browse = TRUE) {
+  # Check if we're in development mode (loaded via devtools::load_all)
+  is_dev_mode <- FALSE
+  pkg_path <- find.package("framework")
+  if (file.exists(file.path(pkg_path, "DESCRIPTION"))) {
+    # We're in a development directory structure
+    is_dev_mode <- TRUE
+    dev_root <- pkg_path
+  }
+
   # Find GUI assets directory
-  gui_path <- system.file("gui", package = "framework")
+  if (is_dev_mode) {
+    gui_path <- file.path(dev_root, "inst", "gui")
+  } else {
+    gui_path <- system.file("gui", package = "framework")
+  }
   if (gui_path == "" || !dir.exists(gui_path)) {
     stop("GUI assets not found. Please rebuild the package with `npm run deploy`.")
   }
 
   # Find plumber API file
-  plumber_file <- system.file("plumber.R", package = "framework")
+  if (is_dev_mode) {
+    plumber_file <- file.path(dev_root, "inst", "plumber.R")
+  } else {
+    plumber_file <- system.file("plumber.R", package = "framework")
+  }
   if (plumber_file == "" || !file.exists(plumber_file)) {
     stop("Plumber API file not found.")
   }

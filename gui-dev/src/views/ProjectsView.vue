@@ -16,103 +16,31 @@
       </template>
     </PageHeader>
 
-    <div
+    <InfoCard
       v-if="projectsRoot"
-      class="mt-6 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between"
+      class="mt-6"
+      label="Projects Root"
+      :value="projectsRoot"
+      copyable
+      copy-message="Root path copied"
     >
-      <div class="min-w-0">
-        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">Projects Root</p>
-        <p class="mt-1 font-mono text-sm text-zinc-600 dark:text-zinc-400 truncate">{{ projectsRoot }}</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <CopyButton
-          :value="projectsRoot"
-          variant="ghost"
-          show-label
-          success-message="Root path copied"
-        />
+      <template #actions>
         <Button size="sm" variant="secondary" @click="router.push('/settings')">
           Edit
         </Button>
-      </div>
-    </div>
+      </template>
+    </InfoCard>
 
     <!-- Project List -->
     <div v-if="settings.projects && settings.projects.length > 0" class="mt-10 grid gap-6 sm:grid-cols-2">
-      <div
+      <ProjectCard
         v-for="(project, index) in settings.projects"
         :key="index"
-        class="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-sky-500/5"
-      >
-        <!-- Project Type Icon -->
-        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-sky-500/10 to-sky-600/10 blur-2xl transition-all duration-300 group-hover:scale-150"></div>
-
-        <div class="relative">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 shadow-lg shadow-sky-500/20">
-                  <svg v-if="project.type === 'project'" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                  <svg v-else-if="project.type === 'course'" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                  <svg v-else class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                  </svg>
-                </div>
-                <Badge variant="sky">
-                  {{ getProjectTypeLabel(project.type) }}
-                </Badge>
-              </div>
-
-              <h3 class="mt-4 text-xl font-bold text-zinc-900 dark:text-white">
-                {{ project.name }}
-              </h3>
-              <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400 font-mono truncate">
-                {{ project.path }}
-              </p>
-
-              <!-- Author info if available -->
-              <div v-if="project.author" class="mt-3 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{{ project.author }}</span>
-                <span v-if="project.author_email" class="text-zinc-400 dark:text-zinc-500">·</span>
-                <span v-if="project.author_email" class="truncate">{{ project.author_email }}</span>
-              </div>
-
-              <div class="mt-3 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-500">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>Created {{ project.created }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-6 flex gap-2">
-            <Button
-              variant="primary"
-              size="md"
-              @click="$router.push(`/project/${project.id}`)"
-              class="flex-1"
-            >
-              View Project
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              @click="viewProjectDetails(project)"
-              class="flex-1"
-            >
-              See More
-            </Button>
-          </div>
-        </div>
-      </div>
+        :project="project"
+        :type-label="getProjectTypeLabel(project.type)"
+        @view="$router.push(`/project/${project.id}`)"
+        @details="viewProjectDetails"
+      />
     </div>
 
     <!-- Empty State -->
@@ -130,7 +58,7 @@
 
           <h2 class="mt-6 text-3xl font-bold text-white">Ready to start?</h2>
           <p class="mt-3 text-lg text-sky-50">
-            Create a new Framework project with beautiful structure and best practices built-in.
+            Create a new Framework project with a sensible structure and best practices built-in.
           </p>
 
           <button
@@ -282,11 +210,12 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ProjectWizard from '../components/ProjectWizard.vue'
+import ProjectCard from '../components/ProjectCard.vue'
 import PageHeader from '../components/ui/PageHeader.vue'
 import Button from '../components/ui/Button.vue'
 import Badge from '../components/ui/Badge.vue'
 import Modal from '../components/ui/Modal.vue'
-import CopyButton from '../components/ui/CopyButton.vue'
+import InfoCard from '../components/ui/InfoCard.vue'
 
 const router = useRouter()
 const route = useRoute()

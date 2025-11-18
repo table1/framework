@@ -63,145 +63,10 @@
       <div class="mt-8 space-y-6">
         <!-- Overview Section -->
         <div v-show="activeSection === 'overview'">
-          <div class="space-y-3">
-              <!-- Basics Card -->
-              <OverviewCard
-                title="Basics"
-                @click="activeSection = 'basics'"
-              >
-                <span class="text-gray-600 dark:text-gray-400">{{ project.name || 'Untitled Project' }}</span>
-                <template v-if="project.author.name">
-                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                  <span class="text-gray-600 dark:text-gray-400">{{ project.author.name }}</span>
-                </template>
-                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                <span class="text-gray-600 dark:text-gray-400">{{ getProjectTypeLabel(project.type) }}</span>
-              </OverviewCard>
-
-              <!-- Project Structure Card -->
-              <OverviewCard
-                title="Project Structure"
-                @click="activeSection = 'structure'"
-              >
-                <span class="text-gray-600 dark:text-gray-400">{{ getProjectTypeLabel(project.type) }}</span>
-                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                <span class="text-gray-600 dark:text-gray-400">{{ countDirectoriesByCategory('workspace') }} workspace</span>
-                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                <span class="text-gray-600 dark:text-gray-400">{{ countDirectoriesByCategory('input') }} input</span>
-                <template v-if="countDirectoriesByCategory('output') > 0">
-                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                  <span class="text-gray-600 dark:text-gray-400">{{ countDirectoriesByCategory('output') }} output</span>
-                </template>
-              </OverviewCard>
-
-              <!-- Packages Card -->
-              <OverviewCard
-                title="Packages"
-                @click="activeSection = 'packages'"
-              >
-                <span class="text-gray-600 dark:text-gray-400">
-                  renv: {{ project.packages.use_renv ? 'enabled' : 'disabled' }}
-                </span>
-                <template v-if="project.packages.default_packages && project.packages.default_packages.length > 0">
-                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                  <span class="text-gray-600 dark:text-gray-400">
-                    {{ project.packages.default_packages.length }} package{{ project.packages.default_packages.length !== 1 ? 's' : '' }}
-                  </span>
-                </template>
-              </OverviewCard>
-
-              <!-- .env Defaults Card -->
-              <OverviewCard
-                title=".env Defaults"
-                @click="activeSection = 'env'"
-              >
-                <span v-if="envVariableCount > 0" class="text-gray-600 dark:text-gray-400">
-                  {{ envVariableCount }} variable{{ envVariableCount === 1 ? '' : 's' }}
-                </span>
-                <span v-else class="text-gray-600 dark:text-gray-400">No defaults set</span>
-              </OverviewCard>
-
-              <!-- AI Assistants Card -->
-              <OverviewCard
-                title="AI Assistants"
-                @click="activeSection = 'ai'"
-              >
-                <template v-if="project.ai.enabled && Array.isArray(project.ai.assistants) && project.ai.assistants.length > 0">
-                  {{ project.ai.assistants.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') }}
-                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                  <span class="text-gray-600 dark:text-gray-400">{{ project.ai.canonical_file }}</span>
-                </template>
-                <template v-else-if="project.ai.enabled">
-                  <span class="text-gray-600 dark:text-gray-400">Enabled (no assistants selected)</span>
-                </template>
-                <template v-else>
-                  <span class="text-gray-600 dark:text-gray-400">Disabled</span>
-                </template>
-              </OverviewCard>
-
-              <!-- Git & Hooks Card -->
-              <OverviewCard
-                title="Git & Hooks"
-                @click="activeSection = 'git'"
-              >
-                <span class="text-gray-600 dark:text-gray-400">
-                  Git: {{ project.git.initialize ? 'enabled' : 'disabled' }}
-                </span>
-                <template v-if="project.git.initialize && enabledGitHooks.length > 0">
-                  <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                  <span class="text-gray-600 dark:text-gray-400">{{ enabledGitHooks.join(', ') }}</span>
-                </template>
-              </OverviewCard>
-
-              <!-- Connections Card -->
-              <OverviewCard
-                title="Connections"
-                @click="activeSection = 'connections'"
-              >
-                <template v-if="connectionsSummary.databases > 0 || connectionsSummary.buckets > 0">
-                  <span class="text-gray-600 dark:text-gray-400">
-                    {{ connectionsSummary.databases }} database{{ connectionsSummary.databases !== 1 ? 's' : '' }}
-                  </span>
-                  <template v-if="connectionsSummary.buckets > 0">
-                    <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                    <span class="text-gray-600 dark:text-gray-400">
-                      {{ connectionsSummary.buckets }} bucket{{ connectionsSummary.buckets !== 1 ? 's' : '' }}
-                    </span>
-                  </template>
-                </template>
-                <template v-else>
-                  <span class="text-gray-600 dark:text-gray-400">framework_db only</span>
-                </template>
-              </OverviewCard>
-
-              <!-- Scaffold Behavior Card -->
-              <OverviewCard
-                title="Scaffold Behavior"
-                @click="activeSection = 'scaffold'"
-              >
-                <span class="text-gray-600 dark:text-gray-400">
-                  <template v-if="project.scaffold.source_all_functions">
-                    Functions loaded from <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">functions/</code>
-                  </template>
-                  <template v-else>
-                    Does not load functions
-                  </template>
-                </span>
-                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                <span class="text-gray-600 dark:text-gray-400">
-                  <template v-if="project.scaffold.set_theme_on_scaffold">
-                    ggplot2: {{ (project.scaffold.ggplot_theme || 'theme_minimal').replace('theme_', '') }}
-                  </template>
-                  <template v-else>
-                    No ggplot theme
-                  </template>
-                </span>
-                <span class="text-gray-400 dark:text-gray-500 mx-1">·</span>
-                <span class="text-gray-600 dark:text-gray-400">
-                  {{ project.scaffold.seed_on_scaffold ? 'Seed: ' + (project.scaffold.seed || 'default') : 'No random seed' }}
-                </span>
-              </OverviewCard>
-            </div>
+          <OverviewSummary
+            :cards="overviewCards"
+            @navigate="(section) => activeSection = section"
+          />
         </div>
 
         <!-- Basics Section -->
@@ -230,7 +95,8 @@
                 label="Project Type"
                 hint="Choose the template structure for your project"
               >
-                <option value="project">Research Project</option>
+                <option value="project">Standard Project</option>
+                <option value="project_sensitive">Privacy Sensitive Project</option>
                 <option value="course">Course</option>
                 <option value="presentation">Presentation</option>
               </Select>
@@ -260,32 +126,9 @@
                 <option value="rmarkdown">R Markdown (.Rmd)</option>
               </Select>
 
-              <!-- Author Information Subheading -->
+              <!-- Author Information -->
               <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                  Author Information
-                </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
-                  Author information is embedded in project templates and documentation.
-                </p>
-                <div class="space-y-5">
-                  <Input
-                    v-model="project.author.name"
-                    label="Your Name"
-                    placeholder="Your Name"
-                  />
-                  <Input
-                    v-model="project.author.email"
-                    type="email"
-                    label="Email"
-                    placeholder="your.email@example.com"
-                  />
-                  <Input
-                    v-model="project.author.affiliation"
-                    label="Affiliation"
-                    placeholder="Organization"
-                  />
-                </div>
+                <AuthorInformationPanel v-model="project.author" />
               </div>
             </div>
           </div>
@@ -317,7 +160,7 @@
               >
                 <Radio v-model="project.type" id="type-project" name="project-type" value="project">
                   <div>
-                    <div class="font-medium text-sm">Research Project</div>
+                    <div class="font-medium text-sm">Standard Project</div>
                     <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                       Full-featured with organized data, work, and output directories
                     </div>
@@ -352,1048 +195,694 @@
 
             <!-- Presentation Source File (only for presentation type) -->
             <div v-if="project.type === 'presentation'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Presentation File</h3>
-              <Input
-                v-model="project.directories.presentation_source"
-                label="Presentation source file"
-                placeholder="presentation.qmd"
-                hint="Main Quarto file for your slides"
-              />
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Primary Files</h3>
+              <div class="space-y-4">
+                <Input
+                  v-model="project.directories.presentation_source"
+                  label="Presentation source file"
+                  placeholder="presentation.qmd"
+                  hint="Main Quarto file for your slides"
+                />
+                <Input
+                  v-model="project.directories.rendered_slides"
+                  label="Rendered slides directory"
+                  placeholder="."
+                  hint="Rendered slides write to the project root by default (.)"
+                  prefix="/"
+                  monospace
+                />
+              </div>
             </div>
 
-            <!-- Directories - Research Project -->
-            <!-- Workspaces -->
-            <div v-if="project.type === 'project'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Workspaces</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Functions, notebooks, and scripts scaffolded into every project.</p>
-              <div class="space-y-3">
-                  <!-- Default directories -->
-                  <div
-                    v-for="dirKey in ['functions', 'notebooks', 'scripts']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
-                  </div>
+            <!-- Directories - Standard Project -->
+            <div v-if="project.type === 'project'" class="space-y-6">
+              <!-- Inputs Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Inputs</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Define the read-only locations where raw and prepared data live.
+                </p>
 
-                  <!-- Custom directories from global settings -->
-                  <div
-                    v-for="dir in globalExtraDirectoriesByType('workspace')"
-                    :key="`extra-${dir.key}`"
-                  >
+                <div class="space-y-5">
+                  <div v-for="field in generalInputFields" :key="field.key" class="space-y-1.5">
                     <Toggle
-                      :id="`extra-dir-${dir.key}`"
-                      v-model="project.extra_directories_enabled[dir.key]"
-                      :label="dir.label"
-                      :description="`Custom: ${dir.path}`"
-                      class="mb-2"
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
                     />
                     <Input
-                      v-if="project.extra_directories_enabled[dir.key]"
-                      v-model="dir.path"
-                      :placeholder="dir.path"
+                      v-if="project.directories_enabled[field.key] !== false"
+                      v-model="project.directories[field.key]"
                       prefix="/"
                       monospace
                     />
                   </div>
                 </div>
 
-              <!-- Add project-specific custom directories -->
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Workspace Directories</h4>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Add directories specific to this project only.</p>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('workspace')"
-                  @update:model-value="updateProjectExtraDirectories('workspace', $event)"
-                  add-label="Add Workspace Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., tests"
-                        monospace
-                        size="sm"
+                <!-- Additional Input Directories -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Input Directories</h4>
+
+                  <!-- Global extra directories with toggles -->
+                  <div v-if="globalExtraDirectoriesByType('input').length > 0" class="space-y-3 mb-4">
+                    <div v-for="dir in globalExtraDirectoriesByType('input')" :key="dir.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="project.extra_directories_enabled[dir.key]"
+                        :label="dir.label"
                       />
                       <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Tests"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., tests"
+                        v-if="project.extra_directories_enabled[dir.key] !== false"
+                        :model-value="dir.path"
+                        readonly
                         prefix="/"
                         monospace
-                        size="sm"
-                        class="col-span-2"
                       />
                     </div>
-                  </template>
-                </Repeater>
-              </div>
-              </div>
-
-            <!-- Inputs -->
-            <div v-if="project.type === 'project'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Inputs</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Define the read-only locations where raw and prepared data live.</p>
-              <div class="space-y-3">
-                  <!-- Default directories -->
-                  <div
-                    v-for="dirKey in ['inputs_raw', 'inputs_intermediate', 'inputs_final', 'docs']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
                   </div>
 
-                  <!-- Custom directories from global settings -->
-                  <div
-                    v-for="dir in globalExtraDirectoriesByType('input')"
-                    :key="`extra-${dir.key}`"
+                  <!-- New directories with repeater -->
+                  <Repeater
+                    v-model="newInputDirectories"
+                    addLabel="Add Input Directory"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'input', _id: Date.now() })"
                   >
+                    <template #default="{ item, update }">
+                      <div class="space-y-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="inputs_archive"
+                          hint="Unique identifier (alphanumeric and underscores)"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="Archive"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          prefix="/"
+                          placeholder="inputs/archive"
+                          monospace
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+
+              <!-- Workspaces Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Workspaces</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Functions, notebooks, and scripts scaffolded into every project.
+                </p>
+
+                <div class="space-y-5">
+                  <!-- Renderable directories (Notebooks, Docs) with two-column layout -->
+                  <div v-for="field in generalWorkspaceRenderableFields" :key="field.key" class="space-y-1.5">
                     <Toggle
-                      :id="`extra-dir-${dir.key}`"
-                      v-model="project.extra_directories_enabled[dir.key]"
-                      :label="dir.label"
-                      :description="`Custom: ${dir.path}`"
-                      class="mb-2"
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
+                    />
+                    <div v-if="project.directories_enabled[field.key] !== false" class="grid grid-cols-2 gap-3">
+                      <Input
+                        v-model="project.directories[field.key]"
+                        label="Source files"
+                        prefix="/"
+                        monospace
+                      />
+                      <Input
+                        v-model="project.render_dirs[field.key]"
+                        label="Quarto render directory"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Non-renderable directories (Functions, Scripts) with single-column layout -->
+                  <div v-for="field in generalWorkspaceNonRenderableFields" :key="field.key" class="space-y-1.5">
+                    <Toggle
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
                     />
                     <Input
-                      v-if="project.extra_directories_enabled[dir.key]"
-                      v-model="dir.path"
-                      :placeholder="dir.path"
+                      v-if="project.directories_enabled[field.key] !== false"
+                      v-model="project.directories[field.key]"
                       prefix="/"
                       monospace
                     />
                   </div>
                 </div>
 
-              <!-- Add project-specific custom directories -->
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Input Directories</h4>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Add directories specific to this project only.</p>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('input')"
-                  @update:model-value="updateProjectExtraDirectories('input', $event)"
-                  add-label="Add Input Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'input', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., inputs_archive"
-                        monospace
-                        size="sm"
+                <!-- Additional Workspace Directories -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
+
+                  <!-- Global extra directories with toggles -->
+                  <div v-if="globalExtraDirectoriesByType('workspace').length > 0" class="space-y-3 mb-4">
+                    <div v-for="dir in globalExtraDirectoriesByType('workspace')" :key="dir.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="project.extra_directories_enabled[dir.key]"
+                        :label="dir.label"
                       />
                       <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Archive"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., inputs/archive"
+                        v-if="project.extra_directories_enabled[dir.key] !== false"
+                        :model-value="dir.path"
+                        readonly
                         prefix="/"
                         monospace
-                        size="sm"
-                        class="col-span-2"
                       />
                     </div>
-                  </template>
-                </Repeater>
-              </div>
-              </div>
-
-            <!-- Outputs -->
-            <div v-if="project.type === 'project'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Outputs</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Outputs are public by default so results are easy to share.</p>
-              <div class="space-y-3">
-                  <!-- Default directories -->
-                  <div
-                    v-for="dirKey in ['outputs_notebooks', 'outputs_tables', 'outputs_figures', 'outputs_models', 'outputs_reports']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
                   </div>
 
-                  <!-- Custom directories from global settings -->
-                  <div v-for="dir in globalExtraDirectoriesByType('output')" :key="`extra-${dir.key}`">
+                  <!-- New directories with repeater -->
+                  <Repeater
+                    v-model="newWorkspaceDirectories"
+                    addLabel="Add Workspace Directory"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                  >
+                    <template #default="{ item, update }">
+                      <div class="space-y-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="tests"
+                          hint="Unique identifier (alphanumeric and underscores)"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="Tests"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          prefix="/"
+                          placeholder="tests"
+                          monospace
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+
+              <!-- Outputs Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Outputs</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Outputs are public by default so results are easy to share.
+                </p>
+
+                <div class="space-y-5">
+                  <div v-for="field in generalOutputFields" :key="field.key" class="space-y-1.5">
                     <Toggle
-                      :id="`extra-${dir.key}`"
-                      v-model="project.extra_directories_enabled[dir.key]"
-                      :label="dir.label"
-                      class="mb-2"
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
                     />
                     <Input
-                      v-if="project.extra_directories_enabled[dir.key]"
-                      v-model="dir.path"
-                      :placeholder="dir.path"
+                      v-if="project.directories_enabled[field.key] !== false"
+                      v-model="project.directories[field.key]"
                       prefix="/"
+                      monospace
                     />
                   </div>
                 </div>
 
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Output Directories</h4>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('output')"
-                  @update:model-value="updateProjectExtraDirectories('output', $event)"
-                  add-label="Add Output Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'output', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., outputs_animations"
-                        monospace
-                        size="sm"
+                <!-- Additional Output Directories -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Output Directories</h4>
+
+                  <!-- Global extra directories with toggles -->
+                  <div v-if="globalExtraDirectoriesByType('output').length > 0" class="space-y-3 mb-4">
+                    <div v-for="dir in globalExtraDirectoriesByType('output')" :key="dir.key" class="space-y-1.5">
+                      <Toggle
+                        v-model="project.extra_directories_enabled[dir.key]"
+                        :label="dir.label"
                       />
                       <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Animations"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., outputs/animations"
+                        v-if="project.extra_directories_enabled[dir.key] !== false"
+                        :model-value="dir.path"
+                        readonly
                         prefix="/"
                         monospace
-                        size="sm"
-                        class="col-span-2"
                       />
                     </div>
-                  </template>
-                </Repeater>
-              </div>
-              </div>
-
-            <!-- Temporary -->
-            <div v-if="project.type === 'project'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Temporary</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Scratch space and cache (gitignored by default).</p>
-              <div class="space-y-3">
-                  <!-- Default directories -->
-                  <div
-                    v-for="dirKey in ['cache', 'scratch']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
                   </div>
 
-                  <!-- Custom directories from global settings -->
-                  <div v-for="dir in globalExtraDirectoriesByType('temporary')" :key="`extra-${dir.key}`">
+                  <!-- New directories with repeater -->
+                  <Repeater
+                    v-model="newOutputDirectories"
+                    addLabel="Add Output Directory"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'output', _id: Date.now() })"
+                  >
+                    <template #default="{ item, update }">
+                      <div class="space-y-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="outputs_animations"
+                          hint="Unique identifier (alphanumeric and underscores)"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="Animations"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          prefix="/"
+                          placeholder="outputs/animations"
+                          monospace
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+
+              <!-- Utility Directories Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Utility directories</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Cache and scratch folders are gitignored so temporary artifacts never leak into version control.
+                </p>
+
+                <div class="space-y-5">
+                  <div v-for="field in generalUtilityFields" :key="field.key" class="space-y-1.5">
                     <Toggle
-                      :id="`extra-${dir.key}`"
-                      v-model="project.extra_directories_enabled[dir.key]"
-                      :label="dir.label"
-                      class="mb-2"
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
                     />
                     <Input
-                      v-if="project.extra_directories_enabled[dir.key]"
-                      v-model="dir.path"
-                      :placeholder="dir.path"
+                      v-if="project.directories_enabled[field.key] !== false"
+                      v-model="project.directories[field.key]"
                       prefix="/"
+                      monospace
                     />
                   </div>
                 </div>
-
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Temporary Directories</h4>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('temporary')"
-                  @update:model-value="updateProjectExtraDirectories('temporary', $event)"
-                  add-label="Add Temporary Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'temporary', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., temp_downloads"
-                        monospace
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Downloads"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., temp/downloads"
-                        prefix="/"
-                        monospace
-                        size="sm"
-                        class="col-span-2"
-                      />
-                    </div>
-                  </template>
-                </Repeater>
               </div>
-              </div>
+            </div>
 
             <!-- Directories - Course/Teaching -->
-            <!-- Course Materials -->
-            <div v-if="project.type === 'course'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Course Materials</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Slides, assignments, readings, and documentation.</p>
-                <div class="space-y-3">
-                  <div
-                    v-for="dirKey in ['slides', 'assignments', 'readings', 'course_docs']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
-                  </div>
-
-                  <!-- Custom directories from global settings -->
-                  <div v-for="dir in globalExtraDirectoriesByType('workspace')" :key="`extra-${dir.key}`">
-                    <Toggle
-                      :id="`extra-dir-${dir.key}`"
-                      v-model="project.extra_directories_enabled[dir.key]"
-                      :label="dir.label"
-                      :description="`Custom: ${dir.path}`"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.extra_directories_enabled[dir.key]"
-                      v-model="dir.path"
-                      :placeholder="dir.path"
-                      prefix="/"
-                      monospace
-                    />
-                  </div>
-                </div>
-
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Directories</h4>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('workspace')"
-                  @update:model-value="updateProjectExtraDirectories('workspace', $event)"
-                  add-label="Add Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., exercises"
-                        monospace
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Exercises"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., exercises"
-                        prefix="/"
-                        monospace
-                        size="sm"
-                        class="col-span-2"
-                      />
-                    </div>
-                  </template>
-                </Repeater>
-              </div>
-              </div>
-
-            <!-- Workspaces -->
-            <div v-if="project.type === 'course'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Workspaces</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Module notebooks, functions, and scripts.</p>
-                <div class="space-y-3">
-                  <div
-                    v-for="dirKey in ['notebooks', 'functions', 'scripts']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
-                  </div>
-                </div>
-              </div>
-
-            <!-- Data & Storage -->
-            <div v-if="project.type === 'course'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Data & Storage</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Course datasets and temporary files.</p>
-                <div class="space-y-3">
-                  <div
-                    v-for="dirKey in ['data', 'inputs', 'outputs', 'cache']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
-                  </div>
-                </div>
-              </div>
+            <CourseDirectoriesPanel
+              v-if="project.type === 'course' && settingsCatalog"
+              :directories-enabled="project.directories_enabled"
+              @update:directories-enabled="project.directories_enabled = $event"
+              :directories="project.directories"
+              @update:directories="project.directories = $event"
+              :render-dirs="project.render_dirs || {}"
+              @update:render-dirs="project.render_dirs = $event"
+              :catalog="settingsCatalog.project_types?.course || {}"
+              :extra-directories-enabled="project.extra_directories_enabled"
+              @update:extra-directories-enabled="project.extra_directories_enabled = $event"
+              :extra-directories="globalExtraDirectoriesByType('course')"
+              :project-custom-directories="projectExtraDirectoriesByType('course')"
+              @update:project-custom-directories="updateProjectExtraDirectories('course', $event)"
+              :allow-custom-directories="true"
+            />
 
             <!-- Directories - Presentation (simpler, fewer dirs) -->
-            <!-- Optional Directories -->
             <div v-if="project.type === 'presentation'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Optional Directories</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Add supporting directories for data, scripts, or helper functions.</p>
-                <div class="space-y-3">
-                  <div
-                    v-for="dirKey in ['data', 'scripts', 'functions']"
-                    :key="dirKey"
-                  >
-                    <Toggle
-                      :id="`dir-${dirKey}`"
-                      v-model="project.directories_enabled[dirKey]"
-                      :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                      :description="currentProjectTypeDirectories[dirKey]?.hint"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      prefix="/"
-                    />
-                  </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Optional Directories</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Toggle extra scaffolding when you need supporting data, scripts, or helper utilities.</p>
 
-                  <!-- Custom directories from global settings -->
-                  <div v-for="dir in globalExtraDirectoriesByType('workspace')" :key="`extra-${dir.key}`">
-                    <Toggle
-                      :id="`extra-dir-${dir.key}`"
-                      v-model="project.extra_directories_enabled[dir.key]"
-                      :label="dir.label"
-                      :description="`Custom: ${dir.path}`"
-                      class="mb-2"
-                    />
-                    <Input
-                      v-if="project.extra_directories_enabled[dir.key]"
-                      v-model="dir.path"
-                      :placeholder="dir.path"
-                      prefix="/"
-                      monospace
-                    />
-                  </div>
-                </div>
-
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Directories</h4>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('workspace')"
-                  @update:model-value="updateProjectExtraDirectories('workspace', $event)"
-                  add-label="Add Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., assets"
-                        monospace
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Assets"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., assets"
-                        prefix="/"
-                        monospace
-                        size="sm"
-                        class="col-span-2"
-                      />
-                    </div>
-                  </template>
-                </Repeater>
-              </div>
-              </div>
-
-            <!-- Directories - Sensitive (two-column layout) -->
-            <!-- Work Directories -->
-            <div v-if="project.type === 'project_sensitive'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Work Directories</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Module locations for notebooks, scripts, and helper functions.</p>
-              <div class="space-y-3">
-                <!-- Default directories -->
-                <div
-                  v-for="dirKey in ['functions', 'notebooks', 'scripts']"
-                  :key="dirKey"
-                >
-                    <div class="flex items-start gap-3 mb-2">
-                      <Toggle
-                        :id="`dir-${dirKey}`"
-                        v-model="project.directories_enabled[dirKey]"
-                        :label="currentProjectTypeDirectories[dirKey]?.label || dirKey"
-                        :description="currentProjectTypeDirectories[dirKey]?.hint"
-                        class="flex-1"
-                      />
-                    </div>
-                    <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      class="mt-2"
-                      prefix="/"
-                    />
-                  </div>
-
-                <!-- Custom directories from global settings -->
-                <div v-for="dir in globalExtraDirectoriesByType('workspace')" :key="`extra-${dir.key}`">
+              <div class="space-y-4">
+                <div class="space-y-2">
                   <Toggle
-                    :id="`extra-dir-${dir.key}`"
-                    v-model="project.extra_directories_enabled[dir.key]"
-                    :label="dir.label"
-                    :description="`Custom: ${dir.path}`"
-                    class="mb-2"
+                    v-model="project.directories_enabled.data"
+                    label="Include data directory"
+                    description="Adds a /data folder for sample data used in the presentation."
                   />
                   <Input
-                    v-if="project.extra_directories_enabled[dir.key]"
-                    v-model="dir.path"
-                    :placeholder="dir.path"
+                    v-if="project.directories_enabled.data"
+                    v-model="project.directories.data"
                     prefix="/"
                     monospace
                   />
                 </div>
+
+                <div class="space-y-2">
+                  <Toggle
+                    v-model="project.directories_enabled.scripts"
+                    label="Include scripts directory"
+                    description="Adds a scripts/ folder for demo code or automation."
+                  />
+                  <Input
+                    v-if="project.directories_enabled.scripts"
+                    v-model="project.directories.scripts"
+                    prefix="/"
+                    monospace
+                  />
                 </div>
 
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Workspace Directories</h4>
-                <Repeater
-                  :model-value="projectExtraDirectoriesByType('workspace')"
-                  @update:model-value="updateProjectExtraDirectories('workspace', $event)"
-                  add-label="Add Workspace Directory"
-                  :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
-                >
-                  <template #default="{ item, index, update }">
-                    <div class="grid grid-cols-2 gap-3">
-                      <Input
-                        :model-value="item.key"
-                        @update:model-value="update('key', $event)"
-                        label="Key"
-                        placeholder="e.g., helpers"
-                        monospace
-                        size="sm"
+                <div class="space-y-2">
+                  <Toggle
+                    v-model="project.directories_enabled.functions"
+                    label="Include functions directory"
+                    description="Adds functions/ for helper utilities that should load automatically."
+                  />
+                  <Input
+                    v-if="project.directories_enabled.functions"
+                    v-model="project.directories.functions"
+                    prefix="/"
+                    monospace
+                  />
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Directories</h4>
+                  <Repeater
+                    :model-value="projectExtraDirectoriesByType('workspace')"
+                    @update:model-value="updateProjectExtraDirectories('workspace', $event)"
+                    add-label="Add Directory"
+                    :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                  >
+                    <template #default="{ item, index, update }">
+                      <div class="grid grid-cols-2 gap-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="e.g., assets"
+                          monospace
+                          size="sm"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="e.g., Assets"
+                          size="sm"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          placeholder="e.g., assets"
+                          prefix="/"
+                          monospace
+                          size="sm"
+                          class="col-span-2"
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+            </div>
+
+            <!-- Directories - Privacy Sensitive -->
+            <div v-if="project.type === 'project_sensitive'" class="space-y-6">
+              <!-- Inputs Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Inputs</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Keep private inputs compartmentalized; publish processed outputs into public folders when ready.
+                </p>
+
+                <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-4">
+                  <div>Private</div>
+                  <div>Public</div>
+                </div>
+
+                <div class="space-y-5">
+                  <div v-for="pair in sensitiveInputPairs" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-2">
+                      <Toggle
+                        v-model="project.directories_enabled[pair.privateKey]"
+                        :label="pair.privateLabel || `${pair.label} (private)`"
                       />
                       <Input
-                        :model-value="item.label"
-                        @update:model-value="update('label', $event)"
-                        label="Label"
-                        placeholder="e.g., Helper Functions"
-                        size="sm"
-                      />
-                      <Input
-                        :model-value="item.path"
-                        @update:model-value="update('path', $event)"
-                        label="Path"
-                        placeholder="e.g., helpers"
+                        v-if="project.directories_enabled[pair.privateKey] !== false"
+                        v-model="project.directories[pair.privateKey]"
                         prefix="/"
                         monospace
-                        size="sm"
-                        class="col-span-2"
                       />
                     </div>
-                  </template>
-                </Repeater>
-              </div>
-            </div>
-
-            <!-- Inputs (Private/Public) -->
-            <div v-if="project.type === 'project_sensitive'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Inputs</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Keep private inputs compartmentalized; publish processed data into public folders when ready.
-              </p>
-                <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-3">
-                  <div>Private</div>
-                  <div>Public</div>
-                </div>
-                <div class="space-y-4">
-                  <div
-                    v-for="stage in ['raw', 'intermediate', 'final']"
-                    :key="stage"
-                  >
-                    <div class="grid gap-4 sm:grid-cols-2">
-                      <div class="p-3 rounded-md">
-                        <Toggle
-                          :id="`dir-inputs_private_${stage}`"
-                          v-model="project.directories_enabled[`inputs_private_${stage}`]"
-                          :label="`${stage.charAt(0).toUpperCase() + stage.slice(1)} data`"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.directories_enabled[`inputs_private_${stage}`]"
-                          v-model="project.directories[`inputs_private_${stage}`]"
-                          :placeholder="`inputs/private/${stage}`"
-                          prefix="/"
-                        />
-                      </div>
-                      <div class="p-3 rounded-md">
-                        <Toggle
-                          :id="`dir-inputs_public_${stage}`"
-                          v-model="project.directories_enabled[`inputs_public_${stage}`]"
-                          :label="`${stage.charAt(0).toUpperCase() + stage.slice(1)} data`"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.directories_enabled[`inputs_public_${stage}`]"
-                          v-model="project.directories[`inputs_public_${stage}`]"
-                          :placeholder="`inputs/public/${stage}`"
-                          prefix="/"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Custom directories from global settings -->
-                  <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="space-y-3">
-                      <div v-for="dir in globalExtraDirectoriesByType('input_private')" :key="`extra-${dir.key}`" class="p-3 rounded-md">
-                        <Toggle
-                          :id="`extra-dir-${dir.key}`"
-                          v-model="project.extra_directories_enabled[dir.key]"
-                          :label="dir.label"
-                          :description="`Custom: ${dir.path}`"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.extra_directories_enabled[dir.key]"
-                          v-model="dir.path"
-                          :placeholder="dir.path"
-                          prefix="/"
-                          monospace
-                        />
-                      </div>
-                    </div>
-                    <div class="space-y-3">
-                      <div v-for="dir in globalExtraDirectoriesByType('input_public')" :key="`extra-${dir.key}`" class="p-3 rounded-md">
-                        <Toggle
-                          :id="`extra-dir-${dir.key}`"
-                          v-model="project.extra_directories_enabled[dir.key]"
-                          :label="dir.label"
-                          :description="`Custom: ${dir.path}`"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.extra_directories_enabled[dir.key]"
-                          v-model="dir.path"
-                          :placeholder="dir.path"
-                          prefix="/"
-                          monospace
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-4">Add Custom Input Directories</h4>
-                <div class="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-3">Private</p>
-                    <Repeater
-                      :model-value="projectExtraDirectoriesByType('input_private')"
-                      @update:model-value="updateProjectExtraDirectories('input_private', $event)"
-                      add-label="Add Private Input"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'input_private', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="space-y-2">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., inputs_private_survey"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Survey Data"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., inputs/private/survey"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                  <div>
-                    <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-3">Public</p>
-                    <Repeater
-                      :model-value="projectExtraDirectoriesByType('input_public')"
-                      @update:model-value="updateProjectExtraDirectories('input_public', $event)"
-                      add-label="Add Public Input"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'input_public', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="space-y-2">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., inputs_public_survey"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Survey Data"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., inputs/public/survey"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Outputs (Private/Public) -->
-            <div v-if="project.type === 'project_sensitive'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Outputs</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Review outputs before promotion; private folders remain gitignored while public copies are ready to share.
-              </p>
-                <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-3">
-                  <div>Private</div>
-                  <div>Public</div>
-                </div>
-                <div class="space-y-4">
-                  <div
-                    v-for="outType in ['notebooks', 'tables', 'figures', 'models', 'reports']"
-                    :key="outType"
-                  >
-                    <div class="grid gap-4 sm:grid-cols-2">
-                      <div class="p-3 rounded-md">
-                        <Toggle
-                          :id="`dir-outputs_private_${outType}`"
-                          v-model="project.directories_enabled[`outputs_private_${outType}`]"
-                          :label="outType.replace('_', ' ').charAt(0).toUpperCase() + outType.replace('_', ' ').slice(1)"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.directories_enabled[`outputs_private_${outType}`]"
-                          v-model="project.directories[`outputs_private_${outType}`]"
-                          :placeholder="`outputs/private/${outType}`"
-                          prefix="/"
-                        />
-                      </div>
-                      <div class="p-3 rounded-md">
-                        <Toggle
-                          :id="`dir-outputs_public_${outType}`"
-                          v-model="project.directories_enabled[`outputs_public_${outType}`]"
-                          :label="outType.replace('_', ' ').charAt(0).toUpperCase() + outType.replace('_', ' ').slice(1)"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.directories_enabled[`outputs_public_${outType}`]"
-                          v-model="project.directories[`outputs_public_${outType}`]"
-                          :placeholder="`outputs/public/${outType}`"
-                          prefix="/"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Custom directories from global settings -->
-                  <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="space-y-3">
-                      <div v-for="dir in globalExtraDirectoriesByType('output_private')" :key="`extra-${dir.key}`" class="p-3 rounded-md">
-                        <Toggle
-                          :id="`extra-dir-${dir.key}`"
-                          v-model="project.extra_directories_enabled[dir.key]"
-                          :label="dir.label"
-                          :description="`Custom: ${dir.path}`"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.extra_directories_enabled[dir.key]"
-                          v-model="dir.path"
-                          :placeholder="dir.path"
-                          prefix="/"
-                          monospace
-                        />
-                      </div>
-                    </div>
-                    <div class="space-y-3">
-                      <div v-for="dir in globalExtraDirectoriesByType('output_public')" :key="`extra-${dir.key}`" class="p-3 rounded-md">
-                        <Toggle
-                          :id="`extra-dir-${dir.key}`"
-                          v-model="project.extra_directories_enabled[dir.key]"
-                          :label="dir.label"
-                          :description="`Custom: ${dir.path}`"
-                          class="mb-2"
-                        />
-                        <Input
-                          v-if="project.extra_directories_enabled[dir.key]"
-                          v-model="dir.path"
-                          :placeholder="dir.path"
-                          prefix="/"
-                          monospace
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-4">Add Custom Output Directories</h4>
-                <div class="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-3">Private</p>
-                    <Repeater
-                      :model-value="projectExtraDirectoriesByType('output_private')"
-                      @update:model-value="updateProjectExtraDirectories('output_private', $event)"
-                      add-label="Add Private Output"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'output_private', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="space-y-2">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., outputs_private_videos"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Videos"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., outputs/private/videos"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                  <div>
-                    <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-3">Public</p>
-                    <Repeater
-                      :model-value="projectExtraDirectoriesByType('output_public')"
-                      @update:model-value="updateProjectExtraDirectories('output_public', $event)"
-                      add-label="Add Public Output"
-                      :default-item="() => ({ key: '', label: '', path: '', type: 'output_public', _id: Date.now() })"
-                    >
-                      <template #default="{ item, index, update }">
-                        <div class="space-y-2">
-                          <Input
-                            :model-value="item.key"
-                            @update:model-value="update('key', $event)"
-                            label="Key"
-                            placeholder="e.g., outputs_public_videos"
-                            monospace
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.label"
-                            @update:model-value="update('label', $event)"
-                            label="Label"
-                            placeholder="e.g., Videos"
-                            size="sm"
-                          />
-                          <Input
-                            :model-value="item.path"
-                            @update:model-value="update('path', $event)"
-                            label="Path"
-                            placeholder="e.g., outputs/public/videos"
-                            prefix="/"
-                            monospace
-                            size="sm"
-                          />
-                        </div>
-                      </template>
-                    </Repeater>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Cache & Scratch -->
-            <div v-if="project.type === 'project_sensitive'" class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Temporary</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Scratch space and cache (gitignored by default).</p>
-              <div class="space-y-3">
-                <div
-                  v-for="dirKey in ['cache', 'scratch']"
-                  :key="dirKey"
-                  v-show="currentProjectTypeDirectories[dirKey]"
-                >
-                    <div class="flex items-start gap-3 mb-2">
+                    <div class="space-y-2">
                       <Toggle
-                        :id="`dir-${dirKey}`"
-                        v-model="project.directories_enabled[dirKey]"
-                        :label="currentProjectTypeDirectories[dirKey]?.label"
-                        :description="currentProjectTypeDirectories[dirKey]?.hint"
-                        class="flex-1"
+                        v-model="project.directories_enabled[pair.publicKey]"
+                        :label="pair.publicLabel || `${pair.label} (public)`"
+                      />
+                      <Input
+                        v-if="project.directories_enabled[pair.publicKey] !== false"
+                        v-model="project.directories[pair.publicKey]"
+                        prefix="/"
+                        monospace
                       />
                     </div>
+                  </div>
+                </div>
+
+                <!-- Additional Input Directories -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Input Directories</h4>
+
+                  <Repeater
+                    v-model="newInputDirectories"
+                    addLabel="Add Input Directory"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'input', _id: Date.now() })"
+                  >
+                    <template #default="{ item, update }">
+                      <div class="space-y-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="inputs_archive"
+                          hint="Unique identifier (alphanumeric and underscores)"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="Archive"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          prefix="/"
+                          placeholder="inputs/archive"
+                          monospace
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+
+              <!-- Workspaces Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Workspaces</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Module locations for notebooks, scripts, and helper functions.
+                </p>
+
+                <div class="space-y-5">
+                  <!-- Renderable directories (Notebooks, Docs) with two-column layout -->
+                  <div v-for="field in generalWorkspaceRenderableFields" :key="`sensitive-${field.key}`" class="space-y-1.5">
+                    <Toggle
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
+                    />
+                    <div v-if="project.directories_enabled[field.key] !== false" class="grid grid-cols-2 gap-3">
+                      <Input
+                        v-model="project.directories[field.key]"
+                        label="Source files"
+                        prefix="/"
+                        monospace
+                      />
+                      <Input
+                        v-model="project.render_dirs[field.key]"
+                        label="Quarto render directory"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Non-renderable directories (Functions, Scripts) with single-column layout -->
+                  <div v-for="field in generalWorkspaceNonRenderableFields" :key="`sensitive-${field.key}`" class="space-y-1.5">
+                    <Toggle
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
+                    />
                     <Input
-                      v-if="project.directories_enabled[dirKey]"
-                      v-model="project.directories[dirKey]"
-                      :placeholder="currentProjectTypeDirectories[dirKey]?.default"
-                      class="mt-2"
+                      v-if="project.directories_enabled[field.key] !== false"
+                      v-model="project.directories[field.key]"
                       prefix="/"
+                      monospace
                     />
                   </div>
                 </div>
+
+                <!-- Additional Workspace Directories -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
+
+                  <Repeater
+                    v-model="newWorkspaceDirectories"
+                    addLabel="Add Workspace Directory"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
+                  >
+                    <template #default="{ item, update }">
+                      <div class="space-y-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="templates"
+                          hint="Unique identifier (alphanumeric and underscores)"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="Templates"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          prefix="/"
+                          placeholder="templates"
+                          monospace
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+
+              <!-- Outputs Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Outputs</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Review outputs before promotion; private folders remain gitignored while public copies are ready to share.
+                </p>
+
+                <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-4">
+                  <div>Private</div>
+                  <div>Public</div>
+                </div>
+
+                <div class="space-y-5">
+                  <div v-for="pair in sensitiveOutputPairs" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-2">
+                      <Toggle
+                        v-model="project.directories_enabled[pair.privateKey]"
+                        :label="pair.privateLabel || `${pair.label} (private)`"
+                      />
+                      <Input
+                        v-if="project.directories_enabled[pair.privateKey] !== false"
+                        v-model="project.directories[pair.privateKey]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                    <div class="space-y-2">
+                      <Toggle
+                        v-model="project.directories_enabled[pair.publicKey]"
+                        :label="pair.publicLabel || `${pair.label} (public)`"
+                      />
+                      <Input
+                        v-if="project.directories_enabled[pair.publicKey] !== false"
+                        v-model="project.directories[pair.publicKey]"
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Output Directories -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Output Directories</h4>
+
+                  <Repeater
+                    v-model="newOutputDirectories"
+                    addLabel="Add Output Directory"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'output', _id: Date.now() })"
+                  >
+                    <template #default="{ item, update }">
+                      <div class="space-y-3">
+                        <Input
+                          :model-value="item.key"
+                          @update:model-value="update('key', $event)"
+                          label="Key"
+                          placeholder="outputs_presentations"
+                          hint="Unique identifier (alphanumeric and underscores)"
+                        />
+                        <Input
+                          :model-value="item.label"
+                          @update:model-value="update('label', $event)"
+                          label="Label"
+                          placeholder="Presentations"
+                        />
+                        <Input
+                          :model-value="item.path"
+                          @update:model-value="update('path', $event)"
+                          label="Path"
+                          prefix="/"
+                          placeholder="outputs/presentations"
+                          monospace
+                        />
+                      </div>
+                    </template>
+                  </Repeater>
+                </div>
+              </div>
+
+              <!-- Utility Directories Section -->
+              <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Utility directories</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Keep cache and scratch in private space for safety; both remain gitignored.
+                </p>
+
+                <div class="space-y-5">
+                  <div v-for="field in generalUtilityFields" :key="`sensitive-${field.key}`" class="space-y-1.5">
+                    <Toggle
+                      v-model="project.directories_enabled[field.key]"
+                      :label="field.label"
+                      :description="field.hint"
+                    />
+                    <Input
+                      v-if="project.directories_enabled[field.key] !== false"
+                      v-model="project.directories[field.key]"
+                      prefix="/"
+                      monospace
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- .gitignore Template -->
             <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">.gitignore Template</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">.gitignore Template</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Customize the .gitignore template for this project type. Uses pattern-based matching to catch sensitive directories anywhere in your project tree.
               </p>
@@ -1443,63 +932,11 @@
 
         <!-- Packages Section -->
         <div v-show="activeSection === 'packages'">
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <div class="space-y-5">
-              <Toggle
-                v-model="project.packages.use_renv"
-                label="Enable renv"
-                description="Use renv for package version management and reproducibility"
-              />
-
-              <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-                  <div>
-                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300">Default Packages</h4>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Installed (and optionally attached) when scaffold() runs.</p>
-                  </div>
-                  <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
-                </div>
-
-                <div class="space-y-3" v-if="project.packages.default_packages && project.packages.default_packages.length">
-                  <div
-                    v-for="(pkg, idx) in project.packages.default_packages"
-                    :key="`pkg-${idx}`"
-                    class="rounded-md border border-gray-200 p-4 dark:border-gray-700"
-                  >
-                    <div class="flex flex-col gap-3">
-                      <div class="grid gap-3 grid-cols-[1fr_160px]">
-                        <PackageAutocomplete
-                          v-if="pkg.source === 'cran' || pkg.source === 'bioconductor'"
-                          v-model="pkg.name"
-                          :source="pkg.source"
-                          label="Package"
-                          :placeholder="pkg.source === 'cran' ? 'Search CRAN...' : 'Search Bioconductor...'"
-                          @select="(selectedPkg) => pkg.name = selectedPkg.name"
-                        />
-                        <Input
-                          v-else
-                          v-model="pkg.name"
-                          label="Package"
-                          placeholder="user/repo"
-                        />
-                        <Select v-model="pkg.source" label="Source">
-                          <option value="cran">CRAN</option>
-                          <option value="github">GitHub</option>
-                          <option value="bioconductor">Bioconductor</option>
-                        </Select>
-                      </div>
-                      <div class="flex items-center justify-between">
-                        <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() when scaffold() runs." />
-                        <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <p v-else class="text-xs text-gray-500 dark:text-gray-400">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
-              </div>
-            </div>
-          </div>
+          <PackagesEditor
+            v-model="project.packages"
+            :show-renv-toggle="true"
+            :flush="false"
+          />
         </div>
 
         <!-- AI Assistants Section -->
@@ -1509,63 +946,16 @@
               Framework maintains context files for selected assistants and keeps them in sync before commits.
             </p>
 
-            <div class="space-y-6">
-              <div>
-                <Toggle
-                  v-model="project.ai.enabled"
-                  label="Enable AI Support"
-                  description="Generate and sync assistant-specific context files."
-                />
-              </div>
-
-              <template v-if="project.ai.enabled">
-                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical context file</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    This file is the source of truth; other instructions files are synced to it when AI hooks run.
-                  </p>
-                  <Select
-                    v-model="project.ai.canonical_file"
-                    label="Canonical Context File"
-                  >
-                    <option value="AGENTS.md">AGENTS.md (multi-agent orchestrator)</option>
-                    <option value="CLAUDE.md">CLAUDE.md</option>
-                    <option value=".github/copilot-instructions.md">.github/copilot-instructions.md</option>
-                  </Select>
-                </div>
-
-                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Assistants</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Choose which assistants receive context updates.
-                  </p>
-                  <div class="space-y-2">
-                    <Checkbox
-                      v-for="assistant in availableAssistants"
-                      :key="assistant.id"
-                      :id="`ai-${assistant.id}`"
-                      :model-value="Array.isArray(project.ai.assistants) && project.ai.assistants.includes(assistant.id)"
-                      @update:model-value="toggleAssistant(assistant.id, $event)"
-                      :description="assistant.description"
-                    >
-                      {{ assistant.label }}
-                    </Checkbox>
-                  </div>
-                </div>
-
-                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Canonical instructions</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Edit the canonical file directly. This will be pre-populated when the project is created.
-                  </p>
-                  <CodeEditor
-                    v-model="project.ai.canonical_content"
-                    language="markdown"
-                    min-height="500px"
-                  />
-                </div>
+            <AIAssistantsPanel
+              v-model="project.ai"
+              :flush="true"
+              :show-editor="true"
+              editor-height="500px"
+            >
+              <template #editor-description>
+                Edit the canonical file directly. This will be pre-populated when the project is created.
               </template>
-            </div>
+            </AIAssistantsPanel>
           </div>
         </div>
 
@@ -1598,10 +988,19 @@ import Repeater from '../components/ui/Repeater.vue'
 import CodeEditor from '../components/ui/CodeEditor.vue'
 import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import OverviewCard from '../components/ui/OverviewCard.vue'
+import OverviewSummary from '../components/OverviewSummary.vue'
 import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
+import AuthorInformationPanel from '../components/settings/AuthorInformationPanel.vue'
+import PackagesEditor from '../components/settings/PackagesEditor.vue'
+import AIAssistantsPanel from '../components/settings/AIAssistantsPanel.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
+import WorkspaceDirectoriesPanel from '../components/settings/WorkspaceDirectoriesPanel.vue'
+import RenderableWorkspacesPanel from '../components/settings/RenderableWorkspacesPanel.vue'
+import InputDirectoriesPanel from '../components/settings/InputDirectoriesPanel.vue'
+import OutputDirectoriesPanel from '../components/settings/OutputDirectoriesPanel.vue'
+import CourseDirectoriesPanel from '../components/settings/CourseDirectoriesPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
 import { useToast } from '../composables/useToast'
 import {
@@ -1622,12 +1021,6 @@ const toast = useToast()
 const globalSettings = ref(null)
 const settingsCatalog = ref(null)
 const loading = ref(true)
-
-const availableAssistants = [
-  { id: 'claude', label: 'Claude Code', description: "Anthropic's IDE-focused assistant." },
-  { id: 'copilot', label: 'GitHub Copilot', description: 'Complements VS Code and JetBrains editors.' },
-  { id: 'agents', label: 'Multi-Agent (OpenAI Codex, Cursor, etc.)', description: 'Shared instructions for multi-model orchestrators.' }
-]
 
 const normalizeAssistantList = (value) => {
   if (!value) return []
@@ -1672,6 +1065,11 @@ const activeSection = ref('basics')
 const creating = ref(false)
 const projectNameInput = ref(null)
 const locationAutoSynced = ref(true)
+
+// Reactive refs for custom directory repeaters
+const newInputDirectories = ref([])
+const newWorkspaceDirectories = ref([])
+const newOutputDirectories = ref([])
 
 const project = ref({
   name: '',
@@ -1745,6 +1143,7 @@ S3_ENDPOINT=`,
   },
   directories_enabled: {},
   directories: {},
+  render_dirs: {}, // Quarto render output directories for renderable workspaces
   extra_directories: [],
   extra_directories_enabled: {}
 })
@@ -1807,9 +1206,22 @@ onMounted(async () => {
           project.value.type = globalSettings.value.defaults.project_type
         }
 
-        // Load scaffold defaults
+        // Load scaffold defaults (preserve existing defaults, then override with API values)
         if (globalSettings.value.defaults?.scaffold) {
-          project.value.scaffold = { ...globalSettings.value.defaults.scaffold }
+          project.value.scaffold = {
+            ...project.value.scaffold,
+            ...globalSettings.value.defaults.scaffold
+          }
+        }
+
+        // Load notebook_format from top-level defaults (current SettingsView format)
+        if (globalSettings.value.defaults?.notebook_format) {
+          project.value.scaffold.notebook_format = globalSettings.value.defaults.notebook_format
+        }
+
+        // Ensure notebook_format always has a value (fallback to quarto)
+        if (!project.value.scaffold.notebook_format) {
+          project.value.scaffold.notebook_format = 'quarto'
         }
 
         // Load positron setting (stored at defaults.positron, not defaults.scaffold.positron)
@@ -1999,9 +1411,14 @@ const loadProjectTypeDefaults = () => {
   // Load gitignore content for the selected template
   loadGitignoreTemplate(project.value.git.gitignore_template)
 
-  // Initialize directories_enabled based on enabled_by_default
+  // Initialize directories_enabled from user's global settings, falling back to catalog enabled_by_default
   project.value.directories_enabled = Object.entries(catalogType.directories).reduce((acc, [key, config]) => {
-    acc[key] = config.enabled_by_default !== false
+    // Prefer user's global settings, then catalog enabled_by_default
+    if (userProjectType?.directories_enabled?.[key] !== undefined) {
+      acc[key] = userProjectType.directories_enabled[key]
+    } else {
+      acc[key] = config.enabled_by_default !== false
+    }
     return acc
   }, {})
 
@@ -2011,6 +1428,17 @@ const loadProjectTypeDefaults = () => {
     acc[key] = userProjectType?.directories?.[key] || config.default || ''
     return acc
   }, {})
+
+  // Initialize render_dirs for directories that support Quarto rendering
+  if (catalogType.render_dirs) {
+    project.value.render_dirs = Object.entries(catalogType.render_dirs).reduce((acc, [key, config]) => {
+      // Prefer user's global settings, then catalog default
+      acc[key] = userProjectType?.render_dirs?.[key] || config.default || ''
+      return acc
+    }, {})
+  } else {
+    project.value.render_dirs = {}
+  }
 
   // Initialize extra_directories from user's global settings
   if (userProjectType?.extra_directories && Array.isArray(userProjectType.extra_directories)) {
@@ -2027,9 +1455,35 @@ const loadProjectTypeDefaults = () => {
       }
       return acc
     }, {})
+
+    // Populate repeater refs with global directories (without _source for easier editing)
+    // Filter project-specific directories (not global) by type
+    newInputDirectories.value = userProjectType.extra_directories
+      .filter(dir => dir.type === 'input')
+      .map(dir => {
+        const { _source, ...rest } = dir
+        return { ...rest, _id: Date.now() + Math.random() }
+      })
+
+    newWorkspaceDirectories.value = userProjectType.extra_directories
+      .filter(dir => dir.type === 'workspace')
+      .map(dir => {
+        const { _source, ...rest } = dir
+        return { ...rest, _id: Date.now() + Math.random() }
+      })
+
+    newOutputDirectories.value = userProjectType.extra_directories
+      .filter(dir => dir.type === 'output')
+      .map(dir => {
+        const { _source, ...rest } = dir
+        return { ...rest, _id: Date.now() + Math.random() }
+      })
   } else {
     project.value.extra_directories = []
     project.value.extra_directories_enabled = {}
+    newInputDirectories.value = []
+    newWorkspaceDirectories.value = []
+    newOutputDirectories.value = []
   }
 
   console.log('[DEBUG] loadProjectTypeDefaults() finished - packages still:', project.value.packages.default_packages)
@@ -2072,6 +1526,19 @@ const groupEnvByPrefix = (vars = {}) => {
 
 watch(() => project.value.env.variables, (vars) => {
   project.value.env.groups = groupEnvByPrefix(vars || {})
+}, { deep: true })
+
+// Watch repeater refs and sync to project.extra_directories
+watch(newInputDirectories, (items) => {
+  updateProjectExtraDirectories('input', items)
+}, { deep: true })
+
+watch(newWorkspaceDirectories, (items) => {
+  updateProjectExtraDirectories('workspace', items)
+}, { deep: true })
+
+watch(newOutputDirectories, (items) => {
+  updateProjectExtraDirectories('output', items)
 }, { deep: true })
 
 // Initialize env variables from raw content
@@ -2149,6 +1616,84 @@ const envVariableCount = computed(() => {
   return Object.keys(variables).length
 })
 
+// Overview data for OverviewSummary component
+const overviewCards = computed(() => {
+  const name = project.value.name || 'Untitled Project'
+  const author = project.value.author?.name || ''
+  const location = displayLocation.value
+  const projectTypeLabel = getProjectTypeLabel(project.value.type)
+  const workspaces = countDirectoriesByCategory('workspace')
+  const inputs = countDirectoriesByCategory('input')
+  const outputs = countDirectoriesByCategory('output')
+  const packagesCount = project.value.packages?.default_packages?.length || 0
+  const renvEnabled = project.value.packages?.use_renv || false
+  const envCount = envVariableCount.value
+  const aiEnabled = project.value.ai?.enabled || false
+  const aiProvider = project.value.ai?.assistants?.[0] ? project.value.ai.assistants.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') : ''
+  const aiCanonical = project.value.ai?.canonical_file || ''
+  const gitInit = project.value.git?.initialize || false
+  const dbCount = connectionsSummary.value.databases
+  const bucketCount = connectionsSummary.value.buckets
+  const connectionsSummaryText = dbCount > 0 || bucketCount > 0
+    ? `${dbCount} database${dbCount !== 1 ? 's' : ''}${bucketCount > 0 ? ` · ${bucketCount} bucket${bucketCount !== 1 ? 's' : ''}` : ''}`
+    : 'framework_db only'
+
+  return [
+    {
+      id: 'basics',
+      title: 'Basics',
+      section: 'basics',
+      content: `<div>${name} · ${author} · ${projectTypeLabel}</div><div class="text-sm text-gray-600 dark:text-gray-400 mt-1">${location}</div>`
+    },
+    {
+      id: 'structure',
+      title: 'Project Structure',
+      section: 'structure',
+      content: `${projectTypeLabel} · ${workspaces} workspace · ${inputs} input · ${outputs} output`
+    },
+    {
+      id: 'packages',
+      title: 'Packages',
+      section: 'packages',
+      content: packagesCount > 0
+        ? `${packagesCount} packages · renv ${renvEnabled ? 'enabled' : 'disabled'}`
+        : `renv: ${renvEnabled ? 'enabled' : 'disabled'}`
+    },
+    {
+      id: 'env',
+      title: '.env Defaults',
+      section: 'env',
+      content: envCount > 0 ? `${envCount} variable${envCount === 1 ? '' : 's'}` : 'No variables defined'
+    },
+    {
+      id: 'ai',
+      title: 'AI Assistants',
+      section: 'ai',
+      content: aiEnabled
+        ? `<span class="text-green-600 dark:text-green-400">${aiProvider} · ${aiCanonical}</span>`
+        : '<span class="text-gray-600 dark:text-gray-400">Disabled</span>'
+    },
+    {
+      id: 'git',
+      title: 'Git & Hooks',
+      section: 'git',
+      content: `Git: ${gitInit ? 'enabled' : 'disabled'}`
+    },
+    {
+      id: 'connections',
+      title: 'Connections',
+      section: 'connections',
+      content: connectionsSummaryText
+    },
+    {
+      id: 'scaffold',
+      title: 'Scaffold Behavior',
+      section: 'scaffold',
+      content: `${project.value.scaffold?.source_all_functions ? 'Functions loaded from functions/' : 'Does not load functions'} · ${project.value.scaffold?.set_theme_on_scaffold ? `ggplot2: ${(project.value.scaffold.ggplot_theme || 'theme_minimal').replace('theme_', '')}` : 'No ggplot theme'} · ${project.value.scaffold?.set_seed ? `Seed: ${project.value.scaffold.seed}` : 'No random seed'}`
+    }
+  ]
+})
+
 const gitPanelModel = computed({
   get() {
     const hooks = project.value.git.hooks || {}
@@ -2205,17 +1750,6 @@ const getPackageHint = (source) => {
   return hints[source] || hints.cran
 }
 
-const toggleAssistant = (assistant, enabled) => {
-  ensureAiAssistantsArray()
-  if (enabled) {
-    if (!project.value.ai.assistants.includes(assistant)) {
-      project.value.ai.assistants.push(assistant)
-    }
-  } else {
-    project.value.ai.assistants = project.value.ai.assistants.filter(a => a !== assistant)
-  }
-}
-
 const handleLocationInput = (value) => {
   project.value.location = value
   const projectsRoot = globalSettings.value?.global?.projects_root || ''
@@ -2229,24 +1763,9 @@ const handleLocationInput = (value) => {
   }
 }
 
-const addPackage = () => {
-  if (!project.value.packages.default_packages) {
-    project.value.packages.default_packages = []
-  }
-  project.value.packages.default_packages.push({
-    name: '',
-    source: 'cran',
-    auto_attach: false
-  })
-}
-
-const removePackage = (index) => {
-  project.value.packages.default_packages.splice(index, 1)
-}
-
 const getGitignoreTemplateLabel = (template) => {
   const labels = {
-    'gitignore-project': 'Research Project',
+    'gitignore-project': 'Standard Project',
     'gitignore-sensitive': 'Privacy Sensitive Project',
     'gitignore-course': 'Course/Teaching',
     'gitignore-presentation': 'Presentation'
@@ -2321,6 +1840,24 @@ const currentProjectTypeDirectories = computed(() => {
   return catalogType?.directories || {}
 })
 
+// Get optional directories for current project type (enabled_by_default: false)
+// This is dynamically read from the settings catalog, making it the source of truth.
+// For presentation type, this filters to: inputs, outputs, scripts, functions
+// SYNC NOTE: SettingsView hardcodes these in presentationOptions reactive object
+// See src/constants/projectTypes.js for documentation of expected values
+const currentProjectTypeOptionalDirectories = computed(() => {
+  if (!settingsCatalog.value?.project_types) return []
+
+  const catalogType = settingsCatalog.value.project_types[project.value.type]
+  if (!catalogType?.directories) return []
+
+  // Filter directories where enabled_by_default is false
+  return Object.keys(catalogType.directories).filter(key => {
+    const dir = catalogType.directories[key]
+    return dir && dir.enabled_by_default === false
+  })
+})
+
 const enabledDirectoriesCount = computed(() => {
   return Object.values(project.value.directories_enabled).filter(v => v).length
 })
@@ -2343,6 +1880,104 @@ const countDirectoriesByCategory = (category) => {
   })
   return keys.length
 }
+
+// Fallback arrays for directory structure (matching SettingsView.vue)
+const generalWorkspaceRenderableFallback = [
+  {
+    key: 'notebooks',
+    label: 'Notebooks',
+    hint: 'Quarto or R Markdown notebooks for analysis.',
+    defaultRenderDir: 'outputs/notebooks'
+  },
+  {
+    key: 'docs',
+    label: 'Documentation',
+    hint: 'Codebooks, documentation, and other reference materials.',
+    defaultRenderDir: 'outputs/docs'
+  }
+]
+
+const generalWorkspaceNonRenderableFallback = [
+  {
+    key: 'functions',
+    label: 'Functions',
+    hint: 'R files here are sourced by scaffold(), so helper functions are available in every project session.'
+  },
+  {
+    key: 'scripts',
+    label: 'Scripts',
+    hint: 'Reusable R scripts, job runners, or automation tasks.'
+  }
+]
+
+const generalInputFallback = [
+  { key: 'inputs_raw', label: 'Raw data', hint: 'Read-only exports from source systems.' },
+  { key: 'inputs_intermediate', label: 'Intermediate data', hint: 'Data after light cleaning or pre-processing steps.' },
+  { key: 'inputs_final', label: 'Analysis-ready data', hint: 'Final inputs ready for modeling or reporting.' }
+]
+
+const generalOutputFallback = [
+  { key: 'outputs_tables', label: 'Tables', hint: 'Publishable tables ready for reports or manuscripts.' },
+  { key: 'outputs_figures', label: 'Figures', hint: 'Final plots and graphics.' },
+  { key: 'outputs_models', label: 'Models', hint: 'Serialized models or model summaries.' },
+  { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
+]
+
+const generalUtilityFallback = [
+  { key: 'cache', label: 'Cache', hint: 'Temporary artifacts (gitignored).' },
+  { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
+]
+
+const sensitiveInputFallback = [
+  { privateKey: 'inputs_private_raw', publicKey: 'inputs_public_raw', label: 'Raw data', privateLabel: 'Raw data (private)', publicLabel: 'Raw data (public)' },
+  { privateKey: 'inputs_private_intermediate', publicKey: 'inputs_public_intermediate', label: 'Intermediate data', privateLabel: 'Intermediate data (private)', publicLabel: 'Intermediate data (public)' },
+  { privateKey: 'inputs_private_final', publicKey: 'inputs_public_final', label: 'Analysis-ready data', privateLabel: 'Analysis-ready data (private)', publicLabel: 'Analysis-ready data (public)' }
+]
+
+const sensitiveOutputFallback = [
+  { privateKey: 'outputs_private_tables', publicKey: 'outputs_public_tables', label: 'Tables', privateLabel: 'Tables (private)', publicLabel: 'Tables (public)' },
+  { privateKey: 'outputs_private_figures', publicKey: 'outputs_public_figures', label: 'Figures', privateLabel: 'Figures (private)', publicLabel: 'Figures (public)' },
+  { privateKey: 'outputs_private_models', publicKey: 'outputs_public_models', label: 'Models', privateLabel: 'Models (private)', publicLabel: 'Models (public)' },
+  { privateKey: 'outputs_private_reports', publicKey: 'outputs_public_reports', label: 'Reports', privateLabel: 'Reports (private)', publicLabel: 'Reports (public)' }
+]
+
+const getDirectoryMeta = (typeKey, dirKey) => settingsCatalog.value?.project_types?.[typeKey]?.directories?.[dirKey] || {}
+
+const buildDirectoryFields = (typeKey, fallback) =>
+  fallback.map((entry) => {
+    const meta = getDirectoryMeta(typeKey, entry.key)
+    return {
+      key: entry.key,
+      label: meta.label || entry.label,
+      hint: meta.hint || entry.hint || ''
+    }
+  })
+
+// Computed properties for Standard Project directory fields
+const generalWorkspaceRenderableFields = computed(() => buildDirectoryFields('project', generalWorkspaceRenderableFallback).map(field => ({
+  ...field,
+  defaultRenderDir: generalWorkspaceRenderableFallback.find(f => f.key === field.key)?.defaultRenderDir || ''
+})))
+
+const generalWorkspaceNonRenderableFields = computed(() => buildDirectoryFields('project', generalWorkspaceNonRenderableFallback))
+const generalInputFields = computed(() => buildDirectoryFields('project', generalInputFallback))
+const generalOutputFields = computed(() => buildDirectoryFields('project', generalOutputFallback))
+const generalUtilityFields = computed(() => buildDirectoryFields('project', generalUtilityFallback))
+
+// Build sensitive pairs for Privacy Sensitive project type
+const buildSensitivePairs = (fallback) =>
+  fallback.map((entry) => {
+    const privateMeta = getDirectoryMeta('project_sensitive', entry.privateKey)
+    const publicMeta = getDirectoryMeta('project_sensitive', entry.publicKey)
+    return {
+      ...entry,
+      privateLabel: privateMeta.label || entry.privateLabel,
+      publicLabel: publicMeta.label || entry.publicLabel
+    }
+  })
+
+const sensitiveInputPairs = computed(() => buildSensitivePairs(sensitiveInputFallback))
+const sensitiveOutputPairs = computed(() => buildSensitivePairs(sensitiveOutputFallback))
 
 // Helper to get extra_directories from global settings by type
 const globalExtraDirectoriesByType = (type) => {
@@ -2444,14 +2079,14 @@ const createProject = async () => {
   try {
     creating.value = true
 
-    // Build directories object from enabled flags
+    // Build directories object from enabled flags and user values
     const catalogType = settingsCatalog.value?.project_types?.[project.value.type]
     const directories = {}
 
     if (catalogType?.directories) {
       Object.entries(catalogType.directories).forEach(([key, config]) => {
         if (project.value.directories_enabled[key]) {
-          directories[key] = config.default
+          directories[key] = project.value.directories[key] || config.default
         }
       })
     }
@@ -2489,7 +2124,18 @@ const createProject = async () => {
       env: {
         raw: project.value.env.rawContent || ''
       },
-      directories
+      directories,
+      render_dirs: project.value.render_dirs || {},
+      // Filter out invalid extra_directories (missing key, label, or path)
+      // AND filter out disabled directories
+      extra_directories: (project.value.extra_directories || []).filter(dir => {
+        const hasValidData = dir.key && dir.key.trim() &&
+                             dir.label && dir.label.trim() &&
+                             dir.path && dir.path.trim()
+        const isEnabled = project.value.extra_directories_enabled?.[dir.key] !== false
+        return hasValidData && isEnabled
+      }),
+      extra_directories_enabled: project.value.extra_directories_enabled || {}
     }
 
     const response = await fetch('/api/projects/create', {
@@ -2504,6 +2150,11 @@ const createProject = async () => {
     }
 
     const result = await response.json()
+
+    // Check if backend returned success: false
+    if (result.success === false) {
+      throw new Error(result.error || 'Project creation failed')
+    }
 
     toast.success('Project Created', `${project.value.name} has been created successfully`)
 
