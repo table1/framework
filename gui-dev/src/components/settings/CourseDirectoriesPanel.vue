@@ -215,7 +215,13 @@ const containerClasses = computed(() =>
 )
 
 const isDirectoryEnabled = (key) => {
-  return props.directoriesEnabled[key] ?? true
+  // Check if explicitly set in directoriesEnabled
+  if (key in props.directoriesEnabled) {
+    return props.directoriesEnabled[key]
+  }
+  // Fall back to catalog's enabled_by_default
+  const catalogDefault = props.catalog?.directories?.[key]?.enabled_by_default
+  return catalogDefault ?? false
 }
 
 const toggleDirectory = (key, enabled) => {
@@ -239,7 +245,14 @@ const updateDirectoryPath = (key, value) => {
 const getRenderDirectory = (key) => {
   // Map directory key to render_dirs key
   const renderKey = key === 'notebooks' ? 'modules' : key
-  return props.renderDirs[renderKey] || ''
+
+  // Check if render dir is explicitly set
+  if (props.renderDirs[renderKey]) {
+    return props.renderDirs[renderKey]
+  }
+
+  // Fall back to catalog default
+  return props.catalog?.render_dirs?.[renderKey]?.default || ''
 }
 
 const updateRenderDirectory = (key, value) => {
