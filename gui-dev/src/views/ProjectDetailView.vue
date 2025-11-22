@@ -273,30 +273,34 @@
         <div v-else-if="projectSettings">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Project Structure</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            This project uses the <strong>{{ projectTypeLabel }}</strong> structure. View-only mode.
+            This project uses the <strong>{{ projectTypeLabel }}</strong> structure.
           </p>
 
           <Alert
             type="info"
-            title="View Only"
-            description="Project structure settings are read-only in this view. To modify structure, edit the project's configuration files directly."
+            title="Append-Only Mode"
+            description="You can enable disabled directories and add new custom directories. Directories that are already enabled cannot be turned off to prevent accidental data loss."
             class="mb-6"
           />
 
-          <div class="opacity-60 pointer-events-none">
-            <ProjectStructureEditor
-              :project-type="project.type"
-              :directories="projectSettings.directories || {}"
-              :render-dirs="projectSettings.render_dirs || {}"
-              :enabled="directoriesEnabledForDisplay"
-              :extra-directories="projectSettings.extra_directories || []"
-              :settings="projectSettings"
-              :gitignore="projectSettings.gitignore || ''"
-              :catalog="settingsCatalog?.project_types?.[project.type] || {}"
-              :new-extra-ids="new Set()"
-              :disabled="true"
-            />
-          </div>
+          <ProjectStructureEditor
+            :project-type="project.type"
+            :directories="editableSettings.directories || {}"
+            :render-dirs="editableSettings.render_dirs || {}"
+            :enabled="editableSettings.enabled || directoriesEnabledForDisplay"
+            :extra-directories="editableSettings.extra_directories || []"
+            :settings="editableSettings"
+            :gitignore="editableSettings.gitignore || ''"
+            :catalog="settingsCatalog?.project_types?.[project.type] || {}"
+            :new-extra-ids="newExtraIds"
+            :allow-destruction="false"
+            @update:directories="editableSettings.directories = $event"
+            @update:render-dirs="editableSettings.render_dirs = $event"
+            @update:enabled="editableSettings.enabled = $event"
+            @update:extra-directories="editableSettings.extra_directories = $event"
+            @update:gitignore="editableSettings.gitignore = $event"
+            @update:newExtraIds="newExtraIds = $event"
+          />
         </div>
       </div>
 
@@ -861,6 +865,7 @@ const settingsCatalog = ref(null)
 const editableSettings = ref({})
 const settingsLoading = ref(false)
 const settingsError = ref(null)
+const newExtraIds = ref(new Set())
 const saving = ref(false)
 const gitSettings = ref({
   initialize: true,
@@ -1785,6 +1790,8 @@ const loadProjectSettings = async () => {
     if (data.error) {
       settingsError.value = data.error
     } else {
+      console.log('[DEBUG] Loaded project settings:', data.settings)
+      console.log('[DEBUG] extra_directories:', data.settings.extra_directories)
       projectSettings.value = data.settings
       editableSettings.value = JSON.parse(JSON.stringify(data.settings))
 
@@ -1838,21 +1845,19 @@ const saveCurrentSection = async () => {
 }
 
 const saveSettings = async () => {
+  console.log('[DEBUG] saveSettings called! Stack trace:', new Error().stack)
   saving.value = true
 
   try {
-    // First, save custom directories if there are any
-    const allCustomDirectories = [
-      ...customWorkspaceDirectories.value,
-      ...customInputDirectories.value,
-      ...customOutputDirectories.value
-    ]
+    // First, create any new directories that were added
+    const newDirectories = (editableSettings.value.extra_directories || [])
+      .filter(dir => newExtraIds.value.has(dir._id))
 
-    if (allCustomDirectories.length > 0) {
+    if (newDirectories.length > 0) {
       const dirResponse = await fetch(`/api/project/${route.params.id}/directories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ directories: allCustomDirectories })
+        body: JSON.stringify({ directories: newDirectories })
       })
 
       const dirResult = await dirResponse.json()
@@ -1863,24 +1868,58 @@ const saveSettings = async () => {
         return
       }
 
-      // Clear the custom directory arrays after successful save
-      customWorkspaceDirectories.value = []
-      customInputDirectories.value = []
-      customOutputDirectories.value = []
+      // Clear the newExtraIds Set after successful save
+      newExtraIds.value = new Set()
     }
 
-    // Then save settings
+    // Clean up enabled state - remove partial keys created during typing
+    // Only keep keys that match:
+    // 1. Catalog directories (from settingsCatalog)
+    // 2. Extra directories (from extra_directories array)
+    const validKeys = new Set()
+
+    // Add catalog directory keys
+    const catalog = settingsCatalog.value?.project_types?.[project.value.type]
+    if (catalog?.directories) {
+      Object.keys(catalog.directories).forEach(key => validKeys.add(key))
+    }
+
+    // Add extra directory keys
+    if (editableSettings.value.extra_directories) {
+      editableSettings.value.extra_directories.forEach(dir => {
+        if (dir.key) validKeys.add(dir.key)
+      })
+    }
+
+    // Filter enabled to only valid keys
+    const cleanedEnabled = {}
+    Object.keys(editableSettings.value.enabled || {}).forEach(key => {
+      if (validKeys.has(key)) {
+        cleanedEnabled[key] = editableSettings.value.enabled[key]
+      }
+    })
+
+    // Create clean settings object for sending
+    const settingsToSave = {
+      ...editableSettings.value,
+      enabled: cleanedEnabled
+    }
+
+    console.log('[DEBUG] Saving settings with extra_directories:', settingsToSave.extra_directories)
+    console.log('[DEBUG] Cleaned enabled state:', cleanedEnabled)
+    console.log('[DEBUG] Removed invalid keys:', Object.keys(editableSettings.value.enabled).filter(k => !validKeys.has(k)))
+
     const response = await fetch(`/api/project/${route.params.id}/settings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editableSettings.value)
+      body: JSON.stringify(settingsToSave)
     })
 
     const result = await response.json()
 
     if (result.success) {
-      const message = allCustomDirectories.length > 0
-        ? `Settings updated and ${allCustomDirectories.length} director${allCustomDirectories.length === 1 ? 'y' : 'ies'} created`
+      const message = newDirectories.length > 0
+        ? `Settings updated and ${newDirectories.length} director${newDirectories.length === 1 ? 'y' : 'ies'} created`
         : 'Project settings have been updated'
 
       toast.success('Settings Saved', message)

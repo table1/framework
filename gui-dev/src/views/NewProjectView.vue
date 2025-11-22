@@ -653,23 +653,80 @@
                   </div>
                 </div>
 
-                <!-- Additional Input Directories -->
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <!-- Additional Input Directories (Private/Public split) -->
+                <div v-if="globalInputDirectoriesPrivate.length > 0 || globalInputDirectoriesPublic.length > 0 || newInputDirectories.length > 0" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Input Directories</h4>
 
+                  <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-4">
+                    <div>Private</div>
+                    <div>Public</div>
+                  </div>
+
+                  <!-- Global extra directories (from defaults) -->
+                  <div v-if="globalInputDirectoriesPrivate.length > 0 || globalInputDirectoriesPublic.length > 0" class="space-y-5 mb-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <!-- Private side -->
+                      <div class="space-y-4">
+                        <div v-for="dir in globalInputDirectoriesPrivate" :key="dir.key" class="space-y-2">
+                          <Toggle
+                            :model-value="project.extra_directories_enabled[dir.key]"
+                            @update:model-value="project.extra_directories_enabled[dir.key] = $event"
+                            :label="dir.label"
+                          />
+                          <Input
+                            v-if="project.extra_directories_enabled[dir.key]"
+                            :model-value="dir.path"
+                            readonly
+                            prefix="/"
+                            monospace
+                          />
+                        </div>
+                      </div>
+
+                      <!-- Public side -->
+                      <div class="space-y-4">
+                        <div v-for="dir in globalInputDirectoriesPublic" :key="dir.key" class="space-y-2">
+                          <Toggle
+                            :model-value="project.extra_directories_enabled[dir.key]"
+                            @update:model-value="project.extra_directories_enabled[dir.key] = $event"
+                            :label="dir.label"
+                          />
+                          <Input
+                            v-if="project.extra_directories_enabled[dir.key]"
+                            :model-value="dir.path"
+                            readonly
+                            prefix="/"
+                            monospace
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Repeater for new project-specific directories -->
                   <Repeater
                     v-model="newInputDirectories"
                     addLabel="Add Input Directory"
-                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'input', _id: Date.now() })"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'input', scope: 'private', _id: Date.now() })"
                   >
                     <template #default="{ item, update }">
                       <div class="space-y-3">
+                        <RadioGroup
+                          :model-value="item.scope || 'private'"
+                          @update:model-value="update('scope', $event)"
+                          label="Scope"
+                          :options="[
+                            { value: 'private', label: 'Private' },
+                            { value: 'public', label: 'Public' }
+                          ]"
+                        />
                         <Input
                           :model-value="item.key"
                           @update:model-value="update('key', $event)"
                           label="Key"
                           placeholder="inputs_archive"
                           hint="Unique identifier (alphanumeric and underscores)"
+                          monospace
                         />
                         <Input
                           :model-value="item.label"
@@ -738,10 +795,29 @@
                   </div>
                 </div>
 
-                <!-- Additional Workspace Directories -->
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <!-- Additional Workspace Directories (no private/public split for workspaces) -->
+                <div v-if="globalWorkspaceDirectories.length > 0 || newWorkspaceDirectories.length > 0" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Workspace Directories</h4>
 
+                  <!-- Global extra directories (from defaults) -->
+                  <div v-if="globalWorkspaceDirectories.length > 0" class="space-y-4 mb-4">
+                    <div v-for="dir in globalWorkspaceDirectories" :key="dir.key" class="space-y-2">
+                      <Toggle
+                        :model-value="project.extra_directories_enabled[dir.key]"
+                        @update:model-value="project.extra_directories_enabled[dir.key] = $event"
+                        :label="dir.label"
+                      />
+                      <Input
+                        v-if="project.extra_directories_enabled[dir.key]"
+                        :model-value="dir.path"
+                        readonly
+                        prefix="/"
+                        monospace
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Repeater for new project-specific directories -->
                   <Repeater
                     v-model="newWorkspaceDirectories"
                     addLabel="Add Workspace Directory"
@@ -755,6 +831,7 @@
                           label="Key"
                           placeholder="templates"
                           hint="Unique identifier (alphanumeric and underscores)"
+                          monospace
                         />
                         <Input
                           :model-value="item.label"
@@ -817,23 +894,80 @@
                   </div>
                 </div>
 
-                <!-- Additional Output Directories -->
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <!-- Additional Output Directories (Private/Public split) -->
+                <div v-if="globalOutputDirectoriesPrivate.length > 0 || globalOutputDirectoriesPublic.length > 0 || newOutputDirectories.length > 0" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Additional Output Directories</h4>
 
+                  <div class="grid gap-4 sm:grid-cols-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-4">
+                    <div>Private</div>
+                    <div>Public</div>
+                  </div>
+
+                  <!-- Global extra directories (from defaults) -->
+                  <div v-if="globalOutputDirectoriesPrivate.length > 0 || globalOutputDirectoriesPublic.length > 0" class="space-y-5 mb-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <!-- Private side -->
+                      <div class="space-y-4">
+                        <div v-for="dir in globalOutputDirectoriesPrivate" :key="dir.key" class="space-y-2">
+                          <Toggle
+                            :model-value="project.extra_directories_enabled[dir.key]"
+                            @update:model-value="project.extra_directories_enabled[dir.key] = $event"
+                            :label="dir.label"
+                          />
+                          <Input
+                            v-if="project.extra_directories_enabled[dir.key]"
+                            :model-value="dir.path"
+                            readonly
+                            prefix="/"
+                            monospace
+                          />
+                        </div>
+                      </div>
+
+                      <!-- Public side -->
+                      <div class="space-y-4">
+                        <div v-for="dir in globalOutputDirectoriesPublic" :key="dir.key" class="space-y-2">
+                          <Toggle
+                            :model-value="project.extra_directories_enabled[dir.key]"
+                            @update:model-value="project.extra_directories_enabled[dir.key] = $event"
+                            :label="dir.label"
+                          />
+                          <Input
+                            v-if="project.extra_directories_enabled[dir.key]"
+                            :model-value="dir.path"
+                            readonly
+                            prefix="/"
+                            monospace
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Repeater for new project-specific directories -->
                   <Repeater
                     v-model="newOutputDirectories"
                     addLabel="Add Output Directory"
-                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'output', _id: Date.now() })"
+                    :defaultItem="() => ({ key: '', label: '', path: '', type: 'output', scope: 'private', _id: Date.now() })"
                   >
                     <template #default="{ item, update }">
                       <div class="space-y-3">
+                        <RadioGroup
+                          :model-value="item.scope || 'private'"
+                          @update:model-value="update('scope', $event)"
+                          label="Scope"
+                          :options="[
+                            { value: 'private', label: 'Private' },
+                            { value: 'public', label: 'Public' }
+                          ]"
+                        />
                         <Input
                           :model-value="item.key"
                           @update:model-value="update('key', $event)"
                           label="Key"
                           placeholder="outputs_presentations"
                           hint="Unique identifier (alphanumeric and underscores)"
+                          monospace
                         />
                         <Input
                           :model-value="item.label"
@@ -974,7 +1108,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PageHeader from '../components/ui/PageHeader.vue'
 import Input from '../components/ui/Input.vue'
@@ -1017,6 +1151,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
+const loadProjects = inject('loadProjects')
 
 const globalSettings = ref(null)
 const settingsCatalog = ref(null)
@@ -1455,36 +1590,15 @@ const loadProjectTypeDefaults = () => {
       }
       return acc
     }, {})
-
-    // Populate repeater refs with global directories (without _source for easier editing)
-    // Filter project-specific directories (not global) by type
-    newInputDirectories.value = userProjectType.extra_directories
-      .filter(dir => dir.type === 'input')
-      .map(dir => {
-        const { _source, ...rest } = dir
-        return { ...rest, _id: Date.now() + Math.random() }
-      })
-
-    newWorkspaceDirectories.value = userProjectType.extra_directories
-      .filter(dir => dir.type === 'workspace')
-      .map(dir => {
-        const { _source, ...rest } = dir
-        return { ...rest, _id: Date.now() + Math.random() }
-      })
-
-    newOutputDirectories.value = userProjectType.extra_directories
-      .filter(dir => dir.type === 'output')
-      .map(dir => {
-        const { _source, ...rest } = dir
-        return { ...rest, _id: Date.now() + Math.random() }
-      })
   } else {
     project.value.extra_directories = []
     project.value.extra_directories_enabled = {}
-    newInputDirectories.value = []
-    newWorkspaceDirectories.value = []
-    newOutputDirectories.value = []
   }
+
+  // Reset repeater refs (they're only for NEW project-specific directories)
+  newInputDirectories.value = []
+  newWorkspaceDirectories.value = []
+  newOutputDirectories.value = []
 
   console.log('[DEBUG] loadProjectTypeDefaults() finished - packages still:', project.value.packages.default_packages)
 }
@@ -1862,6 +1976,35 @@ const enabledDirectoriesCount = computed(() => {
   return Object.values(project.value.directories_enabled).filter(v => v).length
 })
 
+// Filter global extra directories by type and scope
+const globalInputDirectories = computed(() => {
+  return (project.value.extra_directories || []).filter(dir => dir.type === 'input' && dir._source === 'global')
+})
+
+const globalInputDirectoriesPrivate = computed(() => {
+  return globalInputDirectories.value.filter(dir => dir.scope === 'private')
+})
+
+const globalInputDirectoriesPublic = computed(() => {
+  return globalInputDirectories.value.filter(dir => dir.scope === 'public')
+})
+
+const globalWorkspaceDirectories = computed(() => {
+  return (project.value.extra_directories || []).filter(dir => dir.type === 'workspace' && dir._source === 'global')
+})
+
+const globalOutputDirectories = computed(() => {
+  return (project.value.extra_directories || []).filter(dir => dir.type === 'output' && dir._source === 'global')
+})
+
+const globalOutputDirectoriesPrivate = computed(() => {
+  return globalOutputDirectories.value.filter(dir => dir.scope === 'private')
+})
+
+const globalOutputDirectoriesPublic = computed(() => {
+  return globalOutputDirectories.value.filter(dir => dir.scope === 'public')
+})
+
 const countDirectoriesByCategory = (category) => {
   const keys = Object.keys(project.value.directories_enabled).filter(key => {
     const enabled = project.value.directories_enabled[key]
@@ -2157,6 +2300,9 @@ const createProject = async () => {
     }
 
     toast.success('Project Created', `${project.value.name} has been created successfully`)
+
+    // Reload projects list in sidebar
+    await loadProjects()
 
     // Navigate to projects list
     router.push('/projects')
