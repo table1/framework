@@ -108,7 +108,7 @@
           .gitignore
         </button>
       </div>
-      <Button v-if="!disabled" variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="$emit('reset')">
+      <Button v-if="!disabled && allowDestruction" variant="secondary" size="sm" class="mt-3 sm:mt-0" @click="$emit('reset')">
         Reset to Defaults
       </Button>
     </div>
@@ -155,7 +155,7 @@
               @update:model-value="updateEnabled('data', $event)"
               label="Include data directory"
               description="Adds a /data folder for sample data used in the presentation."
-              :disabled="disabled"
+              :disabled="isToggleDisabled('data')"
             />
             <Input
               v-if="localEnabled.data"
@@ -173,7 +173,7 @@
               @update:model-value="updateEnabled('scripts', $event)"
               label="Include scripts directory"
               description="Adds a scripts/ folder for demo code or automation."
-              :disabled="disabled"
+              :disabled="isToggleDisabled('scripts')"
             />
             <Input
               v-if="localEnabled.scripts"
@@ -191,7 +191,7 @@
               @update:model-value="updateEnabled('functions', $event)"
               label="Include functions directory"
               description="Adds functions/ for helper utilities that should load automatically."
-              :disabled="disabled"
+              :disabled="isToggleDisabled('functions')"
             />
             <Input
               v-if="localEnabled.functions"
@@ -287,7 +287,7 @@
                   :model-value="localEnabled[pair.privateKey]"
                   @update:model-value="updateEnabled(pair.privateKey, $event)"
                   :label="pair.privateLabel"
-                  :disabled="disabled"
+                  :disabled="isToggleDisabled(pair.privateKey)"
                 />
                 <Input
                   v-if="localEnabled[pair.privateKey] !== false"
@@ -303,7 +303,7 @@
                   :model-value="localEnabled[pair.publicKey]"
                   @update:model-value="updateEnabled(pair.publicKey, $event)"
                   :label="pair.publicLabel"
-                  :disabled="disabled"
+                  :disabled="isToggleDisabled(pair.publicKey)"
                 />
                 <Input
                   v-if="localEnabled[pair.publicKey] !== false"
@@ -326,7 +326,7 @@
               @update:model-value="updateEnabled(field.key, $event)"
               :label="field.label"
               :description="field.hint"
-              :disabled="disabled"
+              :disabled="isToggleDisabled(field.key)"
             />
             <Input
               v-if="localEnabled[field.key] !== false"
@@ -350,7 +350,7 @@
                 :model-value="localEnabled[dir.key]"
                 @update:model-value="updateEnabled(dir.key, $event)"
                 :label="dir.label"
-                :disabled="disabled"
+                :disabled="isToggleDisabled(dir.key)"
               />
               <Input
                 v-if="localEnabled[dir.key] !== false"
@@ -416,7 +416,7 @@
               @update:model-value="updateEnabled(field.key, $event)"
               :label="field.label"
               :description="field.hint"
-              :disabled="disabled"
+              :disabled="isToggleDisabled(field.key)"
             />
             <div v-if="localEnabled[field.key] !== false" class="grid grid-cols-2 gap-3">
               <Input
@@ -445,7 +445,7 @@
               @update:model-value="updateEnabled(field.key, $event)"
               :label="field.label"
               :description="field.hint"
-              :disabled="disabled"
+              :disabled="isToggleDisabled(field.key)"
             />
             <Input
               v-if="localEnabled[field.key] !== false"
@@ -469,7 +469,7 @@
                 :model-value="localEnabled[dir.key]"
                 @update:model-value="updateEnabled(dir.key, $event)"
                 :label="dir.label"
-                :disabled="disabled"
+                :disabled="isToggleDisabled(dir.key)"
               />
               <Input
                 v-if="localEnabled[dir.key] !== false"
@@ -541,7 +541,7 @@
                   :model-value="localEnabled[pair.privateKey]"
                   @update:model-value="updateEnabled(pair.privateKey, $event)"
                   :label="pair.privateLabel"
-                  :disabled="disabled"
+                  :disabled="isToggleDisabled(pair.privateKey)"
                 />
                 <Input
                   v-if="localEnabled[pair.privateKey] !== false"
@@ -557,7 +557,7 @@
                   :model-value="localEnabled[pair.publicKey]"
                   @update:model-value="updateEnabled(pair.publicKey, $event)"
                   :label="pair.publicLabel"
-                  :disabled="disabled"
+                  :disabled="isToggleDisabled(pair.publicKey)"
                 />
                 <Input
                   v-if="localEnabled[pair.publicKey] !== false"
@@ -580,7 +580,7 @@
               @update:model-value="updateEnabled(field.key, $event)"
               :label="field.label"
               :description="field.hint"
-              :disabled="disabled"
+              :disabled="isToggleDisabled(field.key)"
             />
             <Input
               v-if="localEnabled[field.key] !== false"
@@ -604,7 +604,7 @@
                 :model-value="localEnabled[dir.key]"
                 @update:model-value="updateEnabled(dir.key, $event)"
                 :label="dir.label"
-                :disabled="disabled"
+                :disabled="isToggleDisabled(dir.key)"
               />
               <Input
                 v-if="localEnabled[dir.key] !== false"
@@ -669,7 +669,7 @@
               @update:model-value="updateEnabled(field.key, $event)"
               :label="field.label"
               :description="field.hint"
-              :disabled="disabled"
+              :disabled="isToggleDisabled(field.key)"
             />
             <Input
               v-if="localEnabled[field.key] !== false"
@@ -760,6 +760,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  allowDestruction: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -787,8 +791,8 @@ const getDirectoryValue = (key) => {
     return localDirectories.value[key]
   }
   // Fall back to catalog default if directory not in local state (e.g., when disabled)
-  // Catalog format is: directories[key] = "path/string"
-  return props.catalog?.directories?.[key] || ''
+  // Catalog format is: directories[key] = { label, default, enabled_by_default, hint }
+  return props.catalog?.directories?.[key]?.default || ''
 }
 
 // Watch for external changes
@@ -937,8 +941,20 @@ const updateRenderDir = (key, value) => {
 }
 
 const updateEnabled = (key, value) => {
+  // In append-only mode, prevent disabling (turning off) directories
+  if (!props.allowDestruction && localEnabled.value[key] === true && value === false) {
+    return // Prevent disabling in append-only mode
+  }
   localEnabled.value[key] = value
   emit('update:enabled', { ...localEnabled.value })
+}
+
+// Helper to determine if a toggle should be disabled
+const isToggleDisabled = (key) => {
+  if (props.disabled) return true
+  // In append-only mode, disable toggles that are currently ON (can't turn off)
+  if (!props.allowDestruction && localEnabled.value[key] === true) return true
+  return false
 }
 
 const updateSetting = (key, value) => {
@@ -981,6 +997,33 @@ const updateNewExtras = (type, newItems) => {
     if (item._id) newIds.add(item._id)
   })
   emit('update:newExtraIds', newIds)
+
+  // CRITICAL: Mark newly added directories as enabled (but don't override existing enabled states)
+  // This prevents enabling an existing disabled directory when user types a matching key
+  const updatedEnabled = { ...localEnabled.value }
+  let needsUpdate = false
+
+  newItems.forEach(item => {
+    if (item.key) {
+      // Only auto-enable if:
+      // 1. No enabled state exists for this key yet
+      // 2. The key doesn't match any existing saved extra directory
+      // 3. The key doesn't match any catalog directory
+      const keyExistsInSaved = savedItems.some(saved => saved.key === item.key)
+      const keyExistsInCatalog = props.catalog?.directories &&
+                                  Object.keys(props.catalog.directories).includes(item.key)
+
+      if (!updatedEnabled.hasOwnProperty(item.key) && !keyExistsInSaved && !keyExistsInCatalog) {
+        updatedEnabled[item.key] = true
+        needsUpdate = true
+      }
+    }
+  })
+
+  // Emit enabled state update only if we actually added new keys
+  if (needsUpdate) {
+    emit('update:enabled', updatedEnabled)
+  }
 
   // Merge saved + new items for this type, plus items of other types
   const otherTypeItems = props.extraDirectories.filter(dir => dir.type !== type)
