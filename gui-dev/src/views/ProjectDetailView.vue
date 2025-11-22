@@ -1015,7 +1015,7 @@ const overviewCards = computed(() => {
       id: 'structure',
       title: 'Project Structure',
       section: 'settings',
-      content: projectType
+      content: `${projectTypeLabel.value} · ${Object.keys(workspaceDirectories.value).length} workspace · ${Object.keys(inputDirectories.value).length} input · ${Object.keys(outputDirectories.value).length} output`
     },
     {
       id: 'notebooks',
@@ -1464,9 +1464,15 @@ const directoriesEnabledForDisplay = computed(() => {
   if (!projectSettings.value?.directories) return {}
 
   const enabled = {}
-  // All directories in the config are enabled
-  Object.keys(projectSettings.value.directories).forEach(key => {
-    enabled[key] = true
+  const savedDirectories = projectSettings.value.directories || {}
+
+  // Check catalog for all possible directories
+  const catalogDirs = settingsCatalog.value?.project_types?.[project.value.type]?.directories || {}
+
+  Object.keys(catalogDirs).forEach(key => {
+    // If directory exists in saved config, it's enabled
+    // If it doesn't exist, it was disabled
+    enabled[key] = key in savedDirectories
   })
 
   // Also mark extra directories as enabled
