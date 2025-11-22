@@ -75,6 +75,11 @@ npm run dev:server
 → Uses nodemon to watch files and restart R process
 → **Note**: Vite may show proxy errors immediately after restart while R server is starting up - these are normal and will resolve once the R server finishes loading (typically 2-5 seconds)
 
+**CRITICAL: DO NOT manually restart the R server when using `npm run dev:server`!**
+- The server auto-restarts on file changes via nodemon
+- Manual restarts will kill the auto-reload process
+- Only restart manually if NOT using the dev:server script
+
 **Alternative - Manual R Server (Old Way):**
 
 If you prefer manual restarts or are using tmux:

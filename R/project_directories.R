@@ -88,45 +88,24 @@ project_add_directory <- function(project_path, key, label, path) {
   }
 
   # 3. READ PROJECT CONFIG
+  # Check for settings.yml (existing projects) or config.yml (new GUI projects)
+  settings_path <- file.path(project_path, "settings.yml")
   config_path <- file.path(project_path, "config.yml")
 
-  if (!file.exists(config_path)) {
+  if (file.exists(settings_path)) {
+    config_path <- settings_path
+  } else if (file.exists(config_path)) {
+    config_path <- config_path
+  } else {
     return(list(
       success = FALSE,
-      error = sprintf("Project config not found: %s", config_path)
+      error = sprintf("Project config not found (checked settings.yml and config.yml)")
     ))
   }
 
   tryCatch(
     {
-      config <- yaml::read_yaml(config_path)
-
-      # Extract the "default" environment section (config package convention)
-      if (!is.null(config$default)) {
-        config <- config$default
-      }
-
-      # 4. CHECK FOR DUPLICATE KEY
-      if (!is.null(config$directories) && key %in% names(config$directories)) {
-        return(list(
-          success = FALSE,
-          error = sprintf("Directory key '%s' already exists in config", key)
-        ))
-      }
-
-      # 5. ADD DIRECTORY TO CONFIG
-      if (is.null(config$directories)) {
-        config$directories <- list()
-      }
-
-      config$directories[[key]] <- path
-
-      # 6. WRITE CONFIG BACK (wrapped in "default" section for config package)
-      write_config <- list(default = config)
-
-      yaml::write_yaml(write_config, config_path)
-
-      # 7. CREATE DIRECTORY ON FILESYSTEM
+      # 4. CREATE DIRECTORY ON FILESYSTEM (config is saved separately by the GUI)
       absolute_path <- file.path(project_path, path)
 
       dir_created <- tryCatch(

@@ -5,7 +5,8 @@
       :class="[
         modelValue
           ? 'bg-sky-600 outline-sky-600 dark:bg-sky-500 dark:outline-sky-500'
-          : 'bg-gray-200 outline-sky-600 dark:bg-white/5 dark:outline-sky-500'
+          : 'bg-gray-200 outline-sky-600 dark:bg-white/5 dark:outline-sky-500',
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
       ]"
     >
       <span
