@@ -52,6 +52,30 @@ load_settings_catalog <- function(include_user = TRUE, validate = TRUE) {
     .validate_settings_catalog(catalog)
   }
 
+  # Enrich each project type with gitignore template content
+  if (!is.null(catalog$project_types)) {
+    for (type_name in names(catalog$project_types)) {
+      type <- catalog$project_types[[type_name]]
+
+      # Determine which gitignore template to use for this project type
+      gitignore_template_name <- switch(type_name,
+        "project" = "gitignore-project",
+        "project_sensitive" = "gitignore-sensitive",
+        "course" = "gitignore-course",
+        "presentation" = "gitignore-presentation",
+        "gitignore-project" # default fallback
+      )
+
+      # Load the template content
+      template_path <- system.file("templates", gitignore_template_name, package = "framework")
+      if (file.exists(template_path)) {
+        gitignore_content <- paste(readLines(template_path, warn = FALSE), collapse = "\n")
+        # Store as 'gitignore' field for frontend compatibility
+        catalog$project_types[[type_name]]$gitignore <- gitignore_content
+      }
+    }
+  }
+
   catalog
 }
 

@@ -1,27 +1,94 @@
 # Framework Privacy Sensitive Project
-# Pattern-based gitignore - works regardless of directory structure customization
+# ================================================================================
+# This gitignore is designed for projects handling sensitive data (PII, PHI,
+# regulated data, etc.) and enforces a strict private/public workflow.
+#
+# WORKFLOW:
+#   1. Raw/sensitive data goes in private directories (NEVER committed)
+#   2. De-identified/aggregated data goes in public directories (safe to commit)
+#   3. Analysis scripts are committed, but outputs are carefully controlled
+#
+# CRITICAL: Private directories are NEVER committed to version control.
+# Only commit de-identified data, aggregated results, and code.
+# ================================================================================
 
-# R environment
+# ============================================================================
+# SENSITIVE DATA - NEVER COMMIT
+# ============================================================================
+
+# Private directories (anywhere in project tree)
+# These contain raw data, PII/PHI, credentials, and sensitive outputs
+**/private/**
+**/*_private/**
+
+# Common sensitive data patterns
+**/inputs/raw/**              # Raw data often contains PII
+**/inputs/sensitive/**        # Explicitly marked sensitive inputs
+**/outputs/private/**         # Private outputs, results with PII
+**/data/raw/**                # Alternative raw data location
+**/data/sensitive/**          # Alternative sensitive data location
+
+# Secrets and credentials
+.env
+.env.local
+.Renviron
+**/credentials/**
+**/secrets/**
+*.key
+*.pem
+*.p12
+*.pfx
+
+# ============================================================================
+# UTILITY & CACHE - SAFE TO IGNORE
+# ============================================================================
+
+# Temporary processing directories
+**/cache/**
+**/scratch/**
+**/tmp/**
+**/temp/**
+
+# Framework database (contains file hashes, local metadata)
+framework.db
+framework.db-wal
+framework.db-shm
+
+# ============================================================================
+# R ENVIRONMENT
+# ============================================================================
+
+# R session files
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 
 # renv (package management)
-/renv/
-/renv.lock
+# NOTE: Consider committing renv.lock for reproducibility
+/renv/library/
+/renv/local/
+/renv/cellar/
+/renv/lock/
+/renv/python/
+/renv/sandbox/
+/renv/staging/
 
-# Private directories (anywhere in project tree)
-**/private/**
-**/*_private/**
-
-# Utility directories (anywhere in project tree)
-**/cache/**
-**/scratch/**
+# ============================================================================
+# LANGUAGE-SPECIFIC
+# ============================================================================
 
 # Python (if using reticulate)
 __pycache__/
 .ipynb_checkpoints/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+
+# ============================================================================
+# IDE & SYSTEM FILES
+# ============================================================================
 
 # IDE - personal settings only (commit workspace settings)
 .vscode/.history/
@@ -29,12 +96,22 @@ __pycache__/
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# Secrets and environment files
-.env
-.env.local
-.Renviron
+# Windows
+Thumbs.db
+ehthumbs.db
 
-# Temporary files
+# Linux
+*~
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+
 *.tmp
 *.log
+*.bak
+*.swp
+*~

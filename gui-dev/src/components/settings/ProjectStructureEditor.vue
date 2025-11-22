@@ -213,21 +213,12 @@
               :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
             >
               <template #default="{ item, update }">
-                <div class="grid grid-cols-2 gap-3">
-                  <Input
-                    :model-value="item.key"
-                    @update:model-value="update('key', $event)"
-                    label="Key"
-                    placeholder="e.g., assets"
-                    monospace
-                    size="sm"
-                  />
+                <div class="space-y-3">
                   <Input
                     :model-value="item.label"
                     @update:model-value="update('label', $event)"
                     label="Label"
                     placeholder="e.g., Assets"
-                    size="sm"
                   />
                   <Input
                     :model-value="item.path"
@@ -236,8 +227,6 @@
                     placeholder="e.g., assets"
                     prefix="/"
                     monospace
-                    size="sm"
-                    class="col-span-2"
                   />
                 </div>
               </template>
@@ -374,13 +363,6 @@
             <template #default="{ item, update }">
               <div class="space-y-3">
                 <Input
-                  :model-value="item.key"
-                  @update:model-value="update('key', $event)"
-                  label="Key"
-                  placeholder="inputs_archive"
-                  hint="Unique identifier (alphanumeric and underscores)"
-                />
-                <Input
                   :model-value="item.label"
                   @update:model-value="update('label', $event)"
                   label="Label"
@@ -428,7 +410,7 @@
               :disabled="disabled"
               />
               <Input
-                :model-value="localRenderDirs[field.key]"
+                :model-value="getRenderDirValue(field.key)"
                 @update:model-value="updateRenderDir(field.key, $event)"
                 label="Quarto render directory"
                 prefix="/"
@@ -492,13 +474,6 @@
           >
             <template #default="{ item, update }">
               <div class="space-y-3">
-                <Input
-                  :model-value="item.key"
-                  @update:model-value="update('key', $event)"
-                  label="Key"
-                  placeholder="templates"
-                  hint="Unique identifier (alphanumeric and underscores)"
-                />
                 <Input
                   :model-value="item.label"
                   @update:model-value="update('label', $event)"
@@ -628,13 +603,6 @@
             <template #default="{ item, update }">
               <div class="space-y-3">
                 <Input
-                  :model-value="item.key"
-                  @update:model-value="update('key', $event)"
-                  label="Key"
-                  placeholder="outputs_archive"
-                  hint="Unique identifier (alphanumeric and underscores)"
-                />
-                <Input
                   :model-value="item.label"
                   @update:model-value="update('label', $event)"
                   label="Label"
@@ -691,12 +659,12 @@
         description="Define which files and directories Git should ignore."
       >
         <SettingsBlock>
-          <Textarea
+          <CodeEditor
             :model-value="localGitignore"
             @update:model-value="$emit('update:gitignore', $event)"
-            :rows="12"
+            language="gitignore"
+            min-height="500px"
             :disabled="disabled"
-            monospace
             placeholder="# Framework gitignore patterns
 cache/
 scratch/
@@ -715,7 +683,7 @@ import SettingsBlock from './SettingsBlock.vue'
 import Toggle from '../ui/Toggle.vue'
 import Input from '../ui/Input.vue'
 import Select from '../ui/Select.vue'
-import Textarea from '../ui/Textarea.vue'
+import CodeEditor from '../ui/CodeEditor.vue'
 import Button from '../ui/Button.vue'
 import Repeater from '../ui/Repeater.vue'
 import CourseDirectoriesPanel from './CourseDirectoriesPanel.vue'
@@ -795,12 +763,49 @@ const getDirectoryValue = (key) => {
   return props.catalog?.directories?.[key]?.default || ''
 }
 
+// Helper to get render directory value (from local state or catalog default)
+const getRenderDirValue = (key) => {
+  if (localRenderDirs.value[key]) {
+    return localRenderDirs.value[key]
+  }
+  // Fall back to catalog default if render dir not in local state
+  // Catalog format is: render_dirs[key] = { label, default, hint }
+  return props.catalog?.render_dirs?.[key]?.default || ''
+}
+
 // Watch for external changes
 watch(() => props.directories, (newVal) => { localDirectories.value = { ...newVal } }, { deep: true })
 watch(() => props.renderDirs, (newVal) => { localRenderDirs.value = { ...newVal } }, { deep: true })
 watch(() => props.enabled, (newVal) => { localEnabled.value = { ...newVal } }, { deep: true })
 watch(() => props.settings, (newVal) => { localSettings.value = { ...newVal } }, { deep: true })
 watch(() => props.gitignore, (newVal) => { localGitignore.value = newVal })
+
+// Watch extraDirectories and auto-generate missing keys
+watch(() => props.extraDirectories, (newDirs) => {
+  // Check if any items have a label but no key
+  const needsUpdate = newDirs.some(dir => dir.label && !dir.key)
+
+  if (needsUpdate) {
+    // Get all existing keys
+    const existingKeys = [
+      ...(props.catalog?.directories ? Object.keys(props.catalog.directories) : []),
+      ...newDirs.filter(d => d.key).map(d => d.key)
+    ]
+
+    // Generate keys for items that need them
+    const updated = newDirs.map(dir => {
+      if (dir.label && !dir.key) {
+        const newKey = generateKey(dir.label, existingKeys)
+        existingKeys.push(newKey) // Prevent duplicates in this batch
+        console.log('[DEBUG] Auto-generated key:', { label: dir.label, key: newKey })
+        return { ...dir, key: newKey }
+      }
+      return dir
+    })
+
+    emit('update:extraDirectories', updated)
+  }
+}, { deep: true })
 
 // Fallback directory definitions (used when catalog doesn't have them)
 const workspaceRenderableFallback = [
@@ -840,11 +845,12 @@ const getDirectoryMeta = (dirKey) => {
 const buildFields = (fallback) => {
   return fallback.map(entry => {
     const meta = getDirectoryMeta(entry.key)
+    const renderMeta = props.catalog?.render_dirs?.[entry.key] || {}
     return {
       key: entry.key,
       label: meta.label || entry.label,
       hint: meta.hint || entry.hint || '',
-      defaultRenderDir: entry.defaultRenderDir || ''
+      defaultRenderDir: renderMeta.default || entry.defaultRenderDir || ''
     }
   })
 }
@@ -929,6 +935,30 @@ const extraDirectoriesByType = (type) => {
   return props.extraDirectories.filter(dir => dir.type === type)
 }
 
+// Slug generator: converts label to valid key (lowercase, underscores, no special chars)
+const generateKey = (label, existingKeys = []) => {
+  if (!label) return ''
+
+  // Convert to lowercase, replace spaces with underscores, remove special chars
+  let slug = label
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '_')           // Spaces to underscores
+    .replace(/[^a-z0-9_]/g, '')      // Remove special chars
+    .replace(/_+/g, '_')             // Collapse multiple underscores
+    .replace(/^_|_$/g, '')           // Trim underscores from ends
+
+  // Ensure uniqueness by appending number if needed
+  let uniqueSlug = slug
+  let counter = 2
+  while (existingKeys.includes(uniqueSlug)) {
+    uniqueSlug = `${slug}_${counter}`
+    counter++
+  }
+
+  return uniqueSlug
+}
+
 // Update handlers
 const updateDirectory = (key, value) => {
   localDirectories.value[key] = value
@@ -973,6 +1003,12 @@ const updateExtraDirectoryPath = (key, value) => {
 }
 
 const updateNewExtras = (type, newItems) => {
+  console.log('[DEBUG] updateNewExtras called:', {
+    type,
+    newItems: JSON.parse(JSON.stringify(newItems)),
+    itemCount: newItems.length
+  })
+
   // Get saved items of this type
   const savedItems = props.extraDirectories.filter(dir =>
     dir.type === type && !props.newExtraIds.has(dir._id)

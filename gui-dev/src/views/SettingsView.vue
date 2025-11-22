@@ -1171,12 +1171,16 @@ const normalizeProjectType = (key, type) => {
       render_dir: toScalar(type?.quarto?.render_dir, fallback.quarto?.render_dir || '.')
     },
     notebook_template: toScalar(type?.notebook_template, fallback.notebook_template || 'notebook'),
-    extra_directories: Array.isArray(type?.extra_directories) ? type.extra_directories : (fallback.extra_directories || [])
+    extra_directories: Array.isArray(type?.extra_directories) ? type.extra_directories : (fallback.extra_directories || []),
+    gitignore: toScalar(type?.gitignore, fallback.gitignore || '')
   }
 }
 
 const hydrateDefaultsFromCatalog = (catalogData) => {
   if (!catalogData || !catalogData.project_types) return
+
+  console.log('[DEBUG] hydrateDefaultsFromCatalog - catalogData.project_types:', catalogData.project_types)
+  console.log('[DEBUG] project gitignore from catalog:', catalogData.project_types.project?.gitignore?.substring(0, 100))
 
   const normalized = {}
   for (const [key, type] of Object.entries(catalogData.project_types)) {
@@ -1202,8 +1206,11 @@ const hydrateDefaultsFromCatalog = (catalogData) => {
         render_dir: toScalar(type.quarto?.render_dir?.default, fallback.quarto?.render_dir || '.')
       },
       notebook_template: toScalar(type.notebook_template?.default, fallback.notebook_template || 'notebook'),
-      optional_toggles: type.optional_toggles || {}
+      optional_toggles: type.optional_toggles || {},
+      gitignore: toScalar(type.gitignore, fallback.gitignore || '')
     }
+
+    console.log(`[DEBUG] Normalized ${key} - gitignore length:`, normalized[key].gitignore?.length)
   }
 
   // Ensure any fallback types missing from catalog are preserved
