@@ -634,30 +634,44 @@ function(id) {
     # Recursively resolve any file references in settings
     resolve_file_refs <- function(obj, base_path, parent_key = NULL) {
       if (is.list(obj)) {
-        result <- lapply(names(obj), function(key) {
-          item <- obj[[key]]
-          if (is.character(item) && length(item) == 1 && grepl("\\.yml$", item)) {
-            # This might be a file reference
-            file_path <- file.path(base_path, item)
-            if (file.exists(file_path)) {
-              tryCatch({
-                sub_yaml <- yaml::read_yaml(file_path)
-                # Extract the content under the matching key
-                # e.g., for author.yml containing "author: {...}", extract just {...}
-                if (!is.null(sub_yaml[[key]])) {
-                  return(sub_yaml[[key]])
-                }
-                # Otherwise return the whole thing
-                return(sub_yaml)
-              }, error = function(e) item)
+        obj_names <- names(obj)
+
+        if (is.null(obj_names)) {
+          # Unnamed list (array) - process each element by index
+          result <- lapply(seq_along(obj), function(i) {
+            item <- obj[[i]]
+            if (is.list(item)) {
+              return(resolve_file_refs(item, base_path, parent_key))
             }
-          }
-          if (is.list(item)) {
-            return(resolve_file_refs(item, base_path, key))
-          }
-          item
-        })
-        names(result) <- names(obj)
+            item
+          })
+        } else {
+          # Named list (object) - process by key with file reference resolution
+          result <- lapply(obj_names, function(key) {
+            item <- obj[[key]]
+            if (is.character(item) && length(item) == 1 && grepl("\\.yml$", item)) {
+              # This might be a file reference
+              file_path <- file.path(base_path, item)
+              if (file.exists(file_path)) {
+                tryCatch({
+                  sub_yaml <- yaml::read_yaml(file_path)
+                  # Extract the content under the matching key
+                  # e.g., for author.yml containing "author: {...}", extract just {...}
+                  if (!is.null(sub_yaml[[key]])) {
+                    return(sub_yaml[[key]])
+                  }
+                  # Otherwise return the whole thing
+                  return(sub_yaml)
+                }, error = function(e) item)
+              }
+            }
+            if (is.list(item)) {
+              return(resolve_file_refs(item, base_path, key))
+            }
+            item
+          })
+          names(result) <- obj_names
+        }
         return(result)
       } else {
         obj
@@ -673,6 +687,21 @@ function(id) {
       settings_resolved$gitignore <- gitignore_content
     } else {
       settings_resolved$gitignore <- ""
+    }
+
+    # CRITICAL: Ensure extra_directories is always an array (unnamed list)
+    # YAML parser can convert single-element arrays to named lists (objects)
+    if (!is.null(settings_resolved$extra_directories)) {
+      # If it's a named list (has names), convert to unnamed list
+      if (!is.null(names(settings_resolved$extra_directories)) && length(names(settings_resolved$extra_directories)) > 0) {
+        # It's a named list (single object) - wrap in unnamed list
+        settings_resolved$extra_directories <- list(settings_resolved$extra_directories)
+        # Remove names to ensure it serializes as array
+        names(settings_resolved$extra_directories) <- NULL
+      } else {
+        # It's already an unnamed list, just ensure no names
+        names(settings_resolved$extra_directories) <- NULL
+      }
     }
 
     # Return full settings
@@ -705,6 +734,61 @@ function(id, req) {
   }
 
   body <- jsonlite::fromJSON(req$postBody)
+
+  # DEBUG: Log what we received
+  message("[DEBUG] Received extra_directories: ", jsonlite::toJSON(body$extra_directories, auto_unbox = TRUE))
+  message("[DEBUG] Received enabled: ", jsonlite::toJSON(body$enabled, auto_unbox = TRUE))
+  message("[DEBUG] extra_directories length: ", length(body$extra_directories))
+  message("[DEBUG] extra_directories class: ", class(body$extra_directories))
+
+  # CRITICAL: jsonlite converts arrays of objects to data.frames or weird column-wise structures
+  # Convert back to proper array of objects (list of lists)
+  if (!is.null(body$extra_directories) && length(body$extra_directories) > 0) {
+    if (is.data.frame(body$extra_directories)) {
+      # Data frame: each row is an object
+      body$extra_directories <- lapply(1:nrow(body$extra_directories), function(i) {
+        as.list(body$extra_directories[i, , drop = FALSE][1, ])
+      })
+    } else if (is.list(body$extra_directories)) {
+      # Check if it's column-wise (all values for each field)
+      # Heuristic: if first element is a vector, it's column-wise
+      if (length(body$extra_directories) > 0 && (is.vector(body$extra_directories[[1]]) || is.list(body$extra_directories[[1]]))) {
+        # Check if the last element is a proper object (new directory added)
+        last_elem <- body$extra_directories[[length(body$extra_directories)]]
+        if (is.list(last_elem) && !is.null(names(last_elem)) && "key" %in% names(last_elem)) {
+          # Last element is a proper object, rest are column-wise
+          # Extract the proper object and reconstruct the rest
+          new_dir <- last_elem
+
+          # The previous elements are columns - reconstruct objects from columns
+          num_fields <- length(body$extra_directories) - 1
+          if (num_fields > 0 && length(body$extra_directories[[1]]) > 0) {
+            num_objects <- length(body$extra_directories[[1]])
+            field_names <- c("key", "label", "path", "type", "_id", "render_for")
+
+            reconstructed <- lapply(1:num_objects, function(i) {
+              obj <- list()
+              for (j in 1:min(num_fields, length(field_names))) {
+                field_name <- field_names[j]
+                if (j <= length(body$extra_directories)) {
+                  obj[[field_name]] <- body$extra_directories[[j]][i]
+                }
+              }
+              obj
+            })
+
+            # Combine reconstructed objects with the new directory
+            body$extra_directories <- c(reconstructed, list(new_dir))
+          } else {
+            # Only the new directory
+            body$extra_directories <- list(new_dir)
+          }
+        }
+      }
+    }
+  }
+
+  message("[DEBUG] After conversion, extra_directories: ", jsonlite::toJSON(body$extra_directories, auto_unbox = TRUE))
 
   tryCatch({
     old_wd <- getwd()
@@ -755,7 +839,7 @@ function(id, req) {
     }
 
     # Update main settings.yml if needed
-    if (!is.null(body$project_name) || !is.null(body$project_type)) {
+    if (!is.null(body$project_name) || !is.null(body$project_type) || !is.null(body$extra_directories) || !is.null(body$enabled)) {
       settings_file <- if (file.exists("settings.yml")) "settings.yml" else "config.yml"
       current_settings <- yaml::read_yaml(settings_file)
 
@@ -765,8 +849,25 @@ function(id, req) {
       if (!is.null(body$project_type)) {
         current_settings$default$project_type <- body$project_type
       }
+      if (!is.null(body$extra_directories)) {
+        # Ensure it's saved as an array (unnamed list) not an object
+        extra_dirs <- body$extra_directories
+        if (is.list(extra_dirs)) {
+          names(extra_dirs) <- NULL  # Remove names to ensure array serialization
+        }
+        current_settings$default$extra_directories <- extra_dirs
+      }
+      if (!is.null(body$enabled)) {
+        # Save enabled state for directories (includes extra directories)
+        current_settings$default$enabled <- body$enabled
+      }
 
       yaml::write_yaml(current_settings, settings_file)
+
+      # DEBUG: Verify what was actually saved
+      verification <- yaml::read_yaml(settings_file)
+      message("[DEBUG] After save, file contains ", length(verification$default$extra_directories), " extra directories")
+      message("[DEBUG] After save, extra_directories keys: ", paste(sapply(verification$default$extra_directories, function(d) d$key), collapse = ", "))
     }
 
     list(success = TRUE)
@@ -1477,8 +1578,23 @@ function(id, req) {
   # Get the directories array from the request body
   directories <- body$directories
 
+  # Debug logging
+  cat("[DEBUG] Received directories request\n")
+  cat(sprintf("[DEBUG] directories class: %s\n", class(directories)))
+  cat(sprintf("[DEBUG] directories length: %d\n", length(directories)))
+  cat("[DEBUG] directories structure:\n")
+  print(str(directories))
+
   if (is.null(directories) || length(directories) == 0) {
     return(list(success = FALSE, error = "No directories provided"))
+  }
+
+  # jsonlite converts arrays of objects to data.frames by default
+  # Convert data.frame to list of lists (each row becomes a directory object)
+  if (is.data.frame(directories)) {
+    directories <- lapply(1:nrow(directories), function(i) {
+      as.list(directories[i, , drop = FALSE][1, ])
+    })
   }
 
   # Track results for each directory
@@ -1488,6 +1604,11 @@ function(id, req) {
   # Process each directory
   for (i in seq_along(directories)) {
     dir_spec <- directories[[i]]
+
+    # Debug logging
+    cat(sprintf("[DEBUG] dir_spec class: %s\n", class(dir_spec)))
+    cat(sprintf("[DEBUG] dir_spec structure:\n"))
+    print(str(dir_spec))
 
     # Validate required fields
     if (is.null(dir_spec$key) || is.null(dir_spec$label) || is.null(dir_spec$path)) {

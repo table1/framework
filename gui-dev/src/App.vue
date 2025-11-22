@@ -118,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, h, computed, onMounted } from 'vue'
+import { ref, h, computed, onMounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDarkMode } from './composables/useDarkMode'
 import ToastContainer from './components/ui/ToastContainer.vue'
@@ -129,6 +129,20 @@ const toastContainer = ref(null)
 const route = useRoute()
 const { isDark, toggle: toggleDarkMode } = useDarkMode()
 const projects = ref([])
+
+// Load projects function (exposed to child components)
+const loadProjects = async () => {
+  try {
+    const response = await fetch('/api/settings/get')
+    const data = await response.json()
+    projects.value = data.projects || []
+  } catch (error) {
+    console.error('Failed to load projects:', error)
+  }
+}
+
+// Provide loadProjects to all child components
+provide('loadProjects', loadProjects)
 
 const getActiveGroupIndex = (group) => {
   const tabs = frameworkTabs
@@ -174,14 +188,6 @@ onMounted(async () => {
   setToastContainer(toastContainer.value)
 
   // Load projects from API
-  try {
-    const response = await fetch('/api/settings/get')
-    const data = await response.json()
-
-    // Set projects with enriched metadata
-    projects.value = data.projects || []
-  } catch (error) {
-    console.error('Failed to load projects:', error)
-  }
+  await loadProjects()
 })
 </script>
