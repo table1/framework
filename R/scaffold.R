@@ -554,7 +554,7 @@ scaffold <- function(config_file = NULL) {
   }
 
   if (is.null(seed_value) || is.na(seed_value)) {
-    seed_value <- 1234L
+    seed_value <- 123L
   }
 
   set.seed(seed_value)

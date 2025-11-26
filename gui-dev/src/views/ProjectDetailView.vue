@@ -253,6 +253,29 @@
               <div v-if="editableSettings.author" class="pt-6 border-t border-gray-200 dark:border-gray-700">
                 <AuthorInformationPanel v-model="editableSettings.author" />
               </div>
+
+              <!-- Quarto Configuration -->
+              <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Quarto Configuration
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  _quarto.yml files control rendering settings for notebooks and documents.
+                </p>
+                <Alert
+                  type="warning"
+                  description="This will overwrite all _quarto.yml files in your project. Existing files will be backed up to .quarto_backups/ before regeneration."
+                  class="mb-4"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  @click="regenerateQuartoConfigs"
+                  :disabled="regeneratingQuarto"
+                >
+                  {{ regeneratingQuarto ? 'Regenerating...' : 'Regenerate Quarto Configs' }}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -822,6 +845,12 @@ import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.
 import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
+import { buildGitPanelModel, applyGitPanelModel } from '../utils/gitHelpers'
+import { hydrateStructureFromProjectSettings, serializeStructureForSave } from '../utils/structureMapping'
+import {
+  normalizeProjectPackages,
+  mapProjectPackagesToPayload
+} from '../utils/packageHelpers'
 import {
   InformationCircleIcon,
   UserIcon,
@@ -867,6 +896,7 @@ const settingsLoading = ref(false)
 const settingsError = ref(null)
 const newExtraIds = ref(new Set())
 const saving = ref(false)
+const regeneratingQuarto = ref(false)
 const gitSettings = ref({
   initialize: true,
   user_name: '',
@@ -1799,7 +1829,17 @@ const loadProjectSettings = async () => {
       console.log('[DEBUG] Loaded project settings:', data.settings)
       console.log('[DEBUG] extra_directories:', data.settings.extra_directories)
       projectSettings.value = data.settings
-      editableSettings.value = JSON.parse(JSON.stringify(data.settings))
+      const hydrated = hydrateStructureFromProjectSettings(
+        data.settings,
+        settingsCatalog.value?.project_types?.[data.settings?.type || project.value.type]?.directories || {}
+      )
+      editableSettings.value = {
+        ...JSON.parse(JSON.stringify(data.settings)),
+        directories: hydrated.directories,
+        render_dirs: hydrated.render_dirs,
+        extra_directories: hydrated.extra_directories,
+        enabled: hydrated.enabled
+      }
 
       // Ensure scaffold object exists with defaults
       if (!editableSettings.value.scaffold) {
@@ -1878,37 +1918,22 @@ const saveSettings = async () => {
       newExtraIds.value = new Set()
     }
 
-    // Clean up enabled state - remove partial keys created during typing
-    // Only keep keys that match:
-    // 1. Catalog directories (from settingsCatalog)
-    // 2. Extra directories (from extra_directories array)
-    const validKeys = new Set()
-
-    // Add catalog directory keys
-    const catalog = settingsCatalog.value?.project_types?.[project.value.type]
-    if (catalog?.directories) {
-      Object.keys(catalog.directories).forEach(key => validKeys.add(key))
-    }
-
-    // Add extra directory keys
-    if (editableSettings.value.extra_directories) {
-      editableSettings.value.extra_directories.forEach(dir => {
-        if (dir.key) validKeys.add(dir.key)
-      })
-    }
-
-    // Filter enabled to only valid keys
-    const cleanedEnabled = {}
-    Object.keys(editableSettings.value.enabled || {}).forEach(key => {
-      if (validKeys.has(key)) {
-        cleanedEnabled[key] = editableSettings.value.enabled[key]
-      }
+    const catalogDirs = settingsCatalog.value?.project_types?.[project.value.type]?.directories || {}
+    const serialized = serializeStructureForSave({
+      catalogDirs,
+      directories: editableSettings.value.directories || {},
+      render_dirs: editableSettings.value.render_dirs || {},
+      enabled: editableSettings.value.enabled || {},
+      extra_directories: editableSettings.value.extra_directories || []
     })
 
     // Create clean settings object for sending
     const settingsToSave = {
       ...editableSettings.value,
-      enabled: cleanedEnabled
+      directories: serialized.directories,
+      render_dirs: serialized.render_dirs,
+      enabled: serialized.enabled,
+      extra_directories: serialized.extra_directories
     }
 
     console.log('[DEBUG] Saving settings with extra_directories:', settingsToSave.extra_directories)
@@ -2103,19 +2128,9 @@ const loadPackages = async () => {
     if (data.error) {
       packagesError.value = data.error
     } else {
-      // Normalize packages to ensure defaults
-      packages.value = (data.packages || []).map(pkg => ({
-        name: pkg.name || '',
-        source: pkg.source || 'cran',
-        auto_attach: pkg.auto_attach !== undefined ? pkg.auto_attach : true,
-        ref: pkg.ref || ''
-      }))
-
-      // Also populate editablePackages for the new UI
-      editablePackages.value = {
-        use_renv: data.use_renv || false,
-        default_packages: JSON.parse(JSON.stringify(packages.value))
-      }
+      const mapped = normalizeProjectPackages(data)
+      packages.value = JSON.parse(JSON.stringify(mapped.default_packages || []))
+      editablePackages.value = mapped
     }
   } catch (err) {
     packagesError.value = 'Failed to load packages: ' + err.message
@@ -2131,10 +2146,7 @@ const savePackages = async () => {
     const response = await fetch(`/api/project/${route.params.id}/packages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        use_renv: editablePackages.value.use_renv,
-        packages: editablePackages.value.default_packages
-      })
+      body: JSON.stringify(mapProjectPackagesToPayload(editablePackages.value))
     })
 
     const result = await response.json()
@@ -2420,28 +2432,26 @@ const loadGitSettings = async () => {
 
 const gitPanelModel = computed({
   get() {
-    return {
-      initialize: gitSettings.value.initialize,
-      user_name: gitSettings.value.user_name || '',
-      user_email: gitSettings.value.user_email || '',
-      hooks: {
-        ai_sync: gitSettings.value.hooks?.ai_sync || false,
-        data_security: gitSettings.value.hooks?.data_security || false,
-        check_sensitive_dirs: gitSettings.value.hooks?.check_sensitive_dirs || false
-      }
-    }
+    return buildGitPanelModel({
+      useGit: gitSettings.value.initialize,
+      gitHooks: gitSettings.value.hooks,
+      git: gitSettings.value
+    })
   },
   set(val) {
-    gitSettings.value = {
-      initialize: val.initialize,
-      user_name: val.user_name,
-      user_email: val.user_email,
-      hooks: {
-        ai_sync: val.hooks.ai_sync,
-        data_security: val.hooks.data_security,
-        check_sensitive_dirs: val.hooks.check_sensitive_dirs
-      }
+    const next = {
+      ...gitSettings.value,
+      hooks: { ...(gitSettings.value.hooks || {}) }
     }
+    applyGitPanelModel(
+      {
+        gitTarget: next,
+        gitHooksTarget: next.hooks,
+        setUseGit: (useGit) => { next.initialize = useGit }
+      },
+      val
+    )
+    gitSettings.value = next
   }
 })
 
@@ -2608,6 +2618,33 @@ const saveEnv = async () => {
     toast.error('Save Failed', err.message)
   } finally {
     savingEnv.value = false
+  }
+}
+
+const regenerateQuartoConfigs = async () => {
+  regeneratingQuarto.value = true
+
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/quarto/regenerate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backup: true })
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      toast.success(
+        'Quarto Configs Regenerated',
+        result.message + (result.backup_location ? `\n\nBackup: ${result.backup_location}` : '')
+      )
+    } else {
+      toast.error('Regeneration Failed', result.error || 'Failed to regenerate Quarto configurations')
+    }
+  } catch (err) {
+    toast.error('Regeneration Failed', err.message)
+  } finally {
+    regeneratingQuarto.value = false
   }
 }
 

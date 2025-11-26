@@ -26,6 +26,10 @@ const props = defineProps({
     type: String,
     default: '400px'
   },
+  autoGrow: {
+    type: Boolean,
+    default: false
+  },
   disabled: {
     type: Boolean,
     default: false
@@ -71,27 +75,33 @@ onMounted(() => {
     }
   })
 
+  const themeConfig = {
+    '&': {
+      fontSize: '13px',
+      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace'
+    },
+    '.cm-scroller': {
+      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace'
+    },
+    '.cm-content': {
+      padding: '12px 0'
+    },
+    '.cm-line': {
+      padding: '0 12px'
+    }
+  }
+
+  // Only set minHeight if not auto-growing
+  if (!props.autoGrow) {
+    themeConfig['&'].minHeight = props.minHeight
+  }
+
   const extensions = [
     basicSetup,
     getLanguageExtension(),
     updateListener,
     EditorView.lineWrapping,
-    EditorView.theme({
-      '&': {
-        minHeight: props.minHeight,
-        fontSize: '13px',
-        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace'
-      },
-      '.cm-scroller': {
-        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace'
-      },
-      '.cm-content': {
-        padding: '12px 0'
-      },
-      '.cm-line': {
-        padding: '0 12px'
-      }
-    })
+    EditorView.theme(themeConfig)
   ]
 
   const startState = EditorState.create({

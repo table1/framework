@@ -195,6 +195,41 @@ test_that("project_create handles extra directories", {
   expect_equal(config$default$extra_directories[[1]]$key, "custom_data")
 })
 
+test_that("project_create applies git hooks and use_git from inputs", {
+  skip_if_not_installed("yaml")
+  skip_on_cran()
+
+  test_root <- tempfile("framework_test_")
+  dir.create(test_root)
+  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+
+  result <- project_create(
+    name = "test_git_hooks",
+    location = test_root,
+    type = "project",
+    git = list(
+      use_git = TRUE,
+      user_name = "Git User",
+      user_email = "git@example.com",
+      hooks = list(
+        ai_sync = TRUE,
+        data_security = FALSE,
+        check_sensitive_dirs = TRUE
+      )
+    )
+  )
+
+  expect_true(result$success)
+
+  config <- yaml::read_yaml(file.path(result$path, "config.yml"))
+  expect_true(config$default$git$initialize)
+  expect_equal(config$default$git$user_name, "Git User")
+  expect_equal(config$default$git$user_email, "git@example.com")
+  expect_true(config$default$git$hooks$ai_sync)
+  expect_false(config$default$git$hooks$data_security)
+  expect_true(config$default$git$hooks$check_sensitive_dirs)
+})
+
 test_that("project_create fails if directory already exists", {
   skip_on_cran()
 
@@ -225,9 +260,9 @@ test_that("project_create fails if directory already exists", {
 })
 
 test_that("project_create validates required parameters", {
-  expect_error(project_create(name = "", location = "~/test"), "at least 1 characters")
-  expect_error(project_create(name = "test", location = ""), "at least 1 characters")
-  expect_error(project_create(name = "test", location = "~/test", type = "invalid"), "Must be element of set")
+  expect_error(framework::project_create(name = "", location = "~/test"), "at least 1 characters")
+  expect_error(framework::project_create(name = "test", location = ""), "at least 1 characters")
+  expect_error(framework::project_create(name = "test", location = "~/test", type = "invalid"), "Must be element of set")
 })
 
 test_that("project_create handles different project types", {

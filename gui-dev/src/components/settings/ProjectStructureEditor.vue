@@ -205,9 +205,31 @@
 
           <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Directories</h4>
+
+            <!-- Saved custom directories -->
+            <div v-if="savedWorkspaceExtras.length > 0" class="space-y-3 mb-4">
+              <div v-for="dir in savedWorkspaceExtras" :key="dir.key" class="space-y-1.5">
+                <Toggle
+                  :model-value="localEnabled[dir.key]"
+                  @update:model-value="updateEnabled(dir.key, $event)"
+                  :label="dir.label"
+                  :disabled="isToggleDisabled(dir.key)"
+                />
+                <Input
+                  v-if="localEnabled[dir.key] !== false"
+                  :model-value="dir.path"
+                  @update:model-value="updateExtraDirectoryPath(dir.key, $event)"
+                  prefix="/"
+                  monospace
+                  :disabled="disabled"
+                />
+              </div>
+            </div>
+
+            <!-- New custom directories repeater -->
             <Repeater
               v-if="!disabled"
-              :model-value="extraDirectoriesByType('workspace')"
+              :model-value="newWorkspaceExtras"
               @update:model-value="updateNewExtras('workspace', $event)"
               add-label="Add Directory"
               :default-item="() => ({ key: '', label: '', path: '', type: 'workspace', _id: Date.now() })"
