@@ -17,7 +17,9 @@ project_create(
   scaffold = list(seed_on_scaffold = FALSE, seed = "", set_theme_on_scaffold = TRUE,
     ggplot_theme = "theme_minimal"),
   connections = NULL,
-  env = NULL
+  env = NULL,
+  quarto = NULL,
+  render_dirs = NULL
 )
 }
 \arguments{
@@ -40,6 +42,10 @@ project_create(
 \item{git}{List with use_git, hooks, gitignore_content}
 
 \item{scaffold}{List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme, ide, positron}
+
+\item{quarto}{List with html and revealjs format configurations for Quarto}
+
+\item{render_dirs}{Named list of render directory paths for Quarto outputs}
 }
 \value{
 List with success status, project path, and project ID

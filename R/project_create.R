@@ -14,6 +14,8 @@
 #' @param ai List with enabled, assistants, canonical_content
 #' @param git List with use_git, hooks, gitignore_content
 #' @param scaffold List with seed_on_scaffold, seed, set_theme_on_scaffold, ggplot_theme, ide, positron
+#' @param quarto List with html and revealjs format configurations for Quarto
+#' @param render_dirs Named list of render directory paths for Quarto outputs
 #'
 #' @return List with success status, project path, and project ID
 #' @export
@@ -34,7 +36,9 @@ project_create <- function(
     ggplot_theme = "theme_minimal"
   ),
   connections = NULL,
-  env = NULL
+  env = NULL,
+  quarto = NULL,
+  render_dirs = NULL
 ) {
   # Validate inputs
   checkmate::assert_string(name, min.chars = 1)
@@ -140,6 +144,19 @@ project_create <- function(
     .init_renv(project_dir)
   }
 
+  # Generate Quarto configuration files
+  if (!is.null(quarto) || !is.null(render_dirs)) {
+    quarto_result <- quarto_generate_all(
+      project_path = project_dir,
+      project_type = type,
+      render_dirs = render_dirs,
+      quarto_settings = quarto
+    )
+    if (quarto_result$success) {
+      message("✓ Generated ", quarto_result$count, " Quarto configuration file(s)")
+    }
+  }
+
   # Add to project registry (skip for temp directories used in tests)
   project_id <- NULL
   if (!grepl("^/tmp/|^/var/folders/", project_dir)) {
@@ -186,6 +203,24 @@ project_create <- function(
       }
     }
   }
+}
+
+#' Convert data frame to list of lists for YAML serialization
+#' JSON arrays of objects become data frames in R, but YAML needs list of lists
+#' @keywords internal
+.df_to_list_of_lists <- function(df) {
+
+  if (is.null(df) || length(df) == 0) {
+    return(list())
+  }
+  if (is.data.frame(df)) {
+    return(lapply(seq_len(nrow(df)), function(i) as.list(df[i, , drop = FALSE])))
+  }
+  # Already a list, return as-is
+  if (is.list(df)) {
+    return(df)
+  }
+  list()
 }
 
 #' Create project config.yml
@@ -245,7 +280,7 @@ project_create <- function(
 
     yaml::write_yaml(list(packages = list(
       use_renv = packages$use_renv %||% FALSE,
-      default_packages = packages$default_packages
+      default_packages = .df_to_list_of_lists(packages$default_packages)
     )), file.path(settings_dir, "packages.yml"))
 
     yaml::write_yaml(list(git = list(
@@ -291,7 +326,7 @@ project_create <- function(
         # Package configuration
         packages = list(
           use_renv = packages$use_renv %||% FALSE,
-          default_packages = packages$default_packages
+          default_packages = .df_to_list_of_lists(packages$default_packages)
         ),
 
         # Git configuration

@@ -5,19 +5,51 @@ import { join } from 'path'
 import yaml from 'js-yaml'
 
 /**
- * Helper to clean payload before sending (mimics frontend saveSettings logic)
+ * Helpers to normalize package data across legacy (flat) and nested shapes.
  */
-const cleanPayloadForSave = (payload) => {
-  const cleaned = JSON.parse(JSON.stringify(payload))
+const toPackageModel = (settings) => {
+  const defaults = settings.defaults || {}
+  const nested = defaults.packages || {}
+  const flatPkgs = defaults.default_packages || []
+
+  const default_packages = Array.isArray(nested.default_packages)
+    ? nested.default_packages
+    : Array.isArray(flatPkgs)
+      ? flatPkgs
+      : []
+
+  const use_renv =
+    typeof nested.use_renv === 'boolean'
+      ? nested.use_renv
+      : typeof defaults.use_renv === 'boolean'
+        ? defaults.use_renv
+        : false
+
+  return { use_renv, default_packages }
+}
+
+const buildSavePayload = (settings, pkgModel) => {
+  const cleaned = JSON.parse(JSON.stringify(settings))
+  const model = pkgModel || toPackageModel(cleaned)
+
+  if (!cleaned.defaults) cleaned.defaults = {}
+  cleaned.defaults.packages = {
+    use_renv: !!model.use_renv,
+    default_packages: (model.default_packages || []).filter(
+      (pkg) => pkg?.name && pkg.name.trim() !== ''
+    )
+  }
+  // Keep top-level use_renv for backward compatibility if backend expects it
+  cleaned.defaults.use_renv = cleaned.defaults.packages.use_renv
 
   // Clean seed fields - must be numeric, string, or null (not boolean)
-  if (cleaned.defaults?.scaffold) {
+  if (cleaned.defaults.scaffold) {
     const seed = cleaned.defaults.scaffold.seed
     if (typeof seed === 'boolean' || seed === '') {
       cleaned.defaults.scaffold.seed = null
     }
   }
-  if (cleaned.defaults?.seed !== undefined) {
+  if (cleaned.defaults.seed !== undefined) {
     const seed = cleaned.defaults.seed
     if (typeof seed === 'boolean' || seed === '') {
       cleaned.defaults.seed = null
@@ -78,21 +110,19 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
   })
 
   describe('API Response Structure', () => {
-    it('includes use_renv boolean field', () => {
-      expect(apiSettings.defaults).toHaveProperty('use_renv')
-      expect(typeof apiSettings.defaults.use_renv).toBe('boolean')
-    })
-
-    it('includes default_packages array', () => {
-      expect(apiSettings.defaults).toHaveProperty('default_packages')
-      expect(Array.isArray(apiSettings.defaults.default_packages)).toBe(true)
+    it('includes package settings in either nested or legacy shape', () => {
+      const model = toPackageModel(apiSettings)
+      expect(model).toHaveProperty('use_renv')
+      expect(model).toHaveProperty('default_packages')
+      expect(typeof model.use_renv).toBe('boolean')
+      expect(Array.isArray(model.default_packages)).toBe(true)
     })
 
     it('default_packages entries have required fields', () => {
-      const packages = apiSettings.defaults.default_packages
+      const packages = toPackageModel(apiSettings).default_packages
       expect(packages.length).toBeGreaterThan(0)
 
-      packages.forEach((pkg, index) => {
+      packages.forEach((pkg) => {
         expect(pkg).toHaveProperty('name')
         expect(pkg).toHaveProperty('auto_attach')
         expect(typeof pkg.name).toBe('string')
@@ -101,13 +131,12 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       })
     })
 
-    it('includes core tidyverse packages', () => {
-      const packages = apiSettings.defaults.default_packages
-      const packageNames = packages.map(p => p.name)
+    it('includes core tidyverse packages (baseline sanity)', () => {
+      const packages = toPackageModel(apiSettings).default_packages
+      const packageNames = packages.map((p) => p.name)
 
-      // Only test for packages that are actually in the default config
       const corePackages = ['dplyr', 'ggplot2', 'tidyr', 'stringr']
-      corePackages.forEach(pkgName => {
+      corePackages.forEach((pkgName) => {
         expect(packageNames).toContain(pkgName)
       })
     })
@@ -130,15 +159,12 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
 
   describe('Save Flow: Payload Structure', () => {
     it('accepts valid package configuration update', async () => {
-      const testPayload = cleanPayloadForSave(apiSettings)
-
-      // Make a small change to test saving
-      // API returns flat structure but backend expects nested structure for saving
-      if (!testPayload.defaults.packages) {
-        testPayload.defaults.packages = {}
+      const baseModel = toPackageModel(apiSettings)
+      const testModel = {
+        ...baseModel,
+        use_renv: !baseModel.use_renv
       }
-      testPayload.defaults.packages.use_renv = !testPayload.defaults.use_renv
-      testPayload.defaults.packages.default_packages = testPayload.defaults.default_packages
+      const testPayload = buildSavePayload(apiSettings, testModel)
 
       const response = await fetch(saveApiUrl, {
         method: 'POST',
@@ -157,12 +183,7 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       expect(result.success).toBe(true)
 
       // Restore original value
-      const restorePayload = cleanPayloadForSave(apiSettings)
-      if (!restorePayload.defaults.packages) {
-        restorePayload.defaults.packages = {}
-      }
-      restorePayload.defaults.packages.use_renv = restorePayload.defaults.use_renv
-      restorePayload.defaults.packages.default_packages = restorePayload.defaults.default_packages
+      const restorePayload = buildSavePayload(apiSettings, baseModel)
       await fetch(saveApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,20 +192,17 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
     })
 
     it('accepts adding new package to default_packages', async () => {
-      const testPayload = cleanPayloadForSave(apiSettings)
-
-      // Add a new package
       const newPackage = {
         name: 'test_package',
         auto_attach: true
       }
 
-      // Restructure to nested format for saving
-      if (!testPayload.defaults.packages) {
-        testPayload.defaults.packages = {}
+      const baseModel = toPackageModel(apiSettings)
+      const testModel = {
+        ...baseModel,
+        default_packages: [...baseModel.default_packages, newPackage]
       }
-      testPayload.defaults.packages.use_renv = testPayload.defaults.use_renv
-      testPayload.defaults.packages.default_packages = [...testPayload.defaults.default_packages, newPackage]
+      const testPayload = buildSavePayload(apiSettings, testModel)
 
       const response = await fetch(saveApiUrl, {
         method: 'POST',
@@ -197,12 +215,7 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       expect(result.success).toBe(true)
 
       // Restore original
-      const restorePayload = cleanPayloadForSave(apiSettings)
-      if (!restorePayload.defaults.packages) {
-        restorePayload.defaults.packages = {}
-      }
-      restorePayload.defaults.packages.use_renv = restorePayload.defaults.use_renv
-      restorePayload.defaults.packages.default_packages = restorePayload.defaults.default_packages
+      const restorePayload = buildSavePayload(apiSettings, baseModel)
       await fetch(saveApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,26 +224,25 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
     })
 
     it('filters out packages with empty names', async () => {
-      const testPayload = cleanPayloadForSave(apiSettings)
+      const baseModel = toPackageModel(apiSettings)
 
       // Add packages with empty names (frontend filters these before sending)
       const packagesWithEmpties = [
-        ...testPayload.defaults.default_packages,
+        ...baseModel.default_packages,
         { name: '', auto_attach: true },
         { name: '  ', auto_attach: false }
       ]
 
       // Filter out empty names (mimics frontend logic)
       const filteredPackages = packagesWithEmpties.filter(
-        pkg => pkg.name && pkg.name.trim() !== ''
+        (pkg) => pkg.name && pkg.name.trim() !== ''
       )
 
-      // Restructure to nested format for saving
-      if (!testPayload.defaults.packages) {
-        testPayload.defaults.packages = {}
+      const testModel = {
+        ...baseModel,
+        default_packages: filteredPackages
       }
-      testPayload.defaults.packages.use_renv = testPayload.defaults.use_renv
-      testPayload.defaults.packages.default_packages = filteredPackages
+      const testPayload = buildSavePayload(apiSettings, testModel)
 
       const response = await fetch(saveApiUrl, {
         method: 'POST',
@@ -247,16 +259,13 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
   describe('Round-trip Validation: UI → API → YAML → API', () => {
     it('persists use_renv toggle correctly', async () => {
       const originalUseRenv = apiSettings.defaults.use_renv
-      const testUseRenv = !originalUseRenv
+      const baseModel = toPackageModel(apiSettings)
+      const testUseRenv = !baseModel.use_renv
 
-      // Save toggled use_renv
-      const testPayload = cleanPayloadForSave(apiSettings)
-      // Restructure to nested format for saving
-      if (!testPayload.defaults.packages) {
-        testPayload.defaults.packages = {}
-      }
-      testPayload.defaults.packages.use_renv = testUseRenv
-      testPayload.defaults.packages.default_packages = testPayload.defaults.default_packages
+      const testPayload = buildSavePayload(apiSettings, {
+        ...baseModel,
+        use_renv: testUseRenv
+      })
 
       const saveResponse = await fetch(saveApiUrl, {
         method: 'POST',
@@ -285,12 +294,10 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       expect(yamlSettings.defaults.packages.use_renv).toBe(expectedYamlValue)
 
       // Restore original value
-      const restorePayload = cleanPayloadForSave(freshSettings)
-      if (!restorePayload.defaults.packages) {
-        restorePayload.defaults.packages = {}
-      }
-      restorePayload.defaults.packages.use_renv = originalUseRenv
-      restorePayload.defaults.packages.default_packages = restorePayload.defaults.default_packages
+      const restorePayload = buildSavePayload(freshSettings, {
+        ...toPackageModel(freshSettings),
+        use_renv: originalUseRenv
+      })
       await fetch(saveApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -304,14 +311,11 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
         auto_attach: true
       }
 
-      // Save new package
-      const testPayload = cleanPayloadForSave(apiSettings)
-      // Restructure to nested format for saving
-      if (!testPayload.defaults.packages) {
-        testPayload.defaults.packages = {}
-      }
-      testPayload.defaults.packages.use_renv = testPayload.defaults.use_renv
-      testPayload.defaults.packages.default_packages = [...testPayload.defaults.default_packages, testPackage]
+      const baseModel = toPackageModel(apiSettings)
+      const testPayload = buildSavePayload(apiSettings, {
+        ...baseModel,
+        default_packages: [...baseModel.default_packages, testPackage]
+      })
 
       const saveResponse = await fetch(saveApiUrl, {
         method: 'POST',
@@ -347,15 +351,12 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       expect(yamlPackage.auto_attach).toBe('yes')
 
       // Restore original (remove test package)
-      const restorePayload = cleanPayloadForSave(freshSettings)
-      if (!restorePayload.defaults.packages) {
-        restorePayload.defaults.packages = {}
-      }
-      restorePayload.defaults.packages.use_renv = restorePayload.defaults.use_renv
-      restorePayload.defaults.packages.default_packages =
-        restorePayload.defaults.default_packages.filter(
-          p => p.name !== 'roundtrip_test_pkg'
+      const restorePayload = buildSavePayload(freshSettings, {
+        ...toPackageModel(freshSettings),
+        default_packages: toPackageModel(freshSettings).default_packages.filter(
+          (p) => p.name !== 'roundtrip_test_pkg'
         )
+      })
       await fetch(saveApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -364,24 +365,25 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
     })
 
     it('persists auto_attach toggle for existing package', async () => {
-      // Find dplyr (should exist)
-      const dplyrIndex = apiSettings.defaults.default_packages.findIndex(
-        p => p.name === 'dplyr'
+      const baseModel = toPackageModel(apiSettings)
+      const dplyrIndex = baseModel.default_packages.findIndex(
+        (p) => p.name === 'dplyr'
       )
       expect(dplyrIndex).toBeGreaterThanOrEqual(0)
 
-      const originalAutoAttach = apiSettings.defaults.default_packages[dplyrIndex].auto_attach
+      const originalAutoAttach = baseModel.default_packages[dplyrIndex].auto_attach
       const testAutoAttach = !originalAutoAttach
 
       // Save toggled auto_attach
-      const testPayload = cleanPayloadForSave(apiSettings)
-      // Restructure to nested format for saving
-      if (!testPayload.defaults.packages) {
-        testPayload.defaults.packages = {}
+      const updatedPackages = [...baseModel.default_packages]
+      updatedPackages[dplyrIndex] = {
+        ...updatedPackages[dplyrIndex],
+        auto_attach: testAutoAttach
       }
-      testPayload.defaults.packages.use_renv = testPayload.defaults.use_renv
-      testPayload.defaults.packages.default_packages = [...testPayload.defaults.default_packages]
-      testPayload.defaults.packages.default_packages[dplyrIndex].auto_attach = testAutoAttach
+      const testPayload = buildSavePayload(apiSettings, {
+        ...baseModel,
+        default_packages: updatedPackages
+      })
 
       const saveResponse = await fetch(saveApiUrl, {
         method: 'POST',
@@ -416,16 +418,17 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       expect(yamlDplyr.auto_attach).toBe(expectedYamlAutoAttach)
 
       // Restore original value
-      const restorePayload = cleanPayloadForSave(freshSettings)
-      if (!restorePayload.defaults.packages) {
-        restorePayload.defaults.packages = {}
+      const freshModel = toPackageModel(freshSettings)
+      const restorePackages = [...freshModel.default_packages]
+      const restoreDplyrIndex = restorePackages.findIndex((p) => p.name === 'dplyr')
+      restorePackages[restoreDplyrIndex] = {
+        ...restorePackages[restoreDplyrIndex],
+        auto_attach: originalAutoAttach
       }
-      restorePayload.defaults.packages.use_renv = restorePayload.defaults.use_renv
-      restorePayload.defaults.packages.default_packages = [...restorePayload.defaults.default_packages]
-      const restoreDplyrIndex = restorePayload.defaults.packages.default_packages.findIndex(
-        p => p.name === 'dplyr'
-      )
-      restorePayload.defaults.packages.default_packages[restoreDplyrIndex].auto_attach = originalAutoAttach
+      const restorePayload = buildSavePayload(freshSettings, {
+        ...freshModel,
+        default_packages: restorePackages
+      })
       await fetch(saveApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

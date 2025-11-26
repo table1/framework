@@ -310,6 +310,19 @@ make release       # Full release workflow (clean, docs, test, check)
    - Smart routing: installs use renv when enabled, standard install.packages() otherwise
    - Abstracts renv complexity behind simple Framework functions
 
+10. **Quarto Configuration Generation (`R/quarto_generate.R`)** - NEW
+   - **Write once, user owns it**: `_quarto.yml` files generated on project creation, never auto-regenerated
+   - **Hierarchical configuration**: Project root + directory-specific configs (inherits from root)
+   - **Format-specific defaults**: HTML for notebooks/docs, revealjs for slides/presentations
+   - **Global defaults**: Settings from `~/.config/framework/settings.yml` → `defaults.quarto`
+   - **Manual regeneration**: Optional "Regenerate Quarto Configs" in GUI (warns about overwriting)
+   - **Auto-generated header**: Files include comment noting they're auto-generated and safe to edit
+   - **Project type awareness**: Generates configs for render directories based on project type:
+     - **project**: notebooks, docs render directories
+     - **project_sensitive**: notebooks, docs render directories
+     - **course**: slides, assignments, course_docs, modules render directories
+     - **presentation**: root directory (single presentation.qmd)
+
 ### Key Design Patterns
 
 - **Convention over Configuration**: Standardized directory structures and naming
