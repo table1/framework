@@ -14,7 +14,7 @@
             @click.prevent="navigateToSection(section.id)"
             :class="[
               'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition',
-              activeSection === section.id
+              isSectionActive(section.id)
                 ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
                 : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
             ]"
@@ -65,9 +65,14 @@
             <a
               v-for="item in templatesSubnav"
               :key="item.id"
-              :href="`#${item.id}`"
-              @click.prevent="scrollToSection(item.id)"
-              class="block rounded-md py-1 pl-4 pr-2 text-xs font-medium text-gray-600 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              :href="buildSettingsHref('templates', item.slug)"
+              @click.prevent="navigateToTemplate(item.slug)"
+              :class="[
+                'block rounded-md py-1 pl-4 pr-2 text-xs font-medium transition',
+                selectedTemplate === item.slug
+                  ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+              ]"
             >
               {{ item.label }}
             </a>
@@ -125,6 +130,18 @@
 
         <!-- Connections -->
         <div id="connections-defaults" v-show="activeSection === 'connections-defaults'">
+          <!-- Tutorial/Explainer -->
+          <div class="mb-6 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-800 dark:bg-sky-900/20">
+            <h4 class="text-sm font-semibold text-sky-900 dark:text-sky-100 mb-2">Connection values</h4>
+            <p class="text-sm text-sky-800 dark:text-sky-200 mb-2">
+              Use <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">env("VAR_NAME", "default")</code> to read from your project's <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">.env</code> file.
+              This keeps credentials out of version control while letting each machine use its own values.
+            </p>
+            <p class="text-sm text-sky-800 dark:text-sky-200">
+              You can also type values directly (e.g. <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">localhost</code> or <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">5432</code>) if you don't need environment variable substitution.
+            </p>
+          </div>
+
           <ConnectionsPanel
             v-model:database-connections="databaseConnections"
             v-model:s3-connections="s3Connections"
@@ -136,6 +153,20 @@
         <!-- .env Defaults -->
         <div id="env-defaults" v-show="activeSection === 'env-defaults'">
           <SettingsPanel flush>
+            <!-- Tutorial/Explainer -->
+            <div class="mb-6 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-800 dark:bg-sky-900/20">
+              <h4 class="text-sm font-semibold text-sky-900 dark:text-sky-100 mb-2">How .env files work</h4>
+              <p class="text-sm text-sky-800 dark:text-sky-200 mb-2">
+                Environment variables let you keep sensitive data (passwords, API keys) separate from your code.
+                Instead of hardcoding <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">password = "secret123"</code>,
+                your code reads from a variable: <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">Sys.getenv("POSTGRES_PASSWORD")</code>
+              </p>
+              <p class="text-sm text-sky-800 dark:text-sky-200">
+                The <code class="px-1 py-0.5 bg-sky-100 dark:bg-sky-800 rounded text-xs">.env</code> file is gitignored by default,
+                so your secrets stay on your machine while your code can be shared safely.
+              </p>
+            </div>
+
             <EnvEditor
               :groups="defaultEnvGroups"
               v-model:variables="defaultEnvVariables"
@@ -256,84 +287,97 @@
         <!-- Packages -->
         <div id="packages" v-show="activeSection === 'packages'">
           <SettingsPanel>
-            <SettingsBlock>
-              <Toggle
-                v-model="settings.defaults.packages.use_renv"
-                label="Enable renv"
-                description="Create renv environments for new projects."
-              />
-            </SettingsBlock>
+            <PackagesEditor
+              v-model="defaultPackagesModel"
+              :show-renv-toggle="true"
+            />
+          </SettingsPanel>
+        </div>
 
-            <SettingsBlock
-              title="Default packages"
-              description="Installed (and optionally attached) when scaffold() runs."
+        <!-- Quarto -->
+        <div id="quarto" v-show="activeSection === 'quarto'">
+          <SettingsPanel flush>
+            <QuartoSettingsPanel v-model="settings.defaults.quarto" />
+          </SettingsPanel>
+        </div>
+
+        <!-- AI Assistants -->
+        <div id="ai" v-show="activeSection === 'ai'">
+          <SettingsPanel>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Manage assistant support, canonical context files, and sync hooks for all new projects.
+            </p>
+            <AIAssistantsPanel
+              v-model="defaultAiModel"
+              :flush="true"
+              :show-editor="true"
+              editor-height="420px"
             >
-              <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">Use this list to preseed notebooks with your preferred helpers.</p>
-
-              <div class="space-y-3" v-if="settings.defaults.packages.default_packages && settings.defaults.packages.default_packages.length">
-                <div
-                  v-for="(pkg, idx) in settings.defaults.packages.default_packages"
-                  :key="`pkg-${idx}`"
-                  class="rounded-md border border-gray-200 p-4 dark:border-gray-700"
-                >
-                  <div class="flex flex-col gap-3">
-                    <div class="grid gap-3 grid-cols-[1fr_160px]">
-                      <PackageAutocomplete
-                        v-if="pkg.source === 'cran' || pkg.source === 'bioconductor'"
-                        v-model="pkg.name"
-                        :source="pkg.source"
-                        label="Package"
-                        :placeholder="pkg.source === 'cran' ? 'Search CRAN...' : 'Search Bioconductor...'"
-                        @select="(selectedPkg) => pkg.name = selectedPkg.name"
-                      />
-                      <Input
-                        v-else
-                        v-model="pkg.name"
-                        label="Package"
-                        placeholder="user/repo"
-                      />
-                      <Select v-model="pkg.source" label="Source">
-                        <option value="cran">CRAN</option>
-                        <option value="github">GitHub</option>
-                        <option value="bioconductor">Bioconductor</option>
-                      </Select>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <Toggle v-model="pkg.auto_attach" label="Auto-Attach" description="Call library() when scaffold() runs." />
-                      <Button size="sm" variant="secondary" @click="removePackage(idx)">Remove</Button>
-                    </div>
-                  </div>
+              <template #editor-actions>
+                <div class="mt-4 flex justify-end">
+                  <Button size="sm" variant="secondary" @click="openCanonicalTemplate">
+                    Open canonical file
+                  </Button>
                 </div>
+              </template>
+            </AIAssistantsPanel>
+          </SettingsPanel>
+        </div>
+
+        <!-- Templates -->
+        <div id="templates" v-show="activeSection === 'templates'">
+          <SettingsPanel flush>
+            <div class="flex flex-wrap gap-2 mb-6">
+              <button
+                v-for="tab in templateTabs"
+                :key="tab.key"
+                type="button"
+                @click="navigateToTemplate(tab.slug)"
+                class="px-3 py-1.5 rounded-full text-sm font-medium border transition"
+                :class="selectedTemplate === tab.key
+                  ? 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-200 dark:border-sky-700'
+                  : 'text-gray-700 border-gray-200 hover:border-sky-300 hover:text-sky-700 dark:text-gray-300 dark:border-gray-700 dark:hover:text-sky-200'"
+              >
+                {{ tab.label }}
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div class="space-y-1">
+                  <h4 class="text-base font-semibold text-gray-900 dark:text-white">
+                    {{ currentTemplateTab.label }} Template
+                  </h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ currentTemplateTab.description }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">
+                    Edits save with the main “Save Changes” button.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  class="text-gray-600 dark:text-gray-300 font-normal"
+                  :disabled="templateEditors[currentTemplateTab.editorKey].loading"
+                  @click="resetCurrentTemplate($event)"
+                >
+                  Reset to default
+                </Button>
               </div>
 
-              <p v-else class="text-xs text-gray-500 dark:text-gray-400 mb-4">No packages configured. Add packages to include tidyverse helpers or internal utilities automatically.</p>
-
-              <div class="mt-4">
-                <Button size="sm" variant="secondary" @click="addPackage">Add Package</Button>
-              </div>
-            </SettingsBlock>
+              <CodeEditor
+                v-model="templateEditors[currentTemplateTab.editorKey].contents"
+                :language="currentTemplateTab.language"
+                auto-grow
+              />
+            </div>
           </SettingsPanel>
         </div>
 
       </div>
 
     </div>
-
-    <!-- Template Editor Modal -->
-    <Modal v-model="templateModal.open" size="lg" :title="templateModal.title">
-      <template #default>
-        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">{{ templateModal.description }}</p>
-        <Textarea v-model="templateModal.contents" :rows="18" monospace />
-      </template>
-      <template #actions>
-        <div class="flex gap-3 justify-end">
-          <Button variant="secondary" @click="templateModal.open = false">Cancel</Button>
-          <Button variant="primary" :disabled="templateModal.loading" @click="saveTemplate">
-            {{ templateModal.loading ? 'Saving…' : 'Save Template' }}
-          </Button>
-        </div>
-      </template>
-    </Modal>
 
     <!-- Reset to Defaults Confirmation Modal -->
     <Modal v-model="resetConfirmModal.open" size="md" title="Reset to Defaults" icon="warning">
@@ -360,7 +404,6 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '../components/ui/PageHeader.vue'
 import Input from '../components/ui/Input.vue'
-import PackageAutocomplete from '../components/ui/PackageAutocomplete.vue'
 import Select from '../components/ui/Select.vue'
 import Toggle from '../components/ui/Toggle.vue'
 import Checkbox from '../components/ui/Checkbox.vue'
@@ -370,7 +413,6 @@ import OverviewCard from '../components/ui/OverviewCard.vue'
 import OverviewSummary from '../components/OverviewSummary.vue'
 import NavigationSectionHeading from '../components/ui/NavigationSectionHeading.vue'
 import Modal from '../components/ui/Modal.vue'
-import Textarea from '../components/ui/Textarea.vue'
 import CodeEditor from '../components/ui/CodeEditor.vue'
 import Repeater from '../components/ui/Repeater.vue'
 import { useToast } from '../composables/useToast'
@@ -382,7 +424,33 @@ import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.
 import AuthorInformationPanel from '../components/settings/AuthorInformationPanel.vue'
 import EditorAndNotebookPanel from '../components/settings/EditorAndNotebookPanel.vue'
 import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
+import QuartoSettingsPanel from '../components/settings/QuartoSettingsPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
+import PackagesEditor from '../components/settings/PackagesEditor.vue'
+import AIAssistantsPanel from '../components/settings/AIAssistantsPanel.vue'
+import {
+  normalizeDefaultPackages,
+  mapDefaultPackagesToPayload
+} from '../utils/packageHelpers'
+import {
+  parseEnvContent,
+  groupEnvByPrefix,
+  normalizeEnvConfig,
+  DEFAULT_ENV_TEMPLATE
+} from '../utils/envHelpers'
+import {
+  mapConnectionsToArrays,
+  mapConnectionsToPayload
+} from '../utils/connectionHelpers'
+import {
+  normalizeDirectoriesFromCatalog,
+  normalizeRenderDirsFromCatalog
+} from '../utils/structureHelpers'
+import {
+  hydrateStructureFromCatalog,
+  serializeStructureForSave
+} from '../utils/structureMapping'
+import { buildGitPanelModel, applyGitPanelModel } from '../utils/gitHelpers'
 import {
   InformationCircleIcon,
   UserIcon,
@@ -403,10 +471,9 @@ const sections = [
   { id: 'basics', label: 'Basics', slug: 'basics', icon: Cog6ToothIcon },
   { id: 'structure', label: 'Project Structure', slug: 'project-structure', icon: FolderIcon },
   { id: 'packages', label: 'Packages', slug: 'packages-dependencies', icon: CubeIcon },
-  { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  { id: 'quarto', label: 'Quarto', slug: 'quarto', icon: DocumentTextIcon },
   { id: 'git', label: 'Git & Hooks', slug: 'git-hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
-  { id: 'connections-defaults', label: 'Connections', slug: 'connections', icon: ServerStackIcon },
-  { id: 'env-defaults', label: '.env Defaults', slug: 'env', icon: KeyIcon },
+  { id: 'ai', label: 'AI Assistants', slug: 'ai-assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   {
     id: 'scaffold',
     label: 'Scaffold Behavior',
@@ -419,7 +486,9 @@ const sections = [
     svgStrokeWidth: 0,
     svgPathFill: 'currentColor'
   },
-  { id: 'templates', label: 'Templates', slug: 'templates', icon: DocumentTextIcon }
+  { id: 'templates', label: 'Templates', slug: 'templates', icon: DocumentTextIcon },
+  { id: 'connections-defaults', label: 'Connections', slug: 'connections', icon: ServerStackIcon },
+  { id: 'env-defaults', label: '.env Defaults', slug: 'env', icon: KeyIcon }
 ]
 
 const sectionSlugMap = Object.fromEntries(sections.map(({ id, slug }) => [id, slug]))
@@ -716,6 +785,30 @@ const settings = ref({
         { name: 'ggplot2', source: 'cran', auto_attach: true }
       ]
     },
+    quarto: {
+      html: {
+        format: 'html',
+        embed_resources: true,
+        theme: 'default',
+        toc: true,
+        toc_depth: 3,
+        code_fold: false,
+        code_tools: false,
+        highlight_style: 'github'
+      },
+      revealjs: {
+        format: 'revealjs',
+        theme: 'default',
+        incremental: false,
+        slide_number: true,
+        transition: 'slide',
+        background_transition: 'fade',
+        controls: true,
+        progress: true,
+        center: true,
+        highlight_style: 'github'
+      }
+    },
     env: {
       raw: ''
     }
@@ -779,15 +872,6 @@ const aiAssistants = reactive({
   copilot: false
 })
 
-const templateModal = reactive({
-  open: false,
-  name: '',
-  title: '',
-  description: '',
-  contents: '',
-  loading: false
-})
-
 // .env defaults
 const defaultEnvRawContent = ref('')
 const defaultEnvVariables = ref({})
@@ -796,6 +880,16 @@ const defaultEnvRegroup = ref(false)
 const defaultEnvGroups = ref({})
 const envPreviewModal = ref(false)
 const defaultEnvVariableCount = computed(() => Object.keys(defaultEnvVariables.value || {}).length)
+
+// Packages model for defaults via shared editor
+const defaultPackagesModel = computed({
+  get() {
+    return normalizeDefaultPackages(settings.value.defaults.packages)
+  },
+  set(val) {
+    settings.value.defaults.packages = val || { use_renv: false, default_packages: [] }
+  }
+})
 
 // Helper to get project type label
 const getProjectTypeLabel = (type) => {
@@ -813,7 +907,7 @@ const overviewCards = computed(() => {
   const aiProvider = settings.value.ai_config?.provider || ''
   const aiCanonical = settings.value.ai_config?.canonical_file || ''
   const gitInit = settings.value.git?.auto_init || false
-  const packagesCount = settings.value.packages?.length || 0
+  const packagesCount = defaultPackagesModel.value?.default_packages?.length || 0
   const envCount = defaultEnvVariableCount.value
 
   return [
@@ -874,6 +968,44 @@ const s3Connections = ref([])
 const defaultDatabase = ref(null)
 const defaultStorageBucket = ref(null)
 
+// Auto-select default database when there's exactly one connection
+// Also handles case where current default was deleted
+watch(databaseConnections, (connections) => {
+  const currentDefault = defaultDatabase.value
+  const defaultStillExists = connections.some(c => c.name === currentDefault)
+
+  // If only one connection, it should be the default
+  if (connections.length === 1) {
+    const firstConn = connections[0]
+    if (firstConn?.name && firstConn.name !== 'framework_db') {
+      defaultDatabase.value = firstConn.name
+    }
+  }
+  // If current default was deleted, clear it
+  else if (currentDefault && !defaultStillExists) {
+    defaultDatabase.value = null
+  }
+}, { deep: true })
+
+// Auto-select default S3 bucket when there's exactly one
+// Also handles case where current default was deleted
+watch(s3Connections, (connections) => {
+  const currentDefault = defaultStorageBucket.value
+  const defaultStillExists = connections.some(c => c.name === currentDefault)
+
+  // If only one bucket, it should be the default
+  if (connections.length === 1) {
+    const firstConn = connections[0]
+    if (firstConn?.name) {
+      defaultStorageBucket.value = firstConn.name
+    }
+  }
+  // If current default was deleted, clear it
+  else if (currentDefault && !defaultStillExists) {
+    defaultStorageBucket.value = null
+  }
+}, { deep: true })
+
 const resetConfirmModal = reactive({
   open: false,
   projectTypeKey: null,
@@ -891,6 +1023,105 @@ const templateEditors = reactive({
   gitignore_presentation: { loading: false, contents: '' }
 })
 
+const templateTabs = computed(() => ([
+  {
+    key: 'notebook',
+    label: 'Notebook',
+    description: 'Starter Quarto notebook used when creating notebooks.',
+    editorKey: 'notebook',
+    apiName: 'notebook',
+    language: 'markdown'
+  },
+  {
+    key: 'script',
+    label: 'Script',
+    description: 'Starter R script used for new scripts.',
+    editorKey: 'script',
+    apiName: 'script',
+    language: 'r'
+  },
+  {
+    key: 'presentation',
+    label: 'Presentation',
+    description: 'Starter presentation content for revealjs slides.',
+    editorKey: 'presentation',
+    apiName: 'presentation',
+    language: 'markdown'
+  },
+  {
+    key: 'canonical',
+    label: 'Canonical AI File',
+    description: 'Source of truth mirrored to other assistant files when hooks run.',
+    editorKey: 'canonical',
+    apiName: canonicalTemplateName.value,
+    language: 'markdown'
+  }
+]))
+
+const selectedTemplate = ref(route.params.subsection || 'notebook')
+
+const currentTemplateTab = computed(() => {
+  return templateTabs.value.find((t) => t.key === selectedTemplate.value) || templateTabs.value[0]
+})
+
+const navigateToTemplate = async (slug) => {
+  selectedTemplate.value = slug || 'notebook'
+  await pushSettingsRoute('templates', selectedTemplate.value)
+}
+
+const saveCurrentTemplate = async () => {
+  const tab = currentTemplateTab.value
+  if (!tab || !templateEditors[tab.editorKey]) return
+  templateEditors[tab.editorKey].loading = true
+  try {
+    await fetch(`/api/templates/${tab.apiName}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: templateEditors[tab.editorKey].contents })
+    })
+    toast.success('Template Saved', `${tab.label} template updated.`)
+  } catch (error) {
+    toast.error('Save Failed', 'Could not save template changes.')
+  } finally {
+    templateEditors[tab.editorKey].loading = false
+  }
+}
+
+const resetCurrentTemplate = async (event) => {
+  if (event && typeof event.preventDefault === 'function') event.preventDefault()
+  const tab = currentTemplateTab.value
+  if (!tab) return
+  const confirmed = window.confirm('Reset this template to the default packaged version?')
+  if (!confirmed) return
+  const editorKey = tab.editorKey
+  const apiName = tab.apiName
+  await resetInlineTemplate(apiName, editorKey)
+}
+
+// AI defaults model for shared panel (canonical_content sourced from template editor)
+const defaultAiModel = computed({
+  get() {
+    const defaults = settings.value.defaults || {}
+    return {
+      enabled: defaults.ai_support !== false,
+      canonical_file: defaults.ai_canonical_file || 'CLAUDE.md',
+      assistants: Array.isArray(defaults.ai_assistants) ? [...defaults.ai_assistants] : [],
+      canonical_content: templateEditors.canonical?.contents || ''
+    }
+  },
+  set(val) {
+    if (!val) return
+    const defaults = settings.value.defaults || {}
+    defaults.ai_support = val.enabled
+    defaults.ai_canonical_file = val.canonical_file
+    defaults.ai_assistants = Array.isArray(val.assistants) ? [...val.assistants] : []
+    if (val.canonical_content !== undefined && templateEditors.canonical) {
+      templateEditors.canonical.contents = val.canonical_content
+    }
+    settings.value.defaults = { ...defaults }
+  }
+})
+
 const projectTypeEntries = computed(() => Object.entries(settings.value.project_types || {}))
 
 const projectStructureSubnav = computed(() =>
@@ -903,9 +1134,10 @@ const projectStructureSubnav = computed(() =>
 )
 
 const templatesSubnav = [
-  { id: 'templates-notebook', label: 'Notebook' },
-  { id: 'templates-script', label: 'Script' },
-  { id: 'templates-presentation', label: 'Presentation' }
+  { id: 'templates-notebook', label: 'Notebook', slug: 'notebook' },
+  { id: 'templates-script', label: 'Script', slug: 'script' },
+  { id: 'templates-presentation', label: 'Presentation', slug: 'presentation' },
+  { id: 'templates-canonical', label: 'Canonical AI File', slug: 'canonical' }
 ]
 
 // DISABLED - env defaults removed
@@ -1185,17 +1417,13 @@ const hydrateDefaultsFromCatalog = (catalogData) => {
   const normalized = {}
   for (const [key, type] of Object.entries(catalogData.project_types)) {
     const fallback = fallbackProjectTypes[key] || {}
-    const directories = {}
-    for (const [dirKey, dirMeta] of Object.entries(type.directories || {})) {
-      const fallbackDir = fallback.directories?.[dirKey] || ''
-      directories[dirKey] = toScalar(dirMeta?.default, fallbackDir)
-    }
-
-    const render_dirs = {}
-    for (const [dirKey, dirMeta] of Object.entries(type.render_dirs || {})) {
-      const fallbackRenderDir = fallback.render_dirs?.[dirKey] || ''
-      render_dirs[dirKey] = toScalar(dirMeta?.default, fallbackRenderDir)
-    }
+    const hydrated = hydrateStructureFromCatalog(
+      type,
+      {},
+      fallback.directories || {},
+      fallback.render_dirs || {}
+    )
+    const { directories, render_dirs } = hydrated
 
     normalized[key] = {
       label: toScalar(type.label, fallback.label || formatProjectTypeName(key)),
@@ -1284,6 +1512,10 @@ watch(aiAssistants, (newVal) => {
 watch(() => settings.value.defaults.ai_canonical_file, async () => {
   if (isLoadingSettings.value) return
   await loadTemplateInline(canonicalTemplateName.value, 'canonical')
+  if (activeSection.value === 'templates') {
+    selectedTemplate.value = 'canonical'
+    await pushSettingsRoute('templates', 'canonical')
+  }
 })
 
 watch(() => settings.value.defaults.git_hooks.data_security, (val) => {
@@ -1452,17 +1684,6 @@ const saveTemplate = async () => {
   }
 }
 
-const addPackage = () => {
-  if (!settings.value.defaults.packages.default_packages) {
-    settings.value.defaults.packages.default_packages = []
-  }
-  settings.value.defaults.packages.default_packages.push({ name: '', source: 'cran', auto_attach: false })
-}
-
-const removePackage = (index) => {
-  settings.value.defaults.packages.default_packages.splice(index, 1)
-}
-
 const scrollToSection = (id) => {
   const el = document.getElementById(id)
   if (el) {
@@ -1485,12 +1706,35 @@ const defaultProjectSectionId = (key) => {
   }
 }
 
+// Determine if a section should show as active (with blue background)
+// Parent sections should NOT be active when a sub-item is selected
+const isSectionActive = (sectionId) => {
+  if (activeSection.value !== sectionId) return false
+
+  // For structure section, only active if no project type is selected
+  if (sectionId === 'structure' && currentProjectTypeKey.value) {
+    return false
+  }
+
+  // For templates section, only active if no template is selected
+  // (templates always has a selection, so parent is never "active")
+  if (sectionId === 'templates') {
+    return false
+  }
+
+  return true
+}
+
 const navigateToSection = async (sectionId) => {
   const section = sections.find((s) => s.id === sectionId)
   if (!section) return
 
   // For structure section, go to index page (no subsection)
-  const subsectionSlug = section.id === 'structure' ? undefined : undefined
+  const subsectionSlug = section.id === 'structure'
+    ? undefined
+    : section.id === 'templates'
+      ? (route.params.subsection || selectedTemplate.value || 'notebook')
+      : undefined
 
   await pushSettingsRoute(section.slug, subsectionSlug)
   await nextTick()
@@ -1511,6 +1755,19 @@ watch(
     if (activeSection.value !== 'structure') return
     if (!key || key === prev) return
     nextTick(() => scrollToSection(defaultProjectSectionId(key)))
+  }
+)
+
+watch(
+  () => route.params.subsection,
+  async (slug) => {
+    if (route.params.section !== 'templates') return
+    const next = slug || 'notebook'
+    if (selectedTemplate.value !== next) {
+      selectedTemplate.value = next
+    }
+    await nextTick()
+    scrollToSection('templates')
   }
 )
 
@@ -1646,26 +1903,33 @@ const loadSettings = async () => {
       }
 
       if (defaults.packages) {
-        // New nested structure: packages: { use_renv: bool, default_packages: [...] }
-        if (defaults.packages.default_packages) {
-          settings.value.defaults.packages = {
-            use_renv: toBoolean(defaults.packages.use_renv, false),
-            default_packages: (defaults.packages.default_packages || []).map((pkg) => ({
-              name: toScalar(pkg.name, ''),
-              source: toScalar(pkg.source, 'cran'),
-              auto_attach: toBoolean(pkg.auto_attach, false)
-            }))
-          }
-        }
-        // Old flat array structure (backward compatibility)
-        else if (Array.isArray(defaults.packages)) {
-          settings.value.defaults.packages = {
-            use_renv: false,
-            default_packages: defaults.packages.map((pkg) => ({
-              name: toScalar(pkg.name, ''),
-              source: toScalar(pkg.source, 'cran'),
-              auto_attach: toBoolean(pkg.auto_attach, false)
-            }))
+        settings.value.defaults.packages = normalizeDefaultPackages(defaults.packages)
+      }
+
+      // Load quarto settings
+      if (defaults.quarto) {
+        settings.value.defaults.quarto = {
+          html: {
+            format: 'html',
+            embed_resources: toBoolean(defaults.quarto.html?.embed_resources, true),
+            theme: toScalar(defaults.quarto.html?.theme, 'default'),
+            toc: toBoolean(defaults.quarto.html?.toc, true),
+            toc_depth: parseInt(defaults.quarto.html?.toc_depth) || 3,
+            code_fold: toBoolean(defaults.quarto.html?.code_fold, false),
+            code_tools: toBoolean(defaults.quarto.html?.code_tools, false),
+            highlight_style: toScalar(defaults.quarto.html?.highlight_style, 'github')
+          },
+          revealjs: {
+            format: 'revealjs',
+            theme: toScalar(defaults.quarto.revealjs?.theme, 'default'),
+            incremental: toBoolean(defaults.quarto.revealjs?.incremental, false),
+            slide_number: toBoolean(defaults.quarto.revealjs?.slide_number, true),
+            transition: toScalar(defaults.quarto.revealjs?.transition, 'slide'),
+            background_transition: toScalar(defaults.quarto.revealjs?.background_transition, 'fade'),
+            controls: toBoolean(defaults.quarto.revealjs?.controls, true),
+            progress: toBoolean(defaults.quarto.revealjs?.progress, true),
+            center: toBoolean(defaults.quarto.revealjs?.center, true),
+            highlight_style: toScalar(defaults.quarto.revealjs?.highlight_style, 'github')
           }
         }
       }
@@ -1722,34 +1986,28 @@ const loadSettings = async () => {
 const gitPanelModel = computed({
   get() {
     const defaults = settings.value.defaults || {}
-    const gitHooks = defaults.git_hooks || {}
     const git = settings.value.git || {}
-
-    return {
-      initialize: defaults.use_git !== false,
-      user_name: git.user_name || '',
-      user_email: git.user_email || '',
-      hooks: {
-        ai_sync: gitHooks.ai_sync || false,
-        data_security: gitHooks.data_security || false,
-        check_sensitive_dirs: gitHooks.check_sensitive_dirs || false
-      }
-    }
+    return buildGitPanelModel({
+      useGit: defaults.use_git,
+      gitHooks: defaults.git_hooks,
+      git
+    })
   },
   set(val) {
     if (isLoadingSettings.value) {
       console.log('[gitPanelModel setter] Blocked during load')
       return
     }
-    settings.value.defaults.use_git = val.initialize
-    settings.value.git = settings.value.git || {}
-    settings.value.git.user_name = val.user_name
-    settings.value.git.user_email = val.user_email
-
     settings.value.defaults.git_hooks = settings.value.defaults.git_hooks || {}
-    settings.value.defaults.git_hooks.ai_sync = val.hooks.ai_sync
-    settings.value.defaults.git_hooks.data_security = val.hooks.data_security
-    settings.value.defaults.git_hooks.check_sensitive_dirs = val.hooks.check_sensitive_dirs
+    settings.value.git = settings.value.git || {}
+    applyGitPanelModel(
+      {
+        gitTarget: settings.value.git,
+        gitHooksTarget: settings.value.defaults.git_hooks,
+        setUseGit: (val) => { settings.value.defaults.use_git = val }
+      },
+      val
+    )
   }
 })
 
@@ -2175,106 +2433,22 @@ const validateExtraDirectoryLabel = (label) => {
   return null
 }
 
-// DISABLED - env defaults removed
-// watch(defaultEnvRawContent, (val) => {
-//   if (isLoadingSettings.value) return
-//   settings.value.defaults.env = { raw: val }
-// })
-
-const DEFAULT_ENV_TEMPLATE = `# Framework environment defaults
-# Populate these values before running scaffold() or publishing.
-
-# PostgreSQL connection
-POSTGRES_HOST=127.0.0.1
-POSTGRES_PORT=5432
-POSTGRES_DB=postgres
-POSTGRES_SCHEMA=public
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=
-
-
-# S3-compatible storage (AWS S3, MinIO, etc.)
-S3_ACCESS_KEY=
-S3_SECRET_KEY=
-S3_BUCKET=
-S3_REGION=us-east-1
-S3_ENDPOINT=`
-
-const parseEnvContent = (raw = '') => {
-  const result = {}
-  raw.split(/\r?\n/).forEach((line) => {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) return
-    const [key, ...rest] = trimmed.split('=')
-    result[key.trim()] = rest.join('=').replace(/^"|"$/g, '')
-  })
-  return result
-}
-
-const stringifyEnvVariables = (vars = {}) => Object.entries(vars)
-  .map(([key, value]) => `${key}=${value ?? ''}`)
-  .join('\n')
-
-function groupEnvByPrefix(vars = {}) {
-  const entries = Object.entries(vars)
-  if (!entries.length) return {}
-  return entries.reduce((acc, [key, value]) => {
-    const prefix = key.includes('_') ? key.split('_')[0] : 'Other'
-    if (!acc[prefix]) acc[prefix] = {}
-    acc[prefix][key] = {
-      defined: !!value,
-      used: false,
-      used_in: [],
-      value
-    }
-    return acc
-  }, {})
-}
-
 const clone = (value) => JSON.parse(JSON.stringify(value || {}))
 
 const initializeDefaultEnv = (envConfig) => {
-  let raw = DEFAULT_ENV_TEMPLATE
-  if (typeof envConfig === 'string') {
-    raw = envConfig
-  } else if (envConfig?.raw) {
-    raw = envConfig.raw
-  } else if (envConfig?.variables) {
-    raw = stringifyEnvVariables(envConfig.variables)
-  }
-
-  defaultEnvRawContent.value = raw
-  defaultEnvVariables.value = parseEnvContent(raw)
-  defaultEnvGroups.value = groupEnvByPrefix(parseEnvContent(raw))
-  defaultEnvViewMode.value = 'grouped'
+  const normalized = normalizeEnvConfig(envConfig, DEFAULT_ENV_TEMPLATE)
+  defaultEnvRawContent.value = normalized.rawContent
+  defaultEnvVariables.value = normalized.variables
+  defaultEnvGroups.value = normalized.groups
+  defaultEnvViewMode.value = normalized.viewMode
 }
 
 const hydrateDefaultConnections = (connectionsConfig) => {
-  // Handle nested structure: { default_database, default_storage_bucket, databases: {}, storage_buckets: {} }
-  const databases = connectionsConfig?.databases || {}
-  const storage_buckets = connectionsConfig?.storage_buckets || {}
-
-  // Load defaults
-  defaultDatabase.value = connectionsConfig?.default_database || null
-  defaultStorageBucket.value = connectionsConfig?.default_storage_bucket || null
-
-  // Convert objects to arrays for Repeater component, filtering out framework_db (reserved system connection)
-  const dbArray = Object.entries(databases)
-    .filter(([name]) => name !== 'framework_db')
-    .map(([name, conn]) => ({
-      _id: name,
-      name,
-      ...conn
-    }))
-
-  const s3Array = Object.entries(storage_buckets).map(([name, conn]) => ({
-    _id: name,
-    name,
-    ...conn
-  }))
-
-  databaseConnections.value = dbArray
-  s3Connections.value = s3Array
+  const mapped = mapConnectionsToArrays(connectionsConfig || {})
+  databaseConnections.value = mapped.databaseConnections
+  s3Connections.value = mapped.s3Connections
+  defaultDatabase.value = mapped.defaultDatabase
+  defaultStorageBucket.value = mapped.defaultStorageBucket
 }
 
 const resetEnvDefaults = () => {
@@ -2298,83 +2472,44 @@ const saveSettings = async () => {
 
     // Handle scaffold seed (v2 nested structure)
     if (payload.defaults.scaffold) {
-      payload.defaults.scaffold.seed = payload.defaults.scaffold.seed === '' ? null : payload.defaults.scaffold.seed
+      payload.defaults.scaffold.seed = payload.defaults.scaffold.seed ?? ''
     }
     // Also handle flat structure for backward compatibility
-    payload.defaults.seed = payload.defaults.seed === '' ? null : payload.defaults.seed
+    payload.defaults.seed = payload.defaults.seed ?? ''
 
-    // Handle nested packages structure: { use_renv: bool, default_packages: [...] }
-    if (payload.defaults.packages && payload.defaults.packages.default_packages) {
-      payload.defaults.packages.default_packages = (payload.defaults.packages.default_packages || []).filter((pkg) => pkg.name && pkg.name.trim() !== '')
-    }
+  // Handle nested packages structure
+  payload.defaults.packages = mapDefaultPackagesToPayload(settings.value.defaults.packages)
 
     // Save .env defaults
     payload.defaults.env = { raw: defaultEnvRawContent.value || '' }
 
-    // Convert connections arrays to nested object structure for saving
-    const databases = {}
-    databaseConnections.value.forEach(conn => {
-      const { _id, name, ...fields } = conn
-      databases[name] = fields
+    // Connections payload
+    payload.defaults.connections = mapConnectionsToPayload({
+      databaseConnections: databaseConnections.value,
+      s3Connections: s3Connections.value,
+      defaultDatabase: defaultDatabase.value,
+      defaultStorageBucket: defaultStorageBucket.value
     })
-
-    const storage_buckets = {}
-    s3Connections.value.forEach(conn => {
-      const { _id, name, ...fields } = conn
-      storage_buckets[name] = fields
-    })
-
-    payload.defaults.connections = {
-      default_database: defaultDatabase.value,
-      default_storage_bucket: defaultStorageBucket.value,
-      databases,
-      storage_buckets
-    }
 
     payload.defaults.directories = payload.project_types?.project?.directories || payload.defaults.directories
     payload.defaults.git_hooks.data_security = payload.privacy.secret_scan
     payload.git = payload.git || { user_name: '', user_email: '' }
 
-    // Sync toggle states from directoriesEnabled into payload
-    for (const projectTypeKey in directoriesEnabled) {
-      if (payload.project_types[projectTypeKey]) {
-        payload.project_types[projectTypeKey].directories_enabled = { ...directoriesEnabled[projectTypeKey] }
-      }
-    }
-
-    // Filter out incomplete and disabled extra_directories entries
+    // Normalize structure payload per project type
     for (const projectTypeKey in payload.project_types) {
-      const projectType = payload.project_types[projectTypeKey]
-      if (projectType.extra_directories && Array.isArray(projectType.extra_directories)) {
-        console.log(`[Save] Before filter (${projectTypeKey}):`, {
-          count: projectType.extra_directories.length,
-          items: projectType.extra_directories.map(d => ({ key: d.key, enabled: projectType.directories_enabled?.[d.key] }))
-        })
-
-        projectType.extra_directories = projectType.extra_directories.filter(dir => {
-          // Remove if incomplete
-          if (!dir.key || dir.key.trim() === '' ||
-              !dir.label || dir.label.trim() === '' ||
-              !dir.path || dir.path.trim() === '' ||
-              !dir.type || dir.type.trim() === '') {
-            console.log(`[Save] Filtering out incomplete item:`, dir.key)
-            return false
-          }
-          // Remove if toggled off (disabled)
-          if (projectType.directories_enabled && projectType.directories_enabled[dir.key] === false) {
-            console.log(`[Save] Filtering out disabled item:`, dir.key)
-            return false
-          }
-          return true
-        })
-
-        console.log(`[Save] After filter (${projectTypeKey}):`, {
-          count: projectType.extra_directories.length,
-          items: projectType.extra_directories.map(d => d.key)
-        })
-
-        // Keep directories_enabled in payload so new projects can inherit these defaults
-      }
+      const catalogDirs = catalog.value?.project_types?.[projectTypeKey]?.directories || {}
+      const enabledState = directoriesEnabled[projectTypeKey] || payload.project_types[projectTypeKey].directories_enabled || {}
+      const serialized = serializeStructureForSave({
+        catalogDirs,
+        directories: payload.project_types[projectTypeKey].directories || {},
+        render_dirs: payload.project_types[projectTypeKey].render_dirs || {},
+        enabled: enabledState,
+        extra_directories: payload.project_types[projectTypeKey].extra_directories || []
+      })
+      payload.project_types[projectTypeKey].directories = serialized.directories
+      payload.project_types[projectTypeKey].render_dirs = serialized.render_dirs
+      payload.project_types[projectTypeKey].directories_enabled = serialized.enabled
+      payload.project_types[projectTypeKey].extra_directories = serialized.extra_directories
     }
 
     const response = await fetch('/api/settings/save', {
@@ -2425,6 +2560,11 @@ const saveSettings = async () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: templateEditors.gitignore_presentation.contents })
+      }),
+      fetch(`/api/templates/${canonicalTemplateName.value}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: templateEditors.canonical.contents })
       })
     ])
 
@@ -2457,6 +2597,12 @@ onMounted(() => {
   loadTemplateInline('gitignore-course', 'gitignore_course')
   loadTemplateInline('gitignore-presentation', 'gitignore_presentation')
   loadTemplateInline(canonicalTemplateName.value, 'canonical')
+
+  // Ensure templates route has a subsection slug
+  if (route.params.section === 'templates' && !route.params.subsection) {
+    pushSettingsRoute('templates', selectedTemplate.value || 'notebook')
+  }
+
   window.addEventListener('keydown', handleKeyDown)
 })
 

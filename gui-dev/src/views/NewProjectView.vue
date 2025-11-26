@@ -316,6 +316,15 @@ import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
 import RenderableWorkspacesPanel from '../components/settings/RenderableWorkspacesPanel.vue'
 import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
+import { buildGitPanelModel, applyGitPanelModel } from '../utils/gitHelpers'
+import {
+  hydrateStructureFromCatalog,
+  serializeStructureForSave
+} from '../utils/structureMapping'
+import {
+  normalizeDefaultPackages,
+  mapProjectPackagesToPayload
+} from '../utils/packageHelpers'
 import { useToast } from '../composables/useToast'
 import {
   InformationCircleIcon,
@@ -404,8 +413,7 @@ const project = ref({
     positron: false
   },
   packages: {
-    use_renv: false,
-    default_packages: []
+    ...normalizeDefaultPackages()
   },
   ai: {
     enabled: true,
@@ -542,30 +550,13 @@ onMounted(async () => {
           project.value.scaffold.positron = globalSettings.value.defaults.positron
         }
 
-        // Load package defaults
-        if (globalSettings.value.defaults?.packages) {
-          // Handle flat array structure from SettingsView (current format)
-          if (Array.isArray(globalSettings.value.defaults.packages)) {
-            const mappedPackages = globalSettings.value.defaults.packages.map(pkg => ({
-              name: pkg.name || '',
-              source: pkg.source || 'cran',
-              auto_attach: pkg.auto_attach !== false
-            }))
-
-            // Use splice to maintain reactivity instead of replacing the object
-            project.value.packages.default_packages.splice(0, project.value.packages.default_packages.length, ...mappedPackages)
-          }
-          // Handle nested object structure (backwards compatibility)
-          else if (globalSettings.value.defaults.packages.default_packages) {
-            project.value.packages = {
-              use_renv: globalSettings.value.defaults.packages.use_renv || false,
-              default_packages: (globalSettings.value.defaults.packages.default_packages || []).map(pkg => ({
-                name: pkg.name || '',
-                source: pkg.source || 'cran',
-                auto_attach: pkg.auto_attach !== false
-              }))
-            }
-          }
+        // Load package defaults (supports array or nested structure)
+        // API returns flattened: defaults.use_renv and defaults.default_packages
+        if (globalSettings.value.defaults?.default_packages || globalSettings.value.defaults?.packages) {
+          project.value.packages = normalizeDefaultPackages({
+            use_renv: globalSettings.value.defaults.use_renv,
+            default_packages: globalSettings.value.defaults.default_packages || globalSettings.value.defaults.packages
+          })
         }
 
         // Load AI defaults
@@ -724,54 +715,18 @@ const loadProjectTypeDefaults = () => {
   // Load gitignore content for the selected template
   loadGitignoreTemplate(project.value.git.gitignore_template)
 
-  // Initialize directories_enabled from user's global settings, falling back to catalog enabled_by_default
-  project.value.directories_enabled = Object.entries(catalogType.directories).reduce((acc, [key, config]) => {
-    // Prefer user's global settings, then catalog enabled_by_default
-    if (userProjectType?.directories_enabled?.[key] !== undefined) {
-      acc[key] = userProjectType.directories_enabled[key]
-    } else {
-      acc[key] = config.enabled_by_default === true
-    }
-    return acc
-  }, {})
-
-  // Initialize directories with paths from user's global settings (if available), falling back to catalog defaults
-  project.value.directories = Object.entries(catalogType.directories).reduce((acc, [key, config]) => {
-    // Prefer user's global settings, then catalog default
-    acc[key] = userProjectType?.directories?.[key] || config.default || ''
-    return acc
-  }, {})
-
-  // Initialize render_dirs for directories that support Quarto rendering
-  if (catalogType.render_dirs) {
-    project.value.render_dirs = Object.entries(catalogType.render_dirs).reduce((acc, [key, config]) => {
-      // Prefer user's global settings, then catalog default
-      acc[key] = userProjectType?.render_dirs?.[key] || config.default || ''
-      return acc
-    }, {})
-  } else {
-    project.value.render_dirs = {}
-  }
-
-  // Initialize extra_directories from user's global settings
-  if (userProjectType?.extra_directories && Array.isArray(userProjectType.extra_directories)) {
-    // Mark directories from global settings with _source flag
-    project.value.extra_directories = userProjectType.extra_directories.map(dir => ({
-      ...dir,
-      _source: 'global'
-    }))
-
-    // Enable all global extra_directories by default
-    project.value.extra_directories_enabled = userProjectType.extra_directories.reduce((acc, dir) => {
-      if (dir.key) {
-        acc[dir.key] = true
-      }
-      return acc
-    }, {})
-  } else {
-    project.value.extra_directories = []
-    project.value.extra_directories_enabled = {}
-  }
+  // Initialize directories/render dirs from catalog + user defaults via helper
+  const hydrated = hydrateStructureFromCatalog(
+    catalogType,
+    userProjectType || {},
+    {},
+    {}
+  )
+  project.value.directories = hydrated.directories
+  project.value.directories_enabled = hydrated.directories_enabled
+  project.value.render_dirs = hydrated.render_dirs
+  project.value.extra_directories = hydrated.extra_directories || []
+  project.value.extra_directories_enabled = userProjectType?.extra_directories_enabled || {}
 
   console.log('[DEBUG] loadProjectTypeDefaults() finished - packages still:', project.value.packages.default_packages)
 }
@@ -970,27 +925,20 @@ const overviewCards = computed(() => {
 
 const gitPanelModel = computed({
   get() {
-    const hooks = project.value.git.hooks || {}
-    return {
-      initialize: project.value.git.initialize,
-      user_name: project.value.git.user_name || '',
-      user_email: project.value.git.user_email || '',
-      hooks: {
-        ai_sync: hooks.ai_sync || false,
-        data_security: hooks.data_security || false,
-        check_sensitive_dirs: hooks.check_sensitive_dirs || false
-      }
-    }
+    return buildGitPanelModel({
+      useGit: project.value.git.initialize,
+      gitHooks: project.value.git.hooks,
+      git: project.value.git
+    })
   },
   set(val) {
-    project.value.git.initialize = val.initialize
-    project.value.git.user_name = val.user_name
-    project.value.git.user_email = val.user_email
-    project.value.git.hooks = {
-      ai_sync: val.hooks.ai_sync,
-      data_security: val.hooks.data_security,
-      check_sensitive_dirs: val.hooks.check_sensitive_dirs
-    }
+    applyGitPanelModel(
+      {
+        gitTarget: project.value.git,
+        setUseGit: (useGit) => { project.value.git.initialize = useGit }
+      },
+      val
+    )
   }
 })
 
@@ -1047,9 +995,16 @@ const getGitignoreTemplateLabel = (template) => {
   return labels[template] || template
 }
 
+const buildApiUrl = (path) => {
+  if (!path) return ''
+  return path.startsWith('http')
+    ? path
+    : new URL(path, globalThis.location?.origin || 'http://localhost').toString()
+}
+
 const loadGitignoreTemplate = async (template) => {
   try {
-    const response = await fetch(`/api/templates/${template}`)
+    const response = await fetch(buildApiUrl(`/api/templates/${template}`))
     if (response.ok) {
       const data = await response.json()
       if (data.success && data.contents) {
@@ -1095,7 +1050,7 @@ const loadAITemplate = async (canonicalFile, projectType) => {
       templateName = 'ai_copilot'
     }
 
-    const response = await fetch(`/api/templates/${templateName}`)
+    const response = await fetch(buildApiUrl(`/api/templates/${templateName}`))
     if (response.ok) {
       const data = await response.json()
       if (data.success && data.contents) {
@@ -1456,7 +1411,7 @@ const createProject = async () => {
       type: project.value.type,
       author: project.value.author,
       scaffold: project.value.scaffold,
-      packages: project.value.packages,
+      packages: mapProjectPackagesToPayload(project.value.packages),
       ai: project.value.ai,
       git: project.value.git,
       connections: {
@@ -1505,8 +1460,13 @@ const createProject = async () => {
     // Reload projects list in sidebar
     await loadProjects()
 
-    // Navigate to projects list
-    router.push('/projects')
+    // Navigate to the new project's detail page
+    if (result.project_id) {
+      router.push(`/project/${result.project_id}`)
+    } else {
+      // Fallback to projects list if no ID returned
+      router.push('/projects')
+    }
   } catch (error) {
     console.error('Failed to create project:', error)
     toast.error('Creation Failed', error.message || 'Could not create the project')

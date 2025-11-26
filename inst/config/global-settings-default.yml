@@ -55,6 +55,29 @@ defaults:
       - name: "here"
         auto_attach: false
 
+  # Quarto Defaults (applied when generating _quarto.yml files)
+  quarto:
+    html:
+      format: "html"
+      embed_resources: true             # Produce standalone HTML with all dependencies embedded
+      theme: "default"                  # Bootstrap theme
+      toc: true                         # Table of contents
+      toc_depth: 3                      # TOC heading depth
+      code_fold: false                  # Allow collapsing code blocks
+      code_tools: false                 # Provide code download/viewing options
+      highlight_style: "github"         # Syntax highlighting theme
+    revealjs:
+      format: "revealjs"
+      theme: "default"                  # Presentation theme
+      incremental: false                # Reveal list items incrementally
+      slide_number: true                # Show slide numbers
+      transition: "slide"               # Slide transition effect
+      background_transition: "fade"     # Background transition effect
+      controls: true                    # Show navigation controls
+      progress: true                    # Show progress bar
+      center: true                      # Center slide content
+      highlight_style: "github"         # Syntax highlighting theme
+
   # AI Assistants
   ai:
     enabled: true                        # Enable AI support

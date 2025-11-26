@@ -90,6 +90,29 @@ defaults:
       data_security: false
       check_sensitive_dirs: false
 
+  # Quarto Defaults - applied when generating _quarto.yml files
+  quarto:
+    html:
+      format: "html"
+      embed_resources: true
+      theme: "default"
+      toc: true
+      toc_depth: 3
+      code_fold: false
+      code_tools: false
+      highlight_style: "github"
+    revealjs:
+      format: "revealjs"
+      theme: "default"
+      incremental: false
+      slide_number: true
+      transition: "slide"
+      background_transition: "fade"
+      controls: true
+      progress: true
+      center: true
+      highlight_style: "github"
+
 # Stubs & Templates
 templates:
   notebook:
