@@ -193,3 +193,16 @@ const presentationOptions = reactive({
 - Test presentation directories in New Project
 - Verify consistency between both views
 - Complete manual testing checklist
+
+## Test Coverage Tracker (by screen)
+- Overview: TODO — confirm automated/DOM coverage; add if missing.
+- Basics: TODO — verify UI shows defaults and saves.
+- Project Structure: TODO — ensure presentation/other types tested.
+- Packages: UPDATED — integration (nested vs legacy) passing; UI smoke added for defaults tab. Still want deeper DOM/interaction coverage.
+- Quarto: TODO — defaults and project-level regeneration.
+- Git & Hooks: TODO — init + hooks persistence.
+- AI Assistants: TODO — defaults/new/edit flow coverage.
+- Scaffold Behavior: TODO — toggle/persistence.
+- Templates: TODO — modal interactions, save/reset.
+- .env Defaults: TODO — env editor grouped/raw, save.
+- Connections: TODO — db/s3 mapping, defaults, project override.

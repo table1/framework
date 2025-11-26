@@ -1030,6 +1030,19 @@ configure_global <- function(settings = NULL, validate = TRUE) {
     updated$defaults$env <- settings$defaults$env
   }
 
+  # Normalize seed values: treat empty lists/booleans as unset (NULL) so validation passes
+  sanitize_seed <- function(value) {
+    if (is.null(value)) return(NULL)
+    if (is.list(value) && length(value) == 0) return(NULL)
+    if (is.logical(value)) return(NULL)
+    value
+  }
+
+  updated$defaults["seed"] <- list(sanitize_seed(updated$defaults$seed))
+  if (!is.null(updated$defaults$scaffold)) {
+    updated$defaults$scaffold["seed"] <- list(sanitize_seed(updated$defaults$scaffold$seed))
+  }
+
   # Validate if requested
   if (validate) {
     .validate_author(updated$author)

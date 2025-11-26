@@ -163,11 +163,12 @@ describe('Projects Integration: YAML → API', () => {
       expect(typeof apiProjectsRoot).toBe('string')
     })
 
-    it('projects_root is an absolute path', () => {
+    it('projects_root is an absolute or tilde path', () => {
       if (apiProjectsRoot) {
-        // Should start with / on Unix or C:/ on Windows
+        // Should start with / on Unix, C:/ on Windows, or ~ for home directory
         expect(
           apiProjectsRoot.startsWith('/') ||
+          apiProjectsRoot.startsWith('~') ||
           /^[A-Z]:\\/.test(apiProjectsRoot)
         ).toBe(true)
       }

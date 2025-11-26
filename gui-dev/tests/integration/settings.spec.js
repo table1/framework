@@ -110,7 +110,12 @@ describe('Settings Integration: YAML → API', () => {
     })
 
     it('use_renv matches YAML (defaults to false)', () => {
-      const yamlValue = normalizeYamlBoolean(yamlSettings.defaults?.use_renv ?? false)
+      // use_renv can be at defaults.use_renv OR defaults.packages.use_renv
+      const yamlValue = normalizeYamlBoolean(
+        yamlSettings.defaults?.packages?.use_renv ??
+        yamlSettings.defaults?.use_renv ??
+        false
+      )
       const apiValue = apiSettings.defaults.use_renv
 
       expect(typeof apiValue).toBe('boolean')

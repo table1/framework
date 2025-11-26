@@ -252,6 +252,7 @@ function() {
 
 #* Get global settings and projects list (legacy endpoint)
 #* @get /api/settings/get
+#* @serializer unboxedJSON
 function() {
   settings_path <- path.expand("~/.config/framework/settings.yml")
   first_run <- !file.exists(settings_path)
@@ -2253,5 +2254,60 @@ function(req) {
     list(success = TRUE, id = project_id)
   }, error = function(e) {
     list(error = e$message)
+  })
+}
+
+#* Regenerate Quarto configuration files for a project
+#* @post /api/project/<id>/quarto/regenerate
+#* @param id Project ID
+#* @param req The request object
+function(id, req) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  # Find project
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  # Parse request body for options
+  body <- if (!is.null(req$postBody) && nchar(req$postBody) > 0) {
+    jsonlite::fromJSON(req$postBody)
+  } else {
+    list()
+  }
+
+  backup <- if (!is.null(body$backup)) as.logical(body$backup) else TRUE
+
+  # Regenerate Quarto configs
+  tryCatch({
+    result <- framework::quarto_regenerate(
+      project_path = project$path,
+      backup = backup
+    )
+
+    if (result$success) {
+      list(
+        success = TRUE,
+        message = sprintf("Regenerated %d Quarto configuration file(s)", result$count),
+        files = result$regenerated,
+        backed_up = result$backed_up,
+        backup_location = result$backup_location
+      )
+    } else {
+      list(error = "Failed to regenerate Quarto configurations")
+    }
+  }, error = function(e) {
+    list(error = paste("Error regenerating Quarto configs:", e$message))
   })
 }

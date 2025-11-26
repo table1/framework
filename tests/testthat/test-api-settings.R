@@ -37,9 +37,130 @@ test_that("API /api/settings/save accepts valid settings", {
   expect_true(result$success)
 
   # Verify settings were actually saved
-  saved <- read_frameworkrc()
+  saved <- framework::read_frameworkrc()
   expect_equal(saved$author$name, "Test User")
   expect_equal(saved$defaults$project_type, "project")
+})
+
+test_that("API /api/settings/save persists git hooks and use_git flags", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # First save: enable git and specific hooks
+  framework::configure_global(settings = list(
+    defaults = list(
+      use_git = TRUE,
+      git_hooks = list(
+        ai_sync = TRUE,
+        data_security = FALSE,
+        check_sensitive_dirs = TRUE
+      )
+    )
+  ), validate = TRUE)
+
+  saved <- framework::read_frameworkrc()
+  expect_true(saved$defaults$use_git)
+  expect_true(saved$defaults$git_hooks$ai_sync)
+  expect_false(saved$defaults$git_hooks$data_security)
+  expect_true(saved$defaults$git_hooks$check_sensitive_dirs)
+
+  # Second save: disable git and flip hooks
+  framework::configure_global(settings = list(
+    defaults = list(
+      use_git = FALSE,
+      git_hooks = list(
+        ai_sync = FALSE,
+        data_security = TRUE,
+        check_sensitive_dirs = FALSE
+      )
+    )
+  ), validate = TRUE)
+
+  saved <- framework::read_frameworkrc()
+  expect_false(saved$defaults$use_git)
+  expect_false(saved$defaults$git_hooks$ai_sync)
+  expect_true(saved$defaults$git_hooks$data_security)
+  expect_false(saved$defaults$git_hooks$check_sensitive_dirs)
+})
+
+test_that("API /api/settings/save persists scaffold behavior settings", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  framework::configure_global(settings = list(
+    defaults = list(
+      scaffold = list(
+        source_all_functions = FALSE,
+        set_theme_on_scaffold = TRUE,
+        ggplot_theme = "theme_bw",
+        seed_on_scaffold = TRUE,
+        seed = "2024"
+      )
+    )
+  ), validate = TRUE)
+
+  saved <- framework::read_frameworkrc()
+  expect_false(saved$defaults$scaffold$source_all_functions)
+  expect_true(saved$defaults$scaffold$set_theme_on_scaffold)
+  expect_equal(saved$defaults$scaffold$ggplot_theme, "theme_bw")
+  expect_true(saved$defaults$scaffold$seed_on_scaffold)
+  expect_equal(saved$defaults$scaffold$seed, "2024")
+})
+
+test_that("API /api/settings/save persists AI assistant settings", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  framework::configure_global(settings = list(
+    defaults = list(
+      ai_support = FALSE,
+      ai_assistants = c("claude", "agents"),
+      ai_canonical_file = "AGENTS.md"
+    )
+  ), validate = TRUE)
+
+  saved <- framework::read_frameworkrc()
+  expect_false(saved$defaults$ai_support)
+  expect_equal(saved$defaults$ai_assistants, c("claude", "agents"))
+  expect_equal(saved$defaults$ai_canonical_file, "AGENTS.md")
+
+  # Flip back on and change canonical file
+  framework::configure_global(settings = list(
+    defaults = list(
+      ai_support = TRUE,
+      ai_assistants = c("claude"),
+      ai_canonical_file = "CLAUDE.md"
+    )
+  ), validate = TRUE)
+
+  saved <- framework::read_frameworkrc()
+  expect_true(saved$defaults$ai_support)
+  expect_equal(saved$defaults$ai_assistants, c("claude"))
+  expect_equal(saved$defaults$ai_canonical_file, "CLAUDE.md")
 })
 
 
@@ -78,7 +199,7 @@ test_that("API /api/settings/save validates extra_directories", {
   expect_true(result$success)
 
   # Verify extra_directories were saved
-  saved <- read_frameworkrc()
+  saved <- framework::read_frameworkrc()
   expect_equal(length(saved$project_types$project$extra_directories), 2)
   expect_equal(saved$project_types$project$extra_directories[[1]]$key, "inputs_archive")
 })
@@ -271,7 +392,7 @@ test_that("API /api/settings/save handles JSON array serialization correctly", {
   expect_true(result$success)
 
   # Verify it was saved correctly as an array
-  saved <- read_frameworkrc()
+  saved <- framework::read_frameworkrc()
   expect_equal(length(saved$project_types$project$extra_directories), 2)
   expect_true(is.list(saved$project_types$project$extra_directories))
 })
@@ -312,7 +433,7 @@ test_that("API /api/settings/save preserves extra_directories through updates", 
   framework::configure_global(settings = body2, validate = TRUE)
 
   # Verify extra_directories still exist
-  saved <- read_frameworkrc()
+  saved <- framework::read_frameworkrc()
   expect_equal(length(saved$project_types$project$extra_directories), 1)
   expect_equal(saved$project_types$project$extra_directories[[1]]$key, "test1")
   expect_equal(saved$author$name, "Updated User")
