@@ -71,6 +71,30 @@ const projectSettingsFixture = {
   packages: {
     use_renv: true,
     default_packages: [{ name: 'dplyr', source: 'cran', auto_attach: true }]
+  },
+  connections: {
+    default_database: 'warehouse',
+    default_storage_bucket: 's3_bucket',
+    databases: {
+      warehouse: {
+        driver: 'postgres',
+        host: 'localhost',
+        port: '5432',
+        database: 'analytics',
+        schema: 'public',
+        user: 'analyst',
+        password: 'secret'
+      }
+    },
+    storage_buckets: {
+      s3_bucket: {
+        bucket: 'my-bucket',
+        region: 'us-east-1',
+        endpoint: 'https://s3.amazonaws.com',
+        access_key: 'abc',
+        secret_key: 'xyz'
+      }
+    }
   }
 }
 
@@ -104,6 +128,9 @@ const mockFetch = () =>
     }
     if (pathname.includes('/api/project/1/env')) {
       return new Response(JSON.stringify(projectEnvFixture), { status: 200 })
+    }
+    if (pathname.includes('/api/project/1/connections')) {
+      return new Response(JSON.stringify(projectSettingsFixture.connections), { status: 200 })
     }
     if (pathname.includes('/api/project/1/settings')) {
       return new Response(JSON.stringify({ settings: projectSettingsFixture }), { status: 200 })
@@ -189,5 +216,17 @@ describe('Project Detail UI smoke (data ↔ UI)', () => {
     const envLink = await screen.findByText('.env Defaults')
     await envLink.click()
     expect(await screen.findByDisplayValue('localhost')).toBeTruthy()
+  })
+
+  it('renders Connections tab with databases and storage buckets', async () => {
+    await renderPage()
+    const [connectionsLink] = await screen.findAllByText('Connections')
+    await connectionsLink.click()
+    // Database connection name and driver-specific field
+    expect(await screen.findByDisplayValue('warehouse')).toBeTruthy()
+    expect(await screen.findByDisplayValue('analytics')).toBeTruthy()
+    // S3 bucket name and bucket field
+    expect(await screen.findByDisplayValue('s3_bucket')).toBeTruthy()
+    expect(await screen.findByDisplayValue('my-bucket')).toBeTruthy()
   })
 })

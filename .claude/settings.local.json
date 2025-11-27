@@ -85,7 +85,8 @@
       "mcp__plugin_claude-mem_claude-mem-search__find_by_type",
       "Bash(npm test:*)",
       "Bash(kill:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(NOT_CRAN=true Rscript:*)"
     ],
     "deny": [],
     "ask": []
