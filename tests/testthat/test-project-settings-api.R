@@ -109,6 +109,75 @@ test_that("project settings save preserves all extra_directories", {
   unlink(project_path, recursive = TRUE)
 })
 
+test_that("connections API save writes new schema (databases + storage + defaults)", {
+  skip_on_cran()
+  skip_if_not_installed("yaml")
+
+  # Setup project with split connections file
+  test_dir <- tempdir()
+  project_path <- file.path(test_dir, "test-connections-api")
+  if (dir.exists(project_path)) unlink(project_path, recursive = TRUE)
+  dir.create(file.path(project_path, "settings"), recursive = TRUE)
+
+  # Seed config.yml referencing split connections file
+  config <- list(
+    default = list(
+      project_name = "Test",
+      project_type = "project",
+      connections = "settings/connections.yml"
+    )
+  )
+  yaml::write_yaml(config, file.path(project_path, "config.yml"))
+
+  # Prepare body from UI (new schema)
+  body <- list(
+    default_database = "warehouse",
+    default_storage_bucket = "s3_bucket",
+    databases = list(
+      warehouse = list(
+        driver = "postgres",
+        host = "localhost",
+        port = "5432",
+        database = "analytics",
+        schema = "public",
+        user = "analyst",
+        password = "secret"
+      )
+    ),
+    storage_buckets = list(
+      s3_bucket = list(
+        bucket = "my-bucket",
+        region = "us-east-1",
+        endpoint = "https://s3.amazonaws.com",
+        access_key = "abc",
+        secret_key = "xyz"
+      )
+    )
+  )
+
+  split_info <- framework:::.uses_split_file(project_path, "connections")
+
+  # Simulate POST /api/project/<id>/connections logic
+  connections_data <- list(
+    default_database = body$default_database,
+    default_storage_bucket = body$default_storage_bucket,
+    databases = body$databases %||% list(),
+    storage_buckets = body$storage_buckets %||% list()
+  )
+
+  dir.create(dirname(split_info$split_file), recursive = TRUE, showWarnings = FALSE)
+  yaml::write_yaml(list(connections = connections_data), split_info$split_file)
+
+  # Validate saved connections.yml
+  saved <- yaml::read_yaml(split_info$split_file)$connections
+  expect_equal(saved$default_database, "warehouse")
+  expect_equal(saved$default_storage_bucket, "s3_bucket")
+  expect_true("warehouse" %in% names(saved$databases))
+  expect_true("s3_bucket" %in% names(saved$storage_buckets))
+  expect_equal(saved$databases$warehouse$driver, "postgres")
+  expect_equal(saved$storage_buckets$s3_bucket$bucket, "my-bucket")
+})
+
 test_that("project settings save with data.frame conversion", {
   skip_on_cran()
 

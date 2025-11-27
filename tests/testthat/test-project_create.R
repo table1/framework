@@ -64,6 +64,62 @@ test_that("project_create creates basic project structure", {
   expect_true("framework" %in% names(connections_yaml$connections))
 })
 
+test_that("project_create persists provided connections (db + storage) with defaults", {
+  skip_if_not_installed("yaml")
+  skip_on_cran()
+
+  test_root <- tempfile("framework_conn_")
+  dir.create(test_root)
+  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+
+  conn_config <- list(
+    default_database = "warehouse",
+    default_storage_bucket = "s3_bucket",
+    databases = list(
+      warehouse = list(
+        driver = "postgres",
+        host = "localhost",
+        port = "5432",
+        database = "analytics",
+        schema = "public",
+        user = "analyst",
+        password = "secret"
+      )
+    ),
+    storage_buckets = list(
+      s3_bucket = list(
+        bucket = "my-bucket",
+        region = "us-east-1",
+        endpoint = "https://s3.amazonaws.com",
+        access_key = "abc",
+        secret_key = "xyz"
+      )
+    )
+  )
+
+  result <- project_create(
+    name = "conn_project",
+    location = test_root,
+    type = "project",
+    connections = conn_config,
+    git = list(use_git = FALSE)
+  )
+
+  expect_true(result$success)
+
+  connections_path <- file.path(result$path, "settings/connections.yml")
+  expect_true(file.exists(connections_path))
+  connections_yaml <- yaml::read_yaml(connections_path)
+
+  # New schema should persist untouched (databases + storage + defaults)
+  expect_equal(connections_yaml$default_database, "warehouse")
+  expect_equal(connections_yaml$default_storage_bucket, "s3_bucket")
+  expect_true("warehouse" %in% names(connections_yaml$databases))
+  expect_true("s3_bucket" %in% names(connections_yaml$storage_buckets))
+  expect_equal(connections_yaml$databases$warehouse$driver, "postgres")
+  expect_equal(connections_yaml$storage_buckets$s3_bucket$bucket, "my-bucket")
+})
+
 test_that("project_create handles packages configuration", {
   skip_if_not_installed("yaml")
   skip_on_cran()

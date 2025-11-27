@@ -325,6 +325,10 @@ import {
   normalizeDefaultPackages,
   mapProjectPackagesToPayload
 } from '../utils/packageHelpers'
+import {
+  mapConnectionsToArrays,
+  mapConnectionsToPayload
+} from '../utils/connectionHelpers'
 import { useToast } from '../composables/useToast'
 import {
   InformationCircleIcon,
@@ -580,6 +584,15 @@ onMounted(async () => {
         project.value.git.user_email = globalSettings.value.git?.user_email || ''
         if (globalSettings.value.defaults?.git_hooks) {
           project.value.git.hooks = { ...globalSettings.value.defaults.git_hooks }
+        }
+
+        // Load default connections (databases + S3) from Framework defaults
+        if (globalSettings.value.defaults?.connections) {
+          const mappedConnections = mapConnectionsToArrays(globalSettings.value.defaults.connections)
+          project.value.connections.databaseConnections = mappedConnections.databaseConnections
+          project.value.connections.s3Connections = mappedConnections.s3Connections
+          project.value.connections.defaultDatabase = mappedConnections.defaultDatabase
+          project.value.connections.defaultStorageBucket = mappedConnections.defaultStorageBucket
         }
 
         // Load .env defaults from Framework Project Defaults
@@ -844,6 +857,33 @@ const envVariableCount = computed(() => {
   const variables = project.value.env?.variables || {}
   return Object.keys(variables).length
 })
+
+// Auto-select default connections when only one remains, or clear if deleted
+watch(() => project.value.connections.databaseConnections, (connections) => {
+  const currentDefault = project.value.connections.defaultDatabase
+  const stillExists = connections.some((c) => c.name === currentDefault)
+  if (connections.length === 1) {
+    const first = connections[0]
+    if (first?.name && first.name !== 'framework_db') {
+      project.value.connections.defaultDatabase = first.name
+    }
+  } else if (currentDefault && !stillExists) {
+    project.value.connections.defaultDatabase = null
+  }
+}, { deep: true })
+
+watch(() => project.value.connections.s3Connections, (connections) => {
+  const currentDefault = project.value.connections.defaultStorageBucket
+  const stillExists = connections.some((c) => c.name === currentDefault)
+  if (connections.length === 1) {
+    const first = connections[0]
+    if (first?.name) {
+      project.value.connections.defaultStorageBucket = first.name
+    }
+  } else if (currentDefault && !stillExists) {
+    project.value.connections.defaultStorageBucket = null
+  }
+}, { deep: true })
 
 // Overview data for OverviewSummary component
 const overviewCards = computed(() => {
@@ -1391,16 +1431,11 @@ const createProject = async () => {
     }
 
     // Convert connections arrays to nested object structure for saving
-    const databases = {}
-    project.value.connections.databaseConnections.forEach(conn => {
-      const { _id, name, ...fields } = conn
-      databases[name] = fields
-    })
-
-    const storage_buckets = {}
-    project.value.connections.s3Connections.forEach(conn => {
-      const { _id, name, ...fields } = conn
-      storage_buckets[name] = fields
+    const connectionsPayload = mapConnectionsToPayload({
+      databaseConnections: project.value.connections.databaseConnections,
+      s3Connections: project.value.connections.s3Connections,
+      defaultDatabase: project.value.connections.defaultDatabase,
+      defaultStorageBucket: project.value.connections.defaultStorageBucket
     })
 
     // Build request payload matching v2 structure
@@ -1414,12 +1449,7 @@ const createProject = async () => {
       packages: mapProjectPackagesToPayload(project.value.packages),
       ai: project.value.ai,
       git: project.value.git,
-      connections: {
-        default_database: project.value.connections.defaultDatabase,
-        default_storage_bucket: project.value.connections.defaultStorageBucket,
-        databases,
-        storage_buckets
-      },
+      connections: connectionsPayload,
       env: {
         raw: project.value.env.rawContent || ''
       },

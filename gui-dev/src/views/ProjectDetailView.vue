@@ -852,6 +852,10 @@ import {
   mapProjectPackagesToPayload
 } from '../utils/packageHelpers'
 import {
+  mapConnectionsToArrays,
+  mapConnectionsToPayload
+} from '../utils/connectionHelpers'
+import {
   InformationCircleIcon,
   UserIcon,
   Cog6ToothIcon,
@@ -1018,6 +1022,33 @@ const envOverviewText = computed(() => {
     : 'No variables defined'
 })
 
+// Auto-manage default connections when only one exists or default is removed
+watch(databaseConnections, (connections) => {
+  const current = defaultDatabase.value
+  const exists = connections.some(c => c.name === current)
+  if (connections.length === 1) {
+    const first = connections[0]
+    if (first?.name && first.name !== 'framework_db') {
+      defaultDatabase.value = first.name
+    }
+  } else if (current && !exists) {
+    defaultDatabase.value = null
+  }
+}, { deep: true })
+
+watch(s3Connections, (connections) => {
+  const current = defaultStorageBucket.value
+  const exists = connections.some(c => c.name === current)
+  if (connections.length === 1) {
+    const first = connections[0]
+    if (first?.name) {
+      defaultStorageBucket.value = first.name
+    }
+  } else if (current && !exists) {
+    defaultStorageBucket.value = null
+  }
+}, { deep: true })
+
 // Overview data for OverviewSummary component
 const overviewCards = computed(() => {
   const name = basicsOverview.value.name
@@ -1125,8 +1156,8 @@ const initializeSection = () => {
 watch(activeSection, (newSection) => {
   router.replace({ query: { ...route.query, section: newSection } })
 
-  // Load settings when Settings or Basics section is activated
-  if ((newSection === 'settings' || newSection === 'basics' || newSection === 'scaffold') && !projectSettings.value) {
+  // Load settings when Settings, Basics, Scaffold, or Connections section is activated
+  if ((newSection === 'settings' || newSection === 'basics' || newSection === 'scaffold' || newSection === 'connections') && !projectSettings.value) {
     loadProjectSettings()
   }
 
@@ -1808,6 +1839,25 @@ const loadDataCatalog = async () => {
   }
 }
 
+const hasAnyConnections = (connectionsConfig = {}) => {
+  const dbs = connectionsConfig.databases || {}
+  const buckets = connectionsConfig.storage_buckets || {}
+  return Boolean(
+    Object.keys(dbs).length ||
+    Object.keys(buckets).length ||
+    connectionsConfig.default_database ||
+    connectionsConfig.default_storage_bucket
+  )
+}
+
+const hydrateConnectionsFromConfig = (connectionsConfig = {}) => {
+  const mapped = mapConnectionsToArrays(connectionsConfig || {})
+  databaseConnections.value = mapped.databaseConnections
+  s3Connections.value = mapped.s3Connections
+  defaultDatabase.value = mapped.defaultDatabase
+  defaultStorageBucket.value = mapped.defaultStorageBucket
+}
+
 const loadProjectSettings = async () => {
   settingsLoading.value = true
   settingsError.value = null
@@ -1847,6 +1897,11 @@ const loadProjectSettings = async () => {
           notebook_format: 'quarto',
           positron: false
         }
+      }
+
+      // Hydrate connections from project settings (fallback when /connections endpoint is unavailable)
+      if (data.settings?.connections) {
+        hydrateConnectionsFromConfig(data.settings.connections)
       }
     }
   } catch (err) {
@@ -1995,31 +2050,22 @@ const scrollToEnvSection = () => {
 
 // DISABLED - connections removed
 const loadConnections = async () => {
+  // Prefer cached project settings when available
+  if (projectSettings.value?.connections) {
+    hydrateConnectionsFromConfig(projectSettings.value.connections)
+  }
+
   try {
     const response = await fetch(`/api/project/${route.params.id}/connections`)
     const data = await response.json()
 
     if (data.error) {
       console.error('Failed to load connections:', data.error)
-    } else {
-      // Convert databases object to array for Repeater
-      const dbArray = Object.entries(data.databases || {}).map(([name, conn]) => ({
-        _id: name,
-        name,
-        ...conn
-      }))
-
-      // Convert storage_buckets object to array for Repeater
-      const s3Array = Object.entries(data.storage_buckets || {}).map(([name, conn]) => ({
-        _id: name,
-        name,
-        ...conn
-      }))
-
-      databaseConnections.value = dbArray
-      s3Connections.value = s3Array
-      defaultDatabase.value = data.default_database || null
-      defaultStorageBucket.value = data.default_storage_bucket || null
+    } else if (hasAnyConnections(data)) {
+      hydrateConnectionsFromConfig(data)
+      if (projectSettings.value) {
+        projectSettings.value.connections = data
+      }
     }
   } catch (err) {
     console.error('Failed to load connections:', err.message)
@@ -2168,34 +2214,26 @@ const saveConnections = async () => {
   savingConnections.value = true
 
   try {
-    // Convert arrays to nested object structure for YAML storage
-    const databases = {}
-    databaseConnections.value.forEach(conn => {
-      const { _id, name, ...fields } = conn
-      databases[name] = fields
-    })
-
-    const storage_buckets = {}
-    s3Connections.value.forEach(conn => {
-      const { _id, name, ...fields } = conn
-      storage_buckets[name] = fields
+    const payload = mapConnectionsToPayload({
+      databaseConnections: databaseConnections.value,
+      s3Connections: s3Connections.value,
+      defaultDatabase: defaultDatabase.value,
+      defaultStorageBucket: defaultStorageBucket.value
     })
 
     const response = await fetch(`/api/project/${route.params.id}/connections`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        default_database: defaultDatabase.value,
-        default_storage_bucket: defaultStorageBucket.value,
-        databases,
-        storage_buckets
-      })
+      body: JSON.stringify(payload)
     })
 
     const result = await response.json()
 
     if (result.success) {
       toast.success('Connections Saved', 'Connection configuration has been updated')
+      if (projectSettings.value) {
+        projectSettings.value.connections = payload
+      }
     } else {
       toast.error('Save Failed', result.error || 'Failed to save connections')
     }
