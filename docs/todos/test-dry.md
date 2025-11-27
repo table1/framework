@@ -13,5 +13,5 @@ Test & DRY Checklist
 - AI Assistants — Tests [x] | DRY [x]
 - Scaffold Behavior — Tests [x] | DRY [x]
 - Templates — Tests [x] | DRY [x] (global only - correct design)
-- .env Defaults — Tests [ ] | DRY [ ]
-- Connections — Tests [ ] | DRY [ ]
+- .env Defaults — Tests [x] | DRY [x]
+- Connections — Tests [x] | DRY [x]

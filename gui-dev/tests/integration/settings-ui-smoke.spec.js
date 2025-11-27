@@ -70,7 +70,7 @@ const settingsFixture = {
       data_security: false,
       check_sensitive_dirs: false
     },
-    env: { raw: '' }
+    env: { raw: 'API_KEY=12345\nLOG_LEVEL=info' }
   },
   project_types: catalogFixture.project_types
 }
@@ -188,5 +188,12 @@ describe('Settings UI smoke', () => {
     expect(initToggleInput).toBeChecked()
     await fireEvent.click(initToggleInput)
     await waitFor(() => expect(initToggleInput).not.toBeChecked())
+  })
+
+  it('renders .env Defaults and shows raw content', async () => {
+    await renderSettings('/settings/env')
+    // Grouped view shows variable names
+    expect(await screen.findByDisplayValue('API_KEY')).toBeTruthy()
+    expect(await screen.findByDisplayValue('LOG_LEVEL')).toBeTruthy()
   })
 })

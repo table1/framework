@@ -84,16 +84,32 @@ const settingsFixture = {
       seed_on_scaffold: false,
       seed: ''
     },
-    packages: {
-      use_renv: true,
-      default_packages: [{ name: 'dplyr', source: 'cran', auto_attach: true }]
-    },
+    use_renv: true,
+    default_packages: [{ name: 'dplyr', source: 'cran', auto_attach: true }],
     git_hooks: {
       ai_sync: false,
       data_security: false,
       check_sensitive_dirs: false
     },
-    env: { raw: '' }
+    env: { raw: '' },
+    connections: {
+      default_database: 'warehouse',
+      default_storage_bucket: 's3_bucket',
+      databases: {
+        warehouse: {
+          driver: 'postgres',
+          host: 'localhost',
+          port: '5432',
+          database: 'analytics'
+        }
+      },
+      storage_buckets: {
+        s3_bucket: {
+          bucket: 'my-bucket',
+          region: 'us-east-1'
+        }
+      }
+    }
   },
   project_types: catalogFixture.project_types
 }
