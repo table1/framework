@@ -86,10 +86,10 @@ const toScalar = (value, fallback = '') => {
 
 const normalize = () => ({
   source_all_functions: props.modelValue?.source_all_functions ?? true,
-  set_theme_on_scaffold: props.modelValue?.set_theme_on_scaffold ?? true,
+  set_theme_on_scaffold: props.modelValue?.set_theme_on_scaffold ?? false,
   ggplot_theme: props.modelValue?.ggplot_theme ?? 'theme_minimal',
   seed_on_scaffold: props.modelValue?.seed_on_scaffold ?? false,
-  seed: toScalar(props.modelValue?.seed, '')
+  seed: toScalar(props.modelValue?.seed, '123')
 })
 
 const state = computed(normalize)

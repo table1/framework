@@ -56,7 +56,7 @@
           @update:model-value="update('html', 'toc_depth', parseInt($event) || 3)"
           label="TOC depth"
           min="1"
-          max="6"
+          max="5"
         />
 
         <!-- Code Options -->

@@ -25,8 +25,8 @@ defaults:
   # Scaffold Behavior (runtime settings)
   scaffold:
     seed_on_scaffold: false              # Automatically set seed when scaffold() runs
-    seed: ""                             # Default random seed (e.g., "20241107")
-    set_theme_on_scaffold: true          # Set ggplot2 theme when scaffold() runs
+    seed: "123"                          # Default random seed (e.g., "20241107")
+    set_theme_on_scaffold: false         # Set ggplot2 theme when scaffold() runs
     ggplot_theme: "theme_minimal"        # ggplot2 theme
     source_all_functions: true           # Source all R files from functions/ directory
     notebook_format: "quarto"            # quarto or rmarkdown

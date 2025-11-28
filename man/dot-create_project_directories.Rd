@@ -4,7 +4,12 @@
 \alias{.create_project_directories}
 \title{Create project subdirectories}
 \usage{
-.create_project_directories(project_dir, directories, extra_directories)
+.create_project_directories(
+  project_dir,
+  directories,
+  extra_directories,
+  render_dirs = NULL
+)
 }
 \description{
 Create project subdirectories

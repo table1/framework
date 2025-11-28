@@ -650,7 +650,7 @@
     <div v-if="!isPresentationProject && !isCourseProject && utilityFields.length > 0" :id="`section-utility`">
       <SettingsPanel
         title="Utility"
-        description="Cache, scratch space, and other temporary directories (gitignored by default)."
+        description="Scratch space and other temporary directories (gitignored by default). Cache is always created on first use."
       >
         <div class="space-y-5">
           <div v-for="field in utilityFields" :key="field.key" class="space-y-1.5">
@@ -853,8 +853,8 @@ const outputFallback = [
   { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
+// Note: Cache is always lazy-created and not configurable (uses FW_CACHE_DIR env var or default)
 const utilityFallback = [
-  { key: 'cache', label: 'Cache', hint: 'Temporary artifacts (gitignored).' },
   { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
 ]
 

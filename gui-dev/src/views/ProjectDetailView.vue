@@ -15,7 +15,7 @@
         <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ project.name }}</h2>
         <div class="flex items-center gap-2">
           <span class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{{ project.path }}</span>
-          <CopyButton :value="project.path" variant="ghost" successMessage="Path copied" class="shrink-0" />
+          <CopyButton :value="project.path" successMessage="Path copied" class="shrink-0" />
         </div>
       </div>
 
@@ -66,6 +66,14 @@
         >
           <SparklesIcon class="h-4 w-4" />
           AI Assistants
+        </a>
+        <a
+          href="#quarto"
+          @click.prevent="activeSection = 'quarto'"
+          :class="getSidebarLinkClasses('quarto')"
+        >
+          <DocumentTextIcon class="h-4 w-4" />
+          Quarto
         </a>
 
         <a
@@ -147,11 +155,11 @@
         <Button
           variant="primary"
           @click="saveCurrentSection"
-          :disabled="saving || savingPackages || savingEnv || savingAI || savingGit || savingConnections"
+          :disabled="saving || savingPackages || savingEnv || savingAI || savingGit || savingConnections || savingQuartoFiles || savingQuartoDefaults"
           class="w-full"
         >
           {{
-            (saving || savingPackages || savingEnv || savingAI || savingGit || savingConnections)
+            (saving || savingPackages || savingEnv || savingAI || savingGit || savingConnections || savingQuartoFiles || savingQuartoDefaults)
               ? 'Saving...'
               : 'Save'
           }}
@@ -252,29 +260,6 @@
               <!-- Author Information Subheading -->
               <div v-if="editableSettings.author" class="pt-6 border-t border-gray-200 dark:border-gray-700">
                 <AuthorInformationPanel v-model="editableSettings.author" />
-              </div>
-
-              <!-- Quarto Configuration -->
-              <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  Quarto Configuration
-                </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  _quarto.yml files control rendering settings for notebooks and documents.
-                </p>
-                <Alert
-                  type="warning"
-                  description="This will overwrite all _quarto.yml files in your project. Existing files will be backed up to .quarto_backups/ before regeneration."
-                  class="mb-4"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  @click="regenerateQuartoConfigs"
-                  :disabled="regeneratingQuarto"
-                >
-                  {{ regeneratingQuarto ? 'Regenerating...' : 'Regenerate Quarto Configs' }}
-                </Button>
               </div>
             </div>
           </div>
@@ -526,6 +511,76 @@
               />
             </template>
           </AIAssistantsPanel>
+        </div>
+      </div>
+
+      <!-- Quarto Section -->
+      <div v-show="activeSection === 'quarto'" id="quarto">
+        <div v-if="loadingQuartoFiles">
+          <div class="text-center py-12 text-sm text-gray-500 dark:text-gray-400">Loading Quarto files...</div>
+        </div>
+
+        <div v-else>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Quarto</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Edit project _quarto.yml files and default rendering options.
+          </p>
+
+          <!-- File Editor Section -->
+          <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50 space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Configuration File
+              </label>
+              <select
+                v-model="selectedQuartoFileKey"
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+              >
+                <option v-for="file in quartoFiles" :key="file.key" :value="file.key">
+                  {{ file.label }} — {{ file.path }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="selectedQuartoFile" class="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <CodeEditor
+                v-model="selectedQuartoFileContent"
+                language="yaml"
+                :auto-grow="true"
+                class="min-h-[300px] w-full"
+              />
+            </div>
+            <div v-else class="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
+              No Quarto files detected for this project.
+            </div>
+          </div>
+
+          <!-- Quarto Defaults Section -->
+          <div class="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Quarto Defaults</h3>
+            <QuartoSettingsPanel v-model="projectQuartoDefaults" flush />
+          </div>
+
+          <!-- Regenerate Section -->
+          <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">Regenerate Configurations</h3>
+                <p class="text-sm text-amber-800 dark:text-amber-200">
+                  Overwrite all _quarto.yml files using current settings. Existing files are backed up to <code class="px-1 py-0.5 bg-amber-100 dark:bg-amber-800 rounded text-xs">.quarto_backups/</code>.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                @click="regenerateQuartoConfigs"
+                :disabled="regeneratingQuarto"
+                class="shrink-0"
+              >
+                {{ regeneratingQuarto ? 'Regenerating...' : 'Regenerate' }}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -844,6 +899,7 @@ import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
+import QuartoSettingsPanel from '../components/settings/QuartoSettingsPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
 import { buildGitPanelModel, applyGitPanelModel } from '../utils/gitHelpers'
 import { hydrateStructureFromProjectSettings, serializeStructureForSave } from '../utils/structureMapping'
@@ -881,7 +937,7 @@ const project = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeSection = ref('overview')
-const VALID_SECTIONS = ['overview', 'basics', 'settings', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
+const VALID_SECTIONS = ['overview', 'basics', 'settings', 'quarto', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
 
 const dataCatalog = ref(null)
 const dataSearch = ref('')
@@ -901,6 +957,37 @@ const settingsError = ref(null)
 const newExtraIds = ref(new Set())
 const saving = ref(false)
 const regeneratingQuarto = ref(false)
+const savingQuartoDefaults = ref(false)
+const quartoFiles = ref([])
+const originalQuartoContents = ref({}) // Track original file contents for diff
+const originalQuartoDefaults = ref(null) // Track original defaults for diff
+const selectedQuartoFileKey = ref(null)
+const loadingQuartoFiles = ref(false)
+const savingQuartoFiles = ref(false)
+const projectQuartoDefaults = ref({
+  html: {
+    format: 'html',
+    embed_resources: true,
+    theme: 'default',
+    toc: true,
+    toc_depth: 3,
+    code_fold: false,
+    code_tools: false,
+    highlight_style: 'github'
+  },
+  revealjs: {
+    format: 'revealjs',
+    theme: 'default',
+    incremental: false,
+    slide_number: true,
+    transition: 'slide',
+    background_transition: 'fade',
+    controls: true,
+    progress: true,
+    center: true,
+    highlight_style: 'github'
+  }
+})
 const gitSettings = ref({
   initialize: true,
   user_name: '',
@@ -1476,8 +1563,9 @@ const outputDirectories = computed(() => {
   const dirs = editableSettings.value.directories || {}
   const outputs = {}
 
+  // Note: cache is excluded - it's always lazy-created and not user-configurable
   Object.keys(dirs).forEach(key => {
-    if ((key.startsWith('outputs_') || key.includes('_figures') || key.includes('_tables') || key.includes('_models') || key.includes('_reports') || key === 'cache' || key === 'scratch') && !key.startsWith('inputs_')) {
+    if ((key.startsWith('outputs_') || key.includes('_figures') || key.includes('_tables') || key.includes('_models') || key.includes('_reports') || key === 'scratch') && !key.startsWith('inputs_') && key !== 'cache') {
       outputs[key] = dirs[key]
     }
   })
@@ -1890,6 +1978,8 @@ const loadProjectSettings = async () => {
         extra_directories: hydrated.extra_directories,
         enabled: hydrated.enabled
       }
+      // Load Quarto defaults for editing
+      loadQuartoDefaults(editableSettings.value.quarto)
 
       // Ensure scaffold object exists with defaults
       if (!editableSettings.value.scaffold) {
@@ -1902,6 +1992,11 @@ const loadProjectSettings = async () => {
       // Hydrate connections from project settings (fallback when /connections endpoint is unavailable)
       if (data.settings?.connections) {
         hydrateConnectionsFromConfig(data.settings.connections)
+      }
+
+      // Load Quarto defaults from project settings if present
+      if (data.settings?.quarto) {
+        loadQuartoDefaults(data.settings.quarto)
       }
     }
   } catch (err) {
@@ -1931,6 +2026,9 @@ const saveCurrentSection = async () => {
       break
     case 'ai':
       await saveAISettings()
+      break
+    case 'quarto':
+      await saveQuartoSection()
       break
     case 'env':
       await saveEnv()
@@ -1988,12 +2086,11 @@ const saveSettings = async () => {
       directories: serialized.directories,
       render_dirs: serialized.render_dirs,
       enabled: serialized.enabled,
-      extra_directories: serialized.extra_directories
+      extra_directories: serialized.extra_directories,
+      quarto: projectQuartoDefaults.value
     }
 
     console.log('[DEBUG] Saving settings with extra_directories:', settingsToSave.extra_directories)
-    console.log('[DEBUG] Cleaned enabled state:', cleanedEnabled)
-    console.log('[DEBUG] Removed invalid keys:', Object.keys(editableSettings.value.enabled).filter(k => !validKeys.has(k)))
 
     const response = await fetch(`/api/project/${route.params.id}/settings`, {
       method: 'POST',
@@ -2659,6 +2756,186 @@ const saveEnv = async () => {
   }
 }
 
+const selectedQuartoFile = computed(() => {
+  const files = quartoFiles.value || []
+  if (!files.length) return null
+  return files.find((f) => f.key === selectedQuartoFileKey.value) || files[0]
+})
+
+const selectedQuartoFileContent = computed({
+  get: () => selectedQuartoFile.value?.contents || '',
+  set: (val) => {
+    const file = selectedQuartoFile.value
+    if (file) file.contents = val
+  }
+})
+
+const loadQuartoDefaults = (settingsPayload) => {
+  const defaults = settingsPayload?.quarto
+  if (!defaults) return
+  projectQuartoDefaults.value = {
+    html: {
+      format: 'html',
+      embed_resources: defaults.html?.embed_resources ?? true,
+      theme: defaults.html?.theme ?? 'default',
+      toc: defaults.html?.toc ?? true,
+      toc_depth: defaults.html?.toc_depth ?? 3,
+      code_fold: defaults.html?.code_fold ?? false,
+      code_tools: defaults.html?.code_tools ?? false,
+      highlight_style: defaults.html?.highlight_style ?? 'github'
+    },
+    revealjs: {
+      format: 'revealjs',
+      theme: defaults.revealjs?.theme ?? 'default',
+      incremental: defaults.revealjs?.incremental ?? false,
+      slide_number: defaults.revealjs?.slide_number ?? true,
+      transition: defaults.revealjs?.transition ?? 'slide',
+      background_transition: defaults.revealjs?.background_transition ?? 'fade',
+      controls: defaults.revealjs?.controls ?? true,
+      progress: defaults.revealjs?.progress ?? true,
+      center: defaults.revealjs?.center ?? true,
+      highlight_style: defaults.revealjs?.highlight_style ?? 'github'
+    }
+  }
+  // Store original for diff-before-save
+  originalQuartoDefaults.value = JSON.parse(JSON.stringify(projectQuartoDefaults.value))
+}
+
+const loadQuartoFiles = async () => {
+  loadingQuartoFiles.value = true
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/quarto/files`)
+    const data = await response.json()
+    if (data.error) {
+      throw new Error(data.error)
+    }
+    quartoFiles.value = data.files || []
+    // Store original contents for diff-before-save
+    originalQuartoContents.value = {}
+    for (const file of quartoFiles.value) {
+      originalQuartoContents.value[file.key] = file.contents || ''
+    }
+    if (quartoFiles.value.length > 0 && !selectedQuartoFileKey.value) {
+      selectedQuartoFileKey.value = quartoFiles.value[0].key
+    }
+  } catch (err) {
+    toast.error('Failed to load Quarto configs', err.message)
+  } finally {
+    loadingQuartoFiles.value = false
+  }
+}
+
+const saveSelectedQuartoFile = async () => {
+  const file = selectedQuartoFile.value
+  if (!file) return
+
+  savingQuartoFiles.value = true
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/quarto/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: [file] })
+    })
+    const result = await response.json()
+    if (result.success) {
+      toast.success('Quarto File Saved', 'Quarto configuration saved to project')
+    } else {
+      toast.error('Save Failed', result.error || 'Failed to save Quarto configuration')
+    }
+  } catch (err) {
+    toast.error('Save Failed', err.message)
+  } finally {
+    savingQuartoFiles.value = false
+  }
+}
+
+const saveQuartoDefaults = async () => {
+  savingQuartoDefaults.value = true
+  try {
+    // Reuse settings save to persist quarto defaults
+    await saveSettings()
+    toast.success('Quarto Defaults Saved', 'Defaults saved to project settings')
+  } catch (err) {
+    toast.error('Save Failed', err.message)
+  } finally {
+    savingQuartoDefaults.value = false
+  }
+}
+
+// Save all Quarto settings (files and defaults) with diff-before-save
+const saveQuartoSection = async () => {
+  let savedFiles = false
+  let savedDefaults = false
+  let hasChanges = false
+
+  // Check and save changed Quarto files
+  const changedFiles = quartoFiles.value.filter((file) => {
+    const original = originalQuartoContents.value[file.key] || ''
+    return file.contents !== original
+  })
+
+  if (changedFiles.length > 0) {
+    hasChanges = true
+    savingQuartoFiles.value = true
+    try {
+      const response = await fetch(`/api/project/${route.params.id}/quarto/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: changedFiles })
+      })
+      const result = await response.json()
+      if (result.success) {
+        savedFiles = true
+        // Update originals after successful save
+        for (const file of changedFiles) {
+          originalQuartoContents.value[file.key] = file.contents
+        }
+      } else {
+        toast.error('Save Failed', result.error || 'Failed to save Quarto files')
+        savingQuartoFiles.value = false
+        return
+      }
+    } catch (err) {
+      toast.error('Save Failed', err.message)
+      savingQuartoFiles.value = false
+      return
+    }
+    savingQuartoFiles.value = false
+  }
+
+  // Check and save changed Quarto defaults
+  const defaultsChanged =
+    originalQuartoDefaults.value &&
+    JSON.stringify(projectQuartoDefaults.value) !== JSON.stringify(originalQuartoDefaults.value)
+
+  if (defaultsChanged) {
+    hasChanges = true
+    savingQuartoDefaults.value = true
+    try {
+      await saveSettings()
+      savedDefaults = true
+      // Update original after successful save
+      originalQuartoDefaults.value = JSON.parse(JSON.stringify(projectQuartoDefaults.value))
+    } catch (err) {
+      toast.error('Save Failed', err.message)
+      savingQuartoDefaults.value = false
+      return
+    }
+    savingQuartoDefaults.value = false
+  }
+
+  // Show appropriate feedback
+  if (!hasChanges) {
+    toast.info('No Changes', 'No changes detected in Quarto settings')
+  } else if (savedFiles && savedDefaults) {
+    toast.success('Quarto Saved', 'Files and defaults saved successfully')
+  } else if (savedFiles) {
+    toast.success('Quarto Files Saved', `${changedFiles.length} file(s) saved`)
+  } else if (savedDefaults) {
+    toast.success('Quarto Defaults Saved', 'Defaults saved to project settings')
+  }
+}
+
 const regenerateQuartoConfigs = async () => {
   regeneratingQuarto.value = true
 
@@ -2676,6 +2953,7 @@ const regenerateQuartoConfigs = async () => {
         'Quarto Configs Regenerated',
         result.message + (result.backup_location ? `\n\nBackup: ${result.backup_location}` : '')
       )
+      await loadQuartoFiles()
     } else {
       toast.error('Regeneration Failed', result.error || 'Failed to regenerate Quarto configurations')
     }
@@ -2686,26 +2964,56 @@ const regenerateQuartoConfigs = async () => {
   }
 }
 
+// Save all pending changes across all sections
+const saveAll = async () => {
+  const saves = []
+
+  // Settings covers: settings, scaffold, directories
+  if (editableSettings.value && Object.keys(editableSettings.value).length > 0) {
+    saves.push(saveSettings())
+  }
+
+  // Connections
+  if (databaseConnections.value?.length > 0 || s3Connections.value?.length > 0) {
+    saves.push(saveConnections())
+  }
+
+  // Packages
+  if (packages.value?.length > 0) {
+    saves.push(savePackages())
+  }
+
+  // Git settings
+  if (gitSettings.value) {
+    saves.push(saveGitSettings())
+  }
+
+  // AI settings
+  if (aiSettings.value) {
+    saves.push(saveAISettings())
+  }
+
+  // Env
+  if (envContents.value !== null) {
+    saves.push(saveEnv())
+  }
+
+  // Quarto (has its own change detection)
+  if (quartoFiles.value?.length > 0) {
+    saves.push(saveQuartoSection())
+  }
+
+  if (saves.length > 0) {
+    await Promise.all(saves)
+  }
+}
+
 // Keyboard shortcuts
 const handleKeydown = (e) => {
-  // Cmd/Ctrl + S to save
+  // Cmd/Ctrl + S to save all pending changes
   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
     e.preventDefault()
-    if (activeSection.value === 'settings' || activeSection.value === 'scaffold') {
-      saveSettings()
-    } else if (activeSection.value === 'connections') {
-      saveConnections()
-    } else if (activeSection.value === 'packages') {
-      savePackages()
-    } else if (activeSection.value === 'git') {
-      saveGitSettings()
-    } else if (activeSection.value === 'ai') {
-      saveAISettings()
-    } else if (activeSection.value === 'directories') {
-      saveDirectories()
-    } else if (activeSection.value === 'env') {
-      saveEnv()
-    }
+    saveAll()
   }
 }
 
@@ -2714,6 +3022,7 @@ onMounted(() => {
   loadProject()
   loadDataCatalog()
   loadProjectSettings()
+  loadQuartoFiles()
   loadPackages()
   loadAISettings()
   loadGitSettings()
@@ -2786,12 +3095,15 @@ watch(() => route.params.id, (newId, oldId) => {
     envError.value = null
     envLoading.value = false
     dataCatalog.value = null
+    quartoFiles.value = []
+    selectedQuartoFileKey.value = null
 
     // Reload project data
     initializeSection()
     loadProject()
     loadDataCatalog()
     loadProjectSettings()
+    loadQuartoFiles()
     loadPackages()
     loadAISettings()
     loadGitSettings()
