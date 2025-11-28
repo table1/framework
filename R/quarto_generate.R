@@ -7,9 +7,10 @@
 #' @param settings List containing Quarto settings (html and/or revealjs format configs)
 #' @param format Character. Either "html" or "revealjs"
 #' @param project_root Logical. If TRUE, generates project-level config. Default FALSE.
-#'
+#' @param output_dir Optional output directory for rendered files (relative to file location)
+#' 
 #' @return Character vector of YAML lines
-#'
+#' 
 #' @details
 #' Generated files include:
 #' - Auto-generated header comment
@@ -20,7 +21,7 @@
 #'
 #' @keywords internal
 #' @noRd
-generate_quarto_yml <- function(settings, format = "html", project_root = FALSE) {
+generate_quarto_yml <- function(settings, format = "html", project_root = FALSE, output_dir = NULL) {
   if (!format %in% c("html", "revealjs")) {
     stop("Format must be 'html' or 'revealjs'")
   }
@@ -44,8 +45,16 @@ generate_quarto_yml <- function(settings, format = "html", project_root = FALSE)
   # Build YAML structure
   yaml_lines <- character(0)
 
-  if (project_root) {
-    yaml_lines <- c(yaml_lines, "project:", "  type: default", "")
+  # Project block (root gets type, children may still need output-dir)
+  if (project_root || !is.null(output_dir)) {
+    yaml_lines <- c(yaml_lines, "project:")
+    if (project_root) {
+      yaml_lines <- c(yaml_lines, "  type: default")
+    }
+    if (!is.null(output_dir) && nzchar(output_dir)) {
+      yaml_lines <- c(yaml_lines, sprintf("  output-dir: %s", output_dir))
+    }
+    yaml_lines <- c(yaml_lines, "")
   }
 
   yaml_lines <- c(yaml_lines, "format:")
@@ -180,11 +189,18 @@ write_quarto_yml <- function(yaml_lines, path) {
 #' @param project_type Character. One of "project", "project_sensitive", "course", "presentation"
 #' @param render_dirs Named list. Render directories with their paths
 #' @param quarto_settings List. Quarto settings (html and revealjs configs)
-#'
+#' @param directories Named list. Source directories keyed the same as render_dirs
+#' @param root_output_dir Optional output directory to set on the root _quarto.yml
+#' 
 #' @return List with success status and paths of generated files
-#'
+#' 
 #' @export
-quarto_generate_all <- function(project_path, project_type, render_dirs = NULL, quarto_settings = NULL) {
+quarto_generate_all <- function(project_path,
+                                project_type,
+                                render_dirs = NULL,
+                                quarto_settings = NULL,
+                                directories = NULL,
+                                root_output_dir = NULL) {
   if (!dir.exists(project_path)) {
     stop("Project path does not exist: ", project_path)
   }
@@ -201,7 +217,12 @@ quarto_generate_all <- function(project_path, project_type, render_dirs = NULL, 
 
   # 1. Generate root _quarto.yml
   root_format <- if (project_type == "presentation") "revealjs" else "html"
-  root_yaml <- generate_quarto_yml(quarto_settings, format = root_format, project_root = TRUE)
+  root_yaml <- generate_quarto_yml(
+    quarto_settings,
+    format = root_format,
+    project_root = TRUE,
+    output_dir = NULL
+  )
   root_path <- file.path(project_path, "_quarto.yml")
 
   if (write_quarto_yml(root_yaml, root_path)) {
@@ -211,18 +232,44 @@ quarto_generate_all <- function(project_path, project_type, render_dirs = NULL, 
   # 2. Generate directory-specific _quarto.yml files
   if (!is.null(render_dirs) && length(render_dirs) > 0) {
     for (dir_key in names(render_dirs)) {
-      dir_path <- render_dirs[[dir_key]]
-      if (is.null(dir_path) || dir_path == "") next
+      target_dir <- render_dirs[[dir_key]]
+      if (is.null(target_dir) || target_dir == "") next
+
+      # Source directory defaults to the directory key unless provided
+      source_dir <- NULL
+      if (!is.null(directories) && dir_key %in% names(directories)) {
+        source_dir <- directories[[dir_key]]
+      } else {
+        source_dir <- dir_key
+      }
+      if (is.null(source_dir) || source_dir == "") next
+
+      source_dir_path <- file.path(project_path, source_dir)
+      target_dir_path <- file.path(project_path, target_dir)
+
+      # Ensure source path exists
+      if (!dir.exists(source_dir_path)) dir.create(source_dir_path, recursive = TRUE, showWarnings = FALSE)
 
       # Determine format based on directory type
       format <- determine_render_format(dir_key, project_type)
 
-      # Generate YAML
-      dir_yaml <- generate_quarto_yml(quarto_settings, format = format, project_root = FALSE)
+      # Compute output-dir relative to the source directory
+      output_dir_rel <- tryCatch({
+        fs::path_rel(target_dir_path, start = source_dir_path)
+      }, error = function(e) {
+        target_dir
+      })
 
-      # Write to directory
-      full_dir_path <- file.path(project_path, dir_path)
-      quarto_path <- file.path(full_dir_path, "_quarto.yml")
+      # Generate YAML
+      dir_yaml <- generate_quarto_yml(
+        quarto_settings,
+        format = format,
+        project_root = FALSE,
+        output_dir = output_dir_rel
+      )
+
+      # Write to source directory
+      quarto_path <- file.path(source_dir_path, "_quarto.yml")
 
       if (write_quarto_yml(dir_yaml, quarto_path)) {
         generated_files <- c(generated_files, quarto_path)
@@ -256,16 +303,18 @@ quarto_regenerate <- function(project_path, backup = TRUE) {
   }
 
   # Read project config to get settings
-  config_path <- file.path(project_path, "config.yml")
+  settings_path <- file.path(project_path, "settings.yml")
+  config_path <- if (file.exists(settings_path)) settings_path else file.path(project_path, "config.yml")
+
   if (!file.exists(config_path)) {
-    stop("Project config.yml not found")
+    stop("Project settings.yml/config.yml not found")
   }
 
   config <- yaml::read_yaml(config_path)
   project_type <- config$default$project_type %||% "project"
   render_dirs <- config$default$render_dirs
+  directories <- config$default$directories
   quarto_settings <- config$default$quarto
-
   # Backup existing files if requested
   backed_up <- character(0)
   if (backup) {
@@ -296,7 +345,14 @@ quarto_regenerate <- function(project_path, backup = TRUE) {
   }
 
   # Regenerate
-  result <- quarto_generate_all(project_path, project_type, render_dirs, quarto_settings)
+  result <- quarto_generate_all(
+    project_path,
+    project_type,
+    render_dirs,
+    quarto_settings,
+    directories = directories,
+    root_output_dir = root_output_dir
+  )
 
   list(
     success = result$success,

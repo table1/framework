@@ -8,7 +8,9 @@ quarto_generate_all(
   project_path,
   project_type,
   render_dirs = NULL,
-  quarto_settings = NULL
+  quarto_settings = NULL,
+  directories = NULL,
+  root_output_dir = NULL
 )
 }
 \arguments{
@@ -19,6 +21,10 @@ quarto_generate_all(
 \item{render_dirs}{Named list. Render directories with their paths}
 
 \item{quarto_settings}{List. Quarto settings (html and revealjs configs)}
+
+\item{directories}{Named list. Source directories keyed the same as render_dirs}
+
+\item{root_output_dir}{Optional output directory to set on the root _quarto.yml}
 }
 \value{
 List with success status and paths of generated files

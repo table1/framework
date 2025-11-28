@@ -10,11 +10,8 @@
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
-  # Get cache directory from config
-  cache_dir <- config("cache")
-  if (is.null(cache_dir)) {
-    stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
-  }
+  # Get cache directory - uses FW_CACHE_DIR env var if set, otherwise config
+  cache_dir <- .get_cache_dir()
 
   config_obj <- read_config()
   default_expire <- config_obj$options$data$cache_default_expire
@@ -26,14 +23,14 @@
     file
   }
 
-  # Create cache directory if it doesn't exist
+  # Create cache directory if it doesn't exist (lazy creation)
   cache_dir <- dirname(cache_file)
   if (!dir.exists(cache_dir)) {
     tryCatch({
       dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
-      message(sprintf("Created cache directory: %s", cache_dir))
+      cli::cli_alert_info("Creating cache directory: {.path {cache_dir}}")
     }, error = function(e) {
-      stop(sprintf("Failed to create cache directory: %s", e$message))
+      cli::cli_abort("Failed to create cache directory {.path {cache_dir}}: {e$message}")
     })
   }
 

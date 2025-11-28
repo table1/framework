@@ -24,8 +24,8 @@ defaults:
   # Scaffold Behavior (runtime settings)
   scaffold:
     seed_on_scaffold: false
-    seed: ""
-    set_theme_on_scaffold: true
+    seed: "123"
+    set_theme_on_scaffold: false
     ggplot_theme: "theme_minimal"
     source_all_functions: true
     notebook_format: "quarto"
@@ -36,10 +36,13 @@ defaults:
     use_renv: false
     default_packages:
       - name: "dplyr"
-        auto_attach: true
+        source: "cran"
+        auto_attach: false
       - name: "ggplot2"
-        auto_attach: true
+        source: "cran"
+        auto_attach: false
       - name: "readr"
+        source: "cran"
         auto_attach: false
 
   # .env template defaults
@@ -135,7 +138,7 @@ project_types:
 
     # Scaffold settings (per-type)
     scaffold:
-      set_theme_on_scaffold: true
+      set_theme_on_scaffold: false
       ggplot_theme: "theme_minimal"
 
     directories:
@@ -172,23 +175,23 @@ project_types:
       docs:
         label: "Documentation"
         default: "docs"
-        enabled_by_default: true
+        enabled_by_default: false
         hint: "Codebooks, documentation, and other reference materials."
       outputs_tables:
         label: "Tables"
         default: "outputs/tables"
-        enabled_by_default: true
-        hint: "Publishable tables ready for reports or manuscripts."
+        enabled_by_default: false
+        hint: "Publishable tables ready for reports or manuscripts. Created on first use by save_table()."
       outputs_figures:
         label: "Figures"
         default: "outputs/figures"
-        enabled_by_default: true
-        hint: "Final plots and graphics."
+        enabled_by_default: false
+        hint: "Final plots and graphics. Created on first use by save_figure()."
       outputs_models:
         label: "Models"
         default: "outputs/models"
-        enabled_by_default: true
-        hint: "Serialized models or model summaries."
+        enabled_by_default: false
+        hint: "Serialized models or model summaries. Created on first use by save_model()."
       outputs_reports:
         label: "Reports"
         default: "outputs/reports"
@@ -197,12 +200,13 @@ project_types:
       cache:
         label: "Cache"
         default: "outputs/cache"
-        enabled_by_default: true
-        hint: "Temporary artifacts (gitignored)."
+        enabled_by_default: false
+        always_lazy: true
+        hint: "Temporary artifacts (gitignored). Always created on first use - not shown in directory settings."
       scratch:
         label: "Scratch"
         default: "scratch"
-        enabled_by_default: true
+        enabled_by_default: false
         hint: "Short-lived explorations (gitignored)."
 
     # Quarto render directories (per workspace directory)
@@ -229,7 +233,7 @@ project_types:
     description: "Enhanced privacy controls for sensitive data with dedicated private/public flows"
 
     scaffold:
-      set_theme_on_scaffold: true
+      set_theme_on_scaffold: false
       ggplot_theme: "theme_minimal"
 
     directories:
@@ -248,7 +252,7 @@ project_types:
       docs:
         label: "Documentation"
         default: "docs"
-        enabled_by_default: true
+        enabled_by_default: false
         hint: "Codebooks, documentation, and other reference materials."
       inputs_private_raw:
         label: "Raw data (private)"
@@ -277,27 +281,33 @@ project_types:
       outputs_private_tables:
         label: "Tables (private)"
         default: "outputs/private/tables"
-        enabled_by_default: true
+        enabled_by_default: false
+        hint: "Created on first use by save_table()."
       outputs_public_tables:
         label: "Tables (public)"
         default: "outputs/public/tables"
-        enabled_by_default: true
+        enabled_by_default: false
+        hint: "Created on first use by save_table(public = TRUE)."
       outputs_private_figures:
         label: "Figures (private)"
         default: "outputs/private/figures"
-        enabled_by_default: true
+        enabled_by_default: false
+        hint: "Created on first use by save_figure()."
       outputs_public_figures:
         label: "Figures (public)"
         default: "outputs/public/figures"
-        enabled_by_default: true
+        enabled_by_default: false
+        hint: "Created on first use by save_figure(public = TRUE)."
       outputs_private_models:
         label: "Models (private)"
         default: "outputs/private/models"
-        enabled_by_default: true
+        enabled_by_default: false
+        hint: "Created on first use by save_model()."
       outputs_public_models:
         label: "Models (public)"
         default: "outputs/public/models"
-        enabled_by_default: true
+        enabled_by_default: false
+        hint: "Created on first use by save_model(public = TRUE)."
       outputs_private_reports:
         label: "Reports (private)"
         default: "outputs/private/reports"
@@ -309,11 +319,13 @@ project_types:
       cache:
         label: "Cache"
         default: "outputs/private/cache"
-        enabled_by_default: true
+        enabled_by_default: false
+        always_lazy: true
+        hint: "Always created on first use - not shown in directory settings."
       scratch:
         label: "Scratch"
         default: "scratch"
-        enabled_by_default: true
+        enabled_by_default: false
 
     # Quarto render directories (per workspace directory)
     render_dirs:
@@ -339,7 +351,7 @@ project_types:
     description: "Minimal structure for slides and presentations"
 
     scaffold:
-      set_theme_on_scaffold: true
+      set_theme_on_scaffold: false
       ggplot_theme: "theme_minimal"
 
     directories:
@@ -385,7 +397,7 @@ project_types:
     description: "Simplified structure for teaching materials with modules and assignments"
 
     scaffold:
-      set_theme_on_scaffold: true
+      set_theme_on_scaffold: false
       ggplot_theme: "theme_minimal"
 
     directories:
@@ -435,6 +447,11 @@ project_types:
       modules:
         label: "Modules render directory"
         default: "rendered/modules"
+
+    quarto:
+      render_dir:
+        label: "Quarto render directory"
+        default: "rendered/slides"
 
     notebook_template:
       default: "notebook"

@@ -38,6 +38,7 @@ Suggests:
     renv,
     remotes,
     cli,
+    withr
     pool,
     RPostgres,
     RMariaDB,
@@ -47,4 +48,3 @@ Suggests:
     readxl
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)
-
