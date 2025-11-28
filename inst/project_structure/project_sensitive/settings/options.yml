@@ -1,7 +1,7 @@
 options:
   default_notebook_format: quarto
-  seed: 1234
-  seed_on_scaffold: true
+  seed: 123
+  seed_on_scaffold: false
   notebook:
     dir: notebooks
     output_dir: outputs/private/notebooks

@@ -40,8 +40,8 @@ defaults:
   use_renv: false
 
   # Random seed for reproducibility
-  seed: null  # Set to a number (e.g., 20250102) or null for no default
-  seed_on_scaffold: true
+  seed: 123  # Set to a number (e.g., 20250102) or null for no default
+  seed_on_scaffold: false
 
   # AI Assistant preferences
   ai_support: true

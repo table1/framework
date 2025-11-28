@@ -31,11 +31,21 @@ const toasts = ref([])
 let nextId = 1
 
 const addToast = (options) => {
+  const type = options.type || 'success'
+  const title = options.title
+
+  // Check for existing toast with same title and type (deduplication)
+  const existingIndex = toasts.value.findIndex(t => t.title === title && t.type === type)
+  if (existingIndex > -1) {
+    // Remove the existing one and add fresh (resets timer, moves to top)
+    toasts.value.splice(existingIndex, 1)
+  }
+
   const toast = {
     id: nextId++,
-    title: options.title,
+    title,
     description: options.description || null,
-    type: options.type || 'success',
+    type,
     variant: options.variant || 'regular',
     action: options.action || null,
     duration: options.duration !== undefined ? options.duration : 5000,

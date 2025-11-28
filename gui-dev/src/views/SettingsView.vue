@@ -262,10 +262,7 @@
           <SettingsPanel>
             <GitHooksPanel v-model="gitPanelModel" flush>
               <template #note>
-                Project-specific .gitignore templates can be customized in
-                <a href="#/settings/project-defaults" class="text-sky-600 dark:text-sky-400 hover:underline">
-                  Project Defaults
-                </a>.
+                Project-specific .gitignore templates can be customized in <a href="#/settings/project-defaults" class="text-sky-600 dark:text-sky-400 hover:underline">Project Defaults</a>.
               </template>
             </GitHooksPanel>
           </SettingsPanel>
@@ -286,12 +283,10 @@
 
         <!-- Packages -->
         <div id="packages" v-show="activeSection === 'packages'">
-          <SettingsPanel>
-            <PackagesEditor
-              v-model="defaultPackagesModel"
-              :show-renv-toggle="true"
-            />
-          </SettingsPanel>
+          <PackagesEditor
+            v-model="defaultPackagesModel"
+            :show-renv-toggle="true"
+          />
         </div>
 
         <!-- Quarto -->
@@ -357,8 +352,7 @@
                 </div>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  class="text-gray-600 dark:text-gray-300 font-normal"
+                  variant="secondary"
                   :disabled="templateEditors[currentTemplateTab.editorKey].loading"
                   @click="resetCurrentTemplate($event)"
                 >
@@ -511,7 +505,7 @@ const fallbackProjectTypes = {
       outputs_figures: 'outputs/figures',
       outputs_models: 'outputs/models',
       outputs_reports: 'outputs/reports',
-      cache: 'outputs/cache',
+      // cache removed - always lazy-created, not configurable
       scratch: 'scratch'
     },
     render_dirs: {
@@ -545,7 +539,7 @@ const fallbackProjectTypes = {
       outputs_public_models: 'outputs/public/models',
       outputs_public_docs: 'outputs/public/docs',
       outputs_public_data_final: 'outputs/public/data_final',
-      cache: 'outputs/private/cache',
+      // cache removed - always lazy-created, not configurable
       scratch: 'scratch'
     },
     quarto: { render_dir: 'outputs/public/docs' },
@@ -652,8 +646,8 @@ const generalOutputFallback = [
   { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
+// Note: Cache is always lazy-created and not configurable (uses FW_CACHE_DIR env var or default)
 const generalUtilityFallback = [
-  { key: 'cache', label: 'Cache', hint: 'Temporary artifacts (gitignored).' },
   { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
 ]
 
@@ -760,17 +754,17 @@ const settings = ref({
     positron: false,
     use_git: true,
     use_renv: false,
-    seed: '',
+    seed: '123',
     seed_on_scaffold: false,
     ai_support: true,
     ai_assistants: ['claude'],
     ai_canonical_file: 'CLAUDE.md',
     scaffold: {
       source_all_functions: true,
-      set_theme_on_scaffold: true,
+      set_theme_on_scaffold: false,
       ggplot_theme: 'theme_minimal',
       seed_on_scaffold: false,
-      seed: ''
+      seed: '123'
     },
     directories: JSON.parse(JSON.stringify(defaultProjectTypes.value.project.directories)),
     git_hooks: {
@@ -781,8 +775,9 @@ const settings = ref({
     packages: {
       use_renv: false,
       default_packages: [
-        { name: 'dplyr', source: 'cran', auto_attach: true },
-        { name: 'ggplot2', source: 'cran', auto_attach: true }
+        { name: 'dplyr', source: 'cran', auto_attach: false },
+        { name: 'ggplot2', source: 'cran', auto_attach: false },
+        { name: 'readr', source: 'cran', auto_attach: false }
       ]
     },
     quarto: {
@@ -1193,7 +1188,7 @@ const currentProjectType = computed(() => {
 })
 
 const defaultPageTitle = 'Settings'
-const defaultPageDescription = 'Manage defaults shared across new projects.'
+const defaultPageDescription = 'Manage default settings for new projects.'
 
 const sectionHeaderMeta = {
   overview: {
@@ -1394,7 +1389,7 @@ const normalizeProjectType = (key, type) => {
     label: toScalar(type?.label, fallback.label || formatProjectTypeName(key)),
     description: toScalar(type?.description, fallback.description || ''),
     ggplot_theme: toScalar(type?.ggplot_theme, 'theme_minimal'),
-    set_theme_on_scaffold: toBoolean(type?.set_theme_on_scaffold, true),
+    set_theme_on_scaffold: toBoolean(type?.set_theme_on_scaffold, false),
     // Don't merge with fallback - only use explicitly saved directories
     directories: normalizeDirectories(type?.directories, {}),
     // For render_dirs, merge with fallback defaults when empty
@@ -1826,10 +1821,14 @@ const loadSettings = async () => {
       const catalogDirs = catalogData?.project_types?.[projectType]?.directories || {}
       const enabled = getDirectoriesEnabled(projectType)
 
-      // Set all known directories from catalog
+      // Set all known directories from catalog using enabled_by_default
       for (const dirKey of Object.keys(catalogDirs)) {
-        // Directory exists in settings = enabled, otherwise disabled
-        enabled[dirKey] = Object.prototype.hasOwnProperty.call(dirs, dirKey)
+        const catalogDir = catalogDirs[dirKey]
+        // Skip cache - it's always lazy-created and not configurable
+        if (dirKey === 'cache' || catalogDir.always_lazy) continue
+        // Use enabled_by_default from catalog, falling back to whether dir exists in settings
+        const enabledByDefault = catalogDir.enabled_by_default ?? Object.prototype.hasOwnProperty.call(dirs, dirKey)
+        enabled[dirKey] = enabledByDefault
       }
 
       // Also check for any extra directories in settings not in catalog
@@ -1895,15 +1894,19 @@ const loadSettings = async () => {
       if (defaults.scaffold) {
         settings.value.defaults.scaffold = {
           source_all_functions: toBoolean(defaults.scaffold.source_all_functions, true),
-          set_theme_on_scaffold: toBoolean(defaults.scaffold.set_theme_on_scaffold, true),
+          set_theme_on_scaffold: toBoolean(defaults.scaffold.set_theme_on_scaffold, false),
           ggplot_theme: toScalar(defaults.scaffold.ggplot_theme, 'theme_minimal'),
           seed_on_scaffold: toBoolean(defaults.scaffold.seed_on_scaffold, false),
-          seed: toScalar(defaults.scaffold.seed, '')
+          seed: toScalar(defaults.scaffold.seed, '123')
         }
       }
 
-      if (defaults.packages) {
+      // Load packages - use saved settings, or fall back to catalog defaults
+      if (defaults.packages && defaults.packages.default_packages?.length) {
         settings.value.defaults.packages = normalizeDefaultPackages(defaults.packages)
+      } else if (catalogData?.defaults?.packages) {
+        // Fall back to catalog defaults when no saved packages
+        settings.value.defaults.packages = normalizeDefaultPackages(catalogData.defaults.packages)
       }
 
       // Load quarto settings
@@ -1956,6 +1959,10 @@ const loadSettings = async () => {
     if (!data.defaults) {
       initializeDefaultEnv(null)
       hydrateDefaultConnections(null)
+      // Load packages from catalog when no saved defaults
+      if (catalogData?.defaults?.packages) {
+        settings.value.defaults.packages = normalizeDefaultPackages(catalogData.defaults.packages)
+      }
     }
 
     if (data.git) {
@@ -2016,10 +2023,10 @@ const scaffoldPanelModel = computed({
     const scaffold = settings.value.defaults?.scaffold || {}
     return {
       source_all_functions: scaffold.source_all_functions !== false,
-      set_theme_on_scaffold: scaffold.set_theme_on_scaffold !== false,
+      set_theme_on_scaffold: scaffold.set_theme_on_scaffold === true,
       ggplot_theme: scaffold.ggplot_theme || 'theme_minimal',
       seed_on_scaffold: scaffold.seed_on_scaffold || false,
-      seed: scaffold.seed || ''
+      seed: scaffold.seed || '123'
     }
   },
   set(val) {

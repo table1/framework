@@ -218,6 +218,13 @@
             <!-- END Project Structure Editor -->
         </div>
 
+        <!-- Quarto Section -->
+        <div v-show="activeSection === 'quarto'">
+          <SettingsPanel flush>
+            <QuartoSettingsPanel v-model="project.quarto" />
+          </SettingsPanel>
+        </div>
+
         <!-- Connections Section -->
         <div v-show="activeSection === 'connections'">
           <ConnectionsPanel
@@ -313,8 +320,10 @@ import AIAssistantsPanel from '../components/settings/AIAssistantsPanel.vue'
 import GitHooksPanel from '../components/settings/GitHooksPanel.vue'
 import ScaffoldBehaviorPanel from '../components/settings/ScaffoldBehaviorPanel.vue'
 import ConnectionsPanel from '../components/settings/ConnectionsPanel.vue'
+import QuartoSettingsPanel from '../components/settings/QuartoSettingsPanel.vue'
 import RenderableWorkspacesPanel from '../components/settings/RenderableWorkspacesPanel.vue'
 import ProjectStructureEditor from '../components/settings/ProjectStructureEditor.vue'
+import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import EnvEditor from '../components/env/EnvEditor.vue'
 import { buildGitPanelModel, applyGitPanelModel } from '../utils/gitHelpers'
 import {
@@ -334,6 +343,7 @@ import {
   InformationCircleIcon,
   UserIcon,
   FolderIcon,
+  DocumentTextIcon,
   CubeIcon,
   DocumentCheckIcon,
   Cog6ToothIcon,
@@ -367,10 +377,37 @@ const ensureAiAssistantsArray = () => {
   }
 }
 
+const defaultQuartoConfig = () => ({
+  html: {
+    format: 'html',
+    embed_resources: true,
+    theme: 'default',
+    toc: true,
+    toc_depth: 3,
+    code_fold: false,
+    code_tools: false,
+    highlight_style: 'github'
+  },
+  revealjs: {
+    format: 'revealjs',
+    theme: 'default',
+    incremental: false,
+    slide_number: true,
+    transition: 'slide',
+    background_transition: 'fade',
+    controls: true,
+    progress: true,
+    center: true,
+    highlight_style: 'github'
+  },
+  render_dir: null
+})
+
 const sections = [
   { id: 'overview', label: 'Overview', icon: InformationCircleIcon },
   { id: 'basics', label: 'Basics', icon: Cog6ToothIcon },
   { id: 'structure', label: 'Project Structure', icon: FolderIcon },
+  { id: 'quarto', label: 'Quarto', icon: DocumentTextIcon },
   { id: 'packages', label: 'Packages', icon: CubeIcon },
   { id: 'ai', label: 'AI Assistants', svgIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: 'git', label: 'Git & Hooks', svgIcon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
@@ -419,6 +456,7 @@ const project = ref({
   packages: {
     ...normalizeDefaultPackages()
   },
+  quarto: defaultQuartoConfig(),
   ai: {
     enabled: true,
     assistants: [],
@@ -476,7 +514,7 @@ S3_ENDPOINT=`,
 // Initialize section from URL query
 const initializeSection = () => {
   const sectionFromUrl = route.query.section
-  const validSections = ['overview', 'author', 'scaffold', 'structure', 'connections', 'env', 'packages', 'ai', 'git']
+  const validSections = ['overview', 'author', 'scaffold', 'structure', 'quarto', 'connections', 'env', 'packages', 'ai', 'git']
   if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
     activeSection.value = sectionFromUrl
   }
@@ -484,7 +522,7 @@ const initializeSection = () => {
 
 // Watch for URL changes (browser back/forward)
 watch(() => route.query.section, (newSection) => {
-  const validSections = ['overview', 'author', 'scaffold', 'structure', 'connections', 'env', 'packages', 'ai', 'git']
+  const validSections = ['overview', 'author', 'scaffold', 'structure', 'quarto', 'connections', 'env', 'packages', 'ai', 'git']
   if (newSection && validSections.includes(newSection)) {
     activeSection.value = newSection
   } else if (!newSection) {
@@ -604,6 +642,17 @@ onMounted(async () => {
             project.value.env.rawContent = envConfig.raw
           }
         }
+
+        // Load Quarto defaults
+        const mergedQuarto = defaultQuartoConfig()
+        if (globalSettings.value.defaults?.quarto) {
+          mergedQuarto.html = { ...mergedQuarto.html, ...(globalSettings.value.defaults.quarto.html || {}) }
+          mergedQuarto.revealjs = { ...mergedQuarto.revealjs, ...(globalSettings.value.defaults.quarto.revealjs || {}) }
+          if (globalSettings.value.defaults.quarto.render_dir) {
+            mergedQuarto.render_dir = globalSettings.value.defaults.quarto.render_dir
+          }
+        }
+        project.value.quarto = mergedQuarto
 
         // Initialize gitignore template based on project type
         const gitignoreTemplateMap = {
@@ -741,6 +790,14 @@ const loadProjectTypeDefaults = () => {
   project.value.extra_directories = hydrated.extra_directories || []
   project.value.extra_directories_enabled = userProjectType?.extra_directories_enabled || {}
 
+  // Root render_dir for Quarto (from catalog if available)
+  const catalogRenderDir = catalogType?.quarto?.render_dir
+  if (catalogRenderDir) {
+    project.value.quarto.render_dir = typeof catalogRenderDir === 'object'
+      ? catalogRenderDir.default || catalogRenderDir
+      : catalogRenderDir
+  }
+
   console.log('[DEBUG] loadProjectTypeDefaults() finished - packages still:', project.value.packages.default_packages)
 }
 
@@ -798,6 +855,7 @@ const currentSectionTitle = computed(() => {
     author: 'Author & Metadata',
     scaffold: 'Scaffold Behavior',
     structure: 'Project Structure',
+    quarto: 'Quarto',
     connections: 'Connections',
     env: '.env Defaults',
     packages: 'Packages & Dependencies',
@@ -815,6 +873,7 @@ const currentSectionDescription = computed(() => {
     author: 'Configure author information embedded in project templates.',
     scaffold: 'Runtime settings that control what happens when scaffold() runs.',
     structure: 'Customize which directories to create for this project type.',
+    quarto: 'Adjust Quarto rendering defaults for notebooks, docs, and slides.',
     connections: 'Database and storage connections for this project.',
     env: 'Environment variables template for this project.',
     packages: 'Configure package management and default packages.',
@@ -1172,7 +1231,8 @@ const countDirectoriesByCategory = (category) => {
     } else if (category === 'output') {
       return key.startsWith('outputs_')
     } else if (category === 'temporary') {
-      return key === 'cache' || key === 'scratch'
+      // Cache is always lazy-created and not configurable
+      return key === 'scratch'
     }
     return false
   })
@@ -1221,8 +1281,8 @@ const generalOutputFallback = [
   { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
+// Note: Cache is always lazy-created and not configurable (uses FW_CACHE_DIR env var or default)
 const generalUtilityFallback = [
-  { key: 'cache', label: 'Cache', hint: 'Temporary artifacts (gitignored).' },
   { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
 ]
 
@@ -1453,6 +1513,7 @@ const createProject = async () => {
       env: {
         raw: project.value.env.rawContent || ''
       },
+      quarto: project.value.quarto,
       directories,
       render_dirs: project.value.render_dirs || {},
       // Filter out invalid extra_directories (missing key, label, or path)

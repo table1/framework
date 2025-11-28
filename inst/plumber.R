@@ -280,8 +280,8 @@ function() {
         project_type = settings$defaults$project_type %||% "project",
         scaffold = list(
           seed_on_scaffold = settings$defaults$seed_on_scaffold %||% FALSE,
-          seed = settings$defaults$seed %||% "",
-          set_theme_on_scaffold = settings$defaults$set_theme_on_scaffold %||% TRUE,
+          seed = settings$defaults$seed %||% "123",
+          set_theme_on_scaffold = settings$defaults$set_theme_on_scaffold %||% FALSE,
           ggplot_theme = settings$defaults$ggplot_theme %||% "theme_minimal",
           notebook_format = settings$defaults$notebook_format %||% "quarto",
           ide = settings$defaults$ide %||% "vscode"
@@ -2113,12 +2113,14 @@ function(req) {
       git = body$git %||% list(use_git = TRUE, hooks = list(), gitignore_content = ""),
       scaffold = body$scaffold %||% list(
         seed_on_scaffold = FALSE,
-        seed = "",
-        set_theme_on_scaffold = TRUE,
+        seed = "123",
+        set_theme_on_scaffold = FALSE,
         ggplot_theme = "theme_minimal"
       ),
       connections = body$connections %||% NULL,
-      env = body$env %||% NULL
+      env = body$env %||% NULL,
+      quarto = body$quarto %||% NULL,
+      render_dirs = body$render_dirs %||% NULL
     )
 
     result
@@ -2310,4 +2312,128 @@ function(id, req) {
   }, error = function(e) {
     list(error = paste("Error regenerating Quarto configs:", e$message))
   })
+}
+
+#* List Quarto configuration files for a project
+#* @get /api/project/<id>/quarto/files
+function(id) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  settings_path <- if (file.exists(file.path(project$path, "settings.yml"))) {
+    file.path(project$path, "settings.yml")
+  } else {
+    file.path(project$path, "config.yml")
+  }
+
+  if (!file.exists(settings_path)) {
+    return(list(error = "Project settings not found"))
+  }
+
+  cfg <- yaml::read_yaml(settings_path)
+  defaults <- cfg$default %||% list()
+  directories <- defaults$directories %||% list()
+  render_dirs <- defaults$render_dirs %||% list()
+
+  files <- list()
+
+  # Root _quarto.yml
+  root_path <- file.path(project$path, "_quarto.yml")
+  files[[length(files) + 1]] <- list(
+    key = "root",
+    label = "Root _quarto.yml",
+    path = root_path,
+    exists = file.exists(root_path),
+    contents = if (file.exists(root_path)) paste(readLines(root_path, warn = FALSE), collapse = "\n") else ""
+  )
+
+  # Per-render directory _quarto.yml (source dirs keyed by render_dirs)
+  if (length(render_dirs) > 0) {
+    for (render_key in names(render_dirs)) {
+      source_dir <- directories[[render_key]] %||% render_key
+      if (is.null(source_dir) || !nzchar(source_dir)) next
+      file_path <- file.path(project$path, source_dir, "_quarto.yml")
+      files[[length(files) + 1]] <- list(
+        key = render_key,
+        label = sprintf("%s/_quarto.yml", source_dir),
+        path = file_path,
+        exists = file.exists(file_path),
+        contents = if (file.exists(file_path)) paste(readLines(file_path, warn = FALSE), collapse = "\n") else ""
+      )
+    }
+  }
+
+  list(success = TRUE, files = files)
+}
+
+#* Save Quarto configuration files for a project
+#* @post /api/project/<id>/quarto/files
+#* @param id Project ID
+#* @param req The request object
+function(id, req) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  if (is.null(req$postBody) || !nzchar(req$postBody)) {
+    return(list(error = "No files provided"))
+  }
+
+  body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
+  files <- body$files
+  if (is.null(files) || length(files) == 0) {
+    return(list(error = "No files provided"))
+  }
+
+  # Handle case where jsonlite converts single-element array differently
+  if (is.data.frame(files)) {
+    files <- lapply(1:nrow(files), function(i) as.list(files[i, ]))
+  }
+
+  written <- list()
+  for (i in seq_along(files)) {
+    file_spec <- files[[i]]
+    target_path <- file_spec$path %||% ""
+    if (!nzchar(target_path)) next
+
+    # Safety: ensure path is inside project
+    normalized <- normalizePath(target_path, winslash = "/", mustWork = FALSE)
+    project_root <- normalizePath(project$path, winslash = "/", mustWork = TRUE)
+    if (!startsWith(normalized, project_root)) {
+      next
+    }
+
+    dir.create(dirname(normalized), recursive = TRUE, showWarnings = FALSE)
+    writeLines(file_spec$contents %||% "", normalized)
+    written[[length(written) + 1]] <- normalized
+  }
+
+  list(success = TRUE, written = written)
 }

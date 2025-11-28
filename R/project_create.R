@@ -60,6 +60,22 @@ project_create <- function(
     )
   }
 
+  # Backfill render directory defaults when not provided
+  if (is.null(render_dirs) || length(render_dirs) == 0) {
+    render_dirs <- .default_render_dirs_for_type(type)
+  }
+
+  # Ensure quarto list exists and has a root render_dir if catalog defines one
+  if (is.null(quarto)) {
+    quarto <- list()
+  }
+  if (is.null(quarto$render_dir)) {
+    default_root_dir <- .default_root_render_dir_for_type(type)
+    if (!is.null(default_root_dir)) {
+      quarto$render_dir <- default_root_dir
+    }
+  }
+
   # Use location as the full project directory path
   project_dir <- path.expand(location)
 
@@ -73,7 +89,7 @@ project_create <- function(
   message("Created project directory: ", project_dir)
 
   # Create subdirectories from directories config
-  .create_project_directories(project_dir, directories, extra_directories)
+  .create_project_directories(project_dir, directories, extra_directories, render_dirs)
 
   # Ensure settings directory exists (connections/env files live here)
   settings_dir <- file.path(project_dir, "settings")
@@ -94,7 +110,9 @@ project_create <- function(
     git = git,
     scaffold = scaffold,
     settings_dir = settings_dir,
-    connections_file = connections_rel_path
+    connections_file = connections_rel_path,
+    render_dirs = render_dirs,
+    quarto = quarto
   )
 
   .create_connections_file(
@@ -146,11 +164,17 @@ project_create <- function(
 
   # Generate Quarto configuration files
   if (!is.null(quarto) || !is.null(render_dirs)) {
+    root_output_dir <- NULL
+    if (!is.null(quarto) && !is.null(quarto$render_dir)) {
+      root_output_dir <- quarto$render_dir
+    }
     quarto_result <- quarto_generate_all(
       project_path = project_dir,
       project_type = type,
       render_dirs = render_dirs,
-      quarto_settings = quarto
+      quarto_settings = quarto,
+      directories = directories,
+      root_output_dir = root_output_dir
     )
     if (quarto_result$success) {
       message("✓ Generated ", quarto_result$count, " Quarto configuration file(s)")
@@ -174,13 +198,17 @@ project_create <- function(
 
 #' Create project subdirectories
 #' @keywords internal
-.create_project_directories <- function(project_dir, directories, extra_directories) {
+.create_project_directories <- function(project_dir, directories, extra_directories, render_dirs = NULL) {
   # Files that should NOT be created as directories
   file_patterns <- c("\\.qmd$", "\\.Rmd$", "\\.R$", "\\.md$")
 
   # Create standard directories
   for (dir_name in directories) {
     if (!is.null(dir_name) && nzchar(dir_name)) {
+      # Skip output directories to avoid clutter; they'll be created on demand by renders
+      if (grepl("^outputs/", dir_name)) {
+        next
+      }
       # Skip if this looks like a file (has a file extension)
       is_file <- any(sapply(file_patterns, function(pattern) grepl(pattern, dir_name)))
       if (is_file) {
@@ -203,6 +231,24 @@ project_create <- function(
       }
     }
   }
+
+  # Create render output directories (only for notebooks; others lazy-created on demand)
+  if (!is.null(render_dirs) && length(render_dirs) > 0) {
+    for (dir_name_idx in seq_along(render_dirs)) {
+      dir_name <- render_dirs[[dir_name_idx]]
+      dir_key <- names(render_dirs)[dir_name_idx]
+      if (is.null(dir_name) || !nzchar(dir_name)) next
+
+      # Only pre-create notebook render outputs to reduce clutter
+      if (!is.null(dir_key) && !grepl("notebook", dir_key, ignore.case = TRUE)) next
+
+      is_file <- any(sapply(file_patterns, function(pattern) grepl(pattern, dir_name)))
+      if (is_file) next
+      dir_path <- file.path(project_dir, dir_name)
+      dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+      message("  Created render output: ", dir_name)
+    }
+  }
 }
 
 #' Convert data frame to list of lists for YAML serialization
@@ -223,6 +269,42 @@ project_create <- function(
   list()
 }
 
+#' Resolve default render directory mappings for a project type from the catalog
+#' @keywords internal
+.default_render_dirs_for_type <- function(type) {
+  catalog_path <- system.file("config/settings-catalog.yml", package = "framework")
+  if (!file.exists(catalog_path)) {
+    return(list())
+  }
+  catalog <- yaml::read_yaml(catalog_path)
+  render_dirs <- catalog$project_types[[type]]$render_dirs
+  if (is.null(render_dirs)) return(list())
+
+  lapply(render_dirs, function(entry) {
+    if (is.list(entry) && !is.null(entry$default)) {
+      entry$default
+    } else {
+      entry
+    }
+  })
+}
+
+#' Resolve default root render_dir (if defined) for a project type
+#' @keywords internal
+.default_root_render_dir_for_type <- function(type) {
+  catalog_path <- system.file("config/settings-catalog.yml", package = "framework")
+  if (!file.exists(catalog_path)) {
+    return(NULL)
+  }
+  catalog <- yaml::read_yaml(catalog_path)
+  rd <- catalog$project_types[[type]]$quarto$render_dir
+  if (is.null(rd)) return(NULL)
+  if (is.list(rd) && !is.null(rd$default)) {
+    return(rd$default)
+  }
+  rd
+}
+
 #' Create project config.yml
 #' @keywords internal
 .create_project_config <- function(
@@ -237,7 +319,9 @@ project_create <- function(
   git,
   scaffold,
   settings_dir,
-  connections_file = "settings/connections.yml"
+  connections_file = "settings/connections.yml",
+  render_dirs = NULL,
+  quarto = NULL
 ) {
   # For project and project_sensitive types, use split settings files
   # For presentation and course, use single settings.yml file
@@ -256,6 +340,8 @@ project_create <- function(
         # Directory configuration (inline for discoverability)
         directories = directories,
         extra_directories = if (length(extra_directories) > 0) extra_directories else NULL,
+        render_dirs = render_dirs,
+        quarto = quarto,
 
         # References to split files
         author = "settings/author.yml",
@@ -322,6 +408,8 @@ project_create <- function(
         # Directories (inline for discoverability)
         directories = directories,
         extra_directories = if (length(extra_directories) > 0) extra_directories else NULL,
+        render_dirs = render_dirs,
+        quarto = quarto,
 
         # Package configuration
         packages = list(

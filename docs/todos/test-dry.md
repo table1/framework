@@ -8,7 +8,7 @@ Test & DRY Checklist
   - Presentation — Tests [x] | DRY [x]
   - Course — Tests [x] | DRY [x]
 - Packages — Tests [x] | DRY [x]
-- Quarto — Tests [ ] | DRY [ ]
+- Quarto — Tests [x] | DRY [x] (render dirs + regeneration UI)
 - Git & Hooks — Tests [x] | DRY [x]
 - AI Assistants — Tests [x] | DRY [x]
 - Scaffold Behavior — Tests [x] | DRY [x]
