@@ -74,55 +74,92 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
     return(invisible(NULL))
   }
 
-  template_dir <- system.file("templates", package = "framework")
+  # Get project name from directory if not provided
+  if (is.null(project_name)) {
+    project_name <- basename(normalizePath(target_dir))
+  }
+
+  # Generate AI context content dynamically
+  # Try to use ai_generate() if config exists, otherwise use template
+  config <- tryCatch(
+    read_config(file.path(target_dir, "settings.yml")),
+    error = function(e) NULL
+  )
+
+  if (!is.null(config)) {
+    # Use dynamic generation
+    content <- ai_generate(
+      project_path = target_dir,
+      project_name = project_name,
+      project_type = project_type,
+      config = config
+    )
+  } else {
+    # Fall back to template
+    content <- .load_ai_template(project_type, project_name)
+  }
+
+  # Define file paths for each assistant
+  ai_files <- list(
+    claude = "CLAUDE.md",
+    agents = "AGENTS.md",
+    copilot = ".github/copilot-instructions.md"
+  )
 
   for (assistant in assistants) {
-    if (assistant == "claude") {
-      # Select project-type-specific CLAUDE template
-      template_name <- switch(
-        project_type,
-        "project_sensitive" = "CLAUDE-sensitive.fr.md",
-        "course" = "CLAUDE-course.fr.md",
-        "presentation" = "CLAUDE-presentation.fr.md",
-        "CLAUDE-project.fr.md"  # Default for "project" and any other type
-      )
+    if (assistant %in% names(ai_files)) {
+      target_file <- file.path(target_dir, ai_files[[assistant]])
 
-      template_file <- file.path(template_dir, template_name)
-      target_file <- file.path(target_dir, "CLAUDE.md")
-
-      if (file.exists(template_file)) {
-        file.copy(template_file, target_file, overwrite = FALSE)
-        message("  ✓ Created CLAUDE.md")
+      # Create directory if needed (for copilot)
+      file_dir <- dirname(target_file)
+      if (!dir.exists(file_dir)) {
+        dir.create(file_dir, recursive = TRUE, showWarnings = FALSE)
       }
 
-    } else if (assistant == "copilot") {
-      # Copy copilot-instructions.md (create .github/ dir if needed)
-      github_dir <- file.path(target_dir, ".github")
-      if (!dir.exists(github_dir)) {
-        dir.create(github_dir, showWarnings = FALSE)
-      }
-
-      template_file <- file.path(template_dir, "copilot-instructions.fr.md")
-      target_file <- file.path(github_dir, "copilot-instructions.md")
-
-      if (file.exists(template_file)) {
-        file.copy(template_file, target_file, overwrite = FALSE)
-        message("  ✓ Created .github/copilot-instructions.md")
-      }
-
-    } else if (assistant == "agents") {
-      # Copy AGENTS.md
-      template_file <- file.path(template_dir, "AGENTS.fr.md")
-      target_file <- file.path(target_dir, "AGENTS.md")
-
-      if (file.exists(template_file)) {
-        file.copy(template_file, target_file, overwrite = FALSE)
-        message("  ✓ Created AGENTS.md")
-      }
+      # Write content
+      writeLines(content, target_file)
+      message("  \u2713 Created ", ai_files[[assistant]])
     }
   }
 
   invisible(NULL)
+}
+
+
+#' Load AI context template for a project type
+#'
+#' @param project_type Project type
+#' @param project_name Project name for placeholder substitution
+#' @return Character string with template content
+#' @keywords internal
+.load_ai_template <- function(project_type, project_name = "My Project") {
+  template_dir <- system.file("templates", package = "framework")
+
+  # New naming convention: ai-context.{type}.fr.md
+  template_name <- sprintf("ai-context.%s.fr.md", project_type)
+  template_file <- file.path(template_dir, template_name)
+
+  # Fall back to generic project template
+
+  if (!file.exists(template_file)) {
+    template_file <- file.path(template_dir, "ai-context.project.fr.md")
+  }
+
+  # Final fallback to old template
+  if (!file.exists(template_file)) {
+    template_file <- file.path(template_dir, "AI_CANONICAL.fr.md")
+  }
+
+  if (!file.exists(template_file)) {
+    return(sprintf("# %s\n\nFramework project.\n", project_name))
+  }
+
+  content <- paste(readLines(template_file, warn = FALSE), collapse = "\n")
+
+  # Replace placeholders
+  content <- gsub("\\{ProjectName\\}", project_name, content)
+
+  content
 }
 
 

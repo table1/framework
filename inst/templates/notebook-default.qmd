@@ -1,5 +1,7 @@
 ---
 title: "New Analysis"
+author: "{{author}}"
+date: today
 format:
   html:
     theme: cosmo

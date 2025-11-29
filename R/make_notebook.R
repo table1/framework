@@ -142,14 +142,24 @@ make_notebook <- function(name,
   stub_content <- gsub("{filename}", original_name, stub_content, fixed = TRUE)
   stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
 
-  # Replace author placeholder with actual config value if available
-  # Try to load config to get author info
+  # Get author name from project config or global config
   cfg <- tryCatch(read_config(), error = function(e) NULL)
   author_name <- cfg$author$name
   if (is.null(author_name) || !nzchar(author_name)) {
+    # Fall back to global settings
+    author_name <- tryCatch(
+      get_global_setting("author.name", default = "", print = FALSE),
+      error = function(e) ""
+    )
+  }
+  if (!nzchar(author_name)) {
     author_name <- "Your Name"
   }
 
+  # Replace {{author}} placeholder (new style)
+  stub_content <- gsub("\\{\\{author\\}\\}", author_name, stub_content)
+
+  # Also support legacy patterns for backward compatibility
   stub_content <- gsub(
     'author:\\s*("Your Name"|!expr config\\$author\\$name|"`r config\\$author\\$name`")',
     sprintf('author: "%s"', author_name),

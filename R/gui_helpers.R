@@ -53,14 +53,22 @@ get_default_global_config <- function() {
   defaults$ide <- defaults$ide %||% "vscode"
   defaults$use_git <- if (is.null(defaults$use_git)) TRUE else isTRUE(defaults$use_git)
   defaults$use_renv <- if (is.null(defaults$use_renv)) FALSE else isTRUE(defaults$use_renv)
-  defaults$seed <- defaults$seed %||% NULL
+  # Handle nested scaffold structure from catalog
+  scaffold <- defaults$scaffold %||% list()
+  defaults$seed <- scaffold$seed %||% defaults$seed %||% "123"
   if (is.character(defaults$seed) && identical(defaults$seed, "")) {
-    defaults$seed <- NULL
+    defaults$seed <- "123"
   }
   if (!"seed" %in% names(defaults)) {
-    defaults["seed"] <- list(NULL)
+    defaults["seed"] <- list("123")
   }
-  defaults$seed_on_scaffold <- if (is.null(defaults$seed_on_scaffold)) FALSE else isTRUE(defaults$seed_on_scaffold)
+  defaults$seed_on_scaffold <- if (!is.null(scaffold$seed_on_scaffold)) {
+    isTRUE(scaffold$seed_on_scaffold)
+  } else if (!is.null(defaults$seed_on_scaffold)) {
+    isTRUE(defaults$seed_on_scaffold)
+  } else {
+    FALSE
+  }
   defaults$ai_support <- if (is.null(defaults$ai_support)) TRUE else isTRUE(defaults$ai_support)
   defaults$ai_assistants <- as.list(defaults$ai_assistants %||% list())
   defaults$ai_canonical_file <- defaults$ai_canonical_file %||% "CLAUDE.md"

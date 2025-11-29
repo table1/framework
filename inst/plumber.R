@@ -227,6 +227,9 @@ function() {
     # Directories - preserve as-is
     defaults_flat$directories <- settings$defaults$directories %||% list()
 
+    # Quarto settings - preserve as-is
+    defaults_flat$quarto <- settings$defaults$quarto %||% list()
+
     # Add alias for backwards compatibility (tests/UI may expect default_format)
     defaults_flat$default_format <- defaults_flat$notebook_format
 
@@ -258,6 +261,10 @@ function() {
   first_run <- !file.exists(settings_path)
 
   settings <- framework::read_frameworkrc()
+
+  # DEBUG: Log what we're returning
+  message("[API GET /api/settings/get] global.projects_root from read: ",
+          settings$global$projects_root %||% "NULL")
 
   # Check if v1 format (no meta.version or version < 2)
   needs_migration <- is.null(settings$meta$version) || settings$meta$version < 2
@@ -361,6 +368,10 @@ function() {
     settings$defaults$packages <- I(list())
   }
 
+  # DEBUG: Log final returned value
+  message("[API GET /api/settings/get] Returning global.projects_root: ",
+          settings$global$projects_root %||% "NULL")
+
   return(settings)
 }
 
@@ -405,9 +416,21 @@ function(name) {
 function(req) {
   body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
 
+  # DEBUG: Log what we received
+  message("[API /api/settings/save] Received body$global$projects_root: ",
+          body$global$projects_root %||% "NULL")
+  message("[API /api/settings/save] Received body$projects_root: ",
+          body$projects_root %||% "NULL")
+
   tryCatch({
     # Use unified configure_global function for validation and persistence
     framework::configure_global(settings = body, validate = TRUE)
+
+    # DEBUG: Verify what was saved
+    saved <- framework::read_frameworkrc()
+    message("[API /api/settings/save] After save, global.projects_root: ",
+            saved$global$projects_root %||% "NULL")
+
     list(success = TRUE)
   }, error = function(e) {
     message("ERROR: ", e$message)
@@ -1388,6 +1411,73 @@ function(id, req) {
   })
 }
 
+#* Regenerate AI context file for a project
+#* Updates dynamic sections marked with <!-- @framework:regenerate -->
+#* @post /api/project/<id>/ai/regenerate
+#* @param id Project ID
+#* @param req The request object (optional body with sections to regenerate)
+function(id, req) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(success = FALSE, error = "Project not found"))
+  }
+
+  tryCatch({
+    # Parse optional body for specific sections to regenerate
+    sections <- NULL
+    if (!is.null(req$postBody) && nchar(req$postBody) > 0) {
+      body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
+      sections <- body$sections  # NULL means all sections
+    }
+
+    # Get AI file name from project config
+    settings_file <- file.path(project$path, "settings.yml")
+    ai_file <- "CLAUDE.md"  # Default
+
+    if (file.exists(settings_file)) {
+      settings <- tryCatch(yaml::read_yaml(settings_file), error = function(e) list())
+      settings <- settings$default %||% settings
+      ai_file <- settings$ai$canonical_file %||% "CLAUDE.md"
+    }
+
+    # Call ai_regenerate
+    framework::ai_regenerate(
+      project_path = project$path,
+      sections = sections,
+      ai_file = ai_file
+    )
+
+    # Read regenerated content to return
+    ai_path <- file.path(project$path, ai_file)
+    content <- if (file.exists(ai_path)) {
+      paste(readLines(ai_path, warn = FALSE), collapse = "\n")
+    } else {
+      NULL
+    }
+
+    list(
+      success = TRUE,
+      message = "AI context regenerated",
+      ai_file = ai_file,
+      content = content
+    )
+  }, error = function(e) {
+    list(success = FALSE, error = e$message)
+  })
+}
+
 #* Save project Git settings
 #* @post /api/project/<id>/git
 #* @param id Project ID
@@ -2124,37 +2214,6 @@ function(req) {
     )
 
     result
-  }, error = function(e) {
-    list(success = FALSE, error = e$message)
-  })
-}
-
-#* Create a new Framework project (legacy endpoint)
-#* @post /api/project/create
-#* @param req The request object
-function(req) {
-  body <- jsonlite::fromJSON(req$postBody)
-
-  tryCatch({
-    # Create the project
-    framework::init(
-      project_dir = body$project_dir,
-      project_name = body$project_name,
-      project_type = body$project_type,
-      author_name = body$author_name,
-      author_email = body$author_email,
-      author_affiliation = body$author_affiliation,
-      ides = body$ides,
-      use_git = body$use_git,
-      use_renv = body$use_renv,
-      ai_support = body$ai_support,
-      ai_assistants = body$ai_assistants
-    )
-
-    # Add to project registry
-    project_id <- framework::add_project_to_config(body$project_dir)
-
-    list(success = TRUE, path = body$project_dir, id = project_id)
   }, error = function(e) {
     list(success = FALSE, error = e$message)
   })
