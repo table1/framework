@@ -86,7 +86,8 @@
       "Bash(npm test:*)",
       "Bash(kill:*)",
       "Bash(pkill:*)",
-      "Bash(NOT_CRAN=true Rscript:*)"
+      "Bash(NOT_CRAN=true Rscript:*)",
+      "Bash(git ls-tree:*)"
     ],
     "deny": [],
     "ask": []

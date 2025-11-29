@@ -509,6 +509,34 @@ project_create <- function(
     copilot = ".github/copilot-instructions.md"
   )
 
+  # Get project name from directory
+  project_name <- basename(normalizePath(project_dir))
+
+  # Try to read config for dynamic generation
+  config <- tryCatch(
+    read_config(file.path(project_dir, "settings.yml")),
+    error = function(e) NULL
+  )
+
+  # Generate content
+  if (!is.null(config)) {
+    # Use dynamic generation with ai_generate()
+    content <- ai_generate(
+      project_path = project_dir,
+      project_name = project_name,
+      project_type = type,
+      config = config
+    )
+  } else {
+    # Fall back to template
+    content <- .load_ai_template(type, project_name)
+  }
+
+  # If still empty, use provided canonical_content
+  if (is.null(content) || !nzchar(content)) {
+    content <- canonical_content
+  }
+
   for (assistant in assistants) {
     if (assistant %in% names(ai_files)) {
       file_path <- file.path(project_dir, ai_files[[assistant]])
@@ -517,12 +545,6 @@ project_create <- function(
       file_dir <- dirname(file_path)
       if (!dir.exists(file_dir)) {
         dir.create(file_dir, recursive = TRUE)
-      }
-
-      # Get template content (single canonical file for all assistants)
-      content <- .load_template_content("AI_CANONICAL.fr.md")
-      if (is.null(content) || !nzchar(content)) {
-        content <- canonical_content
       }
 
       # Write file

@@ -124,7 +124,7 @@
         <div id="overview" v-show="activeSection === 'overview'">
           <OverviewSummary
             :cards="overviewCards"
-            @navigate="(section) => activeSection = section"
+            @navigate="navigateToSection"
           />
         </div>
 
@@ -327,7 +327,7 @@
                 v-for="tab in templateTabs"
                 :key="tab.key"
                 type="button"
-                @click="navigateToTemplate(tab.slug)"
+                @click="navigateToTemplate(tab.key)"
                 class="px-3 py-1.5 rounded-full text-sm font-medium border transition"
                 :class="selectedTemplate === tab.key
                   ? 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-200 dark:border-sky-700'
@@ -1011,7 +1011,7 @@ const templateEditors = reactive({
   notebook: { loading: false, contents: '' },
   script: { loading: false, contents: '' },
   presentation: { loading: false, contents: '' },
-  canonical: { loading: false, contents: '' },
+  canonical: { loading: false, contents: '' }, // Used by AI Assistants panel
   gitignore_project: { loading: false, contents: '' },
   gitignore_project_sensitive: { loading: false, contents: '' },
   gitignore_course: { loading: false, contents: '' },
@@ -1022,7 +1022,7 @@ const templateTabs = computed(() => ([
   {
     key: 'notebook',
     label: 'Notebook',
-    description: 'Starter Quarto notebook used when creating notebooks.',
+    description: 'Starter Quarto notebook used when creating notebooks. Use {{author}} for author interpolation.',
     editorKey: 'notebook',
     apiName: 'notebook',
     language: 'markdown'
@@ -1038,17 +1038,9 @@ const templateTabs = computed(() => ([
   {
     key: 'presentation',
     label: 'Presentation',
-    description: 'Starter presentation content for revealjs slides.',
+    description: 'Starter presentation content for revealjs slides. Use {{author}} for author interpolation.',
     editorKey: 'presentation',
     apiName: 'presentation',
-    language: 'markdown'
-  },
-  {
-    key: 'canonical',
-    label: 'Canonical AI File',
-    description: 'Source of truth mirrored to other assistant files when hooks run.',
-    editorKey: 'canonical',
-    apiName: canonicalTemplateName.value,
     language: 'markdown'
   }
 ]))
@@ -1131,8 +1123,7 @@ const projectStructureSubnav = computed(() =>
 const templatesSubnav = [
   { id: 'templates-notebook', label: 'Notebook', slug: 'notebook' },
   { id: 'templates-script', label: 'Script', slug: 'script' },
-  { id: 'templates-presentation', label: 'Presentation', slug: 'presentation' },
-  { id: 'templates-canonical', label: 'Canonical AI File', slug: 'canonical' }
+  { id: 'templates-presentation', label: 'Presentation', slug: 'presentation' }
 ]
 
 // DISABLED - env defaults removed
@@ -1507,10 +1498,6 @@ watch(aiAssistants, (newVal) => {
 watch(() => settings.value.defaults.ai_canonical_file, async () => {
   if (isLoadingSettings.value) return
   await loadTemplateInline(canonicalTemplateName.value, 'canonical')
-  if (activeSection.value === 'templates') {
-    selectedTemplate.value = 'canonical'
-    await pushSettingsRoute('templates', 'canonical')
-  }
 })
 
 watch(() => settings.value.defaults.git_hooks.data_security, (val) => {
@@ -1791,9 +1778,13 @@ const loadSettings = async () => {
 
     const data = await settingsResponse.json()
     console.log('[loadSettings] Settings data:', data)
+    console.log('[loadSettings] data.global:', data.global)
+    console.log('[loadSettings] data.global?.projects_root:', data.global?.projects_root)
 
     // V2 format: projects_root is under global
-    settings.value.projects_root = toScalar(data.global?.projects_root || data.projects_root, '')
+    const loadedProjectsRoot = toScalar(data.global?.projects_root || data.projects_root, '')
+    console.log('[loadSettings] Setting projects_root to:', loadedProjectsRoot)
+    settings.value.projects_root = loadedProjectsRoot
 
     if (data.project_types) {
       const merged = {}
@@ -2470,12 +2461,17 @@ const saveSettings = async () => {
     saving.value = true
 
     const normalizedRoot = settings.value.projects_root?.trim() || ''
+    console.log('[saveSettings] settings.value.projects_root:', settings.value.projects_root)
+    console.log('[saveSettings] normalizedRoot:', normalizedRoot)
+
     const payload = JSON.parse(JSON.stringify(settings.value))
 
     // V2 format: projects_root goes under global, not at root
     if (!payload.global) payload.global = {}
     payload.global.projects_root = normalizedRoot ? normalizedRoot : null
     delete payload.projects_root  // Remove root-level if it exists
+
+    console.log('[saveSettings] payload.global.projects_root:', payload.global.projects_root)
 
     // Handle scaffold seed (v2 nested structure)
     if (payload.defaults.scaffold) {
@@ -2582,8 +2578,12 @@ const saveSettings = async () => {
     // Clear new directory tracking - they're now saved
     newExtraDirectoryIds.value.clear()
 
+    console.log('[saveSettings] Before loadSettings, projects_root was:', settings.value.projects_root)
+
     // Reload settings to get fresh data from server
     await loadSettings()
+
+    console.log('[saveSettings] After loadSettings, projects_root is:', settings.value.projects_root)
 
     toast.success('Settings Saved', 'Your global defaults were updated.')
   } catch (error) {

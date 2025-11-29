@@ -2,7 +2,7 @@
 % Please edit documentation in R/init.R
 \name{init}
 \alias{init}
-\title{Initialize the framework}
+\title{Initialize the framework (DEPRECATED)}
 \usage{
 init(
   project_name = NULL,
@@ -23,63 +23,56 @@ init(
 )
 }
 \arguments{
-\item{project_name}{The name of the project (used for .Rproj file). Required when initializing from empty directory.}
+\item{project_name}{The name of the project.}
 
-\item{type}{The project type: "project" (default), "course", or "presentation".
-Replaces deprecated project_structure parameter.}
+\item{type}{The project type: "project", "project_sensitive", "course", or "presentation".}
 
-\item{sensitive}{If TRUE and type is "project", uses privacy-first structure with symmetric
-public/private directories for inputs, reference, and outputs. Default FALSE.
-Only applies to "project" type - ignored for "course" and "presentation".}
+\item{sensitive}{If TRUE, uses privacy-first structure.}
 
-\item{project_structure}{DEPRECATED. Use 'type' parameter instead.
-For backward compatibility: "default"/"minimal" map to "project"/"presentation".}
+\item{project_structure}{DEPRECATED parameter.}
 
 \item{lintr}{The lintr style to use.}
 
-\item{use_renv}{If TRUE, enables renv for package management. Default FALSE.}
+\item{use_renv}{If TRUE, enables renv.}
 
-\item{use_git}{If TRUE, initializes a git repository. Default TRUE.}
+\item{use_git}{If TRUE, initializes git.}
 
-\item{attach_defaults}{If TRUE, configures default packages to auto-attach on scaffold().
-Default packages: dplyr, tidyr, ggplot2 (auto-attached), readr, stringr, scales (installed only).
-Default TRUE.}
+\item{attach_defaults}{If TRUE, configures default packages.}
 
-\item{subdir}{Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.}
+\item{author_name}{Author name.}
 
-\item{force}{If TRUE, will reinitialize even if project is already initialized.}
+\item{author_email}{Author email.}
+
+\item{author_affiliation}{Author affiliation.}
+
+\item{default_notebook_format}{Default notebook format.}
+
+\item{subdir}{Optional subdirectory.}
+
+\item{force}{If TRUE, reinitialize.}
+
+\item{.dev_mode}{Internal development flag.}
 }
 \description{
-This function initializes the framework for a new project.
-Can be run from the framework-project template OR from any empty directory.
-When run from an empty directory, requires project_name and type parameters.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function is deprecated. Use \code{\link[=project_create]{project_create()}} or the Framework GUI instead.
+
+The \code{init()} function was the legacy way to create projects from templates.
+It has been replaced by \code{project_create()} which builds projects programmatically
+with full configuration control.
 }
 \examples{
 \dontrun{
-# Standard project (public-friendly)
-init(
-  project_name = "MyProject",
-  type = "project",
-  use_renv = FALSE,
-  attach_defaults = TRUE
+# Instead of init(), use project_create():
+project_create(
+  name = "MyProject",
+  location = "~/projects/myproject",
+  type = "project"
 )
 
-# Privacy-first project with PHI/sensitive data
-init(
-  project_name = "HealthcareStudy",
-  type = "project",
-  sensitive = TRUE
-)
-
-# Course project with renv enabled
-init(
-  project_name = "MyCourse",
-  type = "course",
-  use_renv = TRUE
-)
-
-# Single presentation without default packages
-init(type = "presentation", attach_defaults = FALSE)
+# Or use the Framework GUI:
+gui()
 }
 
 }

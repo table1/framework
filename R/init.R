@@ -219,55 +219,44 @@ message("Framework dev mode active - will load from: %s")
   }
 }
 
-#' Initialize the framework
+#' Initialize the framework (DEPRECATED)
 #'
-#' This function initializes the framework for a new project.
-#' Can be run from the framework-project template OR from any empty directory.
-#' When run from an empty directory, requires project_name and type parameters.
+#' @description
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param project_name The name of the project (used for .Rproj file). Required when initializing from empty directory.
-#' @param type The project type: "project" (default), "course", or "presentation".
-#'   Replaces deprecated project_structure parameter.
-#' @param sensitive If TRUE and type is "project", uses privacy-first structure with symmetric
-#'   public/private directories for inputs, reference, and outputs. Default FALSE.
-#'   Only applies to "project" type - ignored for "course" and "presentation".
-#' @param project_structure DEPRECATED. Use 'type' parameter instead.
-#'   For backward compatibility: "default"/"minimal" map to "project"/"presentation".
+#' This function is deprecated. Use [project_create()] or the Framework GUI instead.
+#'
+#' The `init()` function was the legacy way to create projects from templates.
+#' It has been replaced by `project_create()` which builds projects programmatically
+#' with full configuration control.
+#'
+#' @param project_name The name of the project.
+#' @param type The project type: "project", "project_sensitive", "course", or "presentation".
+#' @param sensitive If TRUE, uses privacy-first structure.
+#' @param project_structure DEPRECATED parameter.
 #' @param lintr The lintr style to use.
-#' @param use_renv If TRUE, enables renv for package management. Default FALSE.
-#' @param use_git If TRUE, initializes a git repository. Default TRUE.
-#' @param attach_defaults If TRUE, configures default packages to auto-attach on scaffold().
-#'   Default packages: dplyr, tidyr, ggplot2 (auto-attached), readr, stringr, scales (installed only).
-#'   Default TRUE.
-#' @param subdir Optional subdirectory to copy files into. If provided, {subdir} in config files will be replaced with subdir/.
-#' @param force If TRUE, will reinitialize even if project is already initialized.
+#' @param use_renv If TRUE, enables renv.
+#' @param use_git If TRUE, initializes git.
+#' @param attach_defaults If TRUE, configures default packages.
+#' @param author_name Author name.
+#' @param author_email Author email.
+#' @param author_affiliation Author affiliation.
+#' @param default_notebook_format Default notebook format.
+#' @param subdir Optional subdirectory.
+#' @param force If TRUE, reinitialize.
+#' @param .dev_mode Internal development flag.
 #'
 #' @examples
 #' \dontrun{
-#' # Standard project (public-friendly)
-#' init(
-#'   project_name = "MyProject",
-#'   type = "project",
-#'   use_renv = FALSE,
-#'   attach_defaults = TRUE
+#' # Instead of init(), use project_create():
+#' project_create(
+#'   name = "MyProject",
+#'   location = "~/projects/myproject",
+#'   type = "project"
 #' )
 #'
-#' # Privacy-first project with PHI/sensitive data
-#' init(
-#'   project_name = "HealthcareStudy",
-#'   type = "project",
-#'   sensitive = TRUE
-#' )
-#'
-#' # Course project with renv enabled
-#' init(
-#'   project_name = "MyCourse",
-#'   type = "course",
-#'   use_renv = TRUE
-#' )
-#'
-#' # Single presentation without default packages
-#' init(type = "presentation", attach_defaults = FALSE)
+#' # Or use the Framework GUI:
+#' gui()
 #' }
 #'
 #' @export
@@ -287,169 +276,21 @@ init <- function(
     subdir = NULL,
     force = FALSE,
     .dev_mode = FALSE) {
-  # Handle deprecated project_structure parameter
-  if (!is.null(project_structure) && is.null(type)) {
-    warning(
-      "Parameter 'project_structure' is deprecated. Use 'type' instead.\n",
-      "  Mapping: 'default' -> 'project', 'minimal' -> 'presentation'"
+
+  .Deprecated(
+    new = "project_create",
+    msg = paste0(
+      "init() is deprecated and no longer functional.\n\n",
+      "Use one of these alternatives:\n",
+      "  1. GUI: framework::gui() then create a new project\n",
+      "  2. R:   framework::project_create(name = '", project_name %||% "MyProject", "', ",
+      "location = '~/projects/', type = '", type %||% "project", "')\n",
+      "  3. CLI: framework new myproject\n\n",
+      "See ?project_create for full documentation."
     )
-    type <- switch(project_structure,
-      "default" = "project",
-      "minimal" = "presentation",
-      "project"  # fallback
-    )
-  }
+  )
 
-  # Handle deprecated "analysis" type
-  if (!is.null(type) && type == "analysis") {
-    warning(
-      "Type 'analysis' is deprecated. Use 'project' instead.\n",
-      "  The 'analysis' type will be removed in a future version."
-    )
-    type <- "project"
-  }
-
-  # Handle sensitive parameter - only applies to "project" type
-  if (sensitive) {
-    # Default to "project" if type is NULL
-    if (is.null(type)) {
-      type <- "project_sensitive"
-    } else if (type == "project") {
-      type <- "project_sensitive"
-    } else if (type %in% c("course", "presentation")) {
-      warning(
-        "Parameter 'sensitive' is ignored for type '", type, "'.\n",
-        "  Privacy-first structure only applies to 'project' type."
-      )
-    } else {
-      # Unknown type, let it fail in validation below
-      type <- "project_sensitive"
-    }
-  }
-
-  # Validate arguments
-  checkmate::assert_string(project_name, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_string(type, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_flag(sensitive)
-  checkmate::assert_string(project_structure, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_string(lintr, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_flag(use_renv)
-  checkmate::assert_flag(use_git)
-  checkmate::assert_flag(attach_defaults)
-  checkmate::assert_string(author_name, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_string(author_email, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_string(author_affiliation, min.chars = 1, null.ok = TRUE)
-  # Handle empty string as NULL for validation
-  if (!is.null(default_notebook_format) && nzchar(default_notebook_format)) {
-    checkmate::assert_choice(default_notebook_format, c("quarto", "rmarkdown"))
-  } else {
-    default_notebook_format <- NULL
-  }
-  checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_flag(force)
-
-  # Check if already initialized (by checking for settings file)
-  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
-  existing_settings <- .get_settings_file(target_dir)
-  if (!is.null(existing_settings) && !force) {
-    stop("Project already initialized (settings.yml or config.yml exists). Use force = TRUE to reinitialize.")
-  }
-
-  # Detect if running from template (has init.R) or empty directory
-  target_dir <- if (!is.null(subdir) && nzchar(subdir)) subdir else "."
-  from_template <- file.exists(file.path(target_dir, "init.R"))
-
-  # If from empty directory, create necessary files first
-  if (!from_template) {
-    message("Initializing from empty directory...")
-
-    # Require project_name and type
-    if (is.null(project_name) || is.null(type)) {
-      stop("project_name and type are required when initializing from an empty directory")
-    }
-
-    # Set defaults for optional parameters
-    if (is.null(lintr)) lintr <- "default"
-
-    # Create foundational files
-    .create_init_file(project_name, type, lintr, subdir)
-    .create_config_file(type, attach_defaults, subdir)
-  } else {
-    # Set defaults from template behavior
-    if (is.null(type)) type <- "project"
-    if (is.null(lintr)) lintr <- "default"
-  }
-
-  # Continue with standard init process (without git init)
-  .init_standard(project_name, type, lintr, author_name, author_email, author_affiliation, default_notebook_format, subdir, force, FALSE)
-
-  # Enable renv if requested
-  if (use_renv) {
-    message("Enabling renv for this project...")
-    renv_enable()
-  }
-
-  # Create dev mode .Rprofile if requested
-  if (.dev_mode) {
-    .create_dev_rprofile(subdir)
-  }
-
-  # Delete init.R after successful initialization
-  suppressMessages(.delete_init_file(subdir))
-
-  # Clean up .gitkeep files from data/ and functions/
-  suppressMessages(.cleanup_gitkeep_files(target_dir))
-
-  # Initialize git AFTER archiving so all files are in final state
-  if (use_git) {
-    suppressMessages(.init_git_repo(target_dir, hooks = NULL))
-  }
-
-  # Prompt for AI assistant support (if enabled by user)
-  assistants <- .prompt_ai_support_init()
-  if (length(assistants) > 0) {
-    .create_ai_instructions(assistants, target_dir, project_name, type)
-  }
-
-  # Configure git hooks if enabled
-  if (use_git) {
-    .configure_git_hooks(target_dir)
-  }
-
-  # Sync AI context files if AI assistants were configured (ensures clean initial commit)
-  if (use_git) {
-    # Check if any AI instruction files exist
-    ai_files_exist <- any(c(
-      file.exists(file.path(target_dir, "CLAUDE.md")),
-      file.exists(file.path(target_dir, "AGENTS.md")),
-      file.exists(file.path(target_dir, ".github/copilot-instructions.md"))
-    ))
-
-    if (ai_files_exist) {
-      tryCatch({
-        old_wd <- getwd()
-        on.exit(setwd(old_wd), add = TRUE)
-        if (!is.null(target_dir) && target_dir != ".") {
-          setwd(target_dir)
-        }
-
-        # Run AI sync silently before initial commit
-        ai_sync_context(verbose = FALSE)
-      }, error = function(e) {
-        # Silently skip if sync fails
-      })
-    }
-  }
-
-  # Create initial commit after all initialization is complete
-  if (use_git) {
-    .create_initial_commit(target_dir)
-  }
-
-  # Display next steps if from empty directory
-  if (!from_template) {
-    .display_next_steps(project_name, type, use_renv)
-  }
+  invisible(NULL)
 }
 
 #' Customize project files with user-specific substitutions

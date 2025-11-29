@@ -1,37 +1,48 @@
-# Framework Privacy Sensitive Project
+# Framework (Privacy-First Mode)
 # ================================================================================
-# This gitignore is designed for projects handling sensitive data (PII, PHI,
-# regulated data, etc.) and enforces a strict private/public workflow.
+# This project uses Framework's privacy-first structure.
+# All */private/ directories are gitignored by default.
+# Only */public/ directories can be committed after explicit review.
 #
 # WORKFLOW:
-#   1. Raw/sensitive data goes in private directories (NEVER committed)
-#   2. De-identified/aggregated data goes in public directories (safe to commit)
+#   1. Sensitive/raw data goes in */private/ directories (NEVER committed)
+#   2. De-identified/aggregated data goes in */public/ directories (safe to commit)
 #   3. Analysis scripts are committed, but outputs are carefully controlled
 #
 # CRITICAL: Private directories are NEVER committed to version control.
-# Only commit de-identified data, aggregated results, and code.
 # ================================================================================
 
 # ============================================================================
 # SENSITIVE DATA - NEVER COMMIT
 # ============================================================================
 
-# Private directories (anywhere in project tree)
-# These contain raw data, PII/PHI, credentials, and sensitive outputs
+# Private directories - explicit paths for this project type
+/inputs/private/
+/reference/private/
+/outputs/private/
+
+# Generic private directory patterns (defense-in-depth)
 **/private/**
 **/*_private/**
+**/sensitive/**
 
-# Common sensitive data patterns
-**/inputs/raw/**              # Raw data often contains PII
-**/inputs/sensitive/**        # Explicitly marked sensitive inputs
-**/outputs/private/**         # Private outputs, results with PII
-**/data/raw/**                # Alternative raw data location
-**/data/sensitive/**          # Alternative sensitive data location
+# Allow structure documentation (README and .gitkeep files in private dirs)
+!/inputs/**/README.md
+!/inputs/**/.gitkeep
+!/reference/**/README.md
+!/reference/**/.gitkeep
+!/outputs/**/README.md
+!/outputs/**/.gitkeep
 
-# Secrets and credentials
+# ============================================================================
+# SECRETS AND CREDENTIALS - NEVER COMMIT
+# ============================================================================
+
 .env
 .env.local
+.env.*.local
 .Renviron
+.httr-oauth
 **/credentials/**
 **/secrets/**
 *.key
@@ -49,11 +60,6 @@
 **/tmp/**
 **/temp/**
 
-# Framework database (contains file hashes, local metadata)
-framework.db
-framework.db-wal
-framework.db-shm
-
 # ============================================================================
 # R ENVIRONMENT
 # ============================================================================
@@ -63,22 +69,42 @@ framework.db-shm
 .Rhistory
 .RData
 .Ruserdata
+.Rapp.history
+.Rprofile
 
 # renv (package management)
 # NOTE: Consider committing renv.lock for reproducibility
-/renv/library/
-/renv/local/
-/renv/cellar/
-/renv/lock/
-/renv/python/
-/renv/sandbox/
-/renv/staging/
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
 
 # ============================================================================
-# LANGUAGE-SPECIFIC
+# FRAMEWORK INTERNALS
 # ============================================================================
 
-# Python (if using reticulate)
+framework.db
+framework.db-wal
+framework.db-shm
+.initiated
+.framework_renv_enabled
+.framework_scaffolded
+
+# ============================================================================
+# QUARTO / RMARKDOWN ARTIFACTS
+# ============================================================================
+
+_freeze/
+*_cache/
+*_files/
+
+# ============================================================================
+# PYTHON (if using reticulate)
+# ============================================================================
+
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
@@ -90,9 +116,11 @@ venv/
 # IDE & SYSTEM FILES
 # ============================================================================
 
-# IDE - personal settings only (commit workspace settings)
+# IDE - personal settings only (commit workspace settings if desired)
+.idea/
 .vscode/.history/
 .positron/.history/
+.history/
 
 # macOS
 .DS_Store
@@ -105,6 +133,13 @@ ehthumbs.db
 
 # Linux
 *~
+
+# ============================================================================
+# CLOUD/AWS CONFIG
+# ============================================================================
+
+.aws/
+.config/
 
 # ============================================================================
 # TEMPORARY FILES
