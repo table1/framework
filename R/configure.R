@@ -661,13 +661,14 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   if (is.null(author)) return(invisible(TRUE))
 
   checkmate::assert_list(author)
-  if (!is.null(author$name)) {
+  # Allow empty strings for all author fields (they're optional)
+  if (!is.null(author$name) && nzchar(author$name)) {
     checkmate::assert_string(author$name, min.chars = 1)
   }
-  if (!is.null(author$email)) {
+  if (!is.null(author$email) && nzchar(author$email)) {
     checkmate::assert_string(author$email, min.chars = 1)
   }
-  if (!is.null(author$affiliation)) {
+  if (!is.null(author$affiliation) && nzchar(author$affiliation)) {
     checkmate::assert_string(author$affiliation, min.chars = 1)
   }
 
@@ -992,6 +993,12 @@ configure_global <- function(settings = NULL, validate = TRUE) {
   # Merge settings with current config (deep merge, keeping NULL values)
   updated <- modifyList(current, settings, keep.null = TRUE)
 
+  # Ensure global section exists and preserve incoming global.projects_root
+  if (!is.null(settings$global$projects_root)) {
+    if (is.null(updated$global)) updated$global <- list()
+    updated$global$projects_root <- settings$global$projects_root
+  }
+
   # CRITICAL FIX: modifyList() doesn't handle unnamed lists (arrays) correctly
   # It replaces them with empty lists. We need to manually restore extra_directories
   # for all project types after the merge.
@@ -1049,6 +1056,7 @@ configure_global <- function(settings = NULL, validate = TRUE) {
     .validate_defaults(updated$defaults)
     .validate_projects(updated$projects)
     .validate_projects_root(updated$projects_root)
+    .validate_projects_root(updated$global$projects_root)  # Also validate nested v2 format
     .validate_project_types(updated$project_types)
     .validate_git_profile(updated$git)
     .validate_privacy(updated$privacy)
@@ -1062,10 +1070,12 @@ configure_global <- function(settings = NULL, validate = TRUE) {
     }
   }
 
-  # Handle v2 global.projects_root
+  # Handle v2 global.projects_root (nested under global)
   if (!is.null(updated$global$projects_root)) {
     if (!nzchar(updated$global$projects_root)) {
       updated$global$projects_root <- NULL
+    } else {
+      updated$global$projects_root <- path.expand(updated$global$projects_root)
     }
   }
 
@@ -1075,12 +1085,19 @@ configure_global <- function(settings = NULL, validate = TRUE) {
 
   # Convert paths to tilde notation before saving (for portability)
   updated_for_save <- updated
+
+  # Debug: log what we're about to save
+  message("[configure_global] global.projects_root in updated: ", updated$global$projects_root %||% "NULL")
+  message("[configure_global] projects_root in updated: ", updated$projects_root %||% "NULL")
+
   if (!is.null(updated_for_save$projects_root)) {
     updated_for_save$projects_root <- .path_to_tilde(updated_for_save$projects_root)
   }
   if (!is.null(updated_for_save$global$projects_root)) {
     updated_for_save$global$projects_root <- .path_to_tilde(updated_for_save$global$projects_root)
   }
+
+  message("[configure_global] Final global.projects_root to save: ", updated_for_save$global$projects_root %||% "NULL")
 
   # Write updated config
   write_frameworkrc(updated_for_save)

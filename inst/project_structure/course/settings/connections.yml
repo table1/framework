@@ -1,9 +1,0 @@
-# Connection configuration
-# Note: framework_db is a reserved system connection that always points to framework.db
-
-default_database: null
-default_storage_bucket: null
-
-databases: {}
-
-storage_buckets: {}

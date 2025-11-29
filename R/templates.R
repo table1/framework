@@ -24,14 +24,15 @@
   `gitignore-project_sensitive` = list(file = "gitignore-sensitive"),
   `gitignore-course` = list(file = "gitignore-course"),
   `gitignore-presentation` = list(file = "gitignore-presentation"),
-  ai_canonical = list(file = "AI_CANONICAL.fr.md"),
-  ai_claude = list(file = "AI_CANONICAL.fr.md"),
-  ai_claude_project = list(file = "AI_CANONICAL.fr.md"),
-  ai_claude_sensitive = list(file = "AI_CANONICAL.fr.md"),
-  ai_claude_course = list(file = "AI_CANONICAL.fr.md"),
-  ai_claude_presentation = list(file = "AI_CANONICAL.fr.md"),
-  ai_agents = list(file = "AI_CANONICAL.fr.md"),
-  ai_copilot = list(file = "AI_CANONICAL.fr.md")
+  # AI context templates - project-type specific
+  ai_canonical = list(file = "ai-context.project.fr.md"),
+  ai_claude = list(file = "ai-context.project.fr.md"),
+  ai_claude_project = list(file = "ai-context.project.fr.md"),
+  ai_claude_sensitive = list(file = "ai-context.project_sensitive.fr.md"),
+  ai_claude_course = list(file = "ai-context.course.fr.md"),
+  ai_claude_presentation = list(file = "ai-context.presentation.fr.md"),
+  ai_agents = list(file = "ai-context.project.fr.md"),
+  ai_copilot = list(file = "ai-context.project.fr.md")
 )
 
 .framework_template_path <- function(name) {

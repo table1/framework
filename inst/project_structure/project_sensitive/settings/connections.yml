@@ -1,7 +1,0 @@
-options:
-  default_connection: "framework"
-
-connections:
-  framework:
-    driver: "sqlite"
-    database: "framework.db"

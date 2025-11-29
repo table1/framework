@@ -553,3 +553,107 @@ test_that("configure_global preserves extra_directories through modifyList", {
   expect_equal(result2$project_types$project$extra_directories[[1]]$key, "test2")
   expect_equal(result2$project_types$project$extra_directories[[1]]$type, "workspace")
 })
+
+
+test_that("configure_global saves global.projects_root", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Set global.projects_root
+  test_path <- "/Users/test/my-projects"
+  result <- configure_global(settings = list(
+    global = list(
+      projects_root = test_path
+    )
+  ))
+
+  # Verify return value has the path
+expect_equal(result$global$projects_root, test_path)
+
+  # Verify file was written
+  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  expect_true(file.exists(settings_path))
+
+  # Read the raw YAML to verify it was actually saved
+  saved_yaml <- yaml::read_yaml(settings_path)
+  expect_equal(saved_yaml$global$projects_root, test_path)
+
+  # Also verify through read_frameworkrc
+  saved <- read_frameworkrc()
+  expect_equal(saved$global$projects_root, test_path)
+})
+
+
+test_that("configure_global persists global.projects_root through multiple saves", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # First save: set projects_root
+  configure_global(settings = list(
+    global = list(
+      projects_root = "/first/path"
+    )
+  ))
+
+  # Second save: change projects_root
+  result <- configure_global(settings = list(
+    global = list(
+      projects_root = "/second/path"
+    )
+  ))
+
+  expect_equal(result$global$projects_root, "/second/path")
+
+  # Verify in file
+  saved <- read_frameworkrc()
+  expect_equal(saved$global$projects_root, "/second/path")
+})
+
+
+test_that("configure_global preserves global.projects_root when saving other settings", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # First: set projects_root
+  configure_global(settings = list(
+    global = list(
+      projects_root = "/my/projects"
+    )
+  ))
+
+  # Second: save author (without sending global)
+  configure_global(settings = list(
+    author = list(
+      name = "New Author"
+    )
+  ))
+
+  # projects_root should still be there
+  saved <- read_frameworkrc()
+  expect_equal(saved$global$projects_root, "/my/projects")
+  expect_equal(saved$author$name, "New Author")
+})

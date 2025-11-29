@@ -438,3 +438,131 @@ test_that("API /api/settings/save preserves extra_directories through updates", 
   expect_equal(saved$project_types$project$extra_directories[[1]]$key, "test1")
   expect_equal(saved$author$name, "Updated User")
 })
+
+
+test_that("API /api/settings/save persists global.projects_root via JSON", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Simulate exactly what the GUI sends
+  request_body <- jsonlite::toJSON(list(
+    global = list(
+      projects_root = "/Users/test/new-projects"
+    ),
+    author = list(
+      name = "Test User",
+      email = "test@example.com"
+    )
+  ), auto_unbox = TRUE)
+
+  # Parse with simplifyDataFrame = FALSE (like the API does)
+  body <- jsonlite::fromJSON(request_body, simplifyDataFrame = FALSE)
+
+  # Verify JSON parsed correctly
+  expect_equal(body$global$projects_root, "/Users/test/new-projects")
+
+  # Call configure_global (like the API does)
+  result <- framework::configure_global(settings = body, validate = TRUE)
+
+  # Verify return value
+  expect_equal(result$global$projects_root, "/Users/test/new-projects")
+
+  # Verify file was actually saved
+  saved <- framework::read_frameworkrc()
+  expect_equal(saved$global$projects_root, "/Users/test/new-projects")
+
+  # Also verify by reading raw YAML
+  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  saved_yaml <- yaml::read_yaml(settings_path)
+  expect_equal(saved_yaml$global$projects_root, "/Users/test/new-projects")
+})
+
+
+test_that("API saves global.projects_root when sent with full payload like GUI", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # This mimics the FULL payload the GUI sends (with all the extra fields)
+  request_body <- jsonlite::toJSON(list(
+    global = list(
+      projects_root = "/Users/test/my-projects",
+      home_dir = "/Users/test"
+    ),
+    author = list(
+      name = "Test Author",
+      email = "test@example.com",
+      affiliation = "Test Org"
+    ),
+    defaults = list(
+      project_type = "project",
+      notebook_format = "quarto",
+      ide = "vscode",
+      use_git = TRUE,
+      use_renv = FALSE,
+      seed = "123",
+      seed_on_scaffold = FALSE,
+      ai_support = TRUE,
+      ai_assistants = list("claude"),
+      ai_canonical_file = "CLAUDE.md",
+      scaffold = list(
+        source_all_functions = TRUE,
+        set_theme_on_scaffold = FALSE,
+        seed_on_scaffold = FALSE,
+        seed = "123"
+      ),
+      git_hooks = list(
+        ai_sync = FALSE,
+        data_security = FALSE
+      ),
+      packages = list(
+        use_renv = FALSE,
+        default_packages = list()
+      )
+    ),
+    project_types = list(
+      project = list(
+        directories = list(
+          notebooks = "notebooks",
+          scripts = "scripts",
+          functions = "functions"
+        )
+      )
+    ),
+    git = list(),
+    privacy = list(
+      secret_scan = FALSE,
+      gitignore_template = "gitignore"
+    )
+  ), auto_unbox = TRUE)
+
+  body <- jsonlite::fromJSON(request_body, simplifyDataFrame = FALSE)
+
+  # Verify JSON parsed correctly
+  expect_equal(body$global$projects_root, "/Users/test/my-projects")
+
+  # Call configure_global
+  result <- framework::configure_global(settings = body, validate = TRUE)
+
+  # Verify return value has the path
+  expect_equal(result$global$projects_root, "/Users/test/my-projects")
+
+  # Verify file was saved correctly
+  saved <- framework::read_frameworkrc()
+  expect_equal(saved$global$projects_root, "/Users/test/my-projects")
+})

@@ -1,40 +1,121 @@
 # Framework Research Project
-# Pattern-based gitignore - works regardless of directory structure customization
+# ================================================================================
+# Pattern-based gitignore - works regardless of directory structure customization.
+# This is the standard template for non-sensitive projects.
+# ================================================================================
 
-# R environment
-.Rproj.user/
-.Rhistory
-.RData
-.Ruserdata
-
-# renv (package management)
-/renv/
-/renv.lock
+# ============================================================================
+# PRIVATE DATA - NEVER COMMIT
+# ============================================================================
 
 # Private directories (anywhere in project tree)
 **/private/**
 **/*_private/**
 
-# Utility directories (anywhere in project tree)
+# ============================================================================
+# SECRETS AND CREDENTIALS - NEVER COMMIT
+# ============================================================================
+
+.env
+.env.local
+.env.*.local
+.Renviron
+.httr-oauth
+**/credentials/**
+**/secrets/**
+*.key
+*.pem
+
+# ============================================================================
+# UTILITY & CACHE - SAFE TO IGNORE
+# ============================================================================
+
+# Temporary processing directories
 **/cache/**
 **/scratch/**
+**/tmp/**
+**/temp/**
 
-# Python (if using reticulate)
+# ============================================================================
+# R ENVIRONMENT
+# ============================================================================
+
+# R session files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+.Rprofile
+
+# renv (package management)
+# NOTE: Consider committing renv.lock for reproducibility
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
+
+# ============================================================================
+# FRAMEWORK INTERNALS
+# ============================================================================
+
+framework.db
+framework.db-wal
+framework.db-shm
+.initiated
+.framework_renv_enabled
+.framework_scaffolded
+
+# ============================================================================
+# QUARTO / RMARKDOWN ARTIFACTS
+# ============================================================================
+
+_freeze/
+*_cache/
+*_files/
+
+# ============================================================================
+# PYTHON (if using reticulate)
+# ============================================================================
+
 __pycache__/
 .ipynb_checkpoints/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
 
-# IDE - personal settings only (commit workspace settings)
+# ============================================================================
+# IDE & SYSTEM FILES
+# ============================================================================
+
+# IDE - personal settings only (commit workspace settings if desired)
+.idea/
 .vscode/.history/
 .positron/.history/
+.history/
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# Secrets and environment files
-.env
-.env.local
-.Renviron
+# Windows
+Thumbs.db
+ehthumbs.db
 
-# Temporary files
+# Linux
+*~
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+
 *.tmp
 *.log
+*.bak
+*.swp
+*~
