@@ -292,38 +292,41 @@
           </div>
 
           <div class="space-y-5">
-            <div v-for="pair in inputFields" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
-              <div class="space-y-2">
-                <Toggle
-                  :model-value="localEnabled[pair.privateKey]"
-                  @update:model-value="updateEnabled(pair.privateKey, $event)"
-                  :label="pair.privateLabel"
-                  :disabled="isToggleDisabled(pair.privateKey)"
-                />
-                <Input
-                  v-if="localEnabled[pair.privateKey] !== false"
-                  :model-value="getDirectoryValue(pair.privateKey)"
-                  @update:model-value="updateDirectory(pair.privateKey, $event)"
-                  prefix="/"
-                  monospace
-                  :disabled="disabled"
-                />
-              </div>
-              <div class="space-y-2">
-                <Toggle
-                  :model-value="localEnabled[pair.publicKey]"
-                  @update:model-value="updateEnabled(pair.publicKey, $event)"
-                  :label="pair.publicLabel"
-                  :disabled="isToggleDisabled(pair.publicKey)"
-                />
-                <Input
-                  v-if="localEnabled[pair.publicKey] !== false"
-                  :model-value="getDirectoryValue(pair.publicKey)"
-                  @update:model-value="updateDirectory(pair.publicKey, $event)"
-                  prefix="/"
-                  monospace
-                  :disabled="disabled"
-                />
+            <div v-for="pair in inputFields" :key="pair.privateKey">
+              <p v-if="pair.hint" class="text-sm text-gray-500 dark:text-gray-400 mb-2">{{ pair.hint }}</p>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                  <Toggle
+                    :model-value="localEnabled[pair.privateKey]"
+                    @update:model-value="updateEnabled(pair.privateKey, $event)"
+                    :label="pair.privateLabel"
+                    :disabled="isToggleDisabled(pair.privateKey)"
+                  />
+                  <Input
+                    v-if="localEnabled[pair.privateKey] !== false"
+                    :model-value="getDirectoryValue(pair.privateKey)"
+                    @update:model-value="updateDirectory(pair.privateKey, $event)"
+                    prefix="/"
+                    monospace
+                    :disabled="disabled"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Toggle
+                    :model-value="localEnabled[pair.publicKey]"
+                    @update:model-value="updateEnabled(pair.publicKey, $event)"
+                    :label="pair.publicLabel"
+                    :disabled="isToggleDisabled(pair.publicKey)"
+                  />
+                  <Input
+                    v-if="localEnabled[pair.publicKey] !== false"
+                    :model-value="getDirectoryValue(pair.publicKey)"
+                    @update:model-value="updateDirectory(pair.publicKey, $event)"
+                    prefix="/"
+                    monospace
+                    :disabled="disabled"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -532,38 +535,41 @@
           </div>
 
           <div class="space-y-5">
-            <div v-for="pair in outputFields" :key="pair.privateKey" class="grid gap-4 sm:grid-cols-2">
-              <div class="space-y-2">
-                <Toggle
-                  :model-value="localEnabled[pair.privateKey]"
-                  @update:model-value="updateEnabled(pair.privateKey, $event)"
-                  :label="pair.privateLabel"
-                  :disabled="isToggleDisabled(pair.privateKey)"
-                />
-                <Input
-                  v-if="localEnabled[pair.privateKey] !== false"
-                  :model-value="getDirectoryValue(pair.privateKey)"
-                  @update:model-value="updateDirectory(pair.privateKey, $event)"
-                  prefix="/"
-                  monospace
-                  :disabled="disabled"
-                />
-              </div>
-              <div class="space-y-2">
-                <Toggle
-                  :model-value="localEnabled[pair.publicKey]"
-                  @update:model-value="updateEnabled(pair.publicKey, $event)"
-                  :label="pair.publicLabel"
-                  :disabled="isToggleDisabled(pair.publicKey)"
-                />
-                <Input
-                  v-if="localEnabled[pair.publicKey] !== false"
-                  :model-value="getDirectoryValue(pair.publicKey)"
-                  @update:model-value="updateDirectory(pair.publicKey, $event)"
-                  prefix="/"
-                  monospace
-                  :disabled="disabled"
-                />
+            <div v-for="pair in outputFields" :key="pair.privateKey">
+              <p v-if="pair.hint" class="text-sm text-gray-500 dark:text-gray-400 mb-2">{{ pair.hint }}</p>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                  <Toggle
+                    :model-value="localEnabled[pair.privateKey]"
+                    @update:model-value="updateEnabled(pair.privateKey, $event)"
+                    :label="pair.privateLabel"
+                    :disabled="isToggleDisabled(pair.privateKey)"
+                  />
+                  <Input
+                    v-if="localEnabled[pair.privateKey] !== false"
+                    :model-value="getDirectoryValue(pair.privateKey)"
+                    @update:model-value="updateDirectory(pair.privateKey, $event)"
+                    prefix="/"
+                    monospace
+                    :disabled="disabled"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Toggle
+                    :model-value="localEnabled[pair.publicKey]"
+                    @update:model-value="updateEnabled(pair.publicKey, $event)"
+                    :label="pair.publicLabel"
+                    :disabled="isToggleDisabled(pair.publicKey)"
+                  />
+                  <Input
+                    v-if="localEnabled[pair.publicKey] !== false"
+                    :model-value="getDirectoryValue(pair.publicKey)"
+                    @update:model-value="updateDirectory(pair.publicKey, $event)"
+                    prefix="/"
+                    monospace
+                    :disabled="disabled"
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -239,9 +239,9 @@
                 <Checkbox
                   v-model="editableSettings.scaffold.positron"
                   id="support-positron-edit"
-                  description="Enable Positron-specific workspace and settings files"
+                  description="Creates .code-workspace file for Positron/VS Code users"
                 >
-                  Positron
+                  Positron / VS Code
                 </Checkbox>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
                   RStudio supported by default

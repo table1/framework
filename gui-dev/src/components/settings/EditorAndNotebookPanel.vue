@@ -8,9 +8,9 @@
         :model-value="positron"
         @update:model-value="$emit('update:positron', $event)"
         id="support-positron"
-        description="Enable Positron-specific workspace and settings files"
+        description="Creates .code-workspace file for Positron/VS Code users"
       >
-        Positron
+        Positron / VS Code
       </Checkbox>
       <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
         RStudio supported by default
