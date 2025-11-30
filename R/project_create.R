@@ -152,17 +152,12 @@ project_create <- function(
   # Create stub files for specific project types
   .create_stub_files(project_dir, type, name, author)
 
-  # Initialize git repository
-  if (git$initialize %||% git$use_git %||% TRUE) {
-    .init_git_repo(project_dir, git$hooks)
-  }
-
-  # Initialize renv if requested
+  # Initialize renv if requested (before git so renv files are committed)
   if (packages$use_renv) {
     .init_renv(project_dir)
   }
 
-  # Generate Quarto configuration files
+  # Generate Quarto configuration files (before git so configs are committed)
   if (!is.null(quarto) || !is.null(render_dirs)) {
     root_output_dir <- NULL
     if (!is.null(quarto) && !is.null(quarto$render_dir)) {
@@ -179,6 +174,11 @@ project_create <- function(
     if (quarto_result$success) {
       message("✓ Generated ", quarto_result$count, " Quarto configuration file(s)")
     }
+  }
+
+  # Initialize git repository LAST so all files are included in initial commit
+  if (git$initialize %||% git$use_git %||% TRUE) {
+    .init_git_repo(project_dir, git$hooks)
   }
 
   # Add to project registry (skip for temp directories used in tests)
@@ -710,14 +710,19 @@ project_create <- function(
     })
   }
 
-  # Make initial commit
+  # Stage all files
   add_result <- system2("git", c("add", "."), stdout = TRUE, stderr = TRUE)
-  commit_result <- system2("git", c("commit", "-m", "Initial commit."), stdout = TRUE, stderr = TRUE)
 
-  if (length(commit_result) > 0 && any(grepl("create mode|Initial commit", commit_result))) {
+  # Create initial commit with proper message formatting
+  # Use system() with proper shell quoting for the commit message
+  commit_result <- system(
+    "git commit -m 'Initial commit from Framework'",
+    intern = TRUE,
+    ignore.stderr = FALSE
+  )
+
+  if (length(commit_result) > 0 && any(grepl("create mode|Initial commit|file changed|files changed", commit_result))) {
     message("  Created initial commit")
-  } else {
-    warning("Git commit may have failed. Output: ", paste(commit_result, collapse = "\n"))
   }
 }
 

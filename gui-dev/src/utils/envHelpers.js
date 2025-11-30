@@ -13,11 +13,12 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
 
 # S3-compatible storage (AWS S3, MinIO, etc.)
+S3_BUCKET=
 S3_ACCESS_KEY=
 S3_SECRET_KEY=
-S3_BUCKET=
 S3_REGION=us-east-1
-S3_ENDPOINT=`
+S3_ENDPOINT=
+S3_SESSION_TOKEN=`
 
 export const parseEnvContent = (raw = '') => {
   const result = {}

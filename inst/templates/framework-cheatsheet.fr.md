@@ -154,6 +154,59 @@ restore_framework_view()         # Restore view preferences
 
 ---
 
+## Publishing to S3
+
+### Setup
+Configure S3 connection in `config.yml`:
+```yaml
+connections:
+  s3_public:
+    driver: s3
+    bucket: my-bucket
+    region: us-east-1
+    prefix: framework-outputs     # Optional prefix for all uploads
+    default: true                 # Mark as default S3 connection
+```
+
+Add credentials to `.env`:
+```bash
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+```
+
+### Publishing Files
+```r
+publish("outputs/report.html")                    # Upload file to S3
+publish("outputs/data.csv", dest = "data/v2.csv") # Custom destination
+publish_dir("outputs/charts/")                    # Upload entire directory
+```
+
+### Publishing Notebooks
+```r
+publish_notebook("notebooks/analysis.qmd")        # Render & publish
+# -> https://bucket.s3.region.amazonaws.com/prefix/analysis/index.html
+
+publish_notebook("report.qmd", dest = "reports/2024/q4")  # Custom path
+publish_notebook("report.qmd", self_contained = FALSE)    # With assets
+```
+
+### Publishing Data
+```r
+publish_data(my_df, "datasets/results.csv")       # Publish data frame
+publish_data(my_df, "data.rds", format = "rds")   # As RDS
+publish_data("outputs/model.rds", "models/v2.rds") # Existing file
+```
+
+### Utilities
+```r
+s3_test()                         # Test S3 connection
+s3_test("backup_s3")              # Test specific connection
+publish_list()                    # List published files
+publish_list("reports/")          # List with prefix filter
+```
+
+---
+
 ## Advanced Features
 
 ### Initialization Control
@@ -203,6 +256,11 @@ capture_output(expr)             # Capture console output
 | `packages_snapshot()` | Save package versions |
 | `packages_status()` | Check package status |
 | `packages_update()` | Update packages |
+| `publish()` | Upload file or directory to S3 |
+| `publish_data()` | Publish data frame or file to S3 |
+| `publish_dir()` | Upload directory to S3 |
+| `publish_list()` | List published files in S3 |
+| `publish_notebook()` | Render and publish Quarto notebook to S3 |
 | `query_execute()` | Execute query on connection |
 | `query_get()` | Get query results |
 | `read_config()` | Read configuration |
@@ -214,6 +272,7 @@ capture_output(expr)             # Capture console output
 | `result_get()` | Load result |
 | `result_list()` | List all results |
 | `result_save()` | Save result |
+| `s3_test()` | Test S3 connection |
 | `save_data()` | Save to data catalog |
 | `scaffold()` | Load project environment |
 | `scratch_capture()` | Save to scratch space |

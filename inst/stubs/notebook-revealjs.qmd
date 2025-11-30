@@ -11,7 +11,7 @@ format:
     footer: "{filename}"
 ---
 
-```{{r}}
+```{r}
 #| label: setup
 #| include: false
 
@@ -29,7 +29,7 @@ scaffold()
 
 Content here
 
-```{{r}}
+```{r}
 # Your code here
 ```
 

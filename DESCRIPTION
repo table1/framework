@@ -38,13 +38,15 @@ Suggests:
     renv,
     remotes,
     cli,
-    withr
+    withr,
     pool,
     RPostgres,
     RMariaDB,
     odbc,
     duckdb,
     haven,
-    readxl
+    readxl,
+    aws.s3,
+    aws.signature
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)

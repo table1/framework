@@ -108,9 +108,9 @@
                 <Checkbox
                   v-model="project.scaffold.positron"
                   id="support-positron"
-                  description="Enable Positron-specific workspace and settings files"
+                  description="Creates .code-workspace file for Positron/VS Code users"
                 >
-                  Positron
+                  Positron / VS Code
                 </Checkbox>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
                   RStudio supported by default
@@ -237,21 +237,19 @@
 
         <!-- .env Defaults Section -->
         <div v-show="activeSection === 'env'">
-          <div class="rounded-lg bg-gray-50 p-6 dark:bg-gray-800/50">
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Environment variables template for this project. These defaults help connections work immediately.
-            </p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Environment variables template for this project. These defaults help connections work immediately.
+          </p>
 
-            <EnvEditor
-              :groups="project.env.groups"
-              v-model:variables="project.env.variables"
-              v-model:raw-content="project.env.rawContent"
-              v-model:view-mode="project.env.viewMode"
-              v-model:regroup-on-save="project.env.regroupOnSave"
-              :show-save-button="false"
-              :allow-show-values-toggle="true"
-            />
-          </div>
+          <EnvEditor
+            :groups="project.env.groups"
+            v-model:variables="project.env.variables"
+            v-model:raw-content="project.env.rawContent"
+            v-model:view-mode="project.env.viewMode"
+            v-model:regroup-on-save="project.env.regroupOnSave"
+            :show-save-button="false"
+            :allow-show-values-toggle="true"
+          />
         </div>
 
         <!-- Packages Section -->
@@ -495,11 +493,12 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
 
 # S3-compatible storage (AWS S3, MinIO, etc.)
+S3_BUCKET=
 S3_ACCESS_KEY=
 S3_SECRET_KEY=
-S3_BUCKET=
 S3_REGION=us-east-1
-S3_ENDPOINT=`,
+S3_ENDPOINT=
+S3_SESSION_TOKEN=`,
     viewMode: 'grouped',
     regroupOnSave: false,
     groups: {}
@@ -641,6 +640,9 @@ onMounted(async () => {
           } else if (envConfig?.raw) {
             project.value.env.rawContent = envConfig.raw
           }
+          // Parse the loaded env content into variables and groups
+          project.value.env.variables = parseEnvContent(project.value.env.rawContent)
+          project.value.env.groups = groupEnvByPrefix(project.value.env.variables)
         }
 
         // Load Quarto defaults
