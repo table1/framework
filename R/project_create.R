@@ -378,6 +378,7 @@ project_create <- function(
 
     yaml::write_yaml(list(ai = list(
       enabled = ai$enabled %||% FALSE,
+      canonical_file = ai$canonical_file %||% "CLAUDE.md",
       assistants = ai$assistants
     )), file.path(settings_dir, "ai.yml"))
 
@@ -428,6 +429,7 @@ project_create <- function(
         # AI configuration
         ai = list(
           enabled = ai$enabled %||% FALSE,
+          canonical_file = ai$canonical_file %||% "CLAUDE.md",
           assistants = ai$assistants
         ),
 

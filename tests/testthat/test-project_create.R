@@ -167,6 +167,7 @@ test_that("project_create handles AI configuration", {
     ai = list(
       enabled = TRUE,
       assistants = c("claude", "agents"),
+      canonical_file = "AGENTS.md",
       canonical_content = "# Test AI Context\n\nThis is a test."
     ),
     git = list(use_git = FALSE)
@@ -178,10 +179,11 @@ test_that("project_create handles AI configuration", {
   expect_true(file.exists(file.path(result$path, "CLAUDE.md")))
   expect_true(file.exists(file.path(result$path, "AGENTS.md")))
 
-  # Check config has AI settings
-  config <- yaml::read_yaml(file.path(result$path, "config.yml"))
-  expect_true(config$default$ai$enabled)
-  expect_equal(config$default$ai$assistants, c("claude", "agents"))
+  # Check AI settings file has correct values (split file for project type)
+  ai_config <- yaml::read_yaml(file.path(result$path, "settings", "ai.yml"))
+  expect_true(ai_config$ai$enabled)
+  expect_equal(ai_config$ai$assistants, c("claude", "agents"))
+  expect_equal(ai_config$ai$canonical_file, "AGENTS.md")
 })
 
 test_that("project_create handles scaffold configuration", {
