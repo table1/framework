@@ -347,7 +347,7 @@
                     {{ currentTemplateTab.description }}
                   </p>
                   <p class="text-xs text-gray-500 dark:text-gray-500">
-                    Edits save with the main “Save Changes” button.
+                    Edits save with the main "Save Changes" button.
                   </p>
                 </div>
                 <Button
@@ -358,6 +358,19 @@
                 >
                   Reset to default
                 </Button>
+              </div>
+
+              <!-- Template Variables Legend -->
+              <div v-if="currentTemplateTab.hasVariables" class="rounded-md bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 p-3">
+                <h5 class="text-xs font-semibold text-sky-800 dark:text-sky-300 mb-2">Available Variables</h5>
+                <table class="text-xs">
+                  <tbody>
+                    <tr v-for="variable in templateVariables" :key="variable.syntax">
+                      <td class="font-mono font-medium text-sky-700 dark:text-sky-300 pr-4 py-0.5">{{ variable.syntax }}</td>
+                      <td class="text-gray-600 dark:text-gray-400 py-0.5">{{ variable.description }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
               <CodeEditor
@@ -652,16 +665,16 @@ const generalUtilityFallback = [
 ]
 
 const sensitiveInputFallback = [
-  { privateKey: 'inputs_private_raw', publicKey: 'inputs_public_raw', label: 'Raw data', privateLabel: 'Raw data (private)', publicLabel: 'Raw data (public)' },
-  { privateKey: 'inputs_private_intermediate', publicKey: 'inputs_public_intermediate', label: 'Intermediate data', privateLabel: 'Intermediate data (private)', publicLabel: 'Intermediate data (public)' },
-  { privateKey: 'inputs_private_final', publicKey: 'inputs_public_final', label: 'Analysis-ready data', privateLabel: 'Analysis-ready data (private)', publicLabel: 'Analysis-ready data (public)' }
+  { privateKey: 'inputs_private_raw', publicKey: 'inputs_public_raw', label: 'Raw data', privateLabel: 'Raw data (private)', publicLabel: 'Raw data (public)', hint: 'Read-only exports from source systems.' },
+  { privateKey: 'inputs_private_intermediate', publicKey: 'inputs_public_intermediate', label: 'Intermediate data', privateLabel: 'Intermediate data (private)', publicLabel: 'Intermediate data (public)', hint: 'Data after light cleaning or pre-processing steps.' },
+  { privateKey: 'inputs_private_final', publicKey: 'inputs_public_final', label: 'Analysis-ready data', privateLabel: 'Analysis-ready data (private)', publicLabel: 'Analysis-ready data (public)', hint: 'Final inputs ready for modeling or reporting.' }
 ]
 
 const sensitiveOutputFallback = [
-  { privateKey: 'outputs_private_tables', publicKey: 'outputs_public_tables', label: 'Tables', privateLabel: 'Tables (private)', publicLabel: 'Tables (public)' },
-  { privateKey: 'outputs_private_figures', publicKey: 'outputs_public_figures', label: 'Figures', privateLabel: 'Figures (private)', publicLabel: 'Figures (public)' },
-  { privateKey: 'outputs_private_models', publicKey: 'outputs_public_models', label: 'Models', privateLabel: 'Models (private)', publicLabel: 'Models (public)' },
-  { privateKey: 'outputs_private_reports', publicKey: 'outputs_public_reports', label: 'Reports', privateLabel: 'Reports (private)', publicLabel: 'Reports (public)' }
+  { privateKey: 'outputs_private_tables', publicKey: 'outputs_public_tables', label: 'Tables', privateLabel: 'Tables (private)', publicLabel: 'Tables (public)', hint: 'Publishable tables ready for reports or manuscripts.' },
+  { privateKey: 'outputs_private_figures', publicKey: 'outputs_public_figures', label: 'Figures', privateLabel: 'Figures (private)', publicLabel: 'Figures (public)', hint: 'Final plots and graphics.' },
+  { privateKey: 'outputs_private_models', publicKey: 'outputs_public_models', label: 'Models', privateLabel: 'Models (private)', publicLabel: 'Models (public)', hint: 'Serialized models or model summaries.' },
+  { privateKey: 'outputs_private_reports', publicKey: 'outputs_public_reports', label: 'Reports', privateLabel: 'Reports (private)', publicLabel: 'Reports (public)', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
 const getDirectoryMeta = (typeKey, dirKey) => catalog.value?.project_types?.[typeKey]?.directories?.[dirKey] || {}
@@ -1018,14 +1031,24 @@ const templateEditors = reactive({
   gitignore_presentation: { loading: false, contents: '' }
 })
 
+// Template variables available for interpolation
+const templateVariables = [
+  { syntax: '{{author}}', description: 'Author name' },
+  { syntax: '{{email}}', description: 'Author email' },
+  { syntax: '{{affiliation}}', description: 'Author affiliation' },
+  { syntax: '{{github_username}}', description: 'GitHub username' },
+  { syntax: '{{github_email}}', description: 'GitHub email' }
+]
+
 const templateTabs = computed(() => ([
   {
     key: 'notebook',
     label: 'Notebook',
-    description: 'Starter Quarto notebook used when creating notebooks. Use {{author}} for author interpolation.',
+    description: 'Starter Quarto notebook used when creating notebooks.',
     editorKey: 'notebook',
     apiName: 'notebook',
-    language: 'markdown'
+    language: 'markdown',
+    hasVariables: true
   },
   {
     key: 'script',
@@ -1033,15 +1056,17 @@ const templateTabs = computed(() => ([
     description: 'Starter R script used for new scripts.',
     editorKey: 'script',
     apiName: 'script',
-    language: 'r'
+    language: 'r',
+    hasVariables: false
   },
   {
     key: 'presentation',
     label: 'Presentation',
-    description: 'Starter presentation content for revealjs slides. Use {{author}} for author interpolation.',
+    description: 'Starter presentation content for revealjs slides.',
     editorKey: 'presentation',
     apiName: 'presentation',
-    language: 'markdown'
+    language: 'markdown',
+    hasVariables: true
   }
 ]))
 

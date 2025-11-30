@@ -231,15 +231,6 @@
               />
             </div>
 
-            <Input
-              :model-value="item.endpoint"
-              @update:model-value="update('endpoint', $event)"
-              label="Endpoint"
-              hint="Leave empty for AWS S3, or specify custom endpoint for MinIO, etc."
-              monospace
-              size="sm"
-            />
-
             <div class="grid grid-cols-2 gap-3">
               <Input
                 :model-value="item.access_key"
@@ -256,6 +247,24 @@
                 size="sm"
               />
             </div>
+
+            <Input
+              :model-value="item.endpoint"
+              @update:model-value="update('endpoint', $event)"
+              label="Endpoint"
+              hint="Leave empty for AWS S3, or specify custom endpoint for MinIO, etc."
+              monospace
+              size="sm"
+            />
+
+            <Checkbox
+              :model-value="item.static_hosting"
+              @update:model-value="update('static_hosting', $event)"
+              id="static-hosting"
+              description="Enable for S3 static website hosting, R2 public buckets, or CDN-fronted storage. Allows clean URLs like /report/ instead of /report.html"
+            >
+              Static website hosting
+            </Checkbox>
           </div>
         </template>
       </Repeater>
@@ -269,6 +278,7 @@ import Repeater from '../ui/Repeater.vue'
 import Input from '../ui/Input.vue'
 import Select from '../ui/Select.vue'
 import Badge from '../ui/Badge.vue'
+import Checkbox from '../ui/Checkbox.vue'
 
 const props = defineProps({
   databaseConnections: {
@@ -423,6 +433,7 @@ const getDefaultS3Item = () => ({
   region: 'env("S3_REGION", "us-east-1")',
   endpoint: 'env("S3_ENDPOINT", "")',
   access_key: 'env("S3_ACCESS_KEY", "")',
-  secret_key: 'env("S3_SECRET_KEY", "")'
+  secret_key: 'env("S3_SECRET_KEY", "")',
+  static_hosting: false
 })
 </script>

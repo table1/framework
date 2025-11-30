@@ -142,22 +142,40 @@ make_notebook <- function(name,
   stub_content <- gsub("{filename}", original_name, stub_content, fixed = TRUE)
   stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
 
-  # Get author name from project config or global config
+  # Get author info from project config or global config
   cfg <- tryCatch(read_config(), error = function(e) NULL)
-  author_name <- cfg$author$name
-  if (is.null(author_name) || !nzchar(author_name)) {
+
+
+  # Helper to get a setting with fallback chain: project config -> global settings -> default
+  get_author_field <- function(field, default = "") {
+    # Try project config first
+    value <- cfg$author[[field]]
+    if (!is.null(value) && nzchar(value)) return(value)
+
     # Fall back to global settings
-    author_name <- tryCatch(
-      get_global_setting("author.name", default = "", print = FALSE),
+    value <- tryCatch(
+      get_global_setting(paste0("author.", field), default = "", print = FALSE),
       error = function(e) ""
     )
-  }
-  if (!nzchar(author_name)) {
-    author_name <- "Your Name"
+    if (nzchar(value)) return(value)
+
+    # Return default
+    default
   }
 
-  # Replace {{author}} placeholder (new style)
+  # Get all author fields
+  author_name <- get_author_field("name", "Your Name")
+  author_email <- get_author_field("email", "")
+  author_affiliation <- get_author_field("affiliation", "")
+  github_username <- get_author_field("github_username", "")
+  github_email <- get_author_field("github_email", "")
+
+  # Replace all template variables ({{variable}} syntax)
   stub_content <- gsub("\\{\\{author\\}\\}", author_name, stub_content)
+  stub_content <- gsub("\\{\\{email\\}\\}", author_email, stub_content)
+  stub_content <- gsub("\\{\\{affiliation\\}\\}", author_affiliation, stub_content)
+  stub_content <- gsub("\\{\\{github_username\\}\\}", github_username, stub_content)
+  stub_content <- gsub("\\{\\{github_email\\}\\}", github_email, stub_content)
 
   # Also support legacy patterns for backward compatibility
   stub_content <- gsub(

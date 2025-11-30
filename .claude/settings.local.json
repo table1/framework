@@ -87,7 +87,12 @@
       "Bash(kill:*)",
       "Bash(pkill:*)",
       "Bash(NOT_CRAN=true Rscript:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "WebSearch",
+      "WebFetch(domain:cran.r-project.org)",
+      "Bash(docker run:*)",
+      "Bash(minio/minio server:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []

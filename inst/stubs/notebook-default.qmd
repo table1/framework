@@ -15,7 +15,7 @@ execute:
   cache: false
 ---
 
-```{{r}}
+```{r}
 #| label: setup
 #| include: false
 
@@ -27,24 +27,24 @@ scaffold()
 
 Brief description of this notebook's purpose.
 
-```{{r}}
+```{r}
 # Your code here
 ```
 
 ## Analysis
 
-```{{r}}
+```{r}
 # Analysis code
 ```
 
 ## Results
 
-```{{r}}
+```{r}
 # Results code
 ```
 
 ## Session Info
 
-```{{r}}
+```{r}
 sessionInfo()
 ```

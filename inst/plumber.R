@@ -230,6 +230,12 @@ function() {
     # Quarto settings - preserve as-is
     defaults_flat$quarto <- settings$defaults$quarto %||% list()
 
+    # .env defaults - preserve as-is
+    defaults_flat$env <- settings$defaults$env %||% list()
+
+    # Connections defaults - preserve as-is
+    defaults_flat$connections <- settings$defaults$connections %||% list()
+
     # Add alias for backwards compatibility (tests/UI may expect default_format)
     defaults_flat$default_format <- defaults_flat$notebook_format
 

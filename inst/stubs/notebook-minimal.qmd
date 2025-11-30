@@ -4,11 +4,11 @@ date: "{date}"
 format: html
 ---
 
-```{{r}}
+```{r}
 library(framework)
 scaffold()
 ```
 
-```{{r}}
+```{r}
 # Your code here
 ```
