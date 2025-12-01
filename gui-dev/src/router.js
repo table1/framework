@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import DocsView from './views/DocsView.vue'
+import DocsCategoryView from './views/DocsCategoryView.vue'
 import ProjectsView from './views/ProjectsView.vue'
 import NewProjectView from './views/NewProjectView.vue'
 import ProjectDetailView from './views/ProjectDetailView.vue'
@@ -15,13 +15,12 @@ const routes = [
   },
   {
     path: '/docs',
-    name: 'docs',
-    component: DocsView
+    redirect: '/docs/category/1'
   },
   {
-    path: '/docs/:functionName',
-    name: 'doc-detail',
-    component: DocsView,
+    path: '/docs/category/:categoryId',
+    name: 'docs-category',
+    component: DocsCategoryView,
     props: true
   },
   {

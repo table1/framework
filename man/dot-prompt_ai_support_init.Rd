@@ -7,7 +7,7 @@
 .prompt_ai_support_init()
 }
 \description{
-Called during init() to check if AI instructions should be created.
+Called during project_create() to check if AI instructions should be created.
 NO prompting - just returns saved preferences.
 }
 \keyword{internal}

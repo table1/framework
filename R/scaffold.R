@@ -33,7 +33,7 @@ scaffold <- function(config_file = NULL) {
       "  - .Rproj file with settings file nearby\n",
       "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
       "Current directory: ", getwd(), "\n",
-      "To create a new project, use: init()"
+      "To create a new project, use: project_create()"
     )
   }
 
@@ -56,7 +56,7 @@ scaffold <- function(config_file = NULL) {
       "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
       "Current directory: ", getwd(), "\n",
       "Project root found: ", if (!is.null(project_root)) project_root else "none", "\n",
-      "To create a new project, use: init()"
+      "To create a new project, use: project_create()"
     )
   }
 
@@ -644,7 +644,7 @@ scaffold <- function(config_file = NULL) {
 
 #' Create initial commit after first successful scaffold
 #' @keywords internal
-#' @note This function is now deprecated. Initial commits are created during init()
+#' @note This function is now deprecated. Initial commits are created during project_create()
 #'   instead of scaffold(). Kept for backward compatibility with older projects.
 .commit_after_scaffold <- function() {
   # Check if git is available and we're in a repo
@@ -662,11 +662,11 @@ scaffold <- function(config_file = NULL) {
   }, error = function(e) FALSE, warning = function(w) FALSE)
 
   # Only create commit if this is first scaffold (no commits yet)
-  # This handles the case where older projects initialized before init() created commits
+  # This handles the case where older projects initialized before project_create() created commits
   if (!has_commits) {
     # No commits yet - add and commit everything
     tryCatch({
-      # Add all files (including any created after init, like .github/)
+      # Add all files (including any created after project_create, like .github/)
       system("git add -A > /dev/null 2>&1")
       commit_result <- system("git commit -m \"Project initialized.\" > /dev/null 2>&1")
       if (commit_result == 0) {

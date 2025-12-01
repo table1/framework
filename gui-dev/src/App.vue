@@ -90,6 +90,38 @@
               </div>
             </li>
 
+            <!-- Documentation Section -->
+            <li class="relative mt-6">
+              <h2 class="text-xs font-semibold text-zinc-900 dark:text-white">
+                Documentation
+              </h2>
+              <div class="relative mt-3 pl-2">
+                <div class="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5"></div>
+                <!-- Active page marker for docs -->
+                <div
+                  v-if="getActiveDocsCategoryIndex() >= 0"
+                  class="absolute left-2 h-6 w-px bg-sky-500 transition-all duration-200"
+                  :style="{ top: `${getActiveDocsCategoryIndex() * 32 + 4}px` }"
+                ></div>
+                <ul role="list" class="border-l border-transparent">
+                  <li v-for="category in docsCategories" :key="category.id" class="relative">
+                    <router-link
+                      :to="`/docs/category/${category.id}`"
+                      :class="[
+                        'flex justify-between gap-2 py-1 pl-4 pr-3 text-sm transition',
+                        isDocsCategoryActive(category.id)
+                          ? 'text-zinc-900 dark:text-white'
+                          : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                      ]"
+                    >
+                      <span class="truncate">{{ category.name }}</span>
+                      <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ category.function_count }}</span>
+                    </router-link>
+                  </li>
+                </ul>
+              </div>
+            </li>
+
             <!-- Dark Mode Toggle -->
             <li class="sticky bottom-0 mt-6 border-t border-zinc-900/10 pt-6 dark:border-white/10">
               <button
@@ -129,6 +161,7 @@ const toastContainer = ref(null)
 const route = useRoute()
 const { isDark, toggle: toggleDarkMode } = useDarkMode()
 const projects = ref([])
+const docsCategories = ref([])
 
 // Load projects function (exposed to child components)
 const loadProjects = async () => {
@@ -138,6 +171,17 @@ const loadProjects = async () => {
     projects.value = data.projects || []
   } catch (error) {
     console.error('Failed to load projects:', error)
+  }
+}
+
+// Load documentation categories
+const loadDocsCategories = async () => {
+  try {
+    const response = await fetch('/api/docs/categories')
+    const data = await response.json()
+    docsCategories.value = data.categories || []
+  } catch (error) {
+    console.error('Failed to load docs categories:', error)
   }
 }
 
@@ -159,12 +203,45 @@ const getActiveProjectIndex = () => {
   return projects.value.findIndex(project => route.path === `/project/${project.id}`)
 }
 
+const getActiveDocsCategoryIndex = () => {
+  // Check if we're on a docs category page
+  const match = route.path.match(/^\/docs\/category\/(\d+)/)
+  if (match) {
+    const categoryId = parseInt(match[1])
+    return docsCategories.value.findIndex(cat => cat.id === categoryId)
+  }
+  // Check if we're viewing a function - find its category
+  if (route.path.startsWith('/docs/function/')) {
+    const categoryId = route.query.category
+    if (categoryId) {
+      return docsCategories.value.findIndex(cat => cat.id === parseInt(categoryId))
+    }
+  }
+  return -1
+}
+
 const isTabActive = (tab) => {
   // Don't highlight "Projects" when on "New Project" page
   if (tab.to === '/projects' && route.path === '/projects/new') {
     return false
   }
+  // Don't highlight anything if we're in docs section
+  if (route.path.startsWith('/docs')) {
+    return false
+  }
   return route.path.startsWith(tab.to)
+}
+
+const isDocsCategoryActive = (categoryId) => {
+  // Check direct category page
+  if (route.path === `/docs/category/${categoryId}`) {
+    return true
+  }
+  // Check if viewing a function in this category
+  if (route.path.startsWith('/docs/function/') && route.query.category) {
+    return parseInt(route.query.category) === categoryId
+  }
+  return false
 }
 
 // Icons for dark mode toggle
@@ -176,7 +253,7 @@ const SunIcon = () => h('svg', { class: 'h-5 w-5', fill: 'none', viewBox: '0 0 2
   h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' })
 ])
 
-// Framework tabs (always visible)
+// Framework tabs (always visible) - removed Documentation since it's now a section
 const frameworkTabs = [
   { id: 'projects', label: 'Projects', to: '/projects' },
   { id: 'settings', label: 'New Project Defaults', to: '/settings' }
@@ -189,5 +266,8 @@ onMounted(async () => {
 
   // Load projects from API
   await loadProjects()
+
+  // Load documentation categories
+  await loadDocsCategories()
 })
 </script>

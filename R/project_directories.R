@@ -47,24 +47,8 @@
 #'   \item Wraps filesystem operations in error handling
 #' }
 #'
-#' @examples
-#' \dontrun{
-#' # Add a custom directory for archived analyses
-#' result <- project_add_directory(
-#'   project_path = "/path/to/project",
-#'   key = "analysis_archive",
-#'   label = "Analysis Archive",
-#'   path = "analysis/archive"
-#' )
-#'
-#' if (result$success) {
-#'   message("Directory created at: ", result$directory$absolute_path)
-#' } else {
-#'   warning("Failed to create directory: ", result$error)
-#' }
-#' }
-#'
 #' @export
+#' @keywords internal
 project_add_directory <- function(project_path, key, label, path) {
   # 1. VALIDATE ALL ARGUMENTS
   checkmate::assert_directory_exists(project_path)
