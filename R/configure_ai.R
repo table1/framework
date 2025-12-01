@@ -61,7 +61,7 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
 
 #' Create AI Assistant Instruction Files
 #'
-#' Internal function called during init() to create AI assistant instruction
+#' Internal function called during project_create() to create AI assistant instruction
 #' files based on user preferences.
 #'
 #' @param assistants Character vector of assistants: "claude", "copilot", "agents"
@@ -178,7 +178,7 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
 
 #' Get AI Support Preferences (Non-interactive)
 #'
-#' Called during init() to check if AI instructions should be created.
+#' Called during project_create() to check if AI instructions should be created.
 #' NO prompting - just returns saved preferences.
 #'
 #' @keywords internal

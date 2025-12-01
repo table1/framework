@@ -8,7 +8,7 @@ env_default_template_lines()
 }
 \description{
 Provides the baseline .env content that ships with Framework. Other helper
-functions (init(), project_create(), GUI scaffolders) reuse these lines when
+functions (project_create(), GUI scaffolders) reuse these lines when
 users haven't customized their own template.
 }
 \keyword{internal}

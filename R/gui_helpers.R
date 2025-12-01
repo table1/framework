@@ -335,14 +335,12 @@ write_frameworkrc <- function(config) {
 }
 
 #' Add project to global configuration
-#'
 #' @param project_dir Path to project directory
 #' @param project_name Optional project name
 #' @param project_type Optional project type
 #' @return Invisibly returns NULL
-#' @export
 #' @keywords internal
-add_project_to_config <- function(project_dir, project_name = NULL, project_type = NULL) {
+.add_project_to_config <- function(project_dir, project_name = NULL, project_type = NULL) {
   config <- read_frameworkrc()
 
   # Check if project already exists
@@ -384,8 +382,7 @@ add_project_to_config <- function(project_dir, project_name = NULL, project_type
 #'
 #' @return Data frame with project information
 #' @export
-#' @keywords internal
-list_projects <- function() {
+projects_list <- function() {
   config <- read_frameworkrc()
 
   if (is.null(config$projects) || length(config$projects) == 0) {
@@ -407,6 +404,10 @@ list_projects <- function() {
     )
   }))
 }
+
+#' @rdname projects_list
+#' @export
+list_projects <- projects_list
 
 #' Remove project from global configuration
 #'

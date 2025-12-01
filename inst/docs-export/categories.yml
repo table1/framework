@@ -1,0 +1,218 @@
+# Function Categories for Documentation
+# Each category has a display name, description, and list of functions
+
+Project Setup:
+  description: Creating and initializing new projects
+  functions:
+    - project_create
+    - projects_list
+    - bootstrap_project_init
+    - is_initialized
+
+Environment:
+  description: Loading and configuring the working environment
+  functions:
+    - scaffold
+    - standardize_wd
+    - env_reset
+    - env_summary
+    - make_env
+    - status
+
+Notebooks & Scripts:
+  description: Creating notebooks, scripts, and presentations
+  functions:
+    - make_notebook
+    - make_qmd
+    - make_rmd
+    - make_script
+    - make_revealjs
+    - make_presentation
+    - list_stubs
+    - stubs_path
+    - stubs_publish
+
+Data:
+  description: Reading, writing, and managing data files
+  functions:
+    - data_read
+    - data_save
+    - data_list
+    - data_load
+    - data_spec_get
+    - data_spec_update
+    - list_data
+    - load_data
+    - read_data
+    - save_data
+    - load_data_or_cache
+
+Caching:
+  description: Caching computed values for performance
+  functions:
+    - cache
+    - cache_fetch
+    - cache_get
+    - cache_flush
+    - cache_forget
+    - get_or_cache
+
+Results:
+  description: Saving and retrieving analysis results
+  functions:
+    - result_save
+    - result_get
+    - result_list
+    - scratch_capture
+    - scratch_clean
+
+Database:
+  description: Database connections, queries, and transactions
+  functions:
+    # Connections
+    - connection_get
+    - connections_list
+    - get_connection
+    - connection_check
+    - connection_check_leaks
+    - connection_close_all
+    - connection_with
+    # Pooling
+    - connection_pool
+    - connection_pool_close
+    - connection_pool_close_all
+    - connection_pool_list
+    - connection_with_pool
+    # Queries
+    - query_get
+    - query_execute
+    - connection_find
+    - db_find
+    # CRUD
+    - connection_insert
+    - connection_update
+    - connection_delete
+    - connection_find_by
+    - connection_restore
+    # Transactions
+    - connection_begin
+    - connection_commit
+    - connection_rollback
+    - connection_transaction
+    - connection_with_transaction
+    # Drivers
+    - drivers_install
+    - drivers_status
+    # S3
+    - s3_test
+
+Configuration:
+  description: Accessing and managing configuration
+  functions:
+    - config
+    - read_config
+    - write_config
+    - settings
+    - configure_global
+    - configure_author
+    - configure_directories
+    - configure_packages
+    - configure_connection
+    - configure_data
+    - configure_ai_agents
+    - get_global_setting
+    - init_global_config
+    - get_default_global_config
+    - read_frameworkrc
+    - write_frameworkrc
+    - load_settings_catalog
+    - migrate_user_settings
+
+Packages:
+  description: Package management and renv integration
+  functions:
+    - packages_install
+    - packages_list
+    - packages_restore
+    - packages_snapshot
+    - packages_status
+    - packages_update
+    - renv_enable
+    - renv_disable
+    - renv_enabled
+    - renv_restore
+    - renv_snapshot
+    - renv_status
+    - renv_sync
+    - renv_update
+
+Publishing:
+  description: Publishing outputs and reports
+  functions:
+    - publish
+    - publish_data
+    - publish_dir
+    - publish_list
+    - publish_notebook
+    - save_figure
+    - save_table
+    - save_report
+    - save_model
+
+GUI:
+  description: Framework GUI functions
+  functions:
+    - framework_gui
+    - gui_list
+    - gui_stop
+    - gui_restart
+
+Git Hooks:
+  description: Git hook management
+  functions:
+    - hooks_install
+    - hooks_uninstall
+    - hooks_enable
+    - hooks_disable
+    - hooks_list
+
+AI:
+  description: AI assistant integration
+  functions:
+    - ai_generate
+    - ai_regenerate
+    - ai_sync_context
+
+CLI:
+  description: Command-line interface installation
+  functions:
+    - cli_install
+    - cli_uninstall
+    - cli_update
+
+Templates:
+  description: Managing framework templates
+  functions:
+    - framework_template_path
+    - list_framework_templates
+    - read_framework_template
+    - write_framework_template
+    - reset_framework_template
+
+Quarto:
+  description: Quarto configuration generation
+  functions:
+    - quarto_generate_all
+    - quarto_regenerate
+
+Utilities:
+  description: Miscellaneous utility functions
+  functions:
+    - capture_output
+    - now
+    - project_info
+    - framework_view
+    - view_create
+    - view_detail
+    - list_metadata
+    - security_audit

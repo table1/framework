@@ -1,8 +1,7 @@
 #' Create a new Framework project from GUI configuration
 #'
 #' This function creates a complete Framework project from scratch based on
-#' configuration provided by the GUI. Unlike the legacy init() function which
-#' relied on templates, this function builds everything programmatically.
+#' configuration provided by the GUI. This function builds everything programmatically.
 #'
 #' @param name Project name (used for project title)
 #' @param location Full path to the project directory (will be created)
@@ -184,7 +183,7 @@ project_create <- function(
   # Add to project registry (skip for temp directories used in tests)
   project_id <- NULL
   if (!grepl("^/tmp/|^/var/folders/", project_dir)) {
-    project_id <- add_project_to_config(project_dir)
+    project_id <- .add_project_to_config(project_dir)
   }
 
   message("✓ Project created successfully: ", project_dir)
@@ -698,14 +697,10 @@ project_create <- function(
   message("  Initialized git repository")
 
   # Install git hooks if any are enabled
+  # hooks_install() reads settings from config file, so just call it with force=TRUE
   if (length(hooks) > 0 && any(unlist(hooks))) {
     tryCatch({
-      # This will use the git_hooks.R functions
-      hooks_install(
-        ai_sync = hooks$ai_sync %||% FALSE,
-        data_security = hooks$data_security %||% FALSE,
-        check_sensitive_dirs = hooks$check_sensitive_dirs %||% FALSE
-      )
+      hooks_install(force = TRUE, verbose = FALSE)
       message("  Installed git hooks")
     }, error = function(e) {
       warning("Failed to install git hooks: ", e$message)

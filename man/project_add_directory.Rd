@@ -61,21 +61,4 @@ The function includes several safety checks:
 }
 }
 
-\examples{
-\dontrun{
-# Add a custom directory for archived analyses
-result <- project_add_directory(
-  project_path = "/path/to/project",
-  key = "analysis_archive",
-  label = "Analysis Archive",
-  path = "analysis/archive"
-)
-
-if (result$success) {
-  message("Directory created at: ", result$directory$absolute_path)
-} else {
-  warning("Failed to create directory: ", result$error)
-}
-}
-
-}
+\keyword{internal}
