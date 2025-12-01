@@ -35,7 +35,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
   # Read current config
   config_path <- .get_settings_file()
   if (is.null(config_path)) {
-    stop("settings.yml or config.yml not found. Run framework::init() first.")
+    stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
   config <- read_config(config_path)
@@ -126,7 +126,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
   # Read current config
   config_path <- .get_settings_file()
   if (is.null(config_path)) {
-    stop("settings.yml or config.yml not found. Run framework::init() first.")
+    stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
   config <- read_config(config_path)
@@ -283,7 +283,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
   # Read current config
   config_path <- .get_settings_file()
   if (is.null(config_path)) {
-    stop("settings.yml or config.yml not found. Run framework::init() first.")
+    stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
   config <- read_config(config_path)
@@ -438,7 +438,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
   # Read current config
   config_path <- .get_settings_file()
   if (is.null(config_path)) {
-    stop("settings.yml or config.yml not found. Run framework::init() first.")
+    stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
   config <- read_config(config_path)
@@ -590,7 +590,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   # Read current config
   config_path <- .get_settings_file()
   if (is.null(config_path)) {
-    stop("settings.yml or config.yml not found. Run framework::init() first.")
+    stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
   config <- read_config(config_path)

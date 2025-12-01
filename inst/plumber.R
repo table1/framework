@@ -2502,3 +2502,332 @@ function(id, req) {
 
   list(success = TRUE, written = written)
 }
+
+# =============================================================================
+# Documentation API Endpoints
+# =============================================================================
+
+# Helper function to get documentation database path
+.get_docs_db_path <- function() {
+  # Try to find docs.db in multiple locations
+  db_paths <- c(
+    # Development: gui-dev directory
+    file.path(getwd(), "gui-dev", "public", "docs.db"),
+    # Production: inst/gui directory (served by plumber)
+    system.file("gui", "docs.db", package = "framework"),
+    # Fallback: inst/docs-export directory
+    system.file("docs-export", "docs.db", package = "framework")
+  )
+
+  for (path in db_paths) {
+    if (nzchar(path) && file.exists(path)) {
+      return(path)
+    }
+  }
+  return(NULL)
+}
+
+#* Get all documentation categories with function counts
+#* @get /api/docs/categories
+#* @serializer unboxedJSON
+function() {
+  tryCatch({
+    db_path <- .get_docs_db_path()
+    if (is.null(db_path)) {
+      return(list(error = "Documentation database not found"))
+    }
+
+    con <- DBI::dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    categories <- DBI::dbGetQuery(con, "
+      SELECT
+        c.id,
+        c.name,
+        c.description,
+        c.position as display_order,
+        COUNT(f.id) as function_count
+      FROM categories c
+      LEFT JOIN functions f ON f.category_id = c.id
+      GROUP BY c.id
+      ORDER BY c.position, c.name
+    ")
+
+    list(categories = categories)
+  }, error = function(e) {
+    list(error = paste("Database error:", conditionMessage(e)))
+  })
+}
+
+#* Get functions list (optionally filtered by category)
+#* @get /api/docs/functions
+#* @param category_id Optional category ID to filter by
+#* @serializer unboxedJSON
+function(category_id = NULL) {
+  tryCatch({
+    db_path <- .get_docs_db_path()
+    if (is.null(db_path)) {
+      return(list(error = "Documentation database not found"))
+    }
+
+    con <- DBI::dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    if (!is.null(category_id) && nzchar(category_id)) {
+      functions <- DBI::dbGetQuery(con, "
+        SELECT
+          f.id,
+          f.name,
+          f.title,
+          f.category_id,
+          c.name as category_name
+        FROM functions f
+        LEFT JOIN categories c ON c.id = f.category_id
+        WHERE f.category_id = ?
+        ORDER BY f.name
+      ", params = list(as.integer(category_id)))
+    } else {
+      functions <- DBI::dbGetQuery(con, "
+        SELECT
+          f.id,
+          f.name,
+          f.title,
+          f.category_id,
+          c.name as category_name
+        FROM functions f
+        LEFT JOIN categories c ON c.id = f.category_id
+        ORDER BY c.position, c.name, f.name
+      ")
+    }
+
+    list(functions = functions)
+  }, error = function(e) {
+    list(error = paste("Database error:", conditionMessage(e)))
+  })
+}
+
+#* Get full documentation for a specific function
+#* @get /api/docs/function/<name>
+#* @param name Function name
+#* @serializer unboxedJSON
+function(name) {
+  tryCatch({
+    db_path <- .get_docs_db_path()
+    if (is.null(db_path)) {
+      return(list(error = "Documentation database not found"))
+    }
+
+    con <- DBI::dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    # Get function details
+    func <- DBI::dbGetQuery(con, "
+      SELECT
+        f.*,
+        c.name as category_name,
+        c.description as category_description
+      FROM functions f
+      LEFT JOIN categories c ON c.id = f.category_id
+      WHERE f.name = ?
+      LIMIT 1
+    ", params = list(name))
+
+    if (nrow(func) == 0) {
+      # Try aliases
+      alias_result <- DBI::dbGetQuery(con, "
+        SELECT function_id FROM aliases WHERE alias = ? LIMIT 1
+      ", params = list(name))
+
+      if (nrow(alias_result) > 0) {
+        func <- DBI::dbGetQuery(con, "
+          SELECT
+            f.*,
+            c.name as category_name,
+            c.description as category_description
+          FROM functions f
+          LEFT JOIN categories c ON c.id = f.category_id
+          WHERE f.id = ?
+          LIMIT 1
+        ", params = list(alias_result$function_id[1]))
+      }
+    }
+
+    if (nrow(func) == 0) {
+      return(list(error = "Function not found"))
+    }
+
+    func_id <- func$id[1]
+
+    # Get aliases
+    aliases <- DBI::dbGetQuery(con, "
+      SELECT alias FROM aliases WHERE function_id = ? ORDER BY alias
+    ", params = list(func_id))
+
+    # Get parameters
+    params <- DBI::dbGetQuery(con, "
+      SELECT name, description, position as param_order
+      FROM parameters
+      WHERE function_id = ?
+      ORDER BY position
+    ", params = list(func_id))
+
+    # Get examples
+    examples <- DBI::dbGetQuery(con, "
+      SELECT code as content, position as example_order
+      FROM examples
+      WHERE function_id = ?
+      ORDER BY position
+    ", params = list(func_id))
+
+    # Get seealso
+    seealso <- DBI::dbGetQuery(con, "
+      SELECT reference as target, reference as link_text
+      FROM seealso
+      WHERE function_id = ?
+    ", params = list(func_id))
+
+    # Get sections
+    sections <- DBI::dbGetQuery(con, "
+      SELECT id, title, content, position as section_order
+      FROM sections
+      WHERE function_id = ?
+      ORDER BY position
+    ", params = list(func_id))
+
+    # Get subsections for each section
+    section_list <- lapply(seq_len(nrow(sections)), function(i) {
+      section <- as.list(sections[i, ])
+      subsections <- DBI::dbGetQuery(con, "
+        SELECT title, content, position as subsection_order
+        FROM subsections
+        WHERE section_id = ?
+        ORDER BY position
+      ", params = list(section$id))
+      section$subsections <- if (nrow(subsections) > 0) {
+        lapply(seq_len(nrow(subsections)), function(j) as.list(subsections[j, ]))
+      } else {
+        list()
+      }
+      section
+    })
+
+    # Build response
+    result <- as.list(func[1, ])
+    result$aliases <- aliases$alias
+    result$parameters <- if (nrow(params) > 0) {
+      lapply(seq_len(nrow(params)), function(i) as.list(params[i, ]))
+    } else {
+      list()
+    }
+    result$examples <- if (nrow(examples) > 0) {
+      lapply(seq_len(nrow(examples)), function(i) as.list(examples[i, ]))
+    } else {
+      list()
+    }
+    result$seealso <- if (nrow(seealso) > 0) {
+      lapply(seq_len(nrow(seealso)), function(i) as.list(seealso[i, ]))
+    } else {
+      list()
+    }
+    result$sections <- section_list
+
+    list(function_doc = result)
+  }, error = function(e) {
+    list(error = paste("Database error:", conditionMessage(e)))
+  })
+}
+
+#* Search documentation using full-text search
+#* @get /api/docs/search
+#* @param q Search query
+#* @param limit Maximum results (default 20)
+#* @serializer unboxedJSON
+function(q = "", limit = 20) {
+  if (!nzchar(q)) {
+    return(list(results = list()))
+  }
+
+  tryCatch({
+    db_path <- .get_docs_db_path()
+    if (is.null(db_path)) {
+      return(list(error = "Documentation database not found"))
+    }
+
+    con <- DBI::dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    # Check if FTS table exists
+    tables <- DBI::dbGetQuery(con, "SELECT name FROM sqlite_master WHERE type='table' AND name='functions_fts'")
+    if (nrow(tables) == 0) {
+      # Fallback to LIKE search if FTS not available
+      search_pattern <- paste0("%", q, "%")
+      results <- DBI::dbGetQuery(con, "
+        SELECT
+          f.id,
+          f.name,
+          f.title,
+          f.description,
+          c.name as category_name
+        FROM functions f
+        LEFT JOIN categories c ON c.id = f.category_id
+        WHERE f.name LIKE ? OR f.title LIKE ? OR f.description LIKE ?
+        LIMIT ?
+      ", params = list(search_pattern, search_pattern, search_pattern, as.integer(limit)))
+    } else {
+      # Use FTS5 for better search
+      results <- DBI::dbGetQuery(con, "
+        SELECT
+          f.id,
+          f.name,
+          f.title,
+          f.description,
+          c.name as category_name,
+          bm25(functions_fts) as relevance
+        FROM functions_fts
+        JOIN functions f ON f.id = functions_fts.rowid
+        LEFT JOIN categories c ON c.id = f.category_id
+        WHERE functions_fts MATCH ?
+        ORDER BY relevance
+        LIMIT ?
+      ", params = list(q, as.integer(limit)))
+    }
+
+    list(results = if (nrow(results) > 0) {
+      lapply(seq_len(nrow(results)), function(i) as.list(results[i, ]))
+    } else {
+      list()
+    })
+  }, error = function(e) {
+    list(error = paste("Search error:", conditionMessage(e)))
+  })
+}
+
+#* Get documentation metadata (package info, export date, etc.)
+#* @get /api/docs/metadata
+#* @serializer unboxedJSON
+function() {
+  tryCatch({
+    db_path <- .get_docs_db_path()
+    if (is.null(db_path)) {
+      return(list(error = "Documentation database not found"))
+    }
+
+    con <- DBI::dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    metadata <- DBI::dbGetQuery(con, "SELECT key, value FROM metadata")
+
+    result <- list()
+    for (i in seq_len(nrow(metadata))) {
+      result[[metadata$key[i]]] <- metadata$value[i]
+    }
+
+    # Add counts
+    result$total_functions <- DBI::dbGetQuery(con, "SELECT COUNT(*) as n FROM functions")$n[1]
+    result$total_categories <- DBI::dbGetQuery(con, "SELECT COUNT(*) as n FROM categories")$n[1]
+
+    list(metadata = result)
+  }, error = function(e) {
+    list(error = paste("Database error:", conditionMessage(e)))
+  })
+}

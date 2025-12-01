@@ -10,7 +10,7 @@
 Create initial commit after first successful scaffold
 }
 \note{
-This function is now deprecated. Initial commits are created during init()
+This function is now deprecated. Initial commits are created during project_create()
 instead of scaffold(). Kept for backward compatibility with older projects.
 }
 \keyword{internal}

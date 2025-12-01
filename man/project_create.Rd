@@ -52,6 +52,5 @@ List with success status, project path, and project ID
 }
 \description{
 This function creates a complete Framework project from scratch based on
-configuration provided by the GUI. Unlike the legacy init() function which
-relied on templates, this function builds everything programmatically.
+configuration provided by the GUI. This function builds everything programmatically.
 }

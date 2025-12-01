@@ -21,7 +21,7 @@
 \item{project_type}{Project type for template selection ("project", "project_sensitive", "course", "presentation")}
 }
 \description{
-Internal function called during init() to create AI assistant instruction
+Internal function called during project_create() to create AI assistant instruction
 files based on user preferences.
 }
 \keyword{internal}
