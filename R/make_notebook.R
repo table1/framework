@@ -87,7 +87,7 @@ make_notebook <- function(name,
 
   # Determine type: explicit parameter > config setting > quarto default
   if (is.null(type)) {
-    cfg <- tryCatch(config_read(), error = function(e) NULL)
+    cfg <- tryCatch(settings_read(), error = function(e) NULL)
 
     default_format <- cfg$options$default_notebook_format %||% cfg$default_notebook_format
 
@@ -142,7 +142,7 @@ make_notebook <- function(name,
   stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
 
   # Get author info from project config or global config
-  cfg <- tryCatch(config_read(), error = function(e) NULL)
+  cfg <- tryCatch(settings_read(), error = function(e) NULL)
 
 
   # Helper to get a setting with fallback chain: project config -> global settings -> default
@@ -461,7 +461,7 @@ stubs_list <- function(type = NULL) {
 .get_notebook_dir_from_config <- function() {
   # Try to read config
   config <- tryCatch(
-    config_read(),
+    settings_read(),
     error = function(e) NULL
   )
 

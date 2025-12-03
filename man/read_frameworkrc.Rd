@@ -15,4 +15,3 @@ List containing global configuration
 \description{
 Read global Framework configuration
 }
-\keyword{internal}

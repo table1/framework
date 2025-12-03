@@ -15,4 +15,3 @@ Invisibly returns NULL
 \description{
 Remove project from global configuration
 }
-\keyword{internal}

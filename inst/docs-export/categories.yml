@@ -2,29 +2,72 @@
 # Each category has a display name, description, list of functions, and optional common functions
 # Common functions appear first in the UI under "Common Functions" header
 
-Project Management:
-  description: Creating and managing projects
-  common:
-    - project_create
-    - project_list
-  functions:
-    - project_create
-    - project_list
-    - bootstrap_project_init
-    - status
-
-Workflow & Environment:
+Workflow:
   description: Setting up and managing the working environment
   common:
     - scaffold
+    - settings
+    - gui
     - standardize_wd
   functions:
     - scaffold
+    - settings
+    - settings_read
+    - settings_write
+    - gui
     - standardize_wd
     - env_clear
     - env_summary
     - scratch_capture
     - scratch_clean
+    - now
+    - capture_output
+    - view_create
+    - view_detail
+
+Data:
+  description: Reading, writing, and managing data files
+  common:
+    - data_read
+    - data_save
+    - data_add
+    - data_list
+  functions:
+    - data_read
+    - data_save
+    - data_add
+    - data_list
+    - data_spec_get
+    - data_spec_update
+    - data_read_or_cache
+
+Packages:
+  description: Package management and renv integration
+  common:
+    - packages_install
+    - packages_restore
+  functions:
+    - packages_install
+    - packages_list
+    - packages_restore
+    - packages_snapshot
+    - packages_status
+    - packages_update
+    - renv_enable
+    - renv_disable
+    - renv_enabled
+
+Saving Work:
+  description: Saving figures, tables, reports, and models
+  common:
+    - save_figure
+    - save_model
+    - save_report
+  functions:
+    - save_figure
+    - save_table
+    - save_report
+    - save_model
 
 Notebooks & Scripts:
   description: Creating notebooks, scripts, and presentations
@@ -42,22 +85,55 @@ Notebooks & Scripts:
     - stubs_list
     - stubs_path
     - stubs_publish
+    - quarto_generate_all
+    - quarto_regenerate
 
-Data:
-  description: Reading, writing, and managing data files
+Project Management:
+  description: Creating and managing projects
   common:
-    - data_read
-    - data_save
-    - data_add
-    - data_list
+    - project_create
+    - project_list
   functions:
-    - data_read
-    - data_save
-    - data_add
-    - data_list
-    - data_spec_get
-    - data_spec_update
-    - data_read_or_cache
+    - project_create
+    - project_list
+    - project_info
+    - bootstrap_project_init
+    - status
+
+Publishing:
+  description: Publishing outputs and reports
+  common:
+    - publish
+    - publish_data
+    - publish_notebook
+  functions:
+    - publish
+    - publish_data
+    - publish_dir
+    - publish_list
+    - publish_notebook
+    - storage_test
+
+Git:
+  description: Git commands and hook management
+  common:
+    - git_status
+    - git_add
+    - git_commit
+  functions:
+    - git_status
+    - git_add
+    - git_commit
+    - git_push
+    - git_pull
+    - git_diff
+    - git_log
+    - git_security_audit
+    - git_hooks_install
+    - git_hooks_uninstall
+    - git_hooks_enable
+    - git_hooks_disable
+    - git_hooks_list
 
 Caching:
   description: Caching computed values for performance
@@ -88,134 +164,11 @@ Database:
     - db_drivers_install
     - db_drivers_status
 
-Configuration:
-  description: Accessing and managing configuration
-  common:
-    - config
-    - settings
-  functions:
-    - config
-    - read_config
-    - write_config
-    - settings
-    - configure_global
-    - configure_author
-    - configure_directories
-    - configure_packages
-    - configure_connection
-    - configure_data
-    - configure_ai_agents
-    - get_global_setting
-    - init_global_config
-    - get_default_global_config
-    - read_frameworkrc
-    - write_frameworkrc
-    - load_settings_catalog
-    - migrate_user_settings
-
-Packages:
-  description: Package management and renv integration
-  common:
-    - packages_install
-    - packages_restore
-  functions:
-    - packages_install
-    - packages_list
-    - packages_restore
-    - packages_snapshot
-    - packages_status
-    - packages_update
-    - renv_enable
-    - renv_disable
-    - renv_enabled
-    - renv_restore
-    - renv_snapshot
-    - renv_status
-    - renv_sync
-    - renv_update
-
-Publishing:
-  description: Publishing outputs and reports
-  common:
-    - publish
-    - publish_notebook
-  functions:
-    - publish
-    - publish_data
-    - publish_dir
-    - publish_list
-    - publish_notebook
-    - save_figure
-    - save_table
-    - save_report
-    - save_model
-    - storage_test
-
-GUI:
-  description: Framework GUI functions
-  common:
-    - gui
-  functions:
-    - gui
-    - gui_list
-    - gui_stop
-    - gui_restart
-
-Git Hooks:
-  description: Git hook management
-  common:
-    - hooks_install
-    - hooks_list
-  functions:
-    - hooks_install
-    - hooks_uninstall
-    - hooks_enable
-    - hooks_disable
-    - hooks_list
-
 AI:
   description: AI assistant integration
   common:
     - ai_sync_context
   functions:
-    - ai_generate
-    - ai_regenerate
+    - ai_generate_context
+    - ai_regenerate_context
     - ai_sync_context
-
-CLI:
-  description: Command-line interface installation
-  common:
-    - cli_install
-  functions:
-    - cli_install
-    - cli_uninstall
-    - cli_update
-
-Templates:
-  description: Managing framework templates
-  functions:
-    - framework_template_path
-    - list_framework_templates
-    - read_framework_template
-    - write_framework_template
-    - reset_framework_template
-
-Quarto:
-  description: Quarto configuration generation
-  functions:
-    - quarto_generate_all
-    - quarto_regenerate
-
-Utilities:
-  description: Miscellaneous utility functions
-  common:
-    - now
-  functions:
-    - capture_output
-    - now
-    - project_info
-    - framework_view
-    - view_create
-    - view_detail
-    - list_metadata
-    - security_audit

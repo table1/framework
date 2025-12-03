@@ -113,7 +113,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-show="!isLoadingSettings" class="flex-1 p-10 pb-24">
+    <div v-show="!isLoadingSettings" class="flex-1 p-10 pb-4">
       <PageHeader
         :title="pageHeaderTitle"
         :description="pageHeaderDescription"
@@ -954,8 +954,8 @@ const overviewCards = computed(() => {
       title: 'AI Assistants',
       section: 'ai',
       content: aiEnabled
-        ? `<span class="text-green-600 dark:text-green-400">${aiProvider} · ${aiCanonical}</span>`
-        : '<span class="text-gray-600 dark:text-gray-400">Disabled</span>'
+        ? `${aiProvider} · ${aiCanonical}`
+        : 'Disabled'
     },
     {
       id: 'git',
@@ -2010,10 +2010,12 @@ const gitPanelModel = computed({
   get() {
     const defaults = settings.value.defaults || {}
     const git = settings.value.git || {}
+    const author = settings.value.author || {}
     return buildGitPanelModel({
       useGit: defaults.use_git,
       gitHooks: defaults.git_hooks,
-      git
+      git,
+      author
     })
   },
   set(val) {
@@ -2023,11 +2025,13 @@ const gitPanelModel = computed({
     }
     settings.value.defaults.git_hooks = settings.value.defaults.git_hooks || {}
     settings.value.git = settings.value.git || {}
+    settings.value.author = settings.value.author || {}
     applyGitPanelModel(
       {
         gitTarget: settings.value.git,
         gitHooksTarget: settings.value.defaults.git_hooks,
-        setUseGit: (val) => { settings.value.defaults.use_git = val }
+        setUseGit: (val) => { settings.value.defaults.use_git = val },
+        authorTarget: settings.value.author
       },
       val
     )

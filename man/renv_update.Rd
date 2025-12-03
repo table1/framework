@@ -13,11 +13,6 @@ renv_update(packages = NULL)
 Invisibly returns TRUE on success
 }
 \description{
-A user-facing wrapper around renv::update() that ensures renv is enabled.
+Internal wrapper around renv::update(). Use packages_update() instead.
 }
-\examples{
-\dontrun{
-renv_update()
-renv_update(c("dplyr", "ggplot2"))
-}
-}
+\keyword{internal}

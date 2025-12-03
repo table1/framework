@@ -1458,8 +1458,8 @@ function(id, req) {
       ai_file <- settings$ai$canonical_file %||% "CLAUDE.md"
     }
 
-    # Call ai_regenerate
-    framework::ai_regenerate(
+    # Call ai_regenerate_context
+    framework::ai_regenerate_context(
       project_path = project$path,
       sections = sections,
       ai_file = ai_file
@@ -2249,8 +2249,8 @@ function(req) {
 function(id) {
   tryCatch({
     # Get project path from registry
-    projects <- framework::list_projects()
-    project <- projects[projects$id == id, ]
+    projects <- framework::project_list()
+    project <- projects[projects$id == as.integer(id), ]
 
     if (nrow(project) == 0) {
       return(list(success = FALSE, error = "Project not found"))
@@ -2269,27 +2269,44 @@ function(id) {
 #* @post /api/projects/<id>/delete
 #* @param id The project ID
 function(id) {
+  message("[DELETE] Called with id: ", id, " (type: ", typeof(id), ")")
   tryCatch({
     # Get project path from registry
-    projects <- framework::list_projects()
-    project <- projects[projects$id == id, ]
+    projects <- framework::project_list()
+    message("[DELETE] Found ", nrow(projects), " projects in registry")
+    message("[DELETE] Project IDs: ", paste(projects$id, collapse = ", "))
+
+    target_id <- as.integer(id)
+    message("[DELETE] Looking for target_id: ", target_id)
+
+    project <- projects[projects$id == target_id, ]
+    message("[DELETE] Matched ", nrow(project), " projects")
 
     if (nrow(project) == 0) {
+      message("[DELETE] Project not found!")
       return(list(success = FALSE, error = "Project not found"))
     }
 
     project_path <- project$path[1]
+    message("[DELETE] Project path: ", project_path)
 
     # Delete directory
     if (dir.exists(project_path)) {
+      message("[DELETE] Deleting directory...")
       unlink(project_path, recursive = TRUE)
+      message("[DELETE] Directory deleted")
+    } else {
+      message("[DELETE] Directory does not exist: ", project_path)
     }
 
     # Remove from registry
-    framework::remove_project_from_config(id)
+    message("[DELETE] Removing from registry...")
+    framework::remove_project_from_config(target_id)
+    message("[DELETE] Removed from registry")
 
     list(success = TRUE, message = "Project deleted")
   }, error = function(e) {
+    message("[DELETE] ERROR: ", e$message)
     list(success = FALSE, error = e$message)
   })
 }

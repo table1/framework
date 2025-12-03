@@ -761,7 +761,7 @@ view_detail <- function(x, title = NULL, max_rows = 5000) {
 #'
 #' @inheritParams view_create
 #' @return Opens a browser window (called for side effects)
-#' @export
+#' @keywords internal
 framework_view <- function(x, title = NULL, max_rows = 5000) {
   .Deprecated("view_detail", package = "framework",
               msg = "framework_view() is deprecated. Use view_detail() instead.")

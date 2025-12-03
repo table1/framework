@@ -2,29 +2,18 @@
 % Please edit documentation in R/packages.R
 \name{packages_install}
 \alias{packages_install}
-\title{List all packages from configuration}
+\title{Install packages from configuration}
 \usage{
 packages_install()
 }
 \value{
-Invisibly returns NULL after printing package list
-
 Invisibly returns TRUE on success
 }
 \description{
-Lists all packages defined in the configuration, showing the package name,
-version pin (if specified), and source (CRAN or GitHub).
+Installs all packages defined in the configuration that are not already installed.
+This is the same logic used in scaffold(), but exposed as a standalone function.
 }
 \examples{
-\dontrun{
-# List all packages
-packages_list()
-}
-Install packages from configuration
-
-Installs all packages defined in the configuration that are not already installed.
-This is the same logic used by scaffold(), but exposed as a standalone function.
-
 \dontrun{
 # Install all configured packages
 packages_install()

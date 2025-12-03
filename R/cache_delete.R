@@ -8,7 +8,7 @@
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
 
   # Get config
-  config <- config_read()
+  config <- settings_read()
   cache_dir <- config$directories$cache %||% config$options$data$cache_dir
 
   if (is.null(cache_dir) || !nzchar(cache_dir)) {
@@ -68,7 +68,7 @@ cache_forget <- function(name, file = NULL) {
 #' @export
 cache_flush <- function() {
   # Get config
-  config <- config_read()
+  config <- settings_read()
   cache_dir <- config$directories$cache %||% config$options$data$cache_dir
 
   if (is.null(cache_dir) || !nzchar(cache_dir)) {

@@ -9,9 +9,33 @@
 
     <div class="space-y-3">
       <div>
-        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Git identity</h4>
+        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">GitHub</h4>
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Overrides Author Information when provided.
+          Your GitHub identity for commits and repository operations.
+        </p>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <Input
+          :model-value="state.github_username"
+          label="GitHub Username"
+          placeholder="username"
+          @update:modelValue="(val) => emitUpdate({ github_username: val })"
+        />
+        <Input
+          :model-value="state.github_email"
+          label="GitHub Email"
+          placeholder="username@users.noreply.github.com"
+          hint="For git commits (often different from primary email)"
+          @update:modelValue="(val) => emitUpdate({ github_email: val })"
+        />
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <div>
+        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Git Identity Override</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Optional: Override GitHub settings with different values for local commits.
         </p>
       </div>
       <div class="grid gap-4 sm:grid-cols-2">
@@ -94,6 +118,8 @@ const normalize = () => ({
   initialize: props.modelValue?.initialize ?? true,
   user_name: props.modelValue?.user_name ?? '',
   user_email: props.modelValue?.user_email ?? '',
+  github_username: props.modelValue?.github_username ?? '',
+  github_email: props.modelValue?.github_email ?? '',
   hooks: {
     ai_sync: props.modelValue?.hooks?.ai_sync ?? false,
     data_security: props.modelValue?.hooks?.data_security ?? false,

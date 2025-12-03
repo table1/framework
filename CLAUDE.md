@@ -109,6 +109,38 @@ cd gui-dev && npm run deploy
 
 This builds the Vue app and copies assets to `inst/gui/` for distribution.
 
+### GUI Documentation Database
+
+**CRITICAL: When modifying the public API, you MUST regenerate docs.db!**
+
+The GUI's documentation browser reads from `docs.db`, a SQLite database generated from roxygen2 documentation. This database must be regenerated whenever you:
+- Add, remove, or rename exported functions
+- Change a function from `@export` to `@keywords internal` (or vice versa)
+- Modify `inst/docs-export/categories.yml` (function categories/groupings)
+- Update function documentation that should appear in the GUI
+
+**To regenerate docs.db:**
+```bash
+cd /Users/erikwestlund/code/framework
+R -e "devtools::load_all(); docs_export()"
+```
+
+**Then copy to GUI locations:**
+```bash
+cp docs.db inst/gui/docs.db
+cp docs.db gui-dev/public/docs.db
+```
+
+**Category configuration**: Edit `inst/docs-export/categories.yml` to control:
+- Which categories appear in the sidebar
+- Which functions appear in each category
+- Which functions are marked as "common" (appear at top)
+
+**Verification**: After regenerating, check the categories are correct:
+```bash
+sqlite3 inst/gui/docs.db "SELECT name FROM categories ORDER BY position"
+```
+
 ## Configuration System
 
 ### Global Configuration (All YAML)

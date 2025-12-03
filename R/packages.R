@@ -4,7 +4,7 @@
 #' 1. New: packages = list(use_renv = ..., default_packages = [...])
 #' 2. Old: packages = [list of package specs]
 #'
-#' @param config Configuration object from config_read()
+#' @param config Configuration object from settings_read()
 #' @return List of package specifications, or empty list if none
 #' @keywords internal
 .get_package_list_from_config <- function(config) {
@@ -342,7 +342,7 @@
 
   # Check if settings file exists
   tryCatch({
-    config <- config_read()
+    config <- settings_read()
   }, error = function(e) {
     warning("Settings file not found")
     return(invisible(FALSE))
@@ -398,15 +398,11 @@
 
 #' Snapshot current package versions to renv.lock
 #'
-#' A user-facing wrapper around renv::snapshot() that ensures renv is enabled.
+#' Internal wrapper around renv::snapshot(). Use packages_snapshot() instead.
 #'
 #' @param prompt Logical; if TRUE, prompt before creating snapshot
 #' @return Invisibly returns TRUE on success
-#' @export
-#' @examples
-#' \dontrun{
-#' renv_snapshot()
-#' }
+#' @keywords internal
 renv_snapshot <- function(prompt = FALSE) {
   if (!renv_enabled()) {
     stop(
@@ -429,15 +425,11 @@ renv_snapshot <- function(prompt = FALSE) {
 
 #' Restore packages from renv.lock
 #'
-#' A user-facing wrapper around renv::restore() that ensures renv is enabled.
+#' Internal wrapper around renv::restore(). Use packages_restore() instead.
 #'
 #' @param prompt Logical; if TRUE, prompt before restoring
 #' @return Invisibly returns TRUE on success
-#' @export
-#' @examples
-#' \dontrun{
-#' renv_restore()
-#' }
+#' @keywords internal
 renv_restore <- function(prompt = FALSE) {
   if (!renv_enabled()) {
     stop(
@@ -464,14 +456,10 @@ renv_restore <- function(prompt = FALSE) {
 
 #' Show package status
 #'
-#' A user-facing wrapper around renv::status() that ensures renv is enabled.
+#' Internal wrapper around renv::status(). Use packages_status() instead.
 #'
 #' @return Invisibly returns the status object from renv::status()
-#' @export
-#' @examples
-#' \dontrun{
-#' renv_status()
-#' }
+#' @keywords internal
 renv_status <- function() {
   if (!renv_enabled()) {
     stop(
@@ -489,24 +477,12 @@ renv_status <- function() {
 
 #' Sync packages with renv.lock
 #'
-#' Resolves inconsistencies between installed packages and renv.lock by:
-#' 1. Installing missing packages that are used in code
-#' 2. Recording installed packages to renv.lock
-#'
-#' This is a convenience wrapper that calls renv::restore() followed by
-#' renv::snapshot() to bring the project into a consistent state.
+#' Internal function that resolves inconsistencies between installed packages
+#' and renv.lock by restoring then snapshotting.
 #'
 #' @param prompt Logical; if TRUE, prompt before making changes
 #' @return Invisibly returns TRUE on success
-#' @export
-#' @examples
-#' \dontrun{
-#' # Check status
-#' renv_status()
-#'
-#' # Fix inconsistencies
-#' renv_sync()
-#' }
+#' @keywords internal
 renv_sync <- function(prompt = FALSE) {
   if (!renv_enabled()) {
     stop(
@@ -547,16 +523,11 @@ renv_sync <- function(prompt = FALSE) {
 
 #' Update packages
 #'
-#' A user-facing wrapper around renv::update() that ensures renv is enabled.
+#' Internal wrapper around renv::update(). Use packages_update() instead.
 #'
 #' @param packages Character vector of package names to update, or NULL for all
 #' @return Invisibly returns TRUE on success
-#' @export
-#' @examples
-#' \dontrun{
-#' renv_update()
-#' renv_update(c("dplyr", "ggplot2"))
-#' }
+#' @keywords internal
 renv_update <- function(packages = NULL) {
   if (!renv_enabled()) {
     stop(
@@ -582,26 +553,10 @@ renv_update <- function(packages = NULL) {
   invisible(TRUE)
 }
 
-
-#' List all packages from configuration
-#'
-#' Lists all packages defined in the configuration, showing the package name,
-#' version pin (if specified), and source (CRAN or GitHub).
-#'
-#' @return Invisibly returns NULL after printing package list
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # List all packages
-#' packages_list()
-#' }
-
-
 #' Install packages from configuration
 #'
 #' Installs all packages defined in the configuration that are not already installed.
-#' This is the same logic used by scaffold(), but exposed as a standalone function.
+#' This is the same logic used in scaffold(), but exposed as a standalone function.
 #'
 #' @return Invisibly returns TRUE on success
 #' @export
@@ -612,7 +567,7 @@ renv_update <- function(packages = NULL) {
 #' packages_install()
 #' }
 packages_install <- function() {
-  config <- config_read()
+  config <- settings_read()
 
   package_list <- .get_package_list_from_config(config)
   if (length(package_list) == 0) {
@@ -683,7 +638,7 @@ packages_update <- function(packages = NULL) {
 #' packages_list()
 #' }
 packages_list <- function() {
-  config <- config_read()
+  config <- settings_read()
 
   package_list <- .get_package_list_from_config(config)
   if (length(package_list) == 0) {

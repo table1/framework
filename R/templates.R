@@ -99,10 +99,8 @@
   invisible(dest)
 }
 
-#' Return metadata about available templates
-#' @keywords internal
 #' List available framework templates
-#' @export
+#' @keywords internal
 list_framework_templates <- function() {
   names(.framework_template_sources)
 }
@@ -111,7 +109,7 @@ list_framework_templates <- function() {
 #'
 #' @param name Template identifier (e.g., "notebook", "gitignore", "ai_claude")
 #' @return Absolute path to the template file, ensuring it exists.
-#' @export
+#' @keywords internal
 framework_template_path <- function(name) {
   .ensure_framework_template(name)
 }

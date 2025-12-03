@@ -196,7 +196,7 @@ connection_check <- function(connection_name) {
 
   # 1. Check if connection exists in config
   cfg <- tryCatch(
-    config_read(),
+    settings_read(),
     error = function(e) {
       messages <<- c(messages, sprintf("Failed to read settings.yml/config.yml: %s", e$message))
       ready <<- FALSE

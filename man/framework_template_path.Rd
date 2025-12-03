@@ -15,3 +15,4 @@ Absolute path to the template file, ensuring it exists.
 \description{
 Get the user-editable path for a Framework template
 }
+\keyword{internal}

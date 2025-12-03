@@ -270,7 +270,7 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 #' list_data()
 #' }
 data_list <- function() {
-  config <- config_read()
+  config <- settings_read()
 
   if (is.null(config$data) || length(config$data) == 0) {
     message("No data entries found in configuration")
@@ -455,7 +455,7 @@ data_spec_get <- function(path) {
     getwd()
   }
 
-  config <- config_read()
+  config <- settings_read()
 
   # Get file type info
   get_file_type_info <- function(path) {
@@ -620,7 +620,7 @@ data_spec_get <- function(path) {
 #' @keywords internal
 .get_data_path_suggestions <- function(attempted_path = NULL) {
   config <- tryCatch(
-    config_read(),
+    settings_read(),
     error = function(e) {
       return(character())
     }

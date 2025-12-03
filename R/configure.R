@@ -24,7 +24,7 @@
 #' )
 #' }
 #'
-#' @export
+#' @keywords internal
 configure_author <- function(name = NULL, email = NULL, affiliation = NULL, interactive = TRUE) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1, null.ok = TRUE)
@@ -38,7 +38,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- config_read(config_path)
+  config <- settings_read(config_path)
 
   # Get current values for defaults
   current_name <- config$author$name
@@ -75,7 +75,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
   if (!is.null(affiliation)) config$author$affiliation <- affiliation
 
   # Write config
-  config_write(config, config_path)
+  settings_write(config, config_path)
 
   message("\u2713 Author information updated in ", basename(config_path))
   if (!is.null(name)) message(sprintf("  Name: %s", name))
@@ -114,7 +114,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
 #' )
 #' }
 #'
-#' @export
+#' @keywords internal
 configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE, interactive = TRUE) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1, null.ok = TRUE)
@@ -129,7 +129,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- config_read(config_path)
+  config <- settings_read(config_path)
 
   # Interactive prompts
   if (interactive) {
@@ -215,7 +215,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
   }
 
   # Write config
-  config_write(config, config_path)
+  settings_write(config, config_path)
 
   message(sprintf("\u2713 Data source '%s' added to %s", path, basename(config_path)))
   message(sprintf("  File: %s", file))
@@ -266,7 +266,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
 #' )
 #' }
 #'
-#' @export
+#' @keywords internal
 configure_connection <- function(name = NULL, driver = NULL, host = NULL,
                                   port = NULL, database = NULL, user = NULL,
                                   password = NULL, interactive = TRUE) {
@@ -286,7 +286,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- config_read(config_path)
+  config <- settings_read(config_path)
 
   # Interactive prompts
   if (interactive) {
@@ -371,7 +371,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
   config$connections[[name]] <- conn_config
 
   # Write config
-  config_write(config, config_path)
+  settings_write(config, config_path)
 
   message(sprintf("\u2713 Connection '%s' added to %s", name, basename(config_path)))
   message(sprintf("  Driver: %s", driver))
@@ -427,7 +427,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
 #' )
 #' }
 #'
-#' @export
+#' @keywords internal
 configure_packages <- function(package = NULL, auto_attach = TRUE, version = NULL, interactive = TRUE) {
   # Validate arguments
   checkmate::assert_string(package, min.chars = 1, null.ok = TRUE)
@@ -441,7 +441,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- config_read(config_path)
+  config <- settings_read(config_path)
 
   # Interactive prompts
   if (interactive) {
@@ -534,7 +534,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
   message("\nRun scaffold() to install and load packages")
 
   # Write config
-  config_write(config, config_path)
+  settings_write(config, config_path)
 
   invisible(config)
 }
@@ -580,7 +580,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 #' )
 #' }
 #'
-#' @export
+#' @keywords internal
 configure_directories <- function(directory = NULL, path = NULL, interactive = TRUE) {
   # Validate arguments
   checkmate::assert_string(directory, min.chars = 1, null.ok = TRUE)
@@ -593,7 +593,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- config_read(config_path)
+  config <- settings_read(config_path)
 
   # Standard directory names
   standard_dirs <- c(
@@ -637,7 +637,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   config$directories[[directory]] <- path
 
   # Write config
-  config_write(config, config_path)
+  settings_write(config, config_path)
 
   message(sprintf("\u2713 Directory '%s' set to '%s' in %s", directory, path, basename(config_path)))
 
@@ -1129,7 +1129,7 @@ configure_global <- function(settings = NULL, validate = TRUE) {
 #' get_global_setting("defaults.notebook_format", default = "quarto")
 #' }
 #'
-#' @export
+#' @keywords internal
 get_global_setting <- function(key, default = "", print = TRUE) {
   checkmate::assert_string(key)
   checkmate::assert_string(default)

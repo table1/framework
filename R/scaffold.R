@@ -183,7 +183,7 @@ scaffold <- function(config_file = NULL) {
     }
   }
 
-  config <- config_read(config_file)
+  config <- settings_read(config_file)
 
   # Only check root level dotenv_location (not nested in options)
   if (!is.null(config$dotenv_location)) {
@@ -231,11 +231,11 @@ scaffold <- function(config_file = NULL) {
     }
   }
 
-  config_read(config_file)
+  settings_read(config_file)
 }
 
 #' Get package requirements from config
-#' @param config Configuration object from config_read()
+#' @param config Configuration object from settings_read()
 #' @keywords internal
 .get_package_requirements <- function(config) {
   if (is.null(config$packages)) {
@@ -305,7 +305,7 @@ scaffold <- function(config_file = NULL) {
 }
 
 #' Install required packages from config
-#' @param config Configuration object from config_read()
+#' @param config Configuration object from settings_read()
 #' @keywords internal
 .install_required_packages <- function(config) {
   packages <- .get_package_requirements(config)
@@ -315,7 +315,7 @@ scaffold <- function(config_file = NULL) {
 }
 
 #' Load all libraries specified in config
-#' @param config Configuration object from config_read()
+#' @param config Configuration object from settings_read()
 #' @keywords internal
 .load_libraries <- function(config) {
   packages <- .get_package_requirements(config)
@@ -358,7 +358,7 @@ scaffold <- function(config_file = NULL) {
     }
   }
 
-  config <- config_read(config_file)
+  config <- settings_read(config_file)
 
   # Check if user opted out of sourcing all functions (default: TRUE)
   source_all <- config$options$source_all_functions
@@ -581,7 +581,7 @@ scaffold <- function(config_file = NULL) {
 }
 
 #' Set random seed for reproducibility
-#' @param config Configuration object from config_read()
+#' @param config Configuration object from settings_read()
 #' @keywords internal
 #' @description
 #' Sets the random seed for reproducibility. Checks for seed in this order:
@@ -617,7 +617,7 @@ scaffold <- function(config_file = NULL) {
 }
 
 #' Set ggplot2 theme for consistent styling
-#' @param config Configuration object from config_read()
+#' @param config Configuration object from settings_read()
 #' @keywords internal
 #' @description
 #' Sets ggplot2 theme if configured. Checks for theme settings in this order:

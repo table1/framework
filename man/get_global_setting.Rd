@@ -30,3 +30,4 @@ get_global_setting("defaults.notebook_format", default = "quarto")
 }
 
 }
+\keyword{internal}

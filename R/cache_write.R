@@ -13,7 +13,7 @@
   # Get cache directory - uses FW_CACHE_DIR env var if set, otherwise config
   cache_dir <- .get_cache_dir()
 
-  config_obj <- config_read()
+  config_obj <- settings_read()
   default_expire <- config_obj$options$data$cache_default_expire
 
   # Determine cache file path
