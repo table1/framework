@@ -382,7 +382,7 @@ write_frameworkrc <- function(config) {
 #'
 #' @return Data frame with project information
 #' @export
-projects_list <- function() {
+project_list <- function() {
   config <- read_frameworkrc()
 
   if (is.null(config$projects) || length(config$projects) == 0) {
@@ -404,10 +404,6 @@ projects_list <- function() {
     )
   }))
 }
-
-#' @rdname projects_list
-#' @export
-list_projects <- projects_list
 
 #' Remove project from global configuration
 #'

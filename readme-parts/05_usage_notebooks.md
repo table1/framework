@@ -18,7 +18,7 @@ make_presentation("deck")       # → notebooks/deck.qmd (alias for make_revealj
 make_script("process-data")     # → scripts/process-data.R
 
 # List available stubs
-list_stubs()
+stubs_list()
 ```
 
 **Built-in stubs:**

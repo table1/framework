@@ -18,7 +18,7 @@ make_notebook(
 \item .qmd: Quarto notebook (default if no extension)
 \item .Rmd: RMarkdown notebook
 \item .R: R script
-Examples: "1-init", "1-init.qmd", "analysis.Rmd", "script.R"
+Examples: \code{1-init}, \code{1-init.qmd}, \code{analysis.Rmd}, \code{script.R}
 }}
 
 \item{type}{Character. File type: "quarto", "rmarkdown", or "script".
@@ -28,9 +28,8 @@ Auto-detected from extension if provided. If NULL (default):
 \item Falls back to "quarto" (Framework is Quarto-first)
 }}
 
-\item{dir}{Character. Directory to create the file in. Reads from
-config \code{directories$notebooks} (or legacy \code{options$notebook_dir}), defaults
-to "notebooks/", "work/", or current directory.}
+\item{dir}{Character. Directory to create the file in. Uses your project's
+configured \code{directories$notebooks} setting. Default: "notebooks/".}
 
 \item{stub}{Character. Name of the stub template to use. Defaults to
 "default". User can create custom stubs in \verb{stubs/notebook-\{stub\}.qmd},
@@ -50,13 +49,15 @@ directory), then falls back to framework defaults.
 \strong{Convenient aliases}: Use \code{\link[=make_qmd]{make_qmd()}} or \code{\link[=make_rmd]{make_rmd()}} for explicit
 Quarto or RMarkdown notebook creation. Use \code{\link[=make_revealjs]{make_revealjs()}} or
 \code{\link[=make_presentation]{make_presentation()}} for reveal.js presentations.
-\subsection{Stub Template Resolution}{
+\subsection{Default Output}{
 
-The function searches for stub templates in this order:
-\enumerate{
-\item User stubs: \verb{stubs/notebook-\{stub\}.qmd} or \verb{stubs/notebook-\{stub\}.Rmd}
-\item Framework stubs: \verb{inst/stubs/notebook-\{stub\}.qmd} or \verb{inst/stubs/notebook-\{stub\}.Rmd}
-}
+Notebooks are created in the \verb{notebooks/} directory by default:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{notebooks/
+  1-data-cleaning.qmd
+  2-analysis.qmd
+  3-visualization.qmd
+}\if{html}{\out{</div>}}
 }
 
 \subsection{Extension Normalization}{
@@ -67,17 +68,15 @@ The function searches for stub templates in this order:
 }
 }
 
-\subsection{Creating Custom Stubs}{
+\subsection{Stub Template Resolution}{
 
-Create a \verb{stubs/} directory in your project root with custom templates:
+The function searches for stub templates in this order:
+\enumerate{
+\item User stubs: \verb{stubs/notebook-\{stub\}.qmd} or \verb{stubs/notebook-\{stub\}.Rmd}
+\item Framework stubs: \verb{inst/stubs/notebook-\{stub\}.qmd} or \verb{inst/stubs/notebook-\{stub\}.Rmd}
+}
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{stubs/
-  notebook-default.qmd      # Override default Quarto stub
-  notebook-analysis.qmd     # Custom analysis stub
-  notebook-report.Rmd       # Custom RMarkdown report stub
-}\if{html}{\out{</div>}}
-
-Templates can use placeholders:
+Custom stub templates can use placeholders:
 \itemize{
 \item \code{{filename}} - The notebook filename without extension
 \item \code{{date}} - Current date (YYYY-MM-DD)

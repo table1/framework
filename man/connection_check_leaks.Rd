@@ -22,16 +22,4 @@ Scans the global environment and parent frames for open database connections.
 Useful for debugging connection leaks in interactive sessions or long-running
 scripts.
 }
-\examples{
-\dontrun{
-# Check for leaked connections
-leaks <- connection_check_leaks()
-
-# Suppress warning
-leaks <- connection_check_leaks(warn = FALSE)
-if (nrow(leaks) > 0) {
-  print(leaks)
-}
-}
-
-}
+\keyword{internal}

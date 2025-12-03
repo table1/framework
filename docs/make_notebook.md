@@ -20,7 +20,7 @@ make_presentation("deck")   # Alias for make_revealjs()
 make_script("process")   # Creates scripts/process.R
 
 # List available stubs
-list_stubs()
+stubs_list()
 ```
 
 ## Features
@@ -147,13 +147,13 @@ scaffold()  # Handles directory standardization automatically
 
 ```r
 # List all stubs
-list_stubs()
+stubs_list()
 
 # List only Quarto stubs
-list_stubs(type = "quarto")
+stubs_list(type = "quarto")
 
 # List only script stubs
-list_stubs(type = "script")
+stubs_list(type = "script")
 ```
 
 ## Configuration Options
@@ -220,10 +220,10 @@ make_notebook(
 
 **Returns:** Invisibly returns the path to created file
 
-### list_stubs()
+### stubs_list()
 
 ```r
-list_stubs(type = NULL)
+stubs_list(type = NULL)
 ```
 
 **Parameters:**

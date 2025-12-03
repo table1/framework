@@ -12,14 +12,13 @@
 #'   - .qmd: Quarto notebook (default if no extension)
 #'   - .Rmd: RMarkdown notebook
 #'   - .R: R script
-#'   Examples: "1-init", "1-init.qmd", "analysis.Rmd", "script.R"
+#'   Examples: `1-init`, `1-init.qmd`, `analysis.Rmd`, `script.R`
 #' @param type Character. File type: "quarto", "rmarkdown", or "script".
 #'   Auto-detected from extension if provided. If NULL (default):
 #'   1. Checks config `default_notebook_format` (or legacy `options$default_notebook_format`)
 #'   2. Falls back to "quarto" (Framework is Quarto-first)
-#' @param dir Character. Directory to create the file in. Reads from
-#'   config `directories$notebooks` (or legacy `options$notebook_dir`), defaults
-#'   to "notebooks/", "work/", or current directory.
+#' @param dir Character. Directory to create the file in. Uses your project's
+#'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param stub Character. Name of the stub template to use. Defaults to
 #'   "default". User can create custom stubs in `stubs/notebook-{stub}.qmd`,
 #'   `stubs/notebook-{stub}.Rmd`, or `stubs/script-{stub}.R`.
@@ -28,11 +27,15 @@
 #' @return Invisible path to created notebook
 #'
 #' @details
-#' ## Stub Template Resolution
+#' ## Default Output
 #'
-#' The function searches for stub templates in this order:
-#' 1. User stubs: `stubs/notebook-{stub}.qmd` or `stubs/notebook-{stub}.Rmd`
-#' 2. Framework stubs: `inst/stubs/notebook-{stub}.qmd` or `inst/stubs/notebook-{stub}.Rmd`
+#' Notebooks are created in the `notebooks/` directory by default:
+#' ```
+#' notebooks/
+#'   1-data-cleaning.qmd
+#'   2-analysis.qmd
+#'   3-visualization.qmd
+#' ```
 #'
 #' ## Extension Normalization
 #'
@@ -40,17 +43,13 @@
 #' - If no extension provided, `.qmd` is used (Quarto-first)
 #' - Use `type = "rmarkdown"` to default to `.Rmd`
 #'
-#' ## Creating Custom Stubs
+#' ## Stub Template Resolution
 #'
-#' Create a `stubs/` directory in your project root with custom templates:
-#' ```
-#' stubs/
-#'   notebook-default.qmd      # Override default Quarto stub
-#'   notebook-analysis.qmd     # Custom analysis stub
-#'   notebook-report.Rmd       # Custom RMarkdown report stub
-#' ```
+#' The function searches for stub templates in this order:
+#' 1. User stubs: `stubs/notebook-{stub}.qmd` or `stubs/notebook-{stub}.Rmd`
+#' 2. Framework stubs: `inst/stubs/notebook-{stub}.qmd` or `inst/stubs/notebook-{stub}.Rmd`
 #'
-#' Templates can use placeholders:
+#' Custom stub templates can use placeholders:
 #' - `{filename}` - The notebook filename without extension
 #' - `{date}` - Current date (YYYY-MM-DD)
 #'
@@ -88,7 +87,7 @@ make_notebook <- function(name,
 
   # Determine type: explicit parameter > config setting > quarto default
   if (is.null(type)) {
-    cfg <- tryCatch(read_config(), error = function(e) NULL)
+    cfg <- tryCatch(config_read(), error = function(e) NULL)
 
     default_format <- cfg$options$default_notebook_format %||% cfg$default_notebook_format
 
@@ -143,7 +142,7 @@ make_notebook <- function(name,
   stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
 
   # Get author info from project config or global config
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
 
 
   # Helper to get a setting with fallback chain: project config -> global settings -> default
@@ -382,17 +381,17 @@ make_notebook <- function(name,
 #' @examples
 #' \dontrun{
 #' # List all stubs
-#' list_stubs()
+#' stubs_list()
 #'
 #' # List only Quarto stubs
-#' list_stubs("quarto")
+#' stubs_list("quarto")
 #'
 #' # List only script stubs
-#' list_stubs("script")
+#' stubs_list("script")
 #' }
 #'
 #' @export
-list_stubs <- function(type = NULL) {
+stubs_list <- function(type = NULL) {
 
   result <- data.frame(
     name = character(0),
@@ -462,7 +461,7 @@ list_stubs <- function(type = NULL) {
 .get_notebook_dir_from_config <- function() {
   # Try to read config
   config <- tryCatch(
-    read_config(),
+    config_read(),
     error = function(e) NULL
   )
 
@@ -500,8 +499,8 @@ list_stubs <- function(type = NULL) {
 #' from stub templates.
 #'
 #' @param name Character. The file name (with or without .qmd extension)
-#' @param dir Character. Directory to create the file in. Reads from
-#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param dir Character. Directory to create the file in. Uses your project's
+#'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param stub Character. Name of the stub template to use. Default "default".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
 #'
@@ -532,8 +531,8 @@ make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
 #' from stub templates.
 #'
 #' @param name Character. The file name (with or without .Rmd extension)
-#' @param dir Character. Directory to create the file in. Reads from
-#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param dir Character. Directory to create the file in. Uses your project's
+#'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param stub Character. Name of the stub template to use. Default "default".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
 #'
@@ -564,8 +563,8 @@ make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
 #' notebook with the revealjs stub template.
 #'
 #' @param name Character. The presentation name (with or without .qmd extension)
-#' @param dir Character. Directory to create the file in. Reads from
-#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param dir Character. Directory to create the file in. Uses your project's
+#'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
 #'
 #' @return Invisible path to created presentation
@@ -591,8 +590,8 @@ make_revealjs <- function(name, dir = NULL, overwrite = FALSE) {
 #' Alias for [make_revealjs()]. Creates a Quarto reveal.js presentation.
 #'
 #' @param name Character. The presentation name (with or without .qmd extension)
-#' @param dir Character. Directory to create the file in. Reads from
-#'   config, defaults to "notebooks/" or "work/" directory.
+#' @param dir Character. Directory to create the file in. Uses your project's
+#'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
 #'
 #' @return Invisible path to created presentation

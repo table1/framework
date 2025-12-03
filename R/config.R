@@ -59,7 +59,7 @@ settings <- function(key = NULL, default = NULL, settings_file = NULL) {
   }
 
   # Read full config
-  cfg <- read_config(settings_file)
+  cfg <- config_read(settings_file)
 
   # If no key provided, return entire config with pretty-printing
   if (is.null(key)) {
@@ -115,15 +115,15 @@ config <- function(key = NULL, default = NULL, config_file = NULL) {
 
 #' Read project configuration
 #'
-#' Reads the project configuration from settings.yml or settings.yml with environment-aware
+#' Reads the project configuration from settings.yml or config.yml with environment-aware
 #' merging and split file resolution. Auto-discovers the settings file if not specified.
 #'
-#' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
+#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
 #' @param environment Active environment name (default: R_CONFIG_ACTIVE or "default")
 #'
 #' @return The configuration as a list
 #' @export
-read_config <- function(config_file = NULL, environment = NULL) {
+config_read <- function(config_file = NULL, environment = NULL) {
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
     config_file <- .get_settings_file()
@@ -454,12 +454,12 @@ read_config <- function(config_file = NULL, environment = NULL) {
 
 #' Write project configuration
 #'
-#' Writes the project configuration to settings.yml or settings files
+#' Writes the project configuration to settings.yml or config files
 #' @param config The configuration list to write
-#' @param config_file The configuration file path (default: auto-detect settings.yml/settings.yml)
+#' @param config_file The configuration file path (default: auto-detect settings.yml/config.yml)
 #' @param section Optional section to update (e.g. "data")
 #' @export
-write_config <- function(config, config_file = NULL, section = NULL) {
+config_write <- function(config, config_file = NULL, section = NULL) {
   # Validate arguments
   checkmate::assert_list(config)
   checkmate::assert_string(config_file, min.chars = 1, null.ok = TRUE)
@@ -478,7 +478,7 @@ write_config <- function(config, config_file = NULL, section = NULL) {
 
     # Check if config file exists
     if (!file.exists(config_file)) {
-      stop(sprintf("Configuration file '%s' does not exist. Use write_config(config) without 'section' to create it first.", config_file))
+      stop(sprintf("Configuration file '%s' does not exist. Use config_write(config) without 'section' to create it first.", config_file))
     }
 
     # Read current config

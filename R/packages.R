@@ -4,7 +4,7 @@
 #' 1. New: packages = list(use_renv = ..., default_packages = [...])
 #' 2. Old: packages = [list of package specs]
 #'
-#' @param config Configuration object from read_config()
+#' @param config Configuration object from config_read()
 #' @return List of package specifications, or empty list if none
 #' @keywords internal
 .get_package_list_from_config <- function(config) {
@@ -342,7 +342,7 @@
 
   # Check if settings file exists
   tryCatch({
-    config <- read_config()
+    config <- config_read()
   }, error = function(e) {
     warning("Settings file not found")
     return(invisible(FALSE))
@@ -612,7 +612,7 @@ renv_update <- function(packages = NULL) {
 #' packages_install()
 #' }
 packages_install <- function() {
-  config <- read_config()
+  config <- config_read()
 
   package_list <- .get_package_list_from_config(config)
   if (length(package_list) == 0) {
@@ -683,7 +683,7 @@ packages_update <- function(packages = NULL) {
 #' packages_list()
 #' }
 packages_list <- function() {
-  config <- read_config()
+  config <- config_read()
 
   package_list <- .get_package_list_from_config(config)
   if (length(package_list) == 0) {

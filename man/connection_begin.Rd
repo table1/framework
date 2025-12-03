@@ -17,24 +17,7 @@ Manually begin a database transaction. You must call \code{connection_commit()}
 to save changes or \code{connection_rollback()} to discard them.
 }
 \details{
-\strong{Note:} Using \code{connection_transaction()} is preferred as it automatically
-handles commit/rollback. Use this only when you need manual control.
+\strong{Note:} Using \code{db_transaction()} is preferred as it automatically
+handles commit/rollback.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-
-connection_begin(conn)
-tryCatch({
-  connection_insert(conn, "users", list(name = "Alice", age = 30))
-  connection_insert(conn, "users", list(name = "Bob", age = 25))
-  connection_commit(conn)
-}, error = function(e) {
-  connection_rollback(conn)
-  stop(e)
-})
-
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

@@ -26,3 +26,4 @@ connection_pool_close_all(quiet = TRUE)
 }
 
 }
+\keyword{internal}

@@ -12,15 +12,13 @@
 #' \dontrun{
 #' # Launch the GUI
 #' gui()
-#' framework_gui()
 #'
 #' # Launch on specific port
 #' gui(port = 8888)
 #' }
 #'
 #' @export
-#' @rdname gui
-framework_gui <- function(port = 8080, browse = TRUE) {
+gui <- function(port = 8080, browse = TRUE) {
   # Check if we're in development mode (loaded via devtools::load_all)
   is_dev_mode <- FALSE
   pkg_path <- find.package("framework")
@@ -130,10 +128,6 @@ framework_gui <- function(port = 8080, browse = TRUE) {
   # Run the server
   pr$run(port = port, host = "127.0.0.1")
 }
-
-#' @export
-#' @rdname gui
-gui <- framework_gui
 
 #' List running GUI servers
 #'

@@ -56,7 +56,7 @@
 #' connection_pool_close_all()
 #' }
 #'
-#' @export
+#' @keywords internal
 connection_pool <- function(name,
                            min_size = 1,
                            max_size = Inf,
@@ -113,7 +113,7 @@ connection_pool <- function(name,
 
   # Get connection config
   config <- tryCatch(
-    read_config(),
+    config_read(),
     error = function(e) {
       stop(sprintf("Failed to read configuration: %s", e$message), call. = FALSE)
     }
@@ -262,7 +262,7 @@ connection_pool <- function(name,
 #' })
 #' }
 #'
-#' @export
+#' @keywords internal
 connection_with_pool <- function(connection_name, code, ...) {
   checkmate::assert_string(connection_name, min.chars = 1)
 
@@ -288,7 +288,7 @@ connection_with_pool <- function(connection_name, code, ...) {
 #' connection_pool_close("my_db")
 #' }
 #'
-#' @export
+#' @keywords internal
 connection_pool_close <- function(name, quiet = FALSE) {
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_flag(quiet)
@@ -335,7 +335,7 @@ connection_pool_close <- function(name, quiet = FALSE) {
 #' connection_pool_close_all(quiet = TRUE)
 #' }
 #'
-#' @export
+#' @keywords internal
 connection_pool_close_all <- function(quiet = FALSE) {
   checkmate::assert_flag(quiet)
 
@@ -382,7 +382,7 @@ connection_pool_close_all <- function(quiet = FALSE) {
 #' connection_pool_list()
 #' }
 #'
-#' @export
+#' @keywords internal
 connection_pool_list <- function() {
   if (!exists(".framework_pools", envir = .GlobalEnv, inherits = FALSE)) {
     return(data.frame(

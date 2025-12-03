@@ -7,7 +7,7 @@
 data_list()
 }
 \value{
-A data frame with columns: name, path, type, locked, encrypted, description
+A data frame with columns: name, path, type, locked, description
 }
 \description{
 Lists all data specifications defined in the configuration, showing the

@@ -26,7 +26,7 @@ ai_generate <- function(project_path = ".",
   # Read config if not provided
   if (is.null(config)) {
     config <- tryCatch(
-      read_config(file.path(project_path, "settings.yml")),
+      config_read(file.path(project_path, "settings.yml")),
       error = function(e) list()
     )
   }
@@ -110,7 +110,7 @@ ai_regenerate <- function(project_path = ".",
   # Determine AI file path
   if (is.null(ai_file)) {
     config <- tryCatch(
-      read_config(file.path(project_path, "settings.yml")),
+      config_read(file.path(project_path, "settings.yml")),
       error = function(e) list()
     )
     ai_file <- config$ai$canonical_file %||% "CLAUDE.md"
@@ -127,7 +127,7 @@ ai_regenerate <- function(project_path = ".",
 
   # Read config for regeneration
   config <- tryCatch(
-    read_config(file.path(project_path, "settings.yml")),
+    config_read(file.path(project_path, "settings.yml")),
     error = function(e) list()
   )
   project_type <- config$project_type %||% "project"
@@ -319,7 +319,7 @@ When you call `scaffold()`, it automatically:
   example_save_final <- .get_example_data_path(dirs, project_type, "final")
 
   sprintf('**CRITICAL: All data operations MUST go through Framework functions.**
-This ensures integrity tracking, encryption support, and reproducibility.
+This ensures integrity tracking and reproducibility.
 
 ### Reading Data
 
@@ -334,10 +334,10 @@ customers <- data_read("%s/customers.csv")
 ```
 
 **NEVER use these functions:**
-- \u274c `read.csv()` - no tracking, no encryption support
-- \u274c `read_csv()` - no tracking, no encryption support
-- \u274c `readRDS()` - no tracking, no encryption support
-- \u274c `read_excel()` - no tracking, no encryption support
+- \u274c `read.csv()` - no tracking
+- \u274c `read_csv()` - no tracking
+- \u274c `readRDS()` - no tracking
+- \u274c `read_excel()` - no tracking
 
 If you see code using these functions, **replace it with `data_read()`**.
 
@@ -543,11 +543,11 @@ data_save(df, "inputs/final/analysis_ready.csv", locked = TRUE)
 
 ### Cache Functions
 
-#### cache_fetch(name, expr)
+#### cache_remember(name, expr)
 Compute once, cache result. Use for expensive operations.
 
 ```r
-model <- cache_fetch("my_model", {
+model <- cache_remember("my_model", {
   # This only runs if cache doesn\'t exist or is expired
   train_expensive_model(data)
 })
@@ -683,7 +683,7 @@ make_notebook("backup-slides", stub = "revealjs")
 
 ```r
 # Cache model fitting (only re-runs if cache expired)
-model <- cache_fetch("fitted_model", {
+model <- cache_remember("fitted_model", {
   fit_complex_model(training_data)
 }, expire_days = 7)
 ```

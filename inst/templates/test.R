@@ -14,11 +14,11 @@ config <- read_config()
 config
 
 # Read in data
-data <- load_data("source.private.example")
+data <- data_read("inputs_raw.example")
 data |> head()
 
 # Save data
-save_data(data, "final.private.example")
+data_save(data, "outputs_private.example")
 
 # Query databases
 ## SQLite

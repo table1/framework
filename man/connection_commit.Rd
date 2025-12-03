@@ -15,13 +15,4 @@ NULL (invisible)
 \description{
 Commits the current transaction, making all changes permanent.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-connection_begin(conn)
-connection_insert(conn, "users", list(name = "Alice", age = 30))
-connection_commit(conn)
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

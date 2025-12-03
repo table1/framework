@@ -87,7 +87,7 @@ renv_enable <- function(sync = TRUE) {
       }
 
       tryCatch({
-        config <- read_config()
+        config <- config_read()
         package_list <- .get_package_list_from_config(config)
         pkg_count <- length(package_list)
         .sync_packages_to_renv()

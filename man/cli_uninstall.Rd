@@ -2,12 +2,9 @@
 % Please edit documentation in R/install_cli.R
 \name{cli_uninstall}
 \alias{cli_uninstall}
-\alias{uninstall_cli}
 \title{Uninstall Framework CLI Tool}
 \usage{
 cli_uninstall(location = c("user", "system"))
-
-uninstall_cli(location = c("user", "system"))
 }
 \arguments{
 \item{location}{Installation location to remove: "user" or "system".

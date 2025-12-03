@@ -2,12 +2,9 @@
 % Please edit documentation in R/init.R
 \name{bootstrap_project_init}
 \alias{bootstrap_project_init}
-\alias{make_init}
 \title{Bootstrap project initialization file}
 \usage{
 bootstrap_project_init(output_file = "init.R")
-
-make_init(output_file = "init.R")
 }
 \arguments{
 \item{output_file}{Path where init.R should be written. Default: "init.R"}

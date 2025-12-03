@@ -21,8 +21,99 @@ create_test_project <- function(dir = create_test_dir(), type = "project") {
 
   setwd(dir)
 
-  # Initialize the project
-  suppressMessages(init(project_name = "TestProject", type = type, force = TRUE))
+  # Create minimal project structure manually for tests
+  # Create basic directories
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
+  dir.create("inputs/final", recursive = TRUE, showWarnings = FALSE)
+  dir.create("outputs/private", recursive = TRUE, showWarnings = FALSE)
+  dir.create("outputs/private/cache", recursive = TRUE, showWarnings = FALSE)
+  dir.create("outputs/public", recursive = TRUE, showWarnings = FALSE)
+  dir.create("notebooks", showWarnings = FALSE)
+  dir.create("scripts", showWarnings = FALSE)
+  dir.create("functions", showWarnings = FALSE)
+
+  # Create minimal config.yml
+  config_content <- list(
+    default = list(
+      project_name = "TestProject",
+      project_type = type,
+      directories = list(
+        notebooks = "notebooks",
+        scripts = "scripts",
+        functions = "functions",
+        inputs_raw = "inputs/raw",
+        inputs_intermediate = "inputs/intermediate",
+        inputs_final = "inputs/final",
+        outputs_private = "outputs/private",
+        outputs_public = "outputs/public",
+        cache = "outputs/private/cache"
+      ),
+      packages = list("dplyr"),
+      data = list()
+    )
+  )
+  yaml::write_yaml(config_content, "config.yml")
+
+  # Create framework.db with required tables
+  conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  # Create data table
+
+  DBI::dbExecute(conn, "
+    CREATE TABLE IF NOT EXISTS data (
+      name TEXT PRIMARY KEY,
+      path TEXT,
+      type TEXT,
+      delimiter TEXT,
+      locked INTEGER DEFAULT 0,
+      encrypted INTEGER DEFAULT 0,
+      hash TEXT,
+      last_read_at TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  ")
+
+  # Create cache table
+  DBI::dbExecute(conn, "
+    CREATE TABLE IF NOT EXISTS cache (
+      name TEXT PRIMARY KEY,
+      hash TEXT,
+      expire_at TEXT,
+      last_read_at TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  ")
+
+  # Create results table
+  DBI::dbExecute(conn, "
+    CREATE TABLE IF NOT EXISTS results (
+      name TEXT PRIMARY KEY,
+      type TEXT,
+      blind INTEGER DEFAULT 0,
+      comment TEXT,
+      hash TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  ")
+
+  # Create connections table
+  DBI::dbExecute(conn, "
+    CREATE TABLE IF NOT EXISTS connections (
+      name TEXT PRIMARY KEY,
+      driver TEXT,
+      host TEXT,
+      port INTEGER,
+      database TEXT,
+      username TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  ")
 
   dir
 }

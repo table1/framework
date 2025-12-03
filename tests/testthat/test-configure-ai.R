@@ -114,7 +114,7 @@ test_that(".create_ai_instructions file content is correct", {
   # Check for key Framework concepts
   expect_true(any(grepl("Framework", claude_content)))
   expect_true(any(grepl("scaffold\\(\\)", claude_content)))
-  expect_true(any(grepl("load_data", claude_content)))
+  expect_true(any(grepl("data_read", claude_content)))
   expect_true(any(grepl("result_save", claude_content)))
   expect_true(any(grepl("config\\.yml", claude_content)))
 

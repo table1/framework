@@ -32,7 +32,6 @@ Suggests:
     languageserver,
     tm,
     devtools,
-    sodium,
     httpgd,
     DT,
     renv,

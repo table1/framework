@@ -24,7 +24,7 @@ make_rmd("report")               # Explicit RMarkdown notebook
 make_revealjs("slides")          # Create reveal.js presentation
 make_presentation("deck")        # Alias for make_revealjs()
 make_script("process-data")      # Create scripts/process-data.R
-list_stubs()                     # Show available stubs
+stubs_list()                     # Show available stubs
 stubs_publish()                  # Publish stubs for customization
 ```
 
@@ -34,15 +34,15 @@ stubs_publish()                  # Publish stubs for customization
 
 ### Loading Data
 ```r
-load_data("source.public.dataset")      # Load from data catalog
-load_data("source.private.secure")      # Load private data
-load_data_or_cache("slow.computation")  # Load or run expensive computation
+data_read("inputs_raw.dataset")           # Load from data catalog
+data_read("inputs_intermediate.cleaned")  # Load intermediate data
+data_read_or_cache("slow.computation")    # Load or run expensive computation
 ```
 
 ### Saving Data
 ```r
-save_data(df, "source.public.output")   # Save to catalog
-save_data(df, "source.private.secret", encrypted=TRUE)  # Encrypted save
+data_save(df, "outputs_private.output")   # Save to catalog
+data_save(df, "outputs_private.secret", encrypted=TRUE)  # Encrypted save
 update_data_spec("source.public.output", spec)  # Update spec
 get_data_spec("source.public.output")   # Get data specification
 ```
@@ -242,9 +242,9 @@ capture_output(expr)             # Capture console output
 | `init()` | Create new project |
 | `is_initialized()` | Check initialization status |
 | `list_metadata()` | List metadata entries |
-| `list_stubs()` | List available stubs |
-| `load_data()` | Load from data catalog |
-| `load_data_or_cache()` | Load or compute |
+| `stubs_list()` | List available stubs |
+| `data_read()` | Load from data catalog |
+| `data_read_or_cache()` | Load or compute |
 | `make_notebook()` | Create notebook from stub |
 | `make_presentation()` | Create presentation (reveal.js) |
 | `make_qmd()` | Create Quarto notebook |
@@ -273,7 +273,7 @@ capture_output(expr)             # Capture console output
 | `result_list()` | List all results |
 | `result_save()` | Save result |
 | `s3_test()` | Test S3 connection |
-| `save_data()` | Save to data catalog |
+| `data_save()` | Save to data catalog |
 | `scaffold()` | Load project environment |
 | `scratch_capture()` | Save to scratch space |
 | `scratch_clean()` | Clean scratch directory |

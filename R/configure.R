@@ -38,7 +38,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- read_config(config_path)
+  config <- config_read(config_path)
 
   # Get current values for defaults
   current_name <- config$author$name
@@ -75,7 +75,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
   if (!is.null(affiliation)) config$author$affiliation <- affiliation
 
   # Write config
-  write_config(config, config_path)
+  config_write(config, config_path)
 
   message("\u2713 Author information updated in ", basename(config_path))
   if (!is.null(name)) message(sprintf("  Name: %s", name))
@@ -129,7 +129,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- read_config(config_path)
+  config <- config_read(config_path)
 
   # Interactive prompts
   if (interactive) {
@@ -215,7 +215,7 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
   }
 
   # Write config
-  write_config(config, config_path)
+  config_write(config, config_path)
 
   message(sprintf("\u2713 Data source '%s' added to %s", path, basename(config_path)))
   message(sprintf("  File: %s", file))
@@ -286,7 +286,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- read_config(config_path)
+  config <- config_read(config_path)
 
   # Interactive prompts
   if (interactive) {
@@ -371,7 +371,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
   config$connections[[name]] <- conn_config
 
   # Write config
-  write_config(config, config_path)
+  config_write(config, config_path)
 
   message(sprintf("\u2713 Connection '%s' added to %s", name, basename(config_path)))
   message(sprintf("  Driver: %s", driver))
@@ -441,7 +441,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- read_config(config_path)
+  config <- config_read(config_path)
 
   # Interactive prompts
   if (interactive) {
@@ -534,7 +534,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
   message("\nRun scaffold() to install and load packages")
 
   # Write config
-  write_config(config, config_path)
+  config_write(config, config_path)
 
   invisible(config)
 }
@@ -593,7 +593,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
     stop("settings.yml or config.yml not found. Run framework::project_create() first.")
   }
 
-  config <- read_config(config_path)
+  config <- config_read(config_path)
 
   # Standard directory names
   standard_dirs <- c(
@@ -637,7 +637,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   config$directories[[directory]] <- path
 
   # Write config
-  write_config(config, config_path)
+  config_write(config, config_path)
 
   message(sprintf("\u2713 Directory '%s' set to '%s' in %s", directory, path, basename(config_path)))
 

@@ -10,7 +10,6 @@
   type = NULL,
   delimiter = NULL,
   locked = FALSE,
-  encrypted = FALSE,
   hash = NULL
 )
 }
@@ -24,8 +23,6 @@
 \item{delimiter}{The delimiter for CSV files}
 
 \item{locked}{Whether the data is locked}
-
-\item{encrypted}{Whether the data is encrypted}
 
 \item{hash}{The hash of the data}
 }

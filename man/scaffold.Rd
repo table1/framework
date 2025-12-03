@@ -6,13 +6,80 @@
 \usage{
 scaffold(config_file = NULL)
 }
+\arguments{
+\item{config_file}{Path to configuration file. If NULL (default), automatically
+discovers settings.yml or config.yml in the project.}
+}
+\value{
+Invisibly returns NULL. The main effects are side effects:
+loading packages, sourcing functions, and creating the \code{config} object.
+}
 \description{
-This function initializes the project environment by:
+The primary entry point for working with Framework projects. Call this at the
+start of every notebook or script to set up your environment with all
+configured packages, functions, and settings.
+}
+\details{
+\code{scaffold()} performs the following steps in order:
 \enumerate{
-\item Standardizing the working directory (for notebooks in subdirectories)
-\item Loading environment variables from .env
-\item Loading configuration from settings.yml (or settings.yml)
-\item Installing required packages
-\item Loading all functions from the functions directory
+\item \strong{Standardizes working directory} - Finds and sets the project root, even when called from notebooks in subdirectories
+\item \strong{Loads environment variables} - Reads secrets from \code{.env} file
+\item \strong{Loads configuration} - Parses settings.yml for project settings
+\item \strong{Sets random seed} - For reproducibility (if \code{seed} is configured)
+\item \strong{Installs packages} - Any missing packages from the \code{packages} list
+\item \strong{Loads packages} - Attaches all configured packages
+\item \strong{Sources functions} - Loads all \code{.R} files from \verb{functions/} directory
+\item \strong{Creates config object} - Makes \code{config} available in global environment
+}
+
+After \code{scaffold()} completes, you have access to:
+\itemize{
+\item All packages listed in settings.yml
+\item All functions from your \verb{functions/} directory
+\item The \code{config} object for accessing settings via \code{config("key")}
+\item Database connections configured in your project
+}
+}
+\section{Project Discovery}{
+
+When called without arguments, \code{scaffold()} searches for a Framework project by:
+\itemize{
+\item Looking for settings.yml or config.yml in current and parent directories
+\item Checking for .Rproj files with nearby settings
+\item Recognizing common Framework subdirectories (notebooks/, scripts/, etc.)
+}
+
+This means you can call \code{scaffold()} from any subdirectory within your project.
+}
+
+\section{Configuration}{
+
+The settings.yml file controls what \code{scaffold()} loads. Key settings include:
+\itemize{
+\item \code{packages}: List of R packages to install and load
+\item \code{seed}: Random seed for reproducibility
+\item \code{directories}: Custom directory paths
+\item \code{connections}: Database connection configurations
+}
+}
+
+\examples{
+\dontrun{
+# At the top of every notebook or script:
+library(framework)
+scaffold()
+
+# Now you can use your configured packages and functions
+# Access settings via the config object:
+config("directories.notebooks")
+config("seed")
+}
+
+}
+\seealso{
+\itemize{
+\item \code{\link[=project_create]{project_create()}} to create a new Framework project
+\item \code{\link[=standardize_wd]{standardize_wd()}} for just the working directory standardization
+\item \code{\link[=config]{config()}} to access configuration values after scaffolding
 }
 }

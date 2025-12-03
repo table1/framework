@@ -27,15 +27,7 @@
 #'
 #' @return A data frame with matching records, or empty data frame if none found
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#' users <- connection_find_by(conn, "users", email = "alice@example.com")
-#' active_users <- connection_find_by(conn, "users", status = "active", role = "admin")
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_find_by <- function(conn, table_name, ..., with_trashed = FALSE) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
@@ -95,18 +87,7 @@ connection_find_by <- function(conn, table_name, ..., with_trashed = FALSE) {
 #'
 #' @return The ID of the inserted record (if auto-increment ID exists), or number of rows affected
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#' id <- connection_insert(conn, "users", list(
-#'   name = "Alice",
-#'   email = "alice@example.com",
-#'   age = 30
-#' ))
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_insert <- function(conn, table_name, values, auto_timestamps = TRUE) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
@@ -173,14 +154,7 @@ connection_insert <- function(conn, table_name, values, auto_timestamps = TRUE) 
 #'
 #' @return Number of rows affected
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#' connection_update(conn, "users", 1, list(age = 31, name = "Alice Updated"))
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_update <- function(conn, table_name, id, values, auto_timestamps = TRUE) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
@@ -237,20 +211,7 @@ connection_update <- function(conn, table_name, id, values, auto_timestamps = TR
 #'
 #' @return Number of rows affected
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#'
-#' # Soft-delete (if deleted_at column exists)
-#' connection_delete(conn, "users", 1)
-#'
-#' # Hard-delete (permanent)
-#' connection_delete(conn, "users", 1, soft = FALSE)
-#'
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_delete <- function(conn, table_name, id, soft = TRUE) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
@@ -305,14 +266,7 @@ connection_delete <- function(conn, table_name, id, soft = TRUE) {
 #'
 #' @return Number of rows affected
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#' connection_restore(conn, "users", 1)
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_restore <- function(conn, table_name, id) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")

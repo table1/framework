@@ -15,27 +15,8 @@ connection_with_transaction(conn, code)
 The result of the code expression
 }
 \description{
-Similar to \code{connection_transaction()}, but only starts a new transaction
+Similar to \code{db_transaction()}, but only starts a new transaction
 if not already in one. Useful for functions that can be called both
 standalone and within an existing transaction.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-
-# If called standalone, this will create a transaction
-connection_with_transaction(conn, {
-  connection_insert(conn, "users", list(name = "Alice", age = 30))
-})
-
-# If called within an existing transaction, it will use that
-connection_transaction(conn, {
-  connection_with_transaction(conn, {
-    connection_insert(conn, "users", list(name = "Bob", age = 25))
-  })
-})
-
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

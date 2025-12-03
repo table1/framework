@@ -9,7 +9,7 @@ cache_forget(name, file = NULL)
 \arguments{
 \item{name}{The cache name to remove}
 
-\item{file}{Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)}
+\item{file}{Optional file path of the cache (default: \verb{cache/\{name\}.rds})}
 }
 \description{
 Remove a cached value
