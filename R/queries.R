@@ -1,96 +1,68 @@
 #' Get data from a database query
 #'
 #' Gets data from a database using a query and connection name. The connection
-#' is created, used, and automatically closed. For better performance with
-#' multiple queries, enable connection pooling via `pool: true` in your
-#' connection configuration.
+#' is created, used, and automatically closed.
 #'
 #' @param query SQL query to execute
-#' @param connection_name Name of the connection in settings.yml
+#' @param connection_name Name of the connection in config.yml
 #' @param ... Additional arguments passed to DBI::dbGetQuery
 #' @return A data frame with the query results
 #'
 #' @examples
 #' \dontrun{
-#' # Default: creates new connection, auto-disconnects
-#' users <- query_get("SELECT * FROM users", "my_db")
-#'
-#' # To use pooling, configure in settings.yml:
-#' # connections:
-#' #   my_db:
-#' #     driver: postgres
-#' #     pool: true
+#' users <- db_query("SELECT * FROM users", "my_db")
 #' }
 #'
 #' @export
-query_get <- function(query, connection_name, ...) {
+db_query <- function(query, connection_name, ...) {
   # Validate arguments
   checkmate::assert_string(query, min.chars = 1)
   checkmate::assert_string(connection_name, min.chars = 1)
 
-  connection_get(connection_name) |>
-    (\(con) {
-      # Only disconnect non-pool connections
-      # Pools manage their own connection lifecycle
-      if (!inherits(con, "Pool")) {
-        on.exit(DBI::dbDisconnect(con))
-      }
+  con <- db_connect(connection_name)
+  on.exit(DBI::dbDisconnect(con))
 
-      tryCatch(
-        DBI::dbGetQuery(con, query, ...),
-        error = function(e) {
-          stop(sprintf("Failed to execute query on connection '%s': %s", connection_name, e$message))
-        }
-      )
-    })()
+  tryCatch(
+    DBI::dbGetQuery(con, query, ...),
+    error = function(e) {
+      stop(sprintf("Failed to execute query on connection '%s': %s", connection_name, e$message))
+    }
+  )
 }
 
-#' Execute a database query
+
+#' Execute a database statement
 #'
-#' Executes a query on a database without returning results. The connection
-#' is created, used, and automatically closed. For better performance with
-#' multiple queries, enable connection pooling via `pool: true` in your
-#' connection configuration.
+#' Executes a SQL statement on a database without returning results. The connection
+#' is created, used, and automatically closed.
 #'
-#' @param query SQL query to execute
-#' @param connection_name Name of the connection in settings.yml
+#' @param query SQL statement to execute
+#' @param connection_name Name of the connection in config.yml
 #' @param ... Additional arguments passed to DBI::dbExecute
 #' @return Number of rows affected
 #'
 #' @examples
 #' \dontrun{
-#' # Default: creates new connection, auto-disconnects
-#' rows <- query_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
-#'
-#' # To use pooling, configure in settings.yml:
-#' # connections:
-#' #   my_db:
-#' #     driver: postgres
-#' #     pool: true
+#' rows <- db_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
 #' }
 #'
 #' @export
-query_execute <- function(query, connection_name, ...) {
+db_execute <- function(query, connection_name, ...) {
   # Validate arguments
   checkmate::assert_string(query, min.chars = 1)
   checkmate::assert_string(connection_name, min.chars = 1)
 
-  connection_get(connection_name) |>
-    (\(con) {
-      # Only disconnect non-pool connections
-      # Pools manage their own connection lifecycle
-      if (!inherits(con, "Pool")) {
-        on.exit(DBI::dbDisconnect(con))
-      }
+  con <- db_connect(connection_name)
+  on.exit(DBI::dbDisconnect(con))
 
-      tryCatch(
-        DBI::dbExecute(con, query, ...),
-        error = function(e) {
-          stop(sprintf("Failed to execute query on connection '%s': %s", connection_name, e$message))
-        }
-      )
-    })()
+  tryCatch(
+    DBI::dbExecute(con, query, ...),
+    error = function(e) {
+      stop(sprintf("Failed to execute statement on connection '%s': %s", connection_name, e$message))
+    }
+  )
 }
+
 
 #' Find a record by ID
 #'
@@ -107,12 +79,12 @@ query_execute <- function(query, connection_name, ...) {
 #'
 #' @examples
 #' \dontrun{
-#' conn <- connection_get("postgres")
+#' conn <- db_connect("postgres")
 #' user <- connection_find(conn, "users", 42)
 #' DBI::dbDisconnect(conn)
 #' }
 #'
-#' @export
+#' @keywords internal
 connection_find <- function(conn, table_name, id, with_trashed = FALSE) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
@@ -150,18 +122,4 @@ connection_find <- function(conn, table_name, id, with_trashed = FALSE) {
 }
 
 
-#' @title (Deprecated) Use connection_find() instead
-#' @description `r lifecycle::badge("deprecated")`
-#'
-#' `db_find()` was renamed to `connection_find()` to follow the package's
-#' noun_verb naming convention for better discoverability and consistency.
-#'
-#' @inheritParams connection_find
-#' @return A data frame with the record
-#' @export
-db_find <- function(conn, table_name, id, with_trashed = FALSE) {
-  .Deprecated("connection_find", package = "framework",
-              msg = "db_find() is deprecated. Use connection_find() instead.")
-  connection_find(conn, table_name, id, with_trashed)
-}
 

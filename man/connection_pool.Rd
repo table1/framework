@@ -84,3 +84,4 @@ connection_pool_close_all()
 }
 
 }
+\keyword{internal}

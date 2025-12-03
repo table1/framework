@@ -515,7 +515,7 @@ project_create <- function(
 
   # Try to read config for dynamic generation
   config <- tryCatch(
-    read_config(file.path(project_dir, "settings.yml")),
+    config_read(file.path(project_dir, "settings.yml")),
     error = function(e) NULL
   )
 

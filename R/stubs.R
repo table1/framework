@@ -49,7 +49,7 @@
 #' stubs_publish(overwrite = TRUE)
 #' }
 #'
-#' @seealso [make_notebook()], [make_script()], [list_stubs()], [stubs_path()]
+#' @seealso [make_notebook()], [make_script()], [stubs_list()], [stubs_path()]
 #' @export
 stubs_publish <- function(type = "all", overwrite = FALSE, stubs = NULL) {
   # Validate arguments

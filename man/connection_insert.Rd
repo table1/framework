@@ -22,15 +22,4 @@ The ID of the inserted record (if auto-increment ID exists), or number of rows a
 Inserts a new record into a table with automatic timestamp handling.
 If the table has created_at/updated_at columns, they will be set automatically.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-id <- connection_insert(conn, "users", list(
-  name = "Alice",
-  email = "alice@example.com",
-  age = 30
-))
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

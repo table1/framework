@@ -1,6 +1,6 @@
 #' Remove a cache value
 #' @param name The cache name to remove
-#' @param file Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)
+#' @param file Optional file path of the cache (default: `cache/{name}.rds`)
 #' @keywords internal
 .remove_cache <- function(name, file = NULL) {
   # Validate arguments
@@ -8,7 +8,7 @@
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
 
   # Get config
-  config <- read_config()
+  config <- config_read()
   cache_dir <- config$directories$cache %||% config$options$data$cache_dir
 
   if (is.null(cache_dir) || !nzchar(cache_dir)) {
@@ -53,7 +53,7 @@
 
 #' Remove a cached value
 #' @param name The cache name to remove
-#' @param file Optional file path of the cache (default: {config$options$data$cache_dir}/{name}.rds)
+#' @param file Optional file path of the cache (default: `cache/{name}.rds`)
 #' @export
 cache_forget <- function(name, file = NULL) {
   # Validate arguments
@@ -68,7 +68,7 @@ cache_forget <- function(name, file = NULL) {
 #' @export
 cache_flush <- function() {
   # Get config
-  config <- read_config()
+  config <- config_read()
   cache_dir <- config$directories$cache %||% config$options$data$cache_dir
 
   if (is.null(cache_dir) || !nzchar(cache_dir)) {

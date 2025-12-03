@@ -445,10 +445,3 @@ cli_update <- function(ref = "main", upgrade_deps = TRUE, force = FALSE) {
 }
 
 
-#' @rdname cli_install
-#' @export
-install_cli <- cli_install
-
-#' @rdname cli_uninstall
-#' @export
-uninstall_cli <- cli_uninstall

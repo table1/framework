@@ -94,7 +94,8 @@
       "Bash(minio/minio server:*)",
       "Bash(docker exec:*)",
       "Bash(NOT_CRAN=true R --quiet -e:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []

@@ -2580,11 +2580,12 @@ function(category_id = NULL) {
           f.name,
           f.title,
           f.category_id,
+          f.is_common,
           c.name as category_name
         FROM functions f
         LEFT JOIN categories c ON c.id = f.category_id
         WHERE f.category_id = ?
-        ORDER BY f.name
+        ORDER BY f.is_common DESC, f.name
       ", params = list(as.integer(category_id)))
     } else {
       functions <- DBI::dbGetQuery(con, "
@@ -2593,10 +2594,11 @@ function(category_id = NULL) {
           f.name,
           f.title,
           f.category_id,
+          f.is_common,
           c.name as category_name
         FROM functions f
         LEFT JOIN categories c ON c.id = f.category_id
-        ORDER BY c.position, c.name, f.name
+        ORDER BY c.position, c.name, f.is_common DESC, f.name
       ")
     }
 
@@ -2713,7 +2715,7 @@ function(name) {
 
     # Build response
     result <- as.list(func[1, ])
-    result$aliases <- aliases$alias
+    result$aliases <- as.list(aliases$alias)
     result$parameters <- if (nrow(params) > 0) {
       lapply(seq_len(nrow(params)), function(i) as.list(params[i, ]))
     } else {

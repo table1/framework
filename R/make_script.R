@@ -5,9 +5,8 @@
 #'
 #' @param name Character. The script name (with or without .R extension).
 #'   Examples: "process-data", "process-data.R"
-#' @param dir Character. Directory to create the script in. Reads from
-#'   config `directories$scripts` (or legacy `options$script_dir`), defaults to
-#'   "scripts/" or current directory.
+#' @param dir Character. Directory to create the script in. Uses your project's
+#'   configured `directories$scripts` setting. Default: "scripts/".
 #' @param stub Character. Name of the stub template to use. Defaults to
 #'   "default". User can create custom stubs in `stubs/script-{stub}.R`.
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
@@ -20,19 +19,15 @@
 #' 2. Uses `script_dir` config option instead of `notebook_dir`
 #' 3. Calls `make_notebook()` with `type = "script"`
 #'
-#' ## Creating Custom Script Stubs
+#' ## Default Output
 #'
-#' Create a `stubs/` directory in your project root with custom templates:
+#' Scripts are created in the `scripts/` directory by default:
 #' ```
-#' stubs/
-#'   script-default.R      # Override default script stub
-#'   script-etl.R          # Custom ETL script stub
-#'   script-analysis.R     # Custom analysis script stub
+#' scripts/
+#'   process-data.R
+#'   build-features.R
+#'   run-model.R
 #' ```
-#'
-#' Templates can use placeholders:
-#' - `{filename}` - The script filename without extension
-#' - `{date}` - Current date (YYYY-MM-DD)
 #'
 #' @examples
 #' \dontrun{
@@ -63,7 +58,7 @@ make_script <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
 
   # Get script directory from config if not specified
   if (is.null(dir)) {
-    config <- tryCatch(read_config(), error = function(e) NULL)
+    config <- tryCatch(config_read(), error = function(e) NULL)
     if (!is.null(config$directories$scripts)) {
       dir <- config$directories$scripts
     } else if (!is.null(config$options$script_dir)) {

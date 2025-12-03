@@ -37,7 +37,7 @@ status <- function() {
   cat("\n")
 
   # Project info
-  config <- tryCatch(read_config(), error = function(e) NULL)
+  config <- tryCatch(config_read(), error = function(e) NULL)
   if (!is.null(config)) {
     cat("\033[1;33m")  # Bold yellow
     cat("Project:\n")

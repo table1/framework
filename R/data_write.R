@@ -2,24 +2,23 @@
 #'
 #' @param data Data frame to save
 #' @param path Either:
-#'   - Dot notation: "intermediate.filename" resolves to inputs/intermediate/filename.{type}
-#'   - Direct path: "inputs/intermediate/filename.csv" uses path as-is
-#'   - Simple filename: "filename" requires force = TRUE or errors
+#'
+#'   - Dot notation: `inputs.raw.filename` resolves to inputs/raw/filename.rds
+#'   - Direct path: "inputs/raw/filename.csv" uses path as-is
+#'
+#'   Dot notation uses your configured directories
+#'   (e.g., `inputs.raw`, `inputs.intermediate`, `outputs.private`).
 #' @param type Type of data file ("csv" or "rds"). Auto-detected from extension if path includes one.
 #' @param delimiter Delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param locked Whether the file should be locked after saving
-#' @param encrypted Whether the file should be encrypted
-#' @param password Optional password for encryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @param force If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.
 #' @export
-data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRUE, encrypted = FALSE, password = NULL, force = FALSE) {
+data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRUE, force = FALSE) {
   # Validate arguments
   checkmate::assert_data_frame(data, min.rows = 1)
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_choice(delimiter, c("comma", "tab", "semicolon", "space"))
   checkmate::assert_flag(locked)
-  checkmate::assert_flag(encrypted)
-  checkmate::assert_string(password, null.ok = TRUE)
   checkmate::assert_flag(force)
 
   # Detect path format
@@ -52,58 +51,49 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
     file_name <- basename(file_path)
 
   } else if (grepl("\\.", path)) {
-    # Dot notation mode (e.g., "intermediate.filename" or legacy "test.public.sample")
+    # Dot notation mode - directory key required
+    # Example: "inputs.raw.filename" → inputs/raw/filename.rds
+    # Example: "outputs.private.results" → outputs/private/results.rds
     parts <- strsplit(path, ".", fixed = TRUE)[[1]]
 
-    if (length(parts) < 2) {
-      stop("Dot notation requires at least two parts (e.g., 'intermediate.filename')")
+    if (length(parts) < 3) {
+      stop("Dot notation requires at least three parts (e.g., 'inputs.raw.filename')")
     }
 
-    # Try to resolve first part as a directory key from config
-    # Check common directory keys: raw, intermediate, final, private, public, etc.
-    dir_key <- parts[1]
-    possible_keys <- c(
-      sprintf("directories.inputs_%s", dir_key),
-      sprintf("directories.outputs_%s", dir_key),
-      sprintf("directories.%s", dir_key)
-    )
+    # First two parts form the directory key (joined with underscore)
+    # e.g., "inputs.raw" -> "inputs_raw"
+    dir_key <- paste(parts[1:2], collapse = "_")
+    config_key <- sprintf("directories.%s", dir_key)
+    resolved_dir <- tryCatch(config(config_key), error = function(e) NULL)
 
-    resolved_dir <- NULL
-    for (key in possible_keys) {
-      resolved_dir <- tryCatch(config(key), error = function(e) NULL)
-      if (!is.null(resolved_dir)) break
+    if (is.null(resolved_dir)) {
+      # Get available directory keys for helpful error message
+      all_dirs <- tryCatch(config("directories"), error = function(e) list())
+      available_keys <- if (is.list(all_dirs)) names(all_dirs) else character(0)
+      # Convert keys to dot notation for display
+      display_keys <- gsub("_", ".", available_keys)
+
+      stop(sprintf(
+        "Unknown directory '%s.%s'. Use a configured directory.\n\nAvailable directories:\n  %s\n\nExamples:\n  data_save(df, 'inputs.raw.mydata')\n  data_save(df, 'outputs.private.results')",
+        parts[1], parts[2],
+        paste(display_keys, collapse = ", ")
+      ))
     }
 
-    if (!is.null(resolved_dir)) {
-      # New behavior: first part resolved to a configured directory
-      # Example: "intermediate.filename" → inputs/intermediate/filename.rds
-      dir_path <- resolved_dir
-      file_base <- paste(parts[-1], collapse = "_")
+    dir_path <- resolved_dir
+    file_base <- paste(parts[-(1:2)], collapse = "_")
 
-      # Default type to rds if not specified
-      if (is.null(type)) type <- "rds"
+    # Default type to rds if not specified
+    if (is.null(type)) type <- "rds"
 
-      file_name <- paste0(file_base, ".", type)
-      file_path <- file.path(dir_path, file_name)
-
-    } else {
-      # Legacy behavior: create nested structure under data/
-      # Example: "test.public.sample" → data/test/public/sample.csv
-      dir_parts <- c("data", parts[-length(parts)])
-      dir_path <- do.call(file.path, as.list(dir_parts))
-
-      # Default type to csv for legacy compatibility
-      if (is.null(type)) type <- "csv"
-
-      file_name <- paste0(parts[length(parts)], ".", type)
-      file_path <- file.path(dir_path, file_name)
-    }
+    file_name <- paste0(file_base, ".", type)
+    file_path <- file.path(dir_path, file_name)
 
   } else {
-    # Simple filename with no directory - require force
+    # Simple filename with no directory
     stop(sprintf(
-      "Path '%s' has no directory. Either:\n  - Use dot notation: 'intermediate.%s'\n  - Provide full path: 'inputs/intermediate/%s.%s'",
-      path, path, path, type %||% "rds"
+      "Path '%s' has no directory. Either:\n  - Use dot notation: 'inputs.raw.%s' or 'inputs.intermediate.%s'\n  - Provide full path: 'inputs/raw/%s.%s'",
+      path, path, path, path, type %||% "rds"
     ))
   }
 
@@ -123,60 +113,14 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
     }
   }
 
-  # Prepare data for saving
-  if (encrypted) {
-    # Get password
-    pwd <- if (!is.null(password)) {
-      password
-    } else {
-      .get_encryption_password(prompt = TRUE)
-    }
-
-    # Serialize data based on type
-    serialized_data <- switch(type,
-      csv = {
-        # Convert delimiter name to actual character
-        delim <- switch(delimiter,
-          comma = ",",
-          tab = "\t",
-          semicolon = ";",
-          space = " "
-        )
-        # Write to temp file first
-        temp_file <- tempfile(fileext = ".csv")
-        readr::write_csv(data, temp_file)
-        # Read raw bytes
-        content <- readBin(temp_file, "raw", n = file.info(temp_file)$size)
-        unlink(temp_file)
-        content
-      },
-      rds = serialize(data, NULL),
-      stop(sprintf("Unsupported file type: %s", type))
-    )
-
-    # Encrypt the serialized data
-    encrypted_data <- .encrypt_with_password(serialized_data, pwd)
-    # Write encrypted data
-    writeBin(encrypted_data, file_path)
-
-    message(sprintf("Data encrypted and saved to: %s", file_path))
-  } else {
-    # Save data normally
-    switch(type,
-      csv = {
-        # Convert delimiter name to actual character
-        delim <- switch(delimiter,
-          comma = ",",
-          tab = "\t",
-          semicolon = ";",
-          space = " "
-        )
-        readr::write_csv(data, file_path)
-      },
-      rds = saveRDS(data, file_path),
-      stop(sprintf("Unsupported file type: %s", type))
-    )
-  }
+  # Save data
+  switch(type,
+    csv = {
+      readr::write_csv(data, file_path)
+    },
+    rds = saveRDS(data, file_path),
+    stop(sprintf("Unsupported file type: %s", type))
+  )
 
   message(sprintf("Data saved to: %s", file_path))
 
@@ -199,7 +143,6 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
       type = type,
       delimiter = if (type == "csv") delimiter else NA,
       locked = locked,
-      encrypted = encrypted,
       hash = current_hash
     ),
     error = function(e) {
@@ -211,18 +154,160 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
   invisible(data)
 }
 
-#' Alias for backward compatibility
-#' @param data Data frame to save
-#' @param path Either dot notation, direct path, or simple filename
-#' @param type Type of data file ("csv" or "rds"). Auto-detected from extension if path includes one.
+#' Add an existing file to the data catalog
+#'
+#' Registers an existing data file with the Framework data catalog. This allows
+#' you to track files that were created outside of Framework (e.g., downloaded
+#' from external sources, copied from other projects) and use them with
+#' `data_read()` using dot notation.
+#'
+#' @param file_path Path to the existing file (must exist)
+#' @param name Optional dot notation name for the data catalog (e.g., `inputs.raw.survey_data`).
+#'   If NULL, derives name from file path relative to project root.
+#' @param type Optional type override. Auto-detected from file extension if NULL.
 #' @param delimiter Delimiter for CSV files ("comma", "tab", "semicolon", "space")
-#' @param locked Whether the file should be locked after saving
-#' @param encrypted Whether the file should be encrypted
-#' @param password Optional password for encryption
-#' @param force If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.
+#' @param locked Whether the file should be locked (hash-verified on read)
+#' @param update_config If TRUE (default), also updates the YAML config with the data spec
+#'
+#' @return Invisibly returns the data spec that was created
+#'
+#' @examples
+#' \dontrun{
+#' # Add a downloaded CSV file to the catalog
+#' data_add("inputs/raw/survey_results.csv", name = "inputs.raw.survey_results")
+#'
+#' # Now you can read it with dot notation
+#' data_read("inputs.raw.survey_results")
+#'
+#' # Add with auto-generated name
+#' data_add("inputs/intermediate/cleaned_data.rds")
+#' # Name will be derived as "inputs.intermediate.cleaned_data"
+#' }
+#'
 #' @export
-save_data <- function(data, path, type = NULL, delimiter = "comma", locked = TRUE, encrypted = FALSE, password = NULL, force = FALSE) {
-  data_save(data, path, type, delimiter, locked, encrypted, password, force)
+data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
+                     locked = TRUE, update_config = TRUE) {
+  # Validate arguments
+  checkmate::assert_string(file_path, min.chars = 1)
+  checkmate::assert_string(name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_choice(type, c("csv", "rds", "tsv", "excel", "stata", "spss", "sas"), null.ok = TRUE)
+  checkmate::assert_choice(delimiter, c("comma", "tab", "semicolon", "space"))
+  checkmate::assert_flag(locked)
+  checkmate::assert_flag(update_config)
+
+  # Check file exists
+
+  if (!file.exists(file_path)) {
+    stop(sprintf("File not found: %s", file_path))
+  }
+
+  # Normalize the path
+  file_path <- normalizePath(file_path, mustWork = TRUE)
+
+  # Auto-detect type from extension if not specified
+  if (is.null(type)) {
+    file_ext <- tolower(sub(".*\\.", "", file_path))
+    type <- switch(file_ext,
+      csv = "csv",
+      tsv = "tsv",
+      txt = "tsv",
+      dat = "tsv",
+      rds = "rds",
+      xlsx = "excel",
+      xls = "excel",
+      dta = "stata",
+      sav = "spss",
+      zsav = "spss",
+      por = "spss",
+      sas7bdat = "sas",
+      xpt = "sas",
+      stop(sprintf("Cannot auto-detect type for extension: %s. Please specify 'type' parameter.", file_ext))
+    )
+  }
+
+  # Generate name from file path if not provided
+  if (is.null(name)) {
+    # Try to make a sensible dot-notation name from the path
+    # e.g., "inputs/raw/survey.csv" -> "inputs.raw.survey"
+    # e.g., "inputs/intermediate/cleaned.rds" -> "inputs.intermediate.cleaned"
+    rel_path <- file_path
+
+    # Try to make path relative to common directories
+    for (dir_key in c("inputs_raw", "inputs_intermediate", "inputs_final", "inputs_reference")) {
+      dir_path <- tryCatch(config(sprintf("directories.%s", dir_key)), error = function(e) NULL)
+      if (!is.null(dir_path) && startsWith(file_path, normalizePath(dir_path, mustWork = FALSE))) {
+        rel_path <- sub(paste0("^", normalizePath(dir_path, mustWork = FALSE), "/?"), "", file_path)
+        # Convert directory key to dot notation (inputs_raw -> inputs.raw)
+        prefix <- gsub("_", ".", dir_key)
+        break
+      }
+    }
+
+    # Remove extension and convert path separators to dots
+    name_base <- sub("\\.[^.]+$", "", basename(rel_path))
+    if (exists("prefix")) {
+      name <- paste(prefix, name_base, sep = ".")
+    } else {
+      # Use filename without directory structure
+      name <- name_base
+      message(sprintf("Note: Using '%s' as data name. Consider specifying a more descriptive name.", name))
+    }
+  }
+
+  # Calculate hash
+  current_hash <- tryCatch(
+    .calculate_file_hash(file_path),
+    error = function(e) {
+      stop(sprintf("Failed to calculate file hash for '%s': %s", file_path, e$message))
+    }
+  )
+
+  # Determine delimiter value for storage
+  delimiter_value <- if (type == "csv") delimiter else NA
+
+  # Register in the database
+  tryCatch(
+    .set_data(
+      name = name,
+      path = file_path,
+      type = type,
+      delimiter = delimiter_value,
+      locked = locked,
+      hash = current_hash
+    ),
+    error = function(e) {
+      stop(sprintf("Failed to register data in database: %s", e$message))
+    }
+  )
+
+  message(sprintf("Data registered in database: %s", name))
+
+  # Build spec for config
+  spec <- list(
+    path = file_path,
+    type = type
+  )
+  if (!is.na(delimiter_value)) {
+    spec$delimiter <- delimiter
+  }
+  if (locked) {
+    spec$locked <- TRUE
+  }
+
+  # Update YAML config if requested
+
+  if (update_config) {
+    tryCatch({
+      data_spec_update(name, spec)
+      message(sprintf("Data spec added to config: %s", name))
+    }, error = function(e) {
+      warning(sprintf("Could not update config (database record was still created): %s", e$message))
+    })
+  }
+
+  message(sprintf("\nYou can now read this data with: data_read(\"%s\")", name))
+
+  invisible(spec)
 }
 
 
@@ -232,17 +317,15 @@ save_data <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
 #' @param type The data type (csv, rds, etc.)
 #' @param delimiter The delimiter for CSV files
 #' @param locked Whether the data is locked
-#' @param encrypted Whether the data is encrypted
 #' @param hash The hash of the data
 #' @keywords internal
-.set_data <- function(name, path = NULL, type = NULL, delimiter = NULL, locked = FALSE, encrypted = FALSE, hash = NULL) {
+.set_data <- function(name, path = NULL, type = NULL, delimiter = NULL, locked = FALSE, hash = NULL) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(path, null.ok = TRUE, na.ok = TRUE)
   checkmate::assert_string(type, null.ok = TRUE, na.ok = TRUE)
   checkmate::assert_string(delimiter, null.ok = TRUE, na.ok = TRUE)
   checkmate::assert_flag(locked)
-  checkmate::assert_flag(encrypted)
   checkmate::assert_string(hash, null.ok = TRUE, na.ok = TRUE)
 
   # Get database connection
@@ -258,7 +341,6 @@ save_data <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
 
   # Convert booleans to integers for SQLite
   locked_int <- as.integer(locked)
-  encrypted_int <- as.integer(encrypted)
 
   # Convert NULL values to NA for SQLite
   path_value <- if (is.null(path)) NA else path
@@ -283,8 +365,8 @@ save_data <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
     tryCatch(
       DBI::dbExecute(
         con,
-        "UPDATE data SET path = ?, type = ?, delimiter = ?, locked = ?, encrypted = ?, hash = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
-        list(path_value, type_value, delimiter_value, locked_int, encrypted_int, hash_value, now, now, name)
+        "UPDATE data SET path = ?, type = ?, delimiter = ?, locked = ?, hash = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
+        list(path_value, type_value, delimiter_value, locked_int, hash_value, now, now, name)
       ),
       error = function(e) {
         stop(sprintf("Failed to update data record: %s", e$message))
@@ -295,8 +377,8 @@ save_data <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
     tryCatch(
       DBI::dbExecute(
         con,
-        "INSERT INTO data (name, path, type, delimiter, locked, encrypted, hash, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        list(name, path_value, type_value, delimiter_value, locked_int, encrypted_int, hash_value, now, now, now)
+        "INSERT INTO data (name, path, type, delimiter, locked, hash, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        list(name, path_value, type_value, delimiter_value, locked_int, hash_value, now, now, now)
       ),
       error = function(e) {
         stop(sprintf("Failed to insert data record: %s", e$message))

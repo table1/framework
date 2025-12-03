@@ -36,7 +36,7 @@ Edit this file or create new presentations with `make_notebook(stub = "revealjs"
 
 ```{r}
 # Load and analyze data
-# data <- load_data("example")
+# data <- data_read("inputs_raw.example")
 summary(mtcars[, 1:3])
 ```
 

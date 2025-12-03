@@ -2,12 +2,9 @@
 % Please edit documentation in R/install_cli.R
 \name{cli_install}
 \alias{cli_install}
-\alias{install_cli}
 \title{Install Framework CLI Tool}
 \usage{
 cli_install(location = c("user", "system"), use_installer = TRUE)
-
-install_cli(location = c("user", "system"), use_installer = TRUE)
 }
 \arguments{
 \item{location}{Installation location: "user" (default) or "system".

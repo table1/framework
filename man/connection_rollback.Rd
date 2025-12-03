@@ -15,13 +15,4 @@ NULL (invisible)
 \description{
 Rolls back the current transaction, discarding all changes.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-connection_begin(conn)
-connection_insert(conn, "users", list(name = "Alice", age = 30))
-connection_rollback(conn)  # Discard changes
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

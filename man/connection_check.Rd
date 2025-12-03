@@ -7,7 +7,7 @@
 connection_check(connection_name)
 }
 \arguments{
-\item{connection_name}{Character. Name of the connection in settings.yml}
+\item{connection_name}{Character. Name of the connection in config.yml}
 }
 \value{
 A list with diagnostic information:
@@ -25,18 +25,4 @@ Diagnoses whether a configured database connection can be established.
 Checks driver availability and configuration validity without actually
 connecting to the database.
 }
-\examples{
-\dontrun{
-# Check a connection
-diag <- connection_check("my_db")
-if (!diag$ready) {
-  print(diag$messages)
-}
-
-# Quick check
-if (connection_check("my_db")$ready) {
-  conn <- connection_get("my_db")
-}
-}
-
-}
+\keyword{internal}

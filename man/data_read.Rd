@@ -4,7 +4,7 @@
 \alias{data_read}
 \title{Read data using dot notation path or direct file path}
 \usage{
-data_read(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
+data_read(path, delim = NULL, keep_attributes = FALSE, ...)
 }
 \arguments{
 \item{path}{Dot notation path (e.g. "source.private.example") or direct file path}
@@ -13,11 +13,9 @@ data_read(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...)
 
 \item{keep_attributes}{Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)}
 
-\item{password}{Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts}
-
 \item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
 \description{
 Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
-and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
+and SAS (.sas7bdat, .xpt) file formats.
 }

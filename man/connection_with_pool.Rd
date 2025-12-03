@@ -36,3 +36,4 @@ result <- connection_with_pool("my_db", {
 }
 
 }
+\keyword{internal}

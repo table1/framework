@@ -24,11 +24,4 @@ Number of rows affected
 Updates an existing record in a table with automatic timestamp handling.
 If the table has an updated_at column, it will be set automatically.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-connection_update(conn, "users", 1, list(age = 31, name = "Alice Updated"))
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

@@ -127,7 +127,7 @@ NULL
 #' @return List with connection configuration including resolved credentials.
 #' @keywords internal
 .resolve_s3_connection <- function(connection = NULL) {
-  config <- read_config()
+  config <- config_read()
 
   # Storage buckets can be in multiple places depending on config structure:
   # 1. Top level (split file merged): config$storage_buckets
@@ -378,9 +378,9 @@ key <- gsub("//+", "/", key)
 }
 
 
-#' Test S3 connection
+#' Test storage connection
 #'
-#' Validates that S3 credentials and bucket access are working.
+#' Validates that S3/storage credentials and bucket access are working.
 #'
 #' @param connection Character or NULL. Connection name, or NULL for default.
 #' @return Logical. TRUE if connection is valid.
@@ -388,13 +388,13 @@ key <- gsub("//+", "/", key)
 #'
 #' @examples
 #' \dontrun{
-#' # Test default S3 connection
-#' s3_test()
+#' # Test default storage connection
+#' storage_test()
 #'
 #' # Test specific connection
-#' s3_test("my_s3_backup")
+#' storage_test("my_s3_backup")
 #' }
-s3_test <- function(connection = NULL) {
+storage_test <- function(connection = NULL) {
   s3_config <- .resolve_s3_connection(connection)
 
   # Set credentials

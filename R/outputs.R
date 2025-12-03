@@ -90,7 +90,7 @@ save_table <- function(data, name, format = "csv", public = FALSE, overwrite = T
 
 
   # Get the appropriate tables directory
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
   project_type <- cfg$project_type %||% "project"
 
   if (project_type == "project_sensitive") {
@@ -194,7 +194,7 @@ save_figure <- function(plot = NULL, name, format = "png", width = 8, height = 6
   checkmate::assert_flag(overwrite)
 
   # Get the appropriate figures directory
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
   project_type <- cfg$project_type %||% "project"
 
   if (project_type == "project_sensitive") {
@@ -274,7 +274,7 @@ save_model <- function(model, name, format = "rds", public = FALSE, overwrite = 
   checkmate::assert_flag(overwrite)
 
   # Get the appropriate models directory
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
   project_type <- cfg$project_type %||% "project"
 
   if (project_type == "project_sensitive") {
@@ -354,7 +354,7 @@ save_report <- function(file, name = NULL, public = FALSE, overwrite = TRUE, mov
   checkmate::assert_flag(move)
 
   # Get the appropriate reports directory
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
   project_type <- cfg$project_type %||% "project"
 
   if (project_type == "project_sensitive") {
@@ -425,7 +425,7 @@ save_report <- function(file, name = NULL, public = FALSE, overwrite = TRUE, mov
 #' @export
 project_info <- function(verbose = FALSE) {
 
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
 
   if (is.null(cfg)) {
     cli::cli_alert_warning("No project configuration found. Are you in a Framework project?

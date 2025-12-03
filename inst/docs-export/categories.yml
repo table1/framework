@@ -1,26 +1,37 @@
 # Function Categories for Documentation
-# Each category has a display name, description, and list of functions
+# Each category has a display name, description, list of functions, and optional common functions
+# Common functions appear first in the UI under "Common Functions" header
 
-Project Setup:
-  description: Creating and initializing new projects
+Project Management:
+  description: Creating and managing projects
+  common:
+    - project_create
+    - project_list
   functions:
     - project_create
-    - projects_list
+    - project_list
     - bootstrap_project_init
-    - is_initialized
+    - status
 
-Environment:
-  description: Loading and configuring the working environment
+Workflow & Environment:
+  description: Setting up and managing the working environment
+  common:
+    - scaffold
+    - standardize_wd
   functions:
     - scaffold
     - standardize_wd
-    - env_reset
+    - env_clear
     - env_summary
-    - make_env
-    - status
+    - scratch_capture
+    - scratch_clean
 
 Notebooks & Scripts:
   description: Creating notebooks, scripts, and presentations
+  common:
+    - make_notebook
+    - make_presentation
+    - make_script
   functions:
     - make_notebook
     - make_qmd
@@ -28,86 +39,60 @@ Notebooks & Scripts:
     - make_script
     - make_revealjs
     - make_presentation
-    - list_stubs
+    - stubs_list
     - stubs_path
     - stubs_publish
 
 Data:
   description: Reading, writing, and managing data files
+  common:
+    - data_read
+    - data_save
+    - data_add
+    - data_list
   functions:
     - data_read
     - data_save
+    - data_add
     - data_list
-    - data_load
     - data_spec_get
     - data_spec_update
-    - list_data
-    - load_data
-    - read_data
-    - save_data
-    - load_data_or_cache
+    - data_read_or_cache
 
 Caching:
   description: Caching computed values for performance
-  functions:
-    - cache
-    - cache_fetch
+  common:
+    - cache_remember
     - cache_get
+    - cache
+  functions:
+    - cache_remember
+    - cache_get
+    - cache
     - cache_flush
     - cache_forget
-    - get_or_cache
-
-Results:
-  description: Saving and retrieving analysis results
-  functions:
-    - result_save
-    - result_get
-    - result_list
-    - scratch_capture
-    - scratch_clean
 
 Database:
-  description: Database connections, queries, and transactions
+  description: Database connections and queries
+  common:
+    - db_query
+    - db_execute
+    - db_connect
   functions:
-    # Connections
-    - connection_get
-    - connections_list
-    - get_connection
-    - connection_check
-    - connection_check_leaks
-    - connection_close_all
-    - connection_with
-    # Pooling
-    - connection_pool
-    - connection_pool_close
-    - connection_pool_close_all
-    - connection_pool_list
-    - connection_with_pool
-    # Queries
-    - query_get
-    - query_execute
-    - connection_find
-    - db_find
-    # CRUD
-    - connection_insert
-    - connection_update
-    - connection_delete
-    - connection_find_by
-    - connection_restore
-    # Transactions
-    - connection_begin
-    - connection_commit
-    - connection_rollback
-    - connection_transaction
-    - connection_with_transaction
-    # Drivers
-    - drivers_install
-    - drivers_status
-    # S3
-    - s3_test
+    - db_connect
+    - db_query
+    - db_execute
+    - db_list
+    - db_with
+    - db_transaction
+    - db_drivers_install
+    - db_drivers_status
 
 Configuration:
   description: Accessing and managing configuration
+  common:
+    - config
+    - settings
   functions:
     - config
     - read_config
@@ -130,6 +115,9 @@ Configuration:
 
 Packages:
   description: Package management and renv integration
+  common:
+    - packages_install
+    - packages_restore
   functions:
     - packages_install
     - packages_list
@@ -148,6 +136,9 @@ Packages:
 
 Publishing:
   description: Publishing outputs and reports
+  common:
+    - publish
+    - publish_notebook
   functions:
     - publish
     - publish_data
@@ -158,17 +149,23 @@ Publishing:
     - save_table
     - save_report
     - save_model
+    - storage_test
 
 GUI:
   description: Framework GUI functions
+  common:
+    - gui
   functions:
-    - framework_gui
+    - gui
     - gui_list
     - gui_stop
     - gui_restart
 
 Git Hooks:
   description: Git hook management
+  common:
+    - hooks_install
+    - hooks_list
   functions:
     - hooks_install
     - hooks_uninstall
@@ -178,6 +175,8 @@ Git Hooks:
 
 AI:
   description: AI assistant integration
+  common:
+    - ai_sync_context
   functions:
     - ai_generate
     - ai_regenerate
@@ -185,6 +184,8 @@ AI:
 
 CLI:
   description: Command-line interface installation
+  common:
+    - cli_install
   functions:
     - cli_install
     - cli_uninstall
@@ -207,6 +208,8 @@ Quarto:
 
 Utilities:
   description: Miscellaneous utility functions
+  common:
+    - now
   functions:
     - capture_output
     - now

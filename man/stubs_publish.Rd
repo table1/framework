@@ -72,5 +72,5 @@ stubs_publish(overwrite = TRUE)
 
 }
 \seealso{
-\code{\link[=make_notebook]{make_notebook()}}, \code{\link[=make_script]{make_script()}}, \code{\link[=list_stubs]{list_stubs()}}, \code{\link[=stubs_path]{stubs_path()}}
+\code{\link[=make_notebook]{make_notebook()}}, \code{\link[=make_script]{make_script()}}, \code{\link[=stubs_list]{stubs_list()}}, \code{\link[=stubs_path]{stubs_path()}}
 }

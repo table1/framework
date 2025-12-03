@@ -1,8 +1,8 @@
 #' Set a cache value
 #' @param name The cache name
 #' @param value The value to cache
-#' @param file Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)
-#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
+#' @param file Optional file path to store the cache (default: `cache/{name}.rds`)
+#' @param expire_after Optional expiration time in hours (default: from config)
 #' @keywords internal
 .set_cache <- function(name, value, file = NULL, expire_after = NULL) {
   # Validate arguments
@@ -13,7 +13,7 @@
   # Get cache directory - uses FW_CACHE_DIR env var if set, otherwise config
   cache_dir <- .get_cache_dir()
 
-  config_obj <- read_config()
+  config_obj <- config_read()
   default_expire <- config_obj$options$data$cache_default_expire
 
   # Determine cache file path
@@ -116,8 +116,8 @@
 #' Cache a value
 #' @param name The cache name
 #' @param value The value to cache
-#' @param file Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)
-#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
+#' @param file Optional file path to store the cache (default: `cache/{name}.rds`)
+#' @param expire_after Optional expiration time in hours (default: from config)
 #' @return The cached value
 #' @export
 cache <- function(name, value, file = NULL, expire_after = NULL) {

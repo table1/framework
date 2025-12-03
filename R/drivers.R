@@ -14,14 +14,14 @@
 #' @examples
 #' \dontrun{
 #' # Check all drivers
-#' drivers_status()
+#' db_drivers_status()
 #'
 #' # Quiet mode (no messages)
-#' drivers_status(quiet = TRUE)
+#' db_drivers_status(quiet = TRUE)
 #' }
 #'
 #' @export
-drivers_status <- function(quiet = FALSE) {
+db_drivers_status <- function(quiet = FALSE) {
   checkmate::assert_flag(quiet)
 
   # Get all supported drivers
@@ -86,16 +86,16 @@ drivers_status <- function(quiet = FALSE) {
 #' @examples
 #' \dontrun{
 #' # Install specific drivers
-#' drivers_install(c("postgres", "mysql"))
+#' db_drivers_install(c("postgres", "mysql"))
 #'
 #' # Interactive mode
-#' drivers_install()
+#' db_drivers_install()
 #' }
 #'
 #' @export
-drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
+db_drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
   # Get current status
-  status <- drivers_status(quiet = TRUE)
+  status <- db_drivers_status(quiet = TRUE)
 
   if (is.null(drivers)) {
     # Interactive mode
@@ -177,7 +177,7 @@ drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
 #' Checks driver availability and configuration validity without actually
 #' connecting to the database.
 #'
-#' @param connection_name Character. Name of the connection in settings.yml
+#' @param connection_name Character. Name of the connection in config.yml
 #'
 #' @return A list with diagnostic information:
 #'   - ready: Logical. TRUE if connection appears ready
@@ -187,21 +187,7 @@ drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
 #'   - config_valid: Whether configuration appears valid
 #'   - messages: Character vector of diagnostic messages
 #'
-#' @examples
-#' \dontrun{
-#' # Check a connection
-#' diag <- connection_check("my_db")
-#' if (!diag$ready) {
-#'   print(diag$messages)
-#' }
-#'
-#' # Quick check
-#' if (connection_check("my_db")$ready) {
-#'   conn <- connection_get("my_db")
-#' }
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_check <- function(connection_name) {
   checkmate::assert_string(connection_name, min.chars = 1)
 
@@ -210,7 +196,7 @@ connection_check <- function(connection_name) {
 
   # 1. Check if connection exists in config
   cfg <- tryCatch(
-    read_config(),
+    config_read(),
     error = function(e) {
       messages <<- c(messages, sprintf("Failed to read settings.yml/config.yml: %s", e$message))
       ready <<- FALSE

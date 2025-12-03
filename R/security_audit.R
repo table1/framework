@@ -131,7 +131,7 @@ security_audit <- function(config_file = NULL,
 
   # Read configuration
   config <- tryCatch(
-    read_config(config_file),
+    config_read(config_file),
     error = function(e) {
       stop(sprintf("Failed to read config file: %s", e$message))
     }
