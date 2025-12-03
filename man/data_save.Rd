@@ -10,8 +10,6 @@ data_save(
   type = NULL,
   delimiter = "comma",
   locked = TRUE,
-  encrypted = FALSE,
-  password = NULL,
   force = FALSE
 )
 }
@@ -20,20 +18,18 @@ data_save(
 
 \item{path}{Either:
 \itemize{
-\item Dot notation: "intermediate.filename" resolves to inputs/intermediate/filename.{type}
-\item Direct path: "inputs/intermediate/filename.csv" uses path as-is
-\item Simple filename: "filename" requires force = TRUE or errors
-}}
+\item Dot notation: \code{inputs.raw.filename} resolves to inputs/raw/filename.rds
+\item Direct path: "inputs/raw/filename.csv" uses path as-is
+}
+
+Dot notation uses your configured directories
+(e.g., \code{inputs.raw}, \code{inputs.intermediate}, \code{outputs.private}).}
 
 \item{type}{Type of data file ("csv" or "rds"). Auto-detected from extension if path includes one.}
 
 \item{delimiter}{Delimiter for CSV files ("comma", "tab", "semicolon", "space")}
 
 \item{locked}{Whether the file should be locked after saving}
-
-\item{encrypted}{Whether the file should be encrypted}
-
-\item{password}{Optional password for encryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts}
 
 \item{force}{If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.}
 }

@@ -22,17 +22,4 @@ Number of rows affected
 Deletes a record from a table. Supports soft-delete pattern where records
 have a deleted_at column. Hard-delete can be forced with soft = FALSE.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-
-# Soft-delete (if deleted_at column exists)
-connection_delete(conn, "users", 1)
-
-# Hard-delete (permanent)
-connection_delete(conn, "users", 1, soft = FALSE)
-
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

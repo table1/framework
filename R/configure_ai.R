@@ -82,7 +82,7 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
   # Generate AI context content dynamically
   # Try to use ai_generate() if config exists, otherwise use template
   config <- tryCatch(
-    read_config(file.path(target_dir, "settings.yml")),
+    config_read(file.path(target_dir, "settings.yml")),
     error = function(e) NULL
   )
 

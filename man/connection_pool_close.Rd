@@ -24,3 +24,4 @@ connection_pool_close("my_db")
 }
 
 }
+\keyword{internal}

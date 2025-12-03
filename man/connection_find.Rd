@@ -25,9 +25,10 @@ where records have a deleted_at column.
 }
 \examples{
 \dontrun{
-conn <- connection_get("postgres")
+conn <- db_connect("postgres")
 user <- connection_find(conn, "users", 42)
 DBI::dbDisconnect(conn)
 }
 
 }
+\keyword{internal}

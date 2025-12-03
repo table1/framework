@@ -20,11 +20,4 @@ Number of rows affected
 Restores a soft-deleted record by setting deleted_at to NULL.
 Only works on tables with a deleted_at column.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-connection_restore(conn, "users", 1)
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

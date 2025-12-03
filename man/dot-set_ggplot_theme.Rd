@@ -7,7 +7,7 @@
 .set_ggplot_theme(config)
 }
 \arguments{
-\item{config}{Configuration object from read_config()}
+\item{config}{Configuration object from config_read()}
 }
 \description{
 Sets ggplot2 theme if configured. Checks for theme settings in this order:

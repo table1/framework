@@ -28,8 +28,8 @@
 
 #' Get a cache value
 #' @param name The cache name
-#' @param file Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)
-#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
+#' @param file Optional file path to store the cache (default: `cache/{name}.rds`)
+#' @param expire_after Optional expiration time in hours (default: from config)
 #' @return The cached result, or NULL if not found, expired, or hash mismatch
 #' @keywords internal
 .get_cache <- function(name, file = NULL, expire_after = NULL) {
@@ -44,7 +44,7 @@
     stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
   }
 
-  config_obj <- read_config()
+  config_obj <- config_read()
   default_expire <- config_obj$options$data$cache_default_expire
 
   # Determine cache file path
@@ -147,8 +147,8 @@
 
 #' Get a cached value
 #' @param name The cache name
-#' @param file Optional file path to store the cache (default: {config$options$data$cache_dir}/{name}.rds)
-#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
+#' @param file Optional file path to store the cache (default: `cache/{name}.rds`)
+#' @param expire_after Optional expiration time in hours (default: from config)
 #' @return The cached value, or NULL if not found, expired, or hash mismatch
 #' @export
 cache_get <- function(name, file = NULL, expire_after = NULL) {
@@ -164,7 +164,7 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
   result$value
 }
 
-#' Get a value, caching the result if not found
+#' Remember a value (get from cache or compute and store)
 #'
 #' Attempts to retrieve a cached value by name. If the cache doesn't exist,
 #' is expired, or a refresh is requested, evaluates the expression and caches
@@ -174,9 +174,9 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #' @param expr The expression to evaluate and cache if cache miss occurs.
 #'   Expression is evaluated in the parent frame.
 #' @param file Optional file path to store the cache
-#'   (default: {config$options$data$cache_dir}/{name}.rds)
+#'   (default: `cache/{name}.rds`)
 #' @param expire_after Optional expiration time in hours
-#'   (default: from config$options$data$cache_default_expire)
+#'   (default: from config)
 #' @param refresh Optional boolean or function that returns boolean to force
 #'   refresh. If TRUE or if function returns TRUE, cache is invalidated and
 #'   expression is re-evaluated.
@@ -187,18 +187,18 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #' @examples
 #' \dontrun{
 #' # Cache expensive computation
-#' result <- cache_fetch("my_analysis", {
+#' result <- cache_remember("my_analysis", {
 #'   expensive_computation()
 #' })
 #'
 #' # Force refresh when data changes
-#' result <- cache_fetch("analysis", {
+#' result <- cache_remember("analysis", {
 #'   run_analysis()
 #' }, refresh = file.mtime("data.csv") > cache_time)
 #' }
 #'
 #' @export
-cache_fetch <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
+cache_remember <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
@@ -234,20 +234,4 @@ cache_fetch <- function(name, expr, file = NULL, expire_after = NULL, refresh = 
   )
 
   value
-}
-
-
-#' @title (Deprecated) Use cache_fetch() instead
-#' @description `r lifecycle::badge("deprecated")`
-#'
-#' `get_or_cache()` was renamed to `cache_fetch()` to follow the package's
-#' noun_verb naming convention for better discoverability and consistency.
-#'
-#' @inheritParams cache_fetch
-#' @return The cached or computed value
-#' @export
-get_or_cache <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
-  .Deprecated("cache_fetch", package = "framework",
-              msg = "get_or_cache() is deprecated. Use cache_fetch() instead.")
-  cache_fetch(name, expr, file, expire_after, refresh)
 }

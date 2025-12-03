@@ -204,7 +204,7 @@ message("Framework dev mode active - will load from: %s")
   cat("  4. Start analyzing!\n\n")
   cat("Optional:\n")
   cat("  • Add database connections: configure_connection()\n")
-  cat("  • Store secrets: make_env(VAR_NAME = \"value\")\n\n")
+  cat("  • Store secrets: Edit .env file directly\n\n")
 
   # Additional context based on project type
   if (type == "course") {
@@ -448,7 +448,7 @@ message("Framework dev mode active - will load from: %s")
   config_path_for_dirs <- .get_settings_file(target_dir)
   if (!is.null(config_path_for_dirs) && file.exists(config_path_for_dirs)) {
     config_for_dirs <- tryCatch(
-      read_config(config_path_for_dirs),
+      config_read(config_path_for_dirs),
       error = function(e) NULL
     )
 
@@ -620,8 +620,8 @@ message("Framework dev mode active - will load from: %s")
 #'
 #' @param subdir Optional subdirectory to check.
 #' @return Logical indicating if project is initialized.
-#' @export
-is_initialized <- function(subdir = NULL) {
+#' @keywords internal
+.is_initialized <- function(subdir = NULL) {
   # Validate arguments
   checkmate::assert_string(subdir, min.chars = 1, null.ok = TRUE)
 
@@ -698,10 +698,6 @@ bootstrap_project_init <- function(output_file = "init.R") {
 
   invisible(TRUE)
 }
-
-#' @rdname bootstrap_project_init
-#' @export
-make_init <- bootstrap_project_init
 
 #' Remove .gitkeep files from data/ and functions/ directories
 #' @keywords internal
@@ -993,7 +989,7 @@ make_init <- bootstrap_project_init
     }
   }
 
-  cfg <- tryCatch(read_config(), error = function(e) NULL)
+  cfg <- tryCatch(config_read(), error = function(e) NULL)
   author_name <- cfg$author$name
   if (is.null(author_name) || !nzchar(author_name)) {
     author_name <- "Your Name"
@@ -1037,7 +1033,7 @@ make_init <- bootstrap_project_init
     return(invisible(NULL))
   }
 
-  cfg <- tryCatch(read_config(config_path), error = function(e) NULL)
+  cfg <- tryCatch(config_read(config_path), error = function(e) NULL)
   if (is.null(cfg)) {
     return(invisible(NULL))
   }

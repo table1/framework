@@ -9,8 +9,8 @@ make_qmd(name, dir = NULL, stub = "default", overwrite = FALSE)
 \arguments{
 \item{name}{Character. The file name (with or without .qmd extension)}
 
-\item{dir}{Character. Directory to create the file in. Reads from
-config, defaults to "notebooks/" or "work/" directory.}
+\item{dir}{Character. Directory to create the file in. Uses your project's
+configured \code{directories$notebooks} setting. Default: "notebooks/".}
 
 \item{stub}{Character. Name of the stub template to use. Default "default".}
 

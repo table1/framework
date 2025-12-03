@@ -8,11 +8,11 @@
 #' @param check_gitignore Logical; if TRUE (default), warns if .env not gitignored
 #'
 #' @return Invisibly returns TRUE on success
-#' @export
+#' @keywords internal
 #' @examples
 #' \dontrun{
 #' # Create .env with database credentials
-#' make_env(
+#' .make_env(
 #'   DB_HOST = "localhost",
 #'   DB_PORT = "5432",
 #'   DB_PASSWORD = "secret",
@@ -20,21 +20,21 @@
 #' )
 #'
 #' # Add API keys
-#' make_env(
+#' .make_env(
 #'   OPENAI_API_KEY = "sk-...",
 #'   comment = "API credentials"
 #' )
 #' }
-make_env <- function(..., comment = NULL, check_gitignore = TRUE) {
+.make_env <- function(..., comment = NULL, check_gitignore = TRUE) {
   vars <- list(...)
 
   if (length(vars) == 0) {
-    stop("No environment variables provided. Usage: make_env(VAR_NAME = \"value\", ...)")
+    stop("No environment variables provided. Usage: .make_env(VAR_NAME = \"value\", ...)")
   }
 
   # Validate named arguments
   if (is.null(names(vars)) || any(names(vars) == "")) {
-    stop("All arguments must be named. Usage: make_env(VAR_NAME = \"value\", ...)")
+    stop("All arguments must be named. Usage: .make_env(VAR_NAME = \"value\", ...)")
   }
 
   env_path <- ".env"
@@ -218,7 +218,7 @@ env_resolve_lines <- function(env_config = NULL) {
   invisible(TRUE)
 }
 
-#' Reset R environment
+#' Clear R environment
 #'
 #' Cleans up the R environment by removing objects, closing plots, detaching
 #' packages, and running garbage collection. Does not clear the console.
@@ -230,12 +230,12 @@ env_resolve_lines <- function(env_config = NULL) {
 #' @examples
 #' \dontrun{
 #' # Clean everything
-#' env_reset()
+#' env_clear()
 #'
 #' # Keep specific objects
-#' env_reset(keep = c("config", "data"))
+#' env_clear(keep = c("config", "data"))
 #' }
-env_reset <- function(keep = character()) {
+env_clear <- function(keep = character()) {
   # Remove all objects except those specified in 'keep'
   all_objects <- ls(all.names = TRUE, envir = .GlobalEnv)
   to_remove <- setdiff(all_objects, keep)

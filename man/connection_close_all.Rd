@@ -18,16 +18,4 @@ Invisibly returns the number of connections closed
 Safely closes all open database connections in the global environment.
 Useful for cleaning up after interactive sessions or when resetting state.
 }
-\examples{
-\dontrun{
-# Close all connections
-connection_close_all()
-
-# Force close (including invalid connections)
-connection_close_all(force = TRUE)
-
-# Quiet mode
-connection_close_all(quiet = TRUE)
-}
-
-}
+\keyword{internal}

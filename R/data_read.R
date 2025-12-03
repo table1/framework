@@ -1,20 +1,18 @@
 #' Read data using dot notation path or direct file path
 #'
 #' Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
-#' and SAS (.sas7bdat, .xpt) file formats. Automatically detects and decrypts encrypted files.
+#' and SAS (.sas7bdat, .xpt) file formats.
 #'
 #' @param path Dot notation path (e.g. "source.private.example") or direct file path
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
-#' @param password Optional password for decryption. If NULL, uses ENCRYPTION_PASSWORD from environment or prompts
 #' @param ... Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)
 #' @export
-data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
+data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_choice(delim, c("comma", "tab", "semicolon", "space", ",", "\t", ";", " "), null.ok = TRUE)
   checkmate::assert_flag(keep_attributes)
-  checkmate::assert_string(password, null.ok = TRUE)
 
   # Check if path is a direct file path
   if (file.exists(path)) {
@@ -39,7 +37,6 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
         xpt = "sas_xpt",
         stop(sprintf("Unsupported file extension: %s", file_ext))
       ),
-      encrypted = FALSE,
       locked = FALSE,
       delimiter = NULL
     )
@@ -103,7 +100,6 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
           type = spec$type,
           delimiter = if (!is.null(spec$delimiter)) spec$delimiter else NA,
           locked = if (!is.null(spec$locked)) spec$locked else FALSE,
-          encrypted = spec$encrypted,
           hash = current_hash
         ),
         error = function(e) {
@@ -127,7 +123,6 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
           type = spec$type,
           delimiter = if (!is.null(spec$delimiter)) spec$delimiter else NA,
           locked = if (!is.null(spec$locked)) spec$locked else FALSE,
-          encrypted = as.logical(data_record$encrypted),
           hash = current_hash
         ),
         error = function(e) {
@@ -181,160 +176,81 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
     }
   }
 
-  # Auto-detect encryption and decrypt if needed
-  is_encrypted <- .is_encrypted_file(spec$path)
-
-  if (is_encrypted) {
-    # Get password (from parameter, environment, or prompt)
-    pwd <- if (!is.null(password)) {
-      password
-    } else {
-      .get_encryption_password(prompt = TRUE)
+  # Helper to check for haven package
+  require_haven <- function(file_type) {
+    if (!requireNamespace("haven", quietly = TRUE)) {
+      stop(
+        sprintf("%s files require the haven package.\n", file_type),
+        "Install with: install.packages('haven')"
+      )
     }
-
-    # Read and decrypt the file
-    encrypted_data <- tryCatch(
-      readBin(spec$path, "raw", n = file.info(spec$path)$size),
-      error = function(e) {
-        stop(sprintf("Failed to read encrypted file: %s", e$message))
-      }
-    )
-
-    decrypted_data <- tryCatch(
-      .decrypt_with_password(encrypted_data, pwd),
-      error = function(e) {
-        stop(sprintf("Failed to decrypt data: %s", e$message))
-      }
-    )
-
-    # Parse decrypted data based on type
-    data <- tryCatch(
-      switch(spec$type,
-        csv = {
-          # Convert raw bytes to string and parse as CSV
-          readr::read_delim(rawToChar(decrypted_data), show_col_types = FALSE, delim = get_delimiter(delim), ...)
-        },
-        tsv = {
-          # Convert raw bytes to string and parse as TSV
-          readr::read_delim(rawToChar(decrypted_data), show_col_types = FALSE, delim = "\t", ...)
-        },
-        rds = unserialize(decrypted_data),
-        stata = stop("Encrypted Stata files not supported"),
-        spss = stop("Encrypted SPSS files not supported"),
-        spss_por = stop("Encrypted SPSS portable files not supported"),
-        sas = stop("Encrypted SAS files not supported"),
-        sas_xpt = stop("Encrypted SAS transport files not supported"),
-        stop(sprintf("Unsupported file type: %s", spec$type))
-      ),
-      error = function(e) {
-        stop(sprintf("Failed to parse decrypted data: %s", e$message))
-      }
-    )
-
-    # Output description if available
-    if (!is.null(spec$description) && nzchar(spec$description)) {
-      message(sprintf("ℹ %s: %s", path, spec$description))
-    }
-
-    data
-  } else {
-    # Helper to check for haven package
-    require_haven <- function(file_type) {
-      if (!requireNamespace("haven", quietly = TRUE)) {
-        stop(
-          sprintf("%s files require the haven package.\n", file_type),
-          "Install with: install.packages('haven')"
-        )
-      }
-    }
-
-    # Helper to check for readxl package
-    require_readxl <- function() {
-      if (!requireNamespace("readxl", quietly = TRUE)) {
-        stop(
-          "Excel files require the readxl package.\n",
-          "Install with: install.packages('readxl')"
-        )
-      }
-    }
-
-    # Load data normally
-    data <- tryCatch(
-      switch(spec$type,
-        csv = {
-          readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(delim), ...)
-        },
-        tsv = {
-          readr::read_delim(spec$path, show_col_types = FALSE, delim = "\t", ...)
-        },
-        rds = readRDS(spec$path),
-        excel = {
-          require_readxl()
-          readxl::read_excel(spec$path, ...)
-        },
-        stata = {
-          require_haven("Stata")
-          haven::read_dta(spec$path, ...)
-        },
-        spss = {
-          require_haven("SPSS")
-          haven::read_sav(spec$path, ...)
-        },
-        spss_por = {
-          require_haven("SPSS portable")
-          haven::read_por(spec$path, ...)
-        },
-        sas = {
-          require_haven("SAS")
-          haven::read_sas(spec$path, ...)
-        },
-        sas_xpt = {
-          require_haven("SAS transport")
-          haven::read_xpt(spec$path, ...)
-        },
-        stop(sprintf("Unsupported file type: %s", spec$type))
-      ),
-      error = function(e) {
-        stop(sprintf("Failed to load data: %s", e$message))
-      }
-    )
-
-    # Strip haven attributes if requested (default behavior)
-    if (!keep_attributes && spec$type %in% c("stata", "spss", "spss_por", "sas", "sas_xpt")) {
-      data <- haven::zap_formats(data)
-      data <- haven::zap_labels(data)
-      data <- haven::zap_label(data)
-      data <- as.data.frame(data)
-    }
-
-    # Output description if available
-    if (!is.null(spec$description) && nzchar(spec$description)) {
-      message(sprintf("ℹ %s: %s", path, spec$description))
-    }
-
-    data
   }
-}
 
-#' Alias for backward compatibility
-#' @inheritParams data_read
-#' @export
-data_load <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
-  data_read(path, delim, keep_attributes, password, ...)
-}
+  # Helper to check for readxl package
+  require_readxl <- function() {
+    if (!requireNamespace("readxl", quietly = TRUE)) {
+      stop(
+        "Excel files require the readxl package.\n",
+        "Install with: install.packages('readxl')"
+      )
+    }
+  }
 
-#' Alias for backward compatibility
-#' @inheritParams data_read
-#' @export
-load_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
-  data_read(path, delim, keep_attributes, password, ...)
-}
+  # Load data
+  data <- tryCatch(
+    switch(spec$type,
+      csv = {
+        readr::read_delim(spec$path, show_col_types = FALSE, delim = get_delimiter(delim), ...)
+      },
+      tsv = {
+        readr::read_delim(spec$path, show_col_types = FALSE, delim = "\t", ...)
+      },
+      rds = readRDS(spec$path),
+      excel = {
+        require_readxl()
+        readxl::read_excel(spec$path, ...)
+      },
+      stata = {
+        require_haven("Stata")
+        haven::read_dta(spec$path, ...)
+      },
+      spss = {
+        require_haven("SPSS")
+        haven::read_sav(spec$path, ...)
+      },
+      spss_por = {
+        require_haven("SPSS portable")
+        haven::read_por(spec$path, ...)
+      },
+      sas = {
+        require_haven("SAS")
+        haven::read_sas(spec$path, ...)
+      },
+      sas_xpt = {
+        require_haven("SAS transport")
+        haven::read_xpt(spec$path, ...)
+      },
+      stop(sprintf("Unsupported file type: %s", spec$type))
+    ),
+    error = function(e) {
+      stop(sprintf("Failed to load data: %s", e$message))
+    }
+  )
 
-#' Alias for backward compatibility
-#' @inheritParams data_read
-#' @export
-read_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NULL, ...) {
-  data_read(path, delim, keep_attributes, password, ...)
+  # Strip haven attributes if requested (default behavior)
+  if (!keep_attributes && spec$type %in% c("stata", "spss", "spss_por", "sas", "sas_xpt")) {
+    data <- haven::zap_formats(data)
+    data <- haven::zap_labels(data)
+    data <- haven::zap_label(data)
+    data <- as.data.frame(data)
+  }
+
+  # Output description if available
+  if (!is.null(spec$description) && nzchar(spec$description)) {
+    message(sprintf("ℹ %s: %s", path, spec$description))
+  }
+
+  data
 }
 
 #' List all data entries from config
@@ -342,7 +258,7 @@ read_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
 #' Lists all data specifications defined in the configuration, showing the
 #' data key, path, type, and description (if available).
 #'
-#' @return A data frame with columns: name, path, type, locked, encrypted, description
+#' @return A data frame with columns: name, path, type, locked, description
 #' @export
 #'
 #' @examples
@@ -354,7 +270,7 @@ read_data <- function(path, delim = NULL, keep_attributes = FALSE, password = NU
 #' list_data()
 #' }
 data_list <- function() {
-  config <- read_config()
+  config <- config_read()
 
   if (is.null(config$data) || length(config$data) == 0) {
     message("No data entries found in configuration")
@@ -363,7 +279,6 @@ data_list <- function() {
       path = character(),
       type = character(),
       locked = logical(),
-      encrypted = logical(),
       description = character(),
       stringsAsFactors = FALSE
     )))
@@ -384,7 +299,6 @@ data_list <- function() {
           path = item$path,
           type = if (!is.null(item$type)) item$type else NA_character_,
           locked = if (!is.null(item$locked)) item$locked else FALSE,
-          encrypted = if (!is.null(item$encrypted)) item$encrypted else FALSE,
           description = if (!is.null(item$description)) item$description else NA_character_
         )
       } else if (is.list(item) && is.null(item$path)) {
@@ -415,12 +329,9 @@ data_list <- function() {
     # Path
     message(sprintf("  Path: %s", entry$path))
 
-    # Flags (locked, encrypted)
-    flags <- c()
-    if (entry$locked) flags <- c(flags, "🔒 locked")
-    if (entry$encrypted) flags <- c(flags, "🔐 encrypted")
-    if (length(flags) > 0) {
-      message(sprintf("  %s", paste(flags, collapse = ", ")))
+    # Flags (locked)
+    if (entry$locked) {
+      message("  🔒 locked")
     }
 
     # Description (if available)
@@ -434,19 +345,23 @@ data_list <- function() {
   invisible(NULL)
 }
 
-#' Alias for backward compatibility
-#' @export
+# Backward compatibility alias (not exported - use data_list instead)
 list_data <- function() {
   data_list()
 }
 
-#' Load data with caching
+#' Read data with caching
+#'
+#' Loads data from the data catalog with automatic caching. If the data is already
+#' in the cache (and not expired), it returns the cached version. Otherwise, it reads
+#' from the file and caches the result.
+#'
 #' @param path Dot notation path to load data (e.g. "source.private.example")
-#' @param expire_after Optional expiration time in hours (default: from config$options$data$cache_default_expire)
+#' @param expire_after Optional expiration time in hours (default: from config)
 #' @param refresh Optional boolean or function that returns boolean to force refresh
 #' @return The loaded data, either from cache or file
 #' @export
-load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
+data_read_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
   # Validate arguments
   checkmate::assert_string(path)
   checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
@@ -456,7 +371,7 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
   )
 
   cache_key <- sprintf("data.%s", path)
-  cache_fetch(cache_key,
+  cache_remember(cache_key,
     {
       message(sprintf("Loading data from file: %s (cached as %s)", path, cache_key))
       data_read(path)
@@ -468,13 +383,13 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 
 #' Get a data value
 #' @param name The data name
-#' @return The data metadata (encrypted flag and hash), or NULL if not found
+#' @return The data metadata (hash), or NULL if not found
 #' @keywords internal
 .get_data_record <- function(name) {
   con <- .get_db_connection()
   result <- DBI::dbGetQuery(
     con,
-    "SELECT encrypted, hash FROM data WHERE name = ?",
+    "SELECT hash FROM data WHERE name = ?",
     list(name)
   )
   DBI::dbDisconnect(con)
@@ -514,7 +429,6 @@ load_data_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 #'     \item \code{delimiter} - Delimiter for CSV files (comma, tab, etc.)
 #'     \item \code{locked} - Whether file is locked for integrity checking
 #'     \item \code{private} - Whether file is in private data directory
-#'     \item \code{encrypted} - Whether file is encrypted
 #'     \item \code{description} - Optional description of the dataset (displayed when loading)
 #'   }
 #'
@@ -541,7 +455,7 @@ data_spec_get <- function(path) {
     getwd()
   }
 
-  config <- read_config()
+  config <- config_read()
 
   # Get file type info
   get_file_type_info <- function(path) {
@@ -600,8 +514,7 @@ data_spec_get <- function(path) {
       type = type_info$type,
       delimiter = type_info$delimiter,
       locked = FALSE,
-      private = basename(dirname(path)) == "private",
-      encrypted = FALSE
+      private = basename(dirname(path)) == "private"
     )
   }
 
@@ -707,7 +620,7 @@ data_spec_get <- function(path) {
 #' @keywords internal
 .get_data_path_suggestions <- function(attempted_path = NULL) {
   config <- tryCatch(
-    read_config(),
+    config_read(),
     error = function(e) {
       return(character())
     }

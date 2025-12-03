@@ -95,6 +95,7 @@ docs_export <- function(output_path = "docs.db",
   # Load and insert categories
   category_map <- .load_category_map()
   category_ids <- .insert_categories(con, category_map)
+  common_functions <- category_map$common_functions
 
   # Insert metadata
   DBI::dbExecute(con,
@@ -123,7 +124,7 @@ docs_export <- function(output_path = "docs.db",
     }
 
     tryCatch({
-      result <- .export_rd_file(con, rd_file, exported_names, category_ids)
+      result <- .export_rd_file(con, rd_file, exported_names, category_ids, common_functions)
       if (!result) skipped <- skipped + 1
     }, error = function(e) {
       warning("Error processing ", basename(rd_file), ": ", e$message)
@@ -146,7 +147,7 @@ docs_export <- function(output_path = "docs.db",
 #' Parse and export a single .Rd file to the database
 #' @noRd
 #' @return TRUE if exported, FALSE if skipped
-.export_rd_file <- function(con, rd_file, exported_names = NULL, category_ids = NULL) {
+.export_rd_file <- function(con, rd_file, exported_names = NULL, category_ids = NULL, common_functions = NULL) {
   rd <- tools::parse_Rd(rd_file)
 
   # Get function name first to check if exported
@@ -170,11 +171,29 @@ docs_export <- function(output_path = "docs.db",
   # Extract main fields
   name <- .rd_get_text(.rd_get_tag(rd, "\\name"))
   title <- .rd_get_text(.rd_get_tag(rd, "\\title"))
-  description <- .rd_render_content(.rd_get_tag(rd, "\\description"))
-  details <- .rd_render_content(.rd_get_tag(rd, "\\details"))
-  usage <- .rd_get_text(.rd_get_tag(rd, "\\usage"))
-  value <- .rd_render_content(.rd_get_tag(rd, "\\value"))
-  note <- .rd_render_content(.rd_get_tag(rd, "\\note"))
+  description <- .normalize_prose(.rd_render_content(.rd_get_tag(rd, "\\description")))
+  details <- .normalize_prose(.rd_render_content(.rd_get_tag(rd, "\\details")))
+  usage_raw <- .rd_get_text(.rd_get_tag(rd, "\\usage"))
+
+  # Filter usage to only show primary function (remove alias usage lines)
+  # Usage often contains multiple function calls when aliases exist
+  # Multi-line function calls are separated by blank lines in usage
+  usage <- if (!is.null(usage_raw) && !is.null(name)) {
+    # Split by double newlines (blank lines) to separate different function usages
+    usage_blocks <- strsplit(usage_raw, "\n\n+")[[1]]
+    # Keep blocks that start with the main function name
+    primary_blocks <- usage_blocks[grepl(paste0("^\\s*", name, "\\s*\\("), usage_blocks)]
+    if (length(primary_blocks) > 0) {
+      trimws(paste(primary_blocks, collapse = "\n\n"))
+    } else {
+      usage_raw  # Fallback to original if filtering fails
+    }
+  } else {
+    usage_raw
+  }
+
+  value <- .normalize_prose(.rd_render_content(.rd_get_tag(rd, "\\value")))
+  note <- .normalize_prose(.rd_render_content(.rd_get_tag(rd, "\\note")))
 
   # Extract keywords
   keywords <- c()
@@ -188,13 +207,16 @@ docs_export <- function(output_path = "docs.db",
   # Look up category_id for this function
   category_id <- category_ids[[name]]
 
+  # Check if this is a common function
+  is_common <- if (!is.null(common_functions) && name %in% common_functions) 1L else 0L
+
   # Insert function (convert NULL to NA for DBI)
   .null_to_na <- function(x) if (is.null(x)) NA_character_ else x
   .null_to_na_int <- function(x) if (is.null(x)) NA_integer_ else as.integer(x)
 
   DBI::dbExecute(con,
-    "INSERT INTO functions (name, title, description, details, usage, value, note, source_file, keywords, category_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO functions (name, title, description, details, usage, value, note, source_file, keywords, category_id, is_common)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     params = list(
       .null_to_na(name),
       .null_to_na(title),
@@ -205,7 +227,8 @@ docs_export <- function(output_path = "docs.db",
       .null_to_na(note),
       .null_to_na(source_file),
       .null_to_na(keywords_str),
-      .null_to_na_int(category_id)
+      .null_to_na_int(category_id),
+      is_common
     )
   )
 
@@ -305,6 +328,79 @@ docs_export <- function(output_path = "docs.db",
 }
 
 
+#' Normalize prose text by collapsing line breaks within paragraphs
+#' Preserves intentional breaks (double newlines, list items)
+#' @noRd
+.normalize_prose <- function(text) {
+
+  if (is.null(text) || !nzchar(text)) return(text)
+
+  # Split into lines first
+  lines <- strsplit(text, "\n")[[1]]
+
+  # Process line by line, preserving list items and code blocks
+  result_lines <- c()
+  current_prose <- c()
+  in_code_block <- FALSE
+
+  for (line in lines) {
+    # Check for code fence markers
+    is_code_fence <- grepl("^```", trimws(line))
+
+    if (is_code_fence) {
+      # Flush any accumulated prose before code block
+      if (length(current_prose) > 0) {
+        result_lines <- c(result_lines, paste(current_prose, collapse = " "))
+        current_prose <- c()
+      }
+      # Toggle code block state
+      in_code_block <- !in_code_block
+      # Add fence marker as-is
+      result_lines <- c(result_lines, line)
+      next
+    }
+
+    if (in_code_block) {
+      # Inside code block - preserve lines exactly
+      result_lines <- c(result_lines, line)
+      next
+    }
+
+    # Check if this line is a list item (starts with - or number.)
+    is_list_item <- grepl("^\\s*[-•]\\s|^\\s*\\d+\\.\\s", line)
+    is_blank <- !nzchar(trimws(line))
+
+    if (is_list_item) {
+      # Flush any accumulated prose
+      if (length(current_prose) > 0) {
+        result_lines <- c(result_lines, paste(current_prose, collapse = " "))
+        current_prose <- c()
+      }
+      # Add list item as-is
+      result_lines <- c(result_lines, line)
+    } else if (is_blank) {
+      # Blank line - flush prose and add paragraph break
+      if (length(current_prose) > 0) {
+        result_lines <- c(result_lines, paste(current_prose, collapse = " "))
+        current_prose <- c()
+      }
+      result_lines <- c(result_lines, "")
+    } else {
+      # Regular prose - accumulate
+      current_prose <- c(current_prose, trimws(line))
+    }
+  }
+
+  # Flush remaining prose
+  if (length(current_prose) > 0) {
+    result_lines <- c(result_lines, paste(current_prose, collapse = " "))
+  }
+
+  # Join and clean up multiple blank lines
+  result <- paste(result_lines, collapse = "\n")
+  gsub("\n{3,}", "\n\n", result)
+}
+
 #' Extract plain text from an Rd element
 #' @noRd
 .rd_get_text <- function(el) {
@@ -359,24 +455,62 @@ docs_export <- function(output_path = "docs.db",
         return(.rd_get_text(el))
       },
       "\\itemize" = {
+        # Items in itemize: \item is followed by TEXT siblings until the next \item
         items <- c()
+        current_item <- NULL
         for (child in el) {
-          if (is.list(child) && !is.null(attr(child, "Rd_tag")) && attr(child, "Rd_tag") == "\\item") {
-            item_text <- .rd_render_content(child, in_list = TRUE)
-            items <- c(items, paste0("- ", trimws(item_text)))
+          tag <- attr(child, "Rd_tag")
+          if (!is.null(tag) && tag == "\\item") {
+            # Save previous item if exists
+            if (!is.null(current_item)) {
+              items <- c(items, paste0("- ", trimws(current_item)))
+            }
+            # Start new item - check if \item has content inside or is empty
+            if (is.list(child) && length(child) > 0) {
+              current_item <- .rd_render_content(child, in_list = TRUE)
+            } else {
+              current_item <- ""
+            }
+          } else if (!is.null(current_item)) {
+            # Append to current item
+            current_item <- paste0(current_item, .rd_render_content(child, in_list = TRUE))
           }
+        }
+        # Don't forget the last item
+        if (!is.null(current_item) && nzchar(trimws(current_item))) {
+          items <- c(items, paste0("- ", trimws(current_item)))
         }
         return(paste(items, collapse = "\n"))
       },
       "\\enumerate" = {
+        # Items in enumerate: \item is followed by TEXT siblings until the next \item
         items <- c()
         idx <- 0
+        current_item <- NULL
         for (child in el) {
-          if (is.list(child) && !is.null(attr(child, "Rd_tag")) && attr(child, "Rd_tag") == "\\item") {
-            idx <- idx + 1
-            item_text <- .rd_render_content(child, in_list = TRUE)
-            items <- c(items, paste0(idx, ". ", trimws(item_text)))
+          tag <- attr(child, "Rd_tag")
+          if (!is.null(tag) && tag == "\\item") {
+            # Save previous item if exists
+            if (!is.null(current_item) && nzchar(trimws(current_item))) {
+              idx <- idx + 1
+              items <- c(items, paste0(idx, ". ", trimws(current_item)))
+            }
+            # Start new item - check if \item has content inside or is empty
+            if (is.list(child) && length(child) > 0) {
+              current_item <- .rd_render_content(child, in_list = TRUE)
+            } else {
+              current_item <- ""
+            }
+          } else if (!is.null(current_item) || idx == 0) {
+            # Append to current item (or start collecting if no \item seen yet but that's rare)
+            if (is.null(current_item)) current_item <- ""
+            current_item <- paste0(current_item, .rd_render_content(child, in_list = TRUE))
           }
+        }
+        # Don't forget the last item
+        if (!is.null(current_item) && nzchar(trimws(current_item))) {
+          idx <- idx + 1
+          items <- c(items, paste0(idx, ". ", trimws(current_item)))
         }
         return(paste(items, collapse = "\n"))
       },
@@ -394,10 +528,39 @@ docs_export <- function(output_path = "docs.db",
         return(paste(items, collapse = "\n"))
       },
       "\\preformatted" = {
-        return(paste0("```\n", .rd_get_text(el), "\n```"))
+        # Preserve newlines in preformatted blocks
+        texts <- c()
+        for (child in el) {
+          if (is.character(child)) {
+            texts <- c(texts, child)
+          }
+        }
+        code_content <- paste(texts, collapse = "")
+        return(paste0("```\n", code_content, "\n```"))
       },
       "\\dontrun" = {
         return(.rd_render_content(el[[1]]))
+      },
+      "\\if" = {
+        # Conditional output - skip HTML-specific content
+        # Format: \if{condition}{content}
+        # We're generating markdown, so skip html conditionals
+        if (length(el) >= 1) {
+          condition <- .rd_get_text(el[[1]])
+          if (condition == "html") {
+            # Skip HTML-specific content entirely
+            return("")
+          }
+        }
+        # For other conditions, try to render content
+        if (length(el) >= 2) {
+          return(.rd_render_content(el[[2]], in_list))
+        }
+        return("")
+      },
+      "\\out" = {
+        # Raw output - skip as it's typically HTML
+        return("")
       },
       "\\item" = {
         # For list items, render children
@@ -581,6 +744,7 @@ docs_export <- function(output_path = "docs.db",
       keywords TEXT,
       category_id INTEGER,
       is_exported INTEGER DEFAULT 1,
+      is_common INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES categories(id)
@@ -728,13 +892,15 @@ docs_export <- function(output_path = "docs.db",
 
   if (!file.exists(yaml_path)) {
     warning("categories.yml not found, functions will have no categories")
-    return(list(categories = list(), function_to_category = list()))
+    return(list(categories = list(), function_to_category = list(), common_functions = character()))
   }
 
   cats <- yaml::read_yaml(yaml_path)
 
-  # Build function -> category name mapping
+  # Build function -> category name mapping and collect common functions
   func_to_cat <- list()
+  common_funcs <- character()
+
   for (cat_name in names(cats)) {
     cat_info <- cats[[cat_name]]
     if (!is.null(cat_info$functions)) {
@@ -742,11 +908,16 @@ docs_export <- function(output_path = "docs.db",
         func_to_cat[[fn]] <- cat_name
       }
     }
+    # Collect common functions
+    if (!is.null(cat_info$common)) {
+      common_funcs <- c(common_funcs, cat_info$common)
+    }
   }
 
   list(
     categories = cats,
-    function_to_category = func_to_cat
+    function_to_category = func_to_cat,
+    common_functions = unique(common_funcs)
   )
 }
 

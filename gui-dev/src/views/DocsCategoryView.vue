@@ -29,21 +29,56 @@
       </div>
 
       <!-- Function List -->
-      <div v-else class="space-y-0.5">
-        <a
-          v-for="func in filteredFunctions"
-          :key="func.id"
-          href="#"
-          @click.prevent="selectFunction(func.name)"
-          :class="[
-            'block rounded-md px-3 py-2 text-sm transition',
-            selectedFunction === func.name
-              ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
-              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-          ]"
-        >
-          <span class="font-mono">{{ func.name }}()</span>
-        </a>
+      <div v-else class="space-y-4">
+        <!-- Common Functions -->
+        <div v-if="commonFunctions.length > 0">
+          <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400 pb-2">Common</h3>
+          <div class="space-y-0.5">
+            <a
+              v-for="func in commonFunctions"
+              :key="func.id"
+              href="#"
+              @click.prevent="selectFunction(func.name)"
+              class="group relative"
+            >
+              <span
+                :class="[
+                  'block rounded-md px-3 py-2 text-sm transition truncate',
+                  selectedFunction === func.name
+                    ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
+                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                ]"
+              >
+                <span class="font-mono text-xs">{{ func.name }}()</span>
+              </span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Other Functions -->
+        <div v-if="otherFunctions.length > 0">
+          <h3 v-if="commonFunctions.length > 0" class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400 pt-4 pb-2">Other</h3>
+          <div class="space-y-0.5">
+            <a
+              v-for="func in otherFunctions"
+              :key="func.id"
+              href="#"
+              @click.prevent="selectFunction(func.name)"
+              class="group relative"
+            >
+              <span
+                :class="[
+                  'block rounded-md px-3 py-2 text-sm transition truncate',
+                  selectedFunction === func.name
+                    ? 'bg-sky-50 text-sky-700 font-medium dark:bg-sky-900/20 dark:text-sky-400'
+                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                ]"
+              >
+                <span class="font-mono text-xs">{{ func.name }}()</span>
+              </span>
+            </a>
+          </div>
+        </div>
 
         <!-- Empty state -->
         <div v-if="filteredFunctions.length === 0 && searchQuery" class="text-center py-4">
@@ -91,16 +126,14 @@
         <!-- Description -->
         <section v-if="doc.description" class="mb-5">
           <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Description</h2>
-          <div class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{{ doc.description }}</div>
+          <MarkdownText :content="doc.description" class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed" />
         </section>
 
         <!-- Usage -->
-        <section v-if="doc.usage" class="mb-5">
+        <section v-if="doc.usage" class="mb-5" :key="'usage-' + highlighterReady">
           <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Usage</h2>
           <div class="relative group">
-            <div class="bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded px-3 py-2 overflow-x-auto">
-              <pre class="text-sm text-gray-800 dark:text-gray-200 font-mono leading-normal"><code>{{ doc.usage }}</code></pre>
-            </div>
+            <div class="code-block rounded overflow-x-auto border border-gray-200 dark:border-gray-700" v-html="highlightCode(doc.usage)"></div>
             <CopyButton
               :value="doc.usage"
               variant="ghost"
@@ -125,7 +158,10 @@
                   <td class="px-3 py-2 align-top">
                     <code class="text-sm font-mono font-medium text-gray-900 dark:text-white">{{ param.name }}</code>
                   </td>
-                  <td class="px-3 py-2 text-[15px] text-gray-600 dark:text-gray-400">{{ param.description || '—' }}</td>
+                  <td class="px-3 py-2 text-[15px] text-gray-600 dark:text-gray-400">
+                    <MarkdownText v-if="param.description" :content="param.description" />
+                    <span v-else>—</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -135,37 +171,35 @@
         <!-- Details -->
         <section v-if="doc.details" class="mb-5">
           <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Details</h2>
-          <div class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{{ doc.details }}</div>
+          <MarkdownText :content="doc.details" class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed" />
         </section>
 
         <!-- Value (Return) -->
         <section v-if="doc.value" class="mb-5">
           <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Returns</h2>
-          <div class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{{ doc.value }}</div>
+          <MarkdownText :content="doc.value" class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed" />
         </section>
 
         <!-- Sections -->
         <template v-if="doc.sections && doc.sections.length > 0">
           <section v-for="section in doc.sections" :key="section.id" class="mb-5">
             <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">{{ section.title }}</h2>
-            <div class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{{ section.content }}</div>
+            <MarkdownText :content="section.content" class="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed" />
             <div v-if="section.subsections && section.subsections.length > 0" class="mt-2 pl-3 border-l-2 border-gray-200 dark:border-gray-700">
               <div v-for="subsection in section.subsections" :key="subsection.title" class="mb-2 last:mb-0">
                 <h3 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ subsection.title }}</h3>
-                <div class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">{{ subsection.content }}</div>
+                <MarkdownText :content="subsection.content" class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed" />
               </div>
             </div>
           </section>
         </template>
 
         <!-- Examples -->
-        <section v-if="doc.examples && doc.examples.length > 0" class="mb-5">
+        <section v-if="doc.examples && doc.examples.length > 0" class="mb-5" :key="'examples-' + highlighterReady">
           <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Examples</h2>
           <div class="space-y-2">
             <div v-for="(example, index) in doc.examples" :key="index" class="relative group">
-              <div class="bg-gray-50 dark:bg-gray-800/50 rounded px-3 py-2 overflow-x-auto border border-gray-200 dark:border-gray-700">
-                <pre class="text-sm text-gray-800 dark:text-gray-200 font-mono leading-normal"><code>{{ example.content }}</code></pre>
-              </div>
+              <div class="code-block rounded overflow-x-auto border border-gray-200 dark:border-gray-700" v-html="highlightCode(formatExample(example.content))"></div>
               <CopyButton
                 :value="example.content"
                 variant="ghost"
@@ -185,7 +219,7 @@
               href="#"
               @click.prevent="selectFunction(related.target)"
               class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sky-600 dark:text-sky-400 font-mono text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-            >{{ related.link_text || related.target }}()</a>
+            >{{ related.link_text || related.target }}</a>
           </div>
         </section>
 
@@ -205,7 +239,7 @@
         <section v-if="doc.note" class="mb-5">
           <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded px-3 py-2">
             <h3 class="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">Note</h3>
-            <div class="text-[15px] text-amber-700 dark:text-amber-300 leading-relaxed whitespace-pre-line">{{ doc.note }}</div>
+            <MarkdownText :content="doc.note" class="text-[15px] text-amber-700 dark:text-amber-300 leading-relaxed" />
           </div>
         </section>
       </div>
@@ -224,6 +258,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CopyButton from '@/components/ui/CopyButton.vue'
+import MarkdownText from '@/components/ui/MarkdownText.vue'
+import { useHighlighter } from '@/composables/useHighlighter'
 
 const props = defineProps({
   categoryId: {
@@ -234,6 +270,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const { initHighlighter, highlight, isReady: highlighterReady } = useHighlighter()
 
 const loading = ref(true)
 const loadingDoc = ref(false)
@@ -244,14 +281,24 @@ const selectedFunction = ref(null)
 const doc = ref(null)
 
 const filteredFunctions = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return functions.value
+  let funcs = functions.value
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    funcs = funcs.filter(func =>
+      func.name.toLowerCase().includes(query) ||
+      (func.title && func.title.toLowerCase().includes(query))
+    )
   }
-  const query = searchQuery.value.toLowerCase()
-  return functions.value.filter(func =>
-    func.name.toLowerCase().includes(query) ||
-    (func.title && func.title.toLowerCase().includes(query))
-  )
+  return funcs
+})
+
+// Split functions into common and other
+const commonFunctions = computed(() => {
+  return filteredFunctions.value.filter(func => func.is_common === 1)
+})
+
+const otherFunctions = computed(() => {
+  return filteredFunctions.value.filter(func => func.is_common !== 1)
 })
 
 const loadCategory = async () => {
@@ -330,5 +377,74 @@ watch(() => route.query.fn, (newFn) => {
   }
 })
 
-onMounted(loadCategory)
+// Format example code - add blank line before comments for readability
+const formatExample = (code) => {
+  if (!code) return ''
+  const lines = code.split('\n')
+  const result = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+    const prevLine = i > 0 ? lines[i - 1].trim() : ''
+
+    // Add blank line before comment if previous line wasn't blank or a comment
+    if (trimmed.startsWith('#') && prevLine && !prevLine.startsWith('#')) {
+      result.push('')
+    }
+    result.push(line)
+  }
+
+  return result.join('\n')
+}
+
+// Syntax highlight R code
+const highlightCode = (code) => {
+  const result = highlight(code, 'r')
+  console.log('highlightCode input:', code?.substring(0, 50), 'output length:', result?.length)
+  return result
+}
+
+onMounted(async () => {
+  await initHighlighter()
+  loadCategory()
+})
 </script>
+
+<style scoped>
+/* Shiki code block styling */
+.code-block :deep(pre) {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.code-block :deep(code) {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+/* Light theme styles */
+.code-block :deep(.shiki),
+.code-block :deep(.shiki span) {
+  background-color: transparent !important;
+}
+
+.code-block {
+  background-color: #f9fafb;
+}
+
+/* Dark theme styles */
+:root.dark .code-block {
+  background-color: rgba(31, 41, 55, 0.5);
+}
+
+:root.dark .code-block :deep(.shiki.github-light) {
+  display: none;
+}
+
+:root:not(.dark) .code-block :deep(.shiki.github-dark) {
+  display: none;
+}
+</style>

@@ -23,12 +23,4 @@ A data frame with matching records, or empty data frame if none found
 Finds records in a table matching specified column values.
 Supports soft-delete patterns where records have a deleted_at column.
 }
-\examples{
-\dontrun{
-conn <- connection_get("postgres")
-users <- connection_find_by(conn, "users", email = "alice@example.com")
-active_users <- connection_find_by(conn, "users", status = "active", role = "admin")
-DBI::dbDisconnect(conn)
-}
-
-}
+\keyword{internal}

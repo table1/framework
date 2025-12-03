@@ -7,7 +7,7 @@
 .get_package_list_from_config(config)
 }
 \arguments{
-\item{config}{Configuration object from read_config()}
+\item{config}{Configuration object from config_read()}
 }
 \value{
 List of package specifications, or empty list if none

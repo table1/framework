@@ -21,25 +21,18 @@
 #'
 #' @examples
 #' \dontrun{
-#' conn <- connection_get("postgres")
+#' conn <- db_connect("postgres")
 #'
 #' # Basic transaction
-#' connection_transaction(conn, {
-#'   connection_insert(conn, "users", list(name = "Alice", age = 30))
-#'   connection_insert(conn, "users", list(name = "Bob", age = 25))
+#' db_transaction(conn, {
+#'   DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES ('Alice', 30)")
+#'   DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES ('Bob', 25)")
 #' })
 #'
-#' # Transaction with return value
-#' result <- connection_transaction(conn, {
-#'   id <- connection_insert(conn, "users", list(name = "Charlie", age = 35))
-#'   user <- connection_find(conn, "users", id)
-#'   user
-#' })
-#'
-#' # Transaction with error handling
+#' # Transaction with error handling - auto-rollback on error
 #' tryCatch({
-#'   connection_transaction(conn, {
-#'     connection_insert(conn, "users", list(name = "Invalid"))
+#'   db_transaction(conn, {
+#'     DBI::dbExecute(conn, "INSERT INTO users (name) VALUES ('Alice')")
 #'     stop("Something went wrong")  # This will trigger rollback
 #'   })
 #' }, error = function(e) {
@@ -50,7 +43,7 @@
 #' }
 #'
 #' @export
-connection_transaction <- function(conn, code) {
+db_transaction <- function(conn, code) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
 
@@ -108,9 +101,10 @@ connection_transaction <- function(conn, code) {
   })
 }
 
+
 #' Execute code with transaction if not already in one
 #'
-#' Similar to `connection_transaction()`, but only starts a new transaction
+#' Similar to `db_transaction()`, but only starts a new transaction
 #' if not already in one. Useful for functions that can be called both
 #' standalone and within an existing transaction.
 #'
@@ -119,26 +113,7 @@ connection_transaction <- function(conn, code) {
 #'
 #' @return The result of the code expression
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#'
-#' # If called standalone, this will create a transaction
-#' connection_with_transaction(conn, {
-#'   connection_insert(conn, "users", list(name = "Alice", age = 30))
-#' })
-#'
-#' # If called within an existing transaction, it will use that
-#' connection_transaction(conn, {
-#'   connection_with_transaction(conn, {
-#'     connection_insert(conn, "users", list(name = "Bob", age = 25))
-#'   })
-#' })
-#'
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_with_transaction <- function(conn, code) {
   # Validate arguments
   checkmate::assert_class(conn, "DBIConnection")
@@ -155,7 +130,7 @@ connection_with_transaction <- function(conn, code) {
     force(code)
   } else {
     # Not in transaction, create one
-    connection_transaction(conn, code)
+    db_transaction(conn, code)
   }
 }
 
@@ -164,31 +139,14 @@ connection_with_transaction <- function(conn, code) {
 #' Manually begin a database transaction. You must call `connection_commit()`
 #' to save changes or `connection_rollback()` to discard them.
 #'
-#' **Note:** Using `connection_transaction()` is preferred as it automatically
-#' handles commit/rollback. Use this only when you need manual control.
+#' **Note:** Using `db_transaction()` is preferred as it automatically
+#' handles commit/rollback.
 #'
 #' @param conn Database connection
 #'
 #' @return NULL (invisible)
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#'
-#' connection_begin(conn)
-#' tryCatch({
-#'   connection_insert(conn, "users", list(name = "Alice", age = 30))
-#'   connection_insert(conn, "users", list(name = "Bob", age = 25))
-#'   connection_commit(conn)
-#' }, error = function(e) {
-#'   connection_rollback(conn)
-#'   stop(e)
-#' })
-#'
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_begin <- function(conn) {
   checkmate::assert_class(conn, "DBIConnection")
 
@@ -209,16 +167,7 @@ connection_begin <- function(conn) {
 #'
 #' @return NULL (invisible)
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#' connection_begin(conn)
-#' connection_insert(conn, "users", list(name = "Alice", age = 30))
-#' connection_commit(conn)
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_commit <- function(conn) {
   checkmate::assert_class(conn, "DBIConnection")
 
@@ -239,16 +188,7 @@ connection_commit <- function(conn) {
 #'
 #' @return NULL (invisible)
 #'
-#' @examples
-#' \dontrun{
-#' conn <- connection_get("postgres")
-#' connection_begin(conn)
-#' connection_insert(conn, "users", list(name = "Alice", age = 30))
-#' connection_rollback(conn)  # Discard changes
-#' DBI::dbDisconnect(conn)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_rollback <- function(conn) {
   checkmate::assert_class(conn, "DBIConnection")
 

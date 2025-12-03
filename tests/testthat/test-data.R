@@ -1,4 +1,4 @@
-test_that("save_data creates data file and updates database", {
+test_that("data_save creates data file and updates database", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -11,23 +11,23 @@ test_that("save_data creates data file and updates database", {
   # Create test data
   test_data <- data.frame(x = 1:5, y = letters[1:5])
 
-  # Save as CSV (force = TRUE to create directory structure)
-  suppressMessages(save_data(test_data, "test.public.sample", type = "csv", force = TRUE))
+  # Save as CSV using direct path (force = TRUE to create directory structure)
+  suppressMessages(data_save(test_data, "outputs/public/sample.csv", force = TRUE))
 
   # Check file was created
-  expect_true(file.exists("data/test/public/sample.csv"))
+  expect_true(file.exists("outputs/public/sample.csv"))
 
   # Check database record was created
   conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
   on.exit(DBI::dbDisconnect(conn), add = TRUE)
 
-  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'test.public.sample'")
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'outputs/public/sample.csv'")
   expect_equal(nrow(record), 1)
   expect_equal(record$type, "csv")
   expect_false(is.na(record$hash))
 })
 
-test_that("save_data creates RDS files", {
+test_that("data_save creates RDS files", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -39,12 +39,13 @@ test_that("save_data creates RDS files", {
 
   test_data <- data.frame(x = 1:5, y = letters[1:5])
 
-  suppressMessages(save_data(test_data, "test.rds_data", type = "rds", force = TRUE))
+  # Use direct path for RDS file
+  suppressMessages(data_save(test_data, "outputs/private/rds_data.rds", force = TRUE))
 
-  expect_true(file.exists("data/test/rds_data.rds"))
+  expect_true(file.exists("outputs/private/rds_data.rds"))
 })
 
-test_that("load_data reads saved CSV data", {
+test_that("data_read reads saved CSV data", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -54,31 +55,34 @@ test_that("load_data reads saved CSV data", {
 
   setwd(test_dir)
 
-  # Create and save test data
+  # Create directory and save test data using direct path
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
   original_data <- data.frame(x = 1:5, y = letters[1:5])
-  suppressMessages(save_data(original_data, "test.csv_load", type = "csv", force = TRUE))
+  suppressMessages(data_save(original_data, "inputs/raw/csv_load.csv"))
 
-  # Add to config
+  # Add to config for catalog lookup
   config <- read_config()
-  config$data$test <- list(
-    csv_load = list(
-      path = "data/test/csv_load.csv",
-      type = "csv",
-      delimiter = "comma",
-      locked = FALSE,
-      encrypted = FALSE
+  config$data$inputs <- list(
+    raw = list(
+      csv_load = list(
+        path = "inputs/raw/csv_load.csv",
+        type = "csv",
+        delimiter = "comma",
+        locked = FALSE,
+        encrypted = FALSE
+      )
     )
   )
   write_config(config)
 
-  # Load it back
-  loaded_data <- suppressWarnings(load_data("test.csv_load"))
+  # Load it back using catalog name
+  loaded_data <- suppressWarnings(data_read("inputs.raw.csv_load"))
 
   expect_equal(nrow(loaded_data), 5)
   expect_equal(loaded_data$x, 1:5)
 })
 
-test_that("load_data reads saved RDS data", {
+test_that("data_read reads saved RDS data", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -88,29 +92,32 @@ test_that("load_data reads saved RDS data", {
 
   setwd(test_dir)
 
-  # Create and save test data
+  # Create directory and save test data using direct path
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
   original_data <- data.frame(x = 1:5, y = letters[1:5])
-  suppressMessages(save_data(original_data, "test.rds_load", type = "rds", force = TRUE))
+  suppressMessages(data_save(original_data, "inputs/intermediate/rds_load.rds"))
 
-  # Add to config
+  # Add to config for catalog lookup
   config <- read_config()
-  config$data$test <- list(
-    rds_load = list(
-      path = "data/test/rds_load.rds",
-      type = "rds",
-      locked = FALSE,
-      encrypted = FALSE
+  config$data$inputs <- list(
+    intermediate = list(
+      rds_load = list(
+        path = "inputs/intermediate/rds_load.rds",
+        type = "rds",
+        locked = FALSE,
+        encrypted = FALSE
+      )
     )
   )
   write_config(config)
 
-  # Load it back
-  loaded_data <- suppressWarnings(load_data("test.rds_load"))
+  # Load it back using catalog name
+  loaded_data <- suppressWarnings(data_read("inputs.intermediate.rds_load"))
 
   expect_equal(loaded_data, original_data)
 })
 
-test_that("load_data reads direct file paths", {
+test_that("data_read reads direct file paths", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -126,13 +133,13 @@ test_that("load_data reads direct file paths", {
   write.csv(test_data, "data/direct/file.csv", row.names = FALSE)
 
   # Load using direct path
-  loaded <- load_data("data/direct/file.csv")
+  loaded <- data_read("data/direct/file.csv")
 
   expect_equal(nrow(loaded), 3)
   expect_true("a" %in% names(loaded))
 })
 
-test_that("load_data fails for non-existent file", {
+test_that("data_read fails for non-existent file", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -142,7 +149,7 @@ test_that("load_data fails for non-existent file", {
 
   setwd(test_dir)
 
-  expect_error(load_data("nonexistent.file.csv"))
+  expect_error(data_read("nonexistent.file.csv"))
 })
 
 test_that("data_spec_get retrieves data specification from config", {
@@ -170,7 +177,8 @@ test_that("data_spec_get retrieves data specification from config", {
   spec <- data_spec_get("inputs.raw.test")
 
   expect_type(spec, "list")
-  expect_equal(spec$path, "inputs/raw/test.csv")
+  # Path is normalized to absolute, so check it ends with the expected relative path
+  expect_true(endsWith(spec$path, "inputs/raw/test.csv"))
   expect_equal(spec$type, "csv")
   expect_equal(spec$delimiter, "comma")
 })
@@ -196,11 +204,12 @@ test_that("data_spec_update updates configuration", {
 
   # Read back
   spec <- data_spec_get("inputs.raw.new_test")
-  expect_equal(spec$path, "inputs/raw/new_test.csv")
+  # Path is normalized to absolute, so check it ends with the expected relative path
+  expect_true(endsWith(spec$path, "inputs/raw/new_test.csv"))
   expect_equal(spec$delimiter, "tab")
 })
 
-test_that("load_data reads Excel files directly", {
+test_that("data_read reads Excel files directly", {
   skip_if_not_installed("readxl")
   skip_if_not_installed("writexl")
   
@@ -219,7 +228,7 @@ test_that("load_data reads Excel files directly", {
   writexl::write_xlsx(test_data, "data/excel/test.xlsx")
 
   # Load using direct path
-  loaded <- load_data("data/excel/test.xlsx")
+  loaded <- data_read("data/excel/test.xlsx")
 
   expect_equal(nrow(loaded), 5)
   expect_equal(loaded$x, 1:5)
@@ -227,7 +236,7 @@ test_that("load_data reads Excel files directly", {
   expect_equal(loaded$z, 10:14)
 })
 
-test_that("load_data reads Excel files from config", {
+test_that("data_read reads Excel files from config", {
   skip_if_not_installed("readxl")
   skip_if_not_installed("writexl")
   
@@ -260,7 +269,7 @@ test_that("load_data reads Excel files from config", {
   write_config(config)
 
   # Load it back
-  loaded <- suppressWarnings(load_data("inputs.raw.people"))
+  loaded <- suppressWarnings(data_read("inputs.raw.people"))
 
   expect_equal(nrow(loaded), 2)
   expect_equal(loaded$name, c("Alice", "Bob"))
@@ -306,7 +315,7 @@ test_that("data_save resolves dot notation to configured directories", {
   test_data <- data.frame(x = 1:5, y = letters[1:5])
 
   # Save using dot notation (intermediate.filename)
-  suppressMessages(data_save(test_data, "intermediate.test_file"))
+  suppressMessages(data_save(test_data, "inputs_intermediate.test_file"))
 
   # Should resolve to inputs/intermediate/test_file.rds
   expect_true(file.exists("inputs/intermediate/test_file.rds"))
@@ -430,14 +439,171 @@ test_that("data_save updates database with normalized name", {
   test_data <- data.frame(x = 1:5)
 
   # Save with dot notation
-  suppressMessages(data_save(test_data, "intermediate.my_data"))
+  suppressMessages(data_save(test_data, "inputs_intermediate.my_data"))
 
   # Check database record uses original path as name
   conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
   on.exit(DBI::dbDisconnect(conn), add = TRUE)
 
-  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'intermediate.my_data'")
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'inputs_intermediate.my_data'")
   expect_equal(nrow(record), 1)
   expect_equal(record$path, "inputs/intermediate/my_data.rds")
   expect_equal(record$type, "rds")
+})
+
+# data_add tests
+test_that("data_add registers existing CSV file", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create a CSV file manually (simulating external data)
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
+  test_data <- data.frame(x = 1:5, y = letters[1:5])
+  write.csv(test_data, "inputs/raw/external_data.csv", row.names = FALSE)
+
+  # Add it to the catalog
+  suppressMessages(
+    data_add("inputs/raw/external_data.csv", name = "raw.external_data")
+  )
+
+  # Check database record was created
+  conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'raw.external_data'")
+  expect_equal(nrow(record), 1)
+  expect_equal(record$type, "csv")
+  expect_false(is.na(record$hash))
+})
+
+test_that("data_add auto-detects file type from extension", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create an RDS file manually
+  dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
+  test_data <- data.frame(x = 1:5)
+  saveRDS(test_data, "inputs/intermediate/processed.rds")
+
+  # Add without specifying type
+  suppressMessages(
+    data_add("inputs/intermediate/processed.rds", name = "intermediate.processed")
+  )
+
+  # Check type was auto-detected
+  conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'intermediate.processed'")
+  expect_equal(record$type, "rds")
+})
+
+test_that("data_add errors for non-existent file", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  expect_error(
+    data_add("nonexistent/file.csv", name = "test.data"),
+    "File not found"
+  )
+})
+
+test_that("data_add allows reading via data_read after registration", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  # Create a CSV file
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
+  original_data <- data.frame(a = 1:3, b = c("x", "y", "z"))
+  write.csv(original_data, "inputs/raw/readable.csv", row.names = FALSE)
+
+  # Register with data_add
+  suppressMessages(
+    data_add("inputs/raw/readable.csv", name = "raw.readable")
+  )
+
+  # Now read it using data_read with dot notation
+  loaded <- suppressWarnings(data_read("raw.readable"))
+
+  expect_equal(nrow(loaded), 3)
+  expect_equal(loaded$a, 1:3)
+})
+
+test_that("data_add respects locked parameter", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
+  write.csv(data.frame(x = 1), "inputs/raw/locked.csv", row.names = FALSE)
+
+  # Add with locked = FALSE
+  suppressMessages(
+    data_add("inputs/raw/locked.csv", name = "raw.locked_file", locked = FALSE)
+  )
+
+  conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'raw.locked_file'")
+  expect_equal(record$locked, 0)  # SQLite stores FALSE as 0
+})
+
+test_that("data_add can skip config update", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+
+  setwd(test_dir)
+
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
+  write.csv(data.frame(x = 1), "inputs/raw/no_config.csv", row.names = FALSE)
+
+  # Add without updating config
+  suppressMessages(
+    data_add("inputs/raw/no_config.csv", name = "raw.no_config", update_config = FALSE)
+  )
+
+  # Database should have record
+  conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'raw.no_config'")
+  expect_equal(nrow(record), 1)
+
+  # But config should NOT have the spec
+  spec <- tryCatch(data_spec_get("raw.no_config"), error = function(e) NULL)
+  expect_null(spec)
 })

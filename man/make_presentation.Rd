@@ -9,8 +9,8 @@ make_presentation(name, dir = NULL, overwrite = FALSE)
 \arguments{
 \item{name}{Character. The presentation name (with or without .qmd extension)}
 
-\item{dir}{Character. Directory to create the file in. Reads from
-config, defaults to "notebooks/" or "work/" directory.}
+\item{dir}{Character. Directory to create the file in. Uses your project's
+configured \code{directories$notebooks} setting. Default: "notebooks/".}
 
 \item{overwrite}{Logical. Whether to overwrite existing file. Default FALSE.}
 }

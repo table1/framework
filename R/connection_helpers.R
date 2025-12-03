@@ -4,28 +4,27 @@
 #' automatically closed when the code block finishes, even if an error occurs.
 #' This prevents connection leaks and ensures proper resource cleanup.
 #'
-#' @param connection_name Character. Name of the connection in settings.yml
-#' @param code Expression to evaluate with the connection
+#' @param connection_name Character. Name of the connection in config.yml
+#' @param code Expression to evaluate with the connection (use `conn` to access the connection)
 #'
 #' @return The result of evaluating `code`
 #'
 #' @examples
 #' \dontrun{
 #' # Safe - connection auto-closes
-#' users <- connection_with("my_db", {
-#'   connection_find_by(conn, "users", status = "active")
+#' users <- db_with("my_db", {
+#'   DBI::dbGetQuery(conn, "SELECT * FROM users WHERE active = TRUE")
 #' })
 #'
 #' # Multiple operations with same connection
-#' result <- connection_with("my_db", {
-#'   user_id <- connection_insert(conn, "users", list(name = "Alice"))
-#'   connection_insert(conn, "posts", list(user_id = user_id, title = "Hello"))
-#'   user_id
+#' result <- db_with("my_db", {
+#'   DBI::dbExecute(conn, "INSERT INTO users (name) VALUES ('Alice')")
+#'   DBI::dbGetQuery(conn, "SELECT * FROM users")
 #' })
 #'
 #' # Connection closes even on error
 #' tryCatch(
-#'   connection_with("my_db", {
+#'   db_with("my_db", {
 #'     stop("Something went wrong")  # Connection still closes
 #'   }),
 #'   error = function(e) message(e$message)
@@ -33,11 +32,11 @@
 #' }
 #'
 #' @export
-connection_with <- function(connection_name, code) {
+db_with <- function(connection_name, code) {
   checkmate::assert_string(connection_name, min.chars = 1)
 
   # Get connection
-  conn <- connection_get(connection_name)
+  conn <- db_connect(connection_name)
 
   # Ensure cleanup even on error
   on.exit({
@@ -54,6 +53,7 @@ connection_with <- function(connection_name, code) {
   eval(substitute(code), envir = list(conn = conn), enclos = parent.frame())
 }
 
+
 #' Check for leaked database connections
 #'
 #' Scans the global environment and parent frames for open database connections.
@@ -67,19 +67,7 @@ connection_with <- function(connection_name, code) {
 #'   - class: Connection class (e.g., "PqConnection", "SQLiteConnection")
 #'   - valid: Whether connection is still valid
 #'
-#' @examples
-#' \dontrun{
-#' # Check for leaked connections
-#' leaks <- connection_check_leaks()
-#'
-#' # Suppress warning
-#' leaks <- connection_check_leaks(warn = FALSE)
-#' if (nrow(leaks) > 0) {
-#'   print(leaks)
-#' }
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_check_leaks <- function(warn = TRUE) {
   checkmate::assert_flag(warn)
 
@@ -145,19 +133,7 @@ connection_check_leaks <- function(warn = TRUE) {
 #'
 #' @return Invisibly returns the number of connections closed
 #'
-#' @examples
-#' \dontrun{
-#' # Close all connections
-#' connection_close_all()
-#'
-#' # Force close (including invalid connections)
-#' connection_close_all(force = TRUE)
-#'
-#' # Quiet mode
-#' connection_close_all(quiet = TRUE)
-#' }
-#'
-#' @export
+#' @keywords internal
 connection_close_all <- function(force = FALSE, quiet = FALSE) {
   checkmate::assert_flag(force)
   checkmate::assert_flag(quiet)

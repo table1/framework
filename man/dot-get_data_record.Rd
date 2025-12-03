@@ -10,7 +10,7 @@
 \item{name}{The data name}
 }
 \value{
-The data metadata (encrypted flag and hash), or NULL if not found
+The data metadata (hash), or NULL if not found
 }
 \description{
 Get a data value

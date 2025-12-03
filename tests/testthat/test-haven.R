@@ -39,8 +39,8 @@ test_that("preserves haven attributes when keep_attributes = TRUE", {
   # May have labels or formats (depending on how they were saved)
 })
 
-test_that("can load haven files using load_data alias", {
-  df <- load_data(test_path("fixtures/test.dta"))
+test_that("can load haven files using data_read", {
+  df <- data_read(test_path("fixtures/test.dta"))
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 5)
 })

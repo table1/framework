@@ -36,7 +36,7 @@ scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf)
 
   # Get default location from config if not provided
   if (is.null(location)) {
-    config <- read_config()
+    config <- config_read()
     location <- config$directories$scratch %||%
       config$options$data$scratch_dir %||%
       "outputs/private/scratch"
@@ -184,7 +184,7 @@ scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf)
 #' Clean up the scratch directory by deleting all files
 #' @export
 scratch_clean <- function() {
-  config <- read_config()
+  config <- config_read()
   scratch_dir <- config$directories$scratch %||%
     config$options$data$scratch_dir %||%
     "outputs/private/scratch"

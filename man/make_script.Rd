@@ -10,9 +10,8 @@ make_script(name, dir = NULL, stub = "default", overwrite = FALSE)
 \item{name}{Character. The script name (with or without .R extension).
 Examples: "process-data", "process-data.R"}
 
-\item{dir}{Character. Directory to create the script in. Reads from
-config \code{directories$scripts} (or legacy \code{options$script_dir}), defaults to
-"scripts/" or current directory.}
+\item{dir}{Character. Directory to create the script in. Uses your project's
+configured \code{directories$scripts} setting. Default: "scripts/".}
 
 \item{stub}{Character. Name of the stub template to use. Defaults to
 "default". User can create custom stubs in \verb{stubs/script-\{stub\}.R}.}
@@ -33,21 +32,15 @@ This function is a convenience wrapper that:
 \item Uses \code{script_dir} config option instead of \code{notebook_dir}
 \item Calls \code{make_notebook()} with \code{type = "script"}
 }
-\subsection{Creating Custom Script Stubs}{
+\subsection{Default Output}{
 
-Create a \verb{stubs/} directory in your project root with custom templates:
+Scripts are created in the \verb{scripts/} directory by default:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{stubs/
-  script-default.R      # Override default script stub
-  script-etl.R          # Custom ETL script stub
-  script-analysis.R     # Custom analysis script stub
+\if{html}{\out{<div class="sourceCode">}}\preformatted{scripts/
+  process-data.R
+  build-features.R
+  run-model.R
 }\if{html}{\out{</div>}}
-
-Templates can use placeholders:
-\itemize{
-\item \code{{filename}} - The script filename without extension
-\item \code{{date}} - Current date (YYYY-MM-DD)
-}
 }
 }
 \examples{
