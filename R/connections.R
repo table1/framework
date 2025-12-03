@@ -24,7 +24,7 @@ db_connect <- function(name) {
   checkmate::assert_string(name, min.chars = 1)
 
   config <- tryCatch(
-    config_read(),
+    settings_read(),
     error = function(e) {
       stop(sprintf("Failed to read configuration: %s", e$message))
     }
@@ -77,7 +77,7 @@ db_connect <- function(name) {
 #' db_list()
 #' }
 db_list <- function() {
-  config <- config_read()
+  config <- settings_read()
 
   if (is.null(config$connections) || length(config$connections) == 0) {
     message("No database connections found in configuration")

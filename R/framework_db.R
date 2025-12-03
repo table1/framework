@@ -149,7 +149,7 @@
 
 #' List all metadata
 #' @return A data frame of metadata with keys, values, and timestamps
-#' @export
+#' @keywords internal
 list_metadata <- function() {
   con <- tryCatch(
     .get_db_connection(),

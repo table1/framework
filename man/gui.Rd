@@ -21,10 +21,13 @@ project management, and settings configuration.
 \examples{
 \dontrun{
 # Launch the GUI
-gui()
+framework::gui()
 
 # Launch on specific port
-gui(port = 8888)
+framework::gui(port = 8888)
 }
 
+}
+\seealso{
+\code{\link[=setup]{setup()}} for first-time configuration
 }

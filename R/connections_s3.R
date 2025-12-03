@@ -127,7 +127,7 @@ NULL
 #' @return List with connection configuration including resolved credentials.
 #' @keywords internal
 .resolve_s3_connection <- function(connection = NULL) {
-  config <- config_read()
+  config <- settings_read()
 
   # Storage buckets can be in multiple places depending on config structure:
   # 1. Top level (split file merged): config$storage_buckets

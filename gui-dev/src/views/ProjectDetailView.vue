@@ -1190,8 +1190,8 @@ const overviewCards = computed(() => {
       title: 'AI Assistants',
       section: 'ai',
       content: aiEnabled
-        ? `<span class="text-green-600 dark:text-green-400">${aiProvider} · ${aiCanonical}</span>`
-        : '<span class="text-gray-600 dark:text-gray-400">Disabled</span>'
+        ? `${aiProvider} · ${aiCanonical}`
+        : 'Disabled'
     },
     {
       id: 'git',

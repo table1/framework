@@ -16,3 +16,4 @@ Invisibly returns NULL
 Creates ~/.config/framework/ directory and copies default settings files
 if they don't already exist.
 }
+\keyword{internal}

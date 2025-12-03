@@ -183,7 +183,7 @@ project_create <- function(
   # Add to project registry (skip for temp directories used in tests)
   project_id <- NULL
   if (!grepl("^/tmp/|^/var/folders/", project_dir)) {
-    project_id <- .add_project_to_config(project_dir)
+    project_id <- add_project_to_config(project_dir)
   }
 
   message("✓ Project created successfully: ", project_dir)
@@ -515,14 +515,14 @@ project_create <- function(
 
   # Try to read config for dynamic generation
   config <- tryCatch(
-    config_read(file.path(project_dir, "settings.yml")),
+    settings_read(file.path(project_dir, "settings.yml")),
     error = function(e) NULL
   )
 
   # Generate content
   if (!is.null(config)) {
-    # Use dynamic generation with ai_generate()
-    content <- ai_generate(
+    # Use dynamic generation with ai_generate_context()
+    content <- ai_generate_context(
       project_path = project_dir,
       project_name = project_name,
       project_type = type,

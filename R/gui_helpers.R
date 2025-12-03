@@ -5,7 +5,7 @@
 #'
 #' @param force If TRUE, overwrites existing settings (default: FALSE)
 #' @return Invisibly returns NULL
-#' @export
+#' @keywords internal
 init_global_config <- function(force = FALSE) {
   config_dir <- path.expand("~/.config/framework")
   settings_path <- file.path(config_dir, "settings.yml")
@@ -40,7 +40,6 @@ init_global_config <- function(force = FALSE) {
 #' Get default global configuration structure
 #'
 #' @return List with default global configuration
-#' @export
 #' @keywords internal
 get_default_global_config <- function() {
   catalog <- load_settings_catalog(include_user = TRUE, validate = TRUE)
@@ -145,7 +144,6 @@ get_default_global_config <- function() {
 #' @param use_defaults Whether to merge with default structure (default: TRUE)
 #' @return List containing global configuration
 #' @export
-#' @keywords internal
 read_frameworkrc <- function(use_defaults = TRUE) {
   # New YAML path (preferred)
   config_dir <- path.expand("~/.config/framework")
@@ -286,7 +284,6 @@ read_frameworkrc <- function(use_defaults = TRUE) {
 #' @param config List containing configuration to write
 #' @return Invisibly returns NULL
 #' @export
-#' @keywords internal
 write_frameworkrc <- function(config) {
   config_dir <- path.expand("~/.config/framework")
   settings_path <- file.path(config_dir, "settings.yml")
@@ -338,9 +335,9 @@ write_frameworkrc <- function(config) {
 #' @param project_dir Path to project directory
 #' @param project_name Optional project name
 #' @param project_type Optional project type
-#' @return Invisibly returns NULL
-#' @keywords internal
-.add_project_to_config <- function(project_dir, project_name = NULL, project_type = NULL) {
+#' @return Invisibly returns the project ID
+#' @export
+add_project_to_config <- function(project_dir, project_name = NULL, project_type = NULL) {
   config <- read_frameworkrc()
 
   # Check if project already exists
@@ -410,7 +407,6 @@ project_list <- function() {
 #' @param project_id Project ID to remove
 #' @return Invisibly returns NULL
 #' @export
-#' @keywords internal
 remove_project_from_config <- function(project_id) {
   config <- read_frameworkrc()
 

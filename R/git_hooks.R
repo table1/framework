@@ -1,3 +1,241 @@
+# Git Helper Functions ----------------------------------------------------
+
+#' Show Git Status
+#'
+#' Display the working tree status from the R console.
+#'
+#' @param short Logical; if TRUE, show short format (default: FALSE)
+#'
+#' @return Invisibly returns the status output as a character vector
+#'
+#' @examples
+#' \dontrun{
+#' git_status()
+#' git_status(short = TRUE)
+#' }
+#'
+#' @export
+git_status <- function(short = FALSE) {
+  .require_git_repo()
+
+  args <- "status"
+  if (short) args <- c(args, "--short")
+
+  result <- system2("git", args, stdout = TRUE, stderr = TRUE)
+  cat(result, sep = "\n")
+  invisible(result)
+}
+
+
+#' Stage Files for Commit
+#'
+#' Add file contents to the staging area.
+#'
+#' @param files Character vector of file paths to stage, or "." for all (default)
+#'
+#' @return Invisibly returns TRUE on success
+#'
+#' @examples
+#' \dontrun{
+#' git_add()              # Stage all changes
+#' git_add("README.md")   # Stage specific file
+#' git_add(c("R/foo.R", "R/bar.R"))
+#' }
+#'
+#' @export
+git_add <- function(files = ".") {
+  .require_git_repo()
+
+  result <- system2("git", c("add", files), stdout = TRUE, stderr = TRUE)
+
+  if (length(files) == 1 && files == ".") {
+    message("\u2713 Staged all changes")
+  } else {
+    message("\u2713 Staged: ", paste(files, collapse = ", "))
+  }
+
+  invisible(TRUE)
+}
+
+
+#' Commit Staged Changes
+#'
+#' Record changes to the repository with a commit message.
+#'
+#' @param message Commit message (required)
+#' @param all Logical; if TRUE, automatically stage modified/deleted files (default: FALSE)
+#'
+#' @return Invisibly returns TRUE on success
+#'
+#' @examples
+#' \dontrun{
+#' git_commit("Fix bug in data loading")
+#' git_commit("Update README", all = TRUE)  # Stage and commit
+#' }
+#'
+#' @export
+git_commit <- function(message, all = FALSE) {
+  .require_git_repo()
+
+  if (missing(message) || is.null(message) || message == "") {
+    stop("Commit message is required")
+  }
+
+  args <- c("commit", "-m", message)
+  if (all) args <- c(args, "-a")
+
+  result <- system2("git", args, stdout = TRUE, stderr = TRUE)
+  status <- attr(result, "status")
+
+  if (!is.null(status) && status != 0) {
+    cat(result, sep = "\n")
+    stop("Commit failed")
+  }
+
+  message("\u2713 Committed: ", message)
+  invisible(TRUE)
+}
+
+
+#' Push to Remote
+#'
+#' Push commits to the remote repository.
+#'
+#' @param remote Remote name (default: "origin")
+#' @param branch Branch name (default: current branch)
+#'
+#' @return Invisibly returns TRUE on success
+#'
+#' @examples
+#' \dontrun{
+#' git_push()
+#' git_push(remote = "origin", branch = "main")
+#' }
+#'
+#' @export
+git_push <- function(remote = "origin", branch = NULL) {
+  .require_git_repo()
+
+  args <- c("push", remote)
+  if (!is.null(branch)) args <- c(args, branch)
+
+  message("Pushing to ", remote, "...")
+  result <- system2("git", args, stdout = TRUE, stderr = TRUE)
+  status <- attr(result, "status")
+
+  if (!is.null(status) && status != 0) {
+    cat(result, sep = "\n")
+    stop("Push failed")
+  }
+
+  message("\u2713 Pushed successfully")
+  invisible(TRUE)
+}
+
+
+#' Pull from Remote
+#'
+#' Fetch and integrate changes from the remote repository.
+#'
+#' @param remote Remote name (default: "origin")
+#' @param branch Branch name (default: current branch)
+#'
+#' @return Invisibly returns TRUE on success
+#'
+#' @examples
+#' \dontrun{
+#' git_pull()
+#' git_pull(remote = "origin", branch = "main")
+#' }
+#'
+#' @export
+git_pull <- function(remote = "origin", branch = NULL) {
+  .require_git_repo()
+
+  args <- c("pull", remote)
+  if (!is.null(branch)) args <- c(args, branch)
+
+  message("Pulling from ", remote, "...")
+  result <- system2("git", args, stdout = TRUE, stderr = TRUE)
+  status <- attr(result, "status")
+
+  if (!is.null(status) && status != 0) {
+    cat(result, sep = "\n")
+    stop("Pull failed")
+  }
+
+  cat(result, sep = "\n")
+  invisible(TRUE)
+}
+
+
+#' Show Changes (Diff)
+#'
+#' Show changes between commits, working tree, etc.
+#'
+#' @param staged Logical; if TRUE, show staged changes (default: FALSE shows unstaged)
+#' @param file Optional file path to show diff for specific file
+#'
+#' @return Invisibly returns the diff output as a character vector
+#'
+#' @examples
+#' \dontrun{
+#' git_diff()             # Show unstaged changes
+#' git_diff(staged = TRUE) # Show staged changes
+#' git_diff(file = "R/foo.R")
+#' }
+#'
+#' @export
+git_diff <- function(staged = FALSE, file = NULL) {
+  .require_git_repo()
+
+  args <- "diff"
+  if (staged) args <- c(args, "--staged")
+  if (!is.null(file)) args <- c(args, file)
+
+  result <- system2("git", args, stdout = TRUE, stderr = TRUE)
+
+  if (length(result) == 0) {
+    message("No changes")
+  } else {
+    cat(result, sep = "\n")
+  }
+
+  invisible(result)
+}
+
+
+#' Show Commit Log
+#'
+#' Show recent commit history.
+#'
+#' @param n Number of commits to show (default: 10)
+#' @param oneline Logical; if TRUE, show condensed one-line format (default: TRUE)
+#'
+#' @return Invisibly returns the log output as a character vector
+#'
+#' @examples
+#' \dontrun{
+#' git_log()
+#' git_log(n = 5)
+#' git_log(oneline = FALSE)  # Full format
+#' }
+#'
+#' @export
+git_log <- function(n = 10, oneline = TRUE) {
+  .require_git_repo()
+
+  args <- c("log", paste0("-", n))
+  if (oneline) args <- c(args, "--oneline")
+
+  result <- system2("git", args, stdout = TRUE, stderr = TRUE)
+  cat(result, sep = "\n")
+  invisible(result)
+}
+
+
+# Git Hooks Management ----------------------------------------------------
+
 #' Install Git Pre-commit Hook
 #'
 #' Creates a pre-commit hook that runs Framework checks based on settings.yml settings.
@@ -21,21 +259,21 @@
 #' @examples
 #' \dontrun{
 #' # Install hooks based on settings.yml
-#' hooks_install()
+#' git_hooks_install()
 #'
 #' # Force reinstall (overwrites existing hook)
-#' hooks_install(force = TRUE)
+#' git_hooks_install(force = TRUE)
 #' }
 #'
 #' @export
-hooks_install <- function(config_file = NULL,
-                         force = FALSE,
-                         verbose = TRUE) {
+git_hooks_install <- function(config_file = NULL,
+                              force = FALSE,
+                              verbose = TRUE) {
 
   # Check if git repo
   if (!.is_git_repo()) {
     if (verbose) {
-      message("✗ Not a git repository")
+      message("\u2717 Not a git repository")
     }
     return(invisible(FALSE))
   }
@@ -47,7 +285,7 @@ hooks_install <- function(config_file = NULL,
 
   if (is.null(config_file)) {
     if (verbose) {
-      message("✗ Settings file not found")
+      message("\u2717 Settings file not found")
     }
     return(invisible(FALSE))
   }
@@ -55,7 +293,7 @@ hooks_install <- function(config_file = NULL,
   # Check if config exists
   if (!file.exists(config_file)) {
     if (verbose) {
-      message("✗ Config file not found: ", config_file)
+      message("\u2717 Config file not found: ", config_file)
     }
     return(invisible(FALSE))
   }
@@ -67,7 +305,7 @@ hooks_install <- function(config_file = NULL,
 
   if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
     if (verbose) {
-      message("ℹ No hooks enabled in settings.yml/config.yml")
+      message("\u2139 No hooks enabled in settings.yml/config.yml")
       message("  Enable with: config$git$hooks$ai_sync = TRUE")
     }
     return(invisible(FALSE))
@@ -84,7 +322,7 @@ hooks_install <- function(config_file = NULL,
   # Check if hook already exists
   if (file.exists(hook_path) && !force) {
     if (verbose) {
-      message("✗ Pre-commit hook already exists")
+      message("\u2717 Pre-commit hook already exists")
       message("  Use force=TRUE to overwrite or edit .git/hooks/pre-commit manually")
     }
     return(invisible(FALSE))
@@ -99,22 +337,22 @@ hooks_install <- function(config_file = NULL,
     Sys.chmod(hook_path, mode = "0755")  # Make executable
 
     if (verbose) {
-      message("✓ Installed pre-commit hook")
+      message("\u2713 Installed pre-commit hook")
       if (ai_sync_enabled) {
-        message("  • AI context sync enabled")
+        message("  \u2022 AI context sync enabled")
       }
       if (data_security_enabled) {
-        message("  • Data security check enabled")
+        message("  \u2022 Data security check enabled")
       }
       if (check_sensitive_dirs_enabled) {
-        message("  • Sensitive directories check enabled")
+        message("  \u2022 Sensitive directories check enabled")
       }
     }
 
     invisible(TRUE)
   }, error = function(e) {
     if (verbose) {
-      message("✗ Failed to install hook: ", e$message)
+      message("\u2717 Failed to install hook: ", e$message)
     }
     invisible(FALSE)
   })
@@ -130,12 +368,12 @@ hooks_install <- function(config_file = NULL,
 #' @return Invisible TRUE if hook was removed, FALSE otherwise
 #'
 #' @export
-hooks_uninstall <- function(verbose = TRUE) {
+git_hooks_uninstall <- function(verbose = TRUE) {
   hook_path <- ".git/hooks/pre-commit"
 
   if (!file.exists(hook_path)) {
     if (verbose) {
-      message("ℹ No pre-commit hook found")
+      message("\u2139 No pre-commit hook found")
     }
     return(invisible(FALSE))
   }
@@ -146,7 +384,7 @@ hooks_uninstall <- function(verbose = TRUE) {
 
   if (!is_framework_hook) {
     if (verbose) {
-      message("⚠ Pre-commit hook exists but not managed by Framework")
+      message("\u26a0 Pre-commit hook exists but not managed by Framework")
       message("  Delete .git/hooks/pre-commit manually if needed")
     }
     return(invisible(FALSE))
@@ -156,12 +394,12 @@ hooks_uninstall <- function(verbose = TRUE) {
   tryCatch({
     file.remove(hook_path)
     if (verbose) {
-      message("✓ Removed pre-commit hook")
+      message("\u2713 Removed pre-commit hook")
     }
     invisible(TRUE)
   }, error = function(e) {
     if (verbose) {
-      message("✗ Failed to remove hook: ", e$message)
+      message("\u2717 Failed to remove hook: ", e$message)
     }
     invisible(FALSE)
   })
@@ -180,12 +418,12 @@ hooks_uninstall <- function(verbose = TRUE) {
 #'
 #' @examples
 #' \dontrun{
-#' hooks_enable("ai_sync")
-#' hooks_enable("data_security")
+#' git_hooks_enable("ai_sync")
+#' git_hooks_enable("data_security")
 #' }
 #'
 #' @export
-hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
+git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs")
 
   if (!hook_name %in% valid_hooks) {
@@ -204,11 +442,11 @@ hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   .update_hook_config(hook_name, TRUE, config_file)
 
   if (verbose) {
-    message("✓ Enabled ", hook_name, " hook")
+    message("\u2713 Enabled ", hook_name, " hook")
   }
 
   # Reinstall hooks
-  hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
+  git_hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
 }
 
 
@@ -223,7 +461,7 @@ hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #' @return Invisible TRUE on success
 #'
 #' @export
-hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
+git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs")
 
   if (!hook_name %in% valid_hooks) {
@@ -242,7 +480,7 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   .update_hook_config(hook_name, FALSE, config_file)
 
   if (verbose) {
-    message("✓ Disabled ", hook_name, " hook")
+    message("\u2713 Disabled ", hook_name, " hook")
   }
 
   # Reinstall hooks (or uninstall if all disabled)
@@ -251,9 +489,9 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   check_sensitive_dirs_enabled <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
 
   if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
-    hooks_uninstall(verbose = verbose)
+    git_hooks_uninstall(verbose = verbose)
   } else {
-    hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
+    git_hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
   }
 }
 
@@ -267,19 +505,19 @@ hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #' @return Data frame with hook information
 #'
 #' @export
-hooks_list <- function(config_file = NULL) {
+git_hooks_list <- function(config_file = NULL) {
   # Auto-discover settings file if not specified
   if (is.null(config_file)) {
     config_file <- .get_settings_file()
   }
 
   if (is.null(config_file)) {
-    message("✗ Settings file not found")
+    message("\u2717 Settings file not found")
     return(invisible(NULL))
   }
 
   if (!file.exists(config_file)) {
-    message("✗ Config file not found: ", config_file)
+    message("\u2717 Config file not found: ", config_file)
     return(invisible(NULL))
   }
 
@@ -305,15 +543,15 @@ hooks_list <- function(config_file = NULL) {
   message("")
 
   for (i in seq_len(nrow(df))) {
-    status_icon <- if (df$enabled[i]) "✓" else "✗"
+    status_icon <- if (df$enabled[i]) "\u2713" else "\u2717"
     message(sprintf("%s %s - %s", status_icon, df$hook[i], df$description[i]))
   }
 
   message("\nCommands:")
-  message("  framework hooks:enable <name>")
-  message("  framework hooks:disable <name>")
-  message("  framework hooks:install")
-  message("  framework hooks:uninstall")
+  message("  git_hooks_enable(\"ai_sync\")")
+  message("  git_hooks_disable(\"ai_sync\")")
+  message("  git_hooks_install()")
+  message("  git_hooks_uninstall()")
 
   invisible(df)
 }
@@ -327,6 +565,14 @@ hooks_list <- function(config_file = NULL) {
   dir.exists(".git")
 }
 
+#' Require git repository or stop
+#' @keywords internal
+.require_git_repo <- function() {
+  if (!.is_git_repo()) {
+    stop("Not a git repository. Run 'git init' first.")
+  }
+}
+
 
 #' Generate pre-commit hook script
 #' @keywords internal
@@ -335,7 +581,7 @@ hooks_list <- function(config_file = NULL) {
     "#!/usr/bin/env bash",
     "# Framework Git Hooks",
     "# Managed by Framework - do not edit manually",
-    "# Use 'framework hooks:*' commands to configure",
+    "# Use git_hooks_*() functions to configure",
     "",
     "set -e",
     "",
@@ -361,7 +607,7 @@ hooks_list <- function(config_file = NULL) {
       "done",
       "",
       "if [ ${#UNIGNORED_DIRS[@]} -gt 0 ]; then",
-      "  echo \"⚠ Warning: Found sensitive directories that are NOT gitignored:\"",
+      "  echo \"\u26a0 Warning: Found sensitive directories that are NOT gitignored:\"",
       "  for dir in \"${UNIGNORED_DIRS[@]}\"; do",
       "    echo \"  - $dir\"",
       "  done",
@@ -386,7 +632,7 @@ hooks_list <- function(config_file = NULL) {
     if (ai_sync_enabled) c(
       "# AI context sync",
       "if ! Rscript -e \"library(framework); ai_sync_context(verbose=FALSE)\"; then",
-      "  echo \"✗ AI context sync failed\"",
+      "  echo \"\u2717 AI context sync failed\"",
       "  exit 1",
       "fi",
       "",
@@ -396,8 +642,8 @@ hooks_list <- function(config_file = NULL) {
     ) else NULL,
     if (data_security_enabled) c(
       "# Data security check",
-      "if ! Rscript -e \"library(framework); result <- security_audit(verbose=FALSE); if (any(result\\$summary\\$status == 'fail')) quit(status=1)\"; then",
-      "  echo \"✗ Data security check failed\"",
+      "if ! Rscript -e \"library(framework); result <- git_security_audit(verbose=FALSE); if (any(result\\$summary\\$status == 'fail')) quit(status=1)\"; then",
+      "  echo \"\u2717 Data security check failed\"",
       "  echo \"Run 'framework security:audit' for details\"",
       "  exit 1",
       "fi",

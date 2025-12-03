@@ -15,4 +15,3 @@ Invisibly returns NULL
 \description{
 Write global Framework configuration
 }
-\keyword{internal}

@@ -24,7 +24,7 @@
 #' configure_ai_agents()
 #' }
 #'
-#' @export
+#' @keywords internal
 configure_ai_agents <- function(support = NULL, assistants = NULL) {
   frameworkrc <- path.expand("~/.frameworkrc")
 
@@ -80,15 +80,15 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
   }
 
   # Generate AI context content dynamically
-  # Try to use ai_generate() if config exists, otherwise use template
+  # Try to use ai_generate_context() if config exists, otherwise use template
   config <- tryCatch(
-    config_read(file.path(target_dir, "settings.yml")),
+    settings_read(file.path(target_dir, "settings.yml")),
     error = function(e) NULL
   )
 
   if (!is.null(config)) {
     # Use dynamic generation
-    content <- ai_generate(
+    content <- ai_generate_context(
       project_path = target_dir,
       project_name = project_name,
       project_type = project_type,

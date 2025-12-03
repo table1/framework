@@ -113,7 +113,7 @@ connection_pool <- function(name,
 
   # Get connection config
   config <- tryCatch(
-    config_read(),
+    settings_read(),
     error = function(e) {
       stop(sprintf("Failed to read configuration: %s", e$message), call. = FALSE)
     }

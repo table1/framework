@@ -17,9 +17,6 @@ config(key = NULL, default = NULL, config_file = NULL)
 The configuration value
 }
 \description{
-Compatibility alias for \code{\link{settings}}. Framework recommends using
-\code{settings()} for new projects, but \code{config()} continues to work.
+Internal alias for \code{\link{settings}}.
 }
-\seealso{
-\code{\link{settings}}
-}
+\keyword{internal}

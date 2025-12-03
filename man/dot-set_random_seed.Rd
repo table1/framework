@@ -7,7 +7,7 @@
 .set_random_seed(config)
 }
 \arguments{
-\item{config}{Configuration object from config_read()}
+\item{config}{Configuration object from settings_read()}
 }
 \description{
 Sets the random seed for reproducibility. Checks for seed in this order:

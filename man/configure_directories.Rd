@@ -52,3 +52,4 @@ configure_directories(
 }
 
 }
+\keyword{internal}

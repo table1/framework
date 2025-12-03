@@ -39,22 +39,22 @@
 #' @examples
 #' \dontrun{
 #' # Basic audit (report only)
-#' audit <- security_audit()
+#' audit <- git_security_audit()
 #' print(audit$summary)
 #' View(audit$findings$orphaned_files)
 #'
 #' # Quick scan without git history
-#' audit <- security_audit(check_git_history = FALSE)
+#' audit <- git_security_audit(check_git_history = FALSE)
 #'
 #' # Verbose with limited git history
-#' audit <- security_audit(history_depth = 100, verbose = TRUE)
+#' audit <- git_security_audit(history_depth = 100, verbose = TRUE)
 #'
 #' # Auto-fix mode (updates .gitignore)
-#' audit <- security_audit(auto_fix = TRUE)
+#' audit <- git_security_audit(auto_fix = TRUE)
 #' }
 #'
 #' @export
-security_audit <- function(config_file = NULL,
+git_security_audit <- function(config_file = NULL,
                            check_git_history = TRUE,
                            history_depth = "all",
                            auto_fix = FALSE,
@@ -131,7 +131,7 @@ security_audit <- function(config_file = NULL,
 
   # Read configuration
   config <- tryCatch(
-    config_read(config_file),
+    settings_read(config_file),
     error = function(e) {
       stop(sprintf("Failed to read config file: %s", e$message))
     }
@@ -926,13 +926,13 @@ security_audit <- function(config_file = NULL,
   if (has_failures) {
     message("\u2717 AUDIT FAILED - Critical security issues found")
     message("\nTo view detailed findings:")
-    message("  audit <- security_audit()")
+    message("  audit <- git_security_audit()")
     message("  View(audit$findings$gitignore_issues)")
     message("  View(audit$findings$private_data_exposure)")
   } else if (has_warnings) {
     message("\u26A0 AUDIT PASSED WITH WARNINGS - Review findings")
     message("\nTo view detailed findings:")
-    message("  audit <- security_audit()")
+    message("  audit <- git_security_audit()")
     message("  View(audit$findings$orphaned_files)")
   } else {
     message("\u2713 AUDIT PASSED - No security issues found")
@@ -949,7 +949,7 @@ security_audit <- function(config_file = NULL,
   }
 
   # Store summary statistics
-  .set_metadata("last_security_audit", as.character(result$audit_metadata$timestamp))
+  .set_metadata("last_git_security_audit", as.character(result$audit_metadata$timestamp))
 
   overall_status <- if (any(result$summary$status == "fail")) {
     "fail"

@@ -55,10 +55,10 @@ test_that("write_config writes configuration to file", {
   expect_equal(config_raw$default$packages, c("dplyr", "ggplot2"))
 
   # Read back with read_config
-  config_read <- read_config(config_file = "test_config.yml")
-  expect_equal(config_read$data$example, "data/example.csv")
+  settings_read <- read_config(config_file = "test_config.yml")
+  expect_equal(settings_read$data$example, "data/example.csv")
   # Packages are a character vector when written as simple strings
-  expect_equal(config_read$packages, c("dplyr", "ggplot2"))
+  expect_equal(settings_read$packages, c("dplyr", "ggplot2"))
 })
 
 
