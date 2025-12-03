@@ -58,7 +58,7 @@ make_script <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
 
   # Get script directory from config if not specified
   if (is.null(dir)) {
-    config <- tryCatch(config_read(), error = function(e) NULL)
+    config <- tryCatch(settings_read(), error = function(e) NULL)
     if (!is.null(config$directories$scripts)) {
       dir <- config$directories$scripts
     } else if (!is.null(config$options$script_dir)) {

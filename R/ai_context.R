@@ -14,19 +14,19 @@
 #' @examples
 #' \dontrun{
 #' # Generate AI context for current project
-#' content <- ai_generate()
+#' content <- ai_generate_context()
 #'
 #' # Generate for a specific project type
-#' content <- ai_generate(project_type = "project_sensitive")
+#' content <- ai_generate_context(project_type = "project_sensitive")
 #' }
-ai_generate <- function(project_path = ".",
+ai_generate_context <- function(project_path = ".",
                         project_name = NULL,
                         project_type = NULL,
                         config = NULL) {
   # Read config if not provided
   if (is.null(config)) {
     config <- tryCatch(
-      config_read(file.path(project_path, "settings.yml")),
+      settings_read(file.path(project_path, "settings.yml")),
       error = function(e) list()
     )
   }
@@ -99,18 +99,18 @@ if (is.null(project_name)) {
 #' @examples
 #' \dontrun{
 #' # Regenerate all dynamic sections
-#' ai_regenerate()
+#' ai_regenerate_context()
 #'
 #' # Regenerate only packages section
-#' ai_regenerate(sections = "packages")
+#' ai_regenerate_context(sections = "packages")
 #' }
-ai_regenerate <- function(project_path = ".",
+ai_regenerate_context <- function(project_path = ".",
                           sections = NULL,
                           ai_file = NULL) {
   # Determine AI file path
   if (is.null(ai_file)) {
     config <- tryCatch(
-      config_read(file.path(project_path, "settings.yml")),
+      settings_read(file.path(project_path, "settings.yml")),
       error = function(e) list()
     )
     ai_file <- config$ai$canonical_file %||% "CLAUDE.md"
@@ -127,7 +127,7 @@ ai_regenerate <- function(project_path = ".",
 
   # Read config for regeneration
   config <- tryCatch(
-    config_read(file.path(project_path, "settings.yml")),
+    settings_read(file.path(project_path, "settings.yml")),
     error = function(e) list()
   )
   project_type <- config$project_type %||% "project"
@@ -705,7 +705,7 @@ model <- cache_remember("fitted_model", {
   '## Project Notes
 
 *Add your project-specific notes, conventions, and documentation here.*
-*This section is never modified by `ai_regenerate()`.*
+*This section is never modified by `ai_regenerate_context()`.*
 '
 }
 

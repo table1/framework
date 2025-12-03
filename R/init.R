@@ -448,7 +448,7 @@ message("Framework dev mode active - will load from: %s")
   config_path_for_dirs <- .get_settings_file(target_dir)
   if (!is.null(config_path_for_dirs) && file.exists(config_path_for_dirs)) {
     config_for_dirs <- tryCatch(
-      config_read(config_path_for_dirs),
+      settings_read(config_path_for_dirs),
       error = function(e) NULL
     )
 
@@ -989,7 +989,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
     }
   }
 
-  cfg <- tryCatch(config_read(), error = function(e) NULL)
+  cfg <- tryCatch(settings_read(), error = function(e) NULL)
   author_name <- cfg$author$name
   if (is.null(author_name) || !nzchar(author_name)) {
     author_name <- "Your Name"
@@ -1033,7 +1033,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
     return(invisible(NULL))
   }
 
-  cfg <- tryCatch(config_read(config_path), error = function(e) NULL)
+  cfg <- tryCatch(settings_read(config_path), error = function(e) NULL)
   if (is.null(cfg)) {
     return(invisible(NULL))
   }

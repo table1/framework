@@ -13,22 +13,7 @@ renv_sync(prompt = FALSE)
 Invisibly returns TRUE on success
 }
 \description{
-Resolves inconsistencies between installed packages and renv.lock by:
-\enumerate{
-\item Installing missing packages that are used in code
-\item Recording installed packages to renv.lock
+Internal function that resolves inconsistencies between installed packages
+and renv.lock by restoring then snapshotting.
 }
-}
-\details{
-This is a convenience wrapper that calls renv::restore() followed by
-renv::snapshot() to bring the project into a consistent state.
-}
-\examples{
-\dontrun{
-# Check status
-renv_status()
-
-# Fix inconsistencies
-renv_sync()
-}
-}
+\keyword{internal}

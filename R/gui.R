@@ -1,3 +1,36 @@
+#' Setup Framework (First-Time Configuration)
+#'
+#' Initializes Framework's global configuration and launches the GUI for
+#' first-time setup. This is the recommended entry point for new users.
+#'
+#' Use this function after installing Framework to:
+#' - Set your author name and email
+#' - Configure default packages for new projects
+#' - Set IDE preferences (VS Code, RStudio)
+#' - Configure other global defaults
+#'
+#' @param port Port number to use (default: 8080)
+#' @param browse Automatically open browser (default: TRUE)
+#'
+#' @return Invisibly returns the plumber server object
+#'
+#' @examples
+#' \dontrun{
+#' # First-time setup
+#' framework::setup()
+#' }
+#'
+#' @seealso [gui()] for launching the GUI without initialization check
+#'
+#' @export
+setup <- function(port = 8080, browse = TRUE) {
+  # Ensure global config exists
+  init_global_config()
+
+  # Launch GUI
+  gui(port = port, browse = browse)
+}
+
 #' Launch Framework GUI
 #'
 #' Opens a beautiful web-based interface for Framework with documentation,
@@ -11,11 +44,13 @@
 #' @examples
 #' \dontrun{
 #' # Launch the GUI
-#' gui()
+#' framework::gui()
 #'
 #' # Launch on specific port
-#' gui(port = 8888)
+#' framework::gui(port = 8888)
 #' }
+#'
+#' @seealso [setup()] for first-time configuration
 #'
 #' @export
 gui <- function(port = 8080, browse = TRUE) {
@@ -125,35 +160,6 @@ gui <- function(port = 8080, browse = TRUE) {
     utils::browseURL(paste0("http://127.0.0.1:", port))
   }
 
-  # Run the server
+  # Run the server (blocking until Ctrl+C)
   pr$run(port = port, host = "127.0.0.1")
-}
-
-#' List running GUI servers
-#'
-#' @return List of running GUI server information
-#' @export
-gui_list <- function() {
-  message("GUI server listing not yet implemented with plumber backend")
-  invisible(NULL)
-}
-
-#' Stop a running GUI server
-#'
-#' @param port Port number of server to stop
-#' @export
-gui_stop <- function(port = 8080) {
-  message("GUI server stopping not yet implemented with plumber backend")
-  message("Press Ctrl+C in the R session where gui() is running")
-  invisible(NULL)
-}
-
-#' Restart the GUI server
-#'
-#' @param port Port number to use
-#' @param browse Automatically open browser
-#' @export
-gui_restart <- function(port = 8080, browse = FALSE) {
-  message("Please stop the current server (Ctrl+C) and run gui() again")
-  invisible(NULL)
 }

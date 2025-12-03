@@ -12,3 +12,4 @@ A data frame of metadata with keys, values, and timestamps
 \description{
 List all metadata
 }
+\keyword{internal}

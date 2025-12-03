@@ -95,7 +95,20 @@
       "Bash(docker exec:*)",
       "Bash(NOT_CRAN=true R --quiet -e:*)",
       "Bash(sqlite3:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(for f in R/ai_context.R R/cache_delete.R R/cache_read.R R/cache_write.R R/configure_ai.R R/configure.R R/connection_pool.R R/connections_s3.R R/connections.R R/data_read.R R/drivers.R R/init.R R/make_notebook.R R/make_script.R R/outputs.R R/packages.R R/project_create.R R/renv.R R/scaffold.R R/scratch.R R/security_audit.R R/status.R)",
+      "Bash(do sed -i '' 's/config_read/settings_read/g; s/config_write/settings_write/g' \"$f\")",
+      "Bash(statamic new --help:*)",
+      "Bash(statamic new:*)",
+      "Bash(composer create-project:*)",
+      "Bash(php please make:user:*)",
+      "Bash(php artisan framework:import-docs:*)",
+      "Bash(php artisan:*)",
+      "Bash(php artisan config:clear:*)",
+      "Bash(php artisan statamic:stache:clear:*)",
+      "Bash(xargs ls:*)",
+      "Bash(for func in add_project_to_config ai_regenerate_context configure_global load_settings_catalog project_add_directory project_create project_list quarto_regenerate read_framework_template read_frameworkrc remove_project_from_config reset_framework_template write_framework_template write_frameworkrc)",
+      "Bash(do grep -q ^$func$ /tmp/exports.txt)"
     ],
     "deny": [],
     "ask": []

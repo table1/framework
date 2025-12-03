@@ -25,3 +25,4 @@ noun_verb naming convention for better discoverability and consistency.
 
 \strong{Recommended:} Use \code{view_detail()} for the clearest, most user-friendly name.
 }
+\keyword{internal}

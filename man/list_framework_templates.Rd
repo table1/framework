@@ -2,15 +2,11 @@
 % Please edit documentation in R/templates.R
 \name{list_framework_templates}
 \alias{list_framework_templates}
-\title{Return metadata about available templates}
+\title{List available framework templates}
 \usage{
 list_framework_templates()
 }
 \description{
-Return metadata about available templates
+List available framework templates
 }
-\keyword{List}
-\keyword{available}
-\keyword{framework}
 \keyword{internal}
-\keyword{templates}

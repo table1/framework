@@ -13,10 +13,6 @@ renv_restore(prompt = FALSE)
 Invisibly returns TRUE on success
 }
 \description{
-A user-facing wrapper around renv::restore() that ensures renv is enabled.
+Internal wrapper around renv::restore(). Use packages_restore() instead.
 }
-\examples{
-\dontrun{
-renv_restore()
-}
-}
+\keyword{internal}

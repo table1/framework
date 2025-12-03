@@ -58,8 +58,8 @@ settings <- function(key = NULL, default = NULL, settings_file = NULL) {
     stop("No settings file found. Looking for settings.yml or config.yml")
   }
 
-  # Read full config
-  cfg <- config_read(settings_file)
+  # Read full settings
+  cfg <- settings_read(settings_file)
 
   # If no key provided, return entire config with pretty-printing
   if (is.null(key)) {
@@ -99,46 +99,44 @@ settings <- function(key = NULL, default = NULL, settings_file = NULL) {
 
 #' Get configuration value (alias for settings)
 #'
-#' Compatibility alias for \code{\link{settings}}. Framework recommends using
-#' \code{settings()} for new projects, but \code{config()} continues to work.
+#' Internal alias for \code{\link{settings}}.
 #'
 #' @param key Character. Dot-notation key path
 #' @param default Optional default value if key is not found
 #' @param config_file Configuration file path (default: auto-discover)
 #'
 #' @return The configuration value
-#' @seealso \code{\link{settings}}
-#' @export
+#' @keywords internal
 config <- function(key = NULL, default = NULL, config_file = NULL) {
   settings(key = key, default = default, settings_file = config_file)
 }
 
-#' Read project configuration
+#' Read project settings
 #'
-#' Reads the project configuration from settings.yml or config.yml with environment-aware
+#' Reads the project settings from settings.yml or config.yml with environment-aware
 #' merging and split file resolution. Auto-discovers the settings file if not specified.
 #'
-#' @param config_file Path to configuration file (default: auto-discover settings.yml or config.yml)
+#' @param settings_file Path to settings file (default: auto-discover settings.yml or config.yml)
 #' @param environment Active environment name (default: R_CONFIG_ACTIVE or "default")
 #'
-#' @return The configuration as a list
+#' @return The settings as a list
 #' @export
-config_read <- function(config_file = NULL, environment = NULL) {
+settings_read <- function(settings_file = NULL, environment = NULL) {
   # Auto-discover settings file if not specified
-  if (is.null(config_file)) {
-    config_file <- .get_settings_file()
+  if (is.null(settings_file)) {
+    settings_file <- .get_settings_file()
   }
 
-  if (is.null(config_file)) {
+  if (is.null(settings_file)) {
     stop("No settings file found. Looking for settings.yml or config.yml")
   }
   # Validate arguments
-  checkmate::assert_string(config_file, min.chars = 1)
+  checkmate::assert_string(settings_file, min.chars = 1)
   checkmate::assert_string(environment, null.ok = TRUE)
 
   # Check file exists
-  if (!file.exists(config_file)) {
-    stop(sprintf("Config file not found: %s", config_file))
+  if (!file.exists(settings_file)) {
+    stop(sprintf("Settings file not found: %s", settings_file))
   }
 
   # Detect active environment
@@ -147,9 +145,9 @@ config_read <- function(config_file = NULL, environment = NULL) {
 
   # Read raw YAML
   raw_config <- tryCatch(
-    .safe_read_yaml(config_file),
+    .safe_read_yaml(settings_file),
     error = function(e) {
-      stop(sprintf("Failed to parse config file '%s': %s", config_file, e$message))
+      stop(sprintf("Failed to parse settings file '%s': %s", settings_file, e$message))
     }
   )
 
@@ -162,7 +160,7 @@ config_read <- function(config_file = NULL, environment = NULL) {
   } else {
     # Environment-scoped file
     if (!"default" %in% names(raw_config)) {
-      stop(sprintf("Config file '%s' has environment sections but no 'default' environment", config_file))
+      stop(sprintf("Settings file '%s' has environment sections but no 'default' environment", settings_file))
     }
 
     # Start with default environment
@@ -179,7 +177,7 @@ config_read <- function(config_file = NULL, environment = NULL) {
   }
 
   # Resolve split file references recursively
-  config <- .resolve_split_files(config, active_env, config_file, character())
+  config <- .resolve_split_files(config, active_env, settings_file, character())
 
   # Initialize standard sections AFTER split file resolution (if still missing)
   for (section in c("data", "connections", "git", "security", "packages", "directories")) {
@@ -452,90 +450,90 @@ config_read <- function(config_file = NULL, environment = NULL) {
   )
 }
 
-#' Write project configuration
+#' Write project settings
 #'
-#' Writes the project configuration to settings.yml or config files
-#' @param config The configuration list to write
-#' @param config_file The configuration file path (default: auto-detect settings.yml/config.yml)
+#' Writes the project settings to settings.yml or config files
+#' @param settings The settings list to write
+#' @param settings_file The settings file path (default: auto-detect settings.yml/config.yml)
 #' @param section Optional section to update (e.g. "data")
 #' @export
-config_write <- function(config, config_file = NULL, section = NULL) {
+settings_write <- function(settings, settings_file = NULL, section = NULL) {
   # Validate arguments
-  checkmate::assert_list(config)
-  checkmate::assert_string(config_file, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_list(settings)
+  checkmate::assert_string(settings_file, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(section, min.chars = 1, null.ok = TRUE)
 
-  # Auto-discover config file when not provided
-  if (is.null(config_file)) {
-    config_file <- .get_settings_file()
-    if (is.null(config_file)) {
+  # Auto-discover settings file when not provided
+  if (is.null(settings_file)) {
+    settings_file <- .get_settings_file()
+    if (is.null(settings_file)) {
       # Default to creating settings.yml when none exist yet
-      config_file <- "settings.yml"
+      settings_file <- "settings.yml"
     }
   }
 
   if (!is.null(section)) {
 
-    # Check if config file exists
-    if (!file.exists(config_file)) {
-      stop(sprintf("Configuration file '%s' does not exist. Use config_write(config) without 'section' to create it first.", config_file))
+    # Check if settings file exists
+    if (!file.exists(settings_file)) {
+      stop(sprintf("Settings file '%s' does not exist. Use settings_write(settings) without 'section' to create it first.", settings_file))
     }
 
-    # Read current config
+    # Read current settings
     current <- tryCatch(
-      yaml::read_yaml(config_file),
+      yaml::read_yaml(settings_file),
       error = function(e) {
-        stop(sprintf("Failed to read configuration file '%s': %s", config_file, e$message))
+        stop(sprintf("Failed to read settings file '%s': %s", settings_file, e$message))
       }
     )
 
     # Get current environment from R_CONFIG_ACTIVE or default
     env <- Sys.getenv("R_CONFIG_ACTIVE", Sys.getenv("R_CONFIG_NAME", "default"))
 
-    # Check if this section uses a settings file
+    # Check if this section uses a split file
     if (is.character(current[[env]][[section]]) && grepl("^settings/", current[[env]][[section]])) {
-      # This is a settings file, update that instead
-      settings_file <- current[[env]][[section]]
-      if (file.exists(settings_file)) {
-        # Read current settings
-        settings <- tryCatch(
-          yaml::read_yaml(settings_file),
+      # This is a split file, update that instead
+      split_file <- current[[env]][[section]]
+      if (file.exists(split_file)) {
+        # Read current split file
+        split_settings <- tryCatch(
+          yaml::read_yaml(split_file),
           error = function(e) {
-            stop(sprintf("Failed to read settings file '%s': %s", settings_file, e$message))
+            stop(sprintf("Failed to read split file '%s': %s", split_file, e$message))
           }
         )
         # Update with new values
-        settings <- modifyList(settings, config)
-        # Write back to settings file
+        split_settings <- modifyList(split_settings, settings)
+        # Write back to split file
         tryCatch(
-          yaml::write_yaml(settings, settings_file),
+          yaml::write_yaml(split_settings, split_file),
           error = function(e) {
-            stop(sprintf("Failed to write settings file '%s': %s", settings_file, e$message))
+            stop(sprintf("Failed to write split file '%s': %s", split_file, e$message))
           }
         )
       } else {
-        stop(sprintf("Settings file '%s' does not exist", settings_file))
+        stop(sprintf("Split file '%s' does not exist", split_file))
       }
     } else {
-      # This is a direct section in settings.yml/config.yml
-      current[[env]][[section]] <- config
+      # This is a direct section in settings.yml
+      current[[env]][[section]] <- settings
       tryCatch(
-        yaml::write_yaml(current, config_file),
+        yaml::write_yaml(current, settings_file),
         error = function(e) {
-          stop(sprintf("Failed to write configuration file '%s': %s", config_file, e$message))
+          stop(sprintf("Failed to write settings file '%s': %s", settings_file, e$message))
         }
       )
     }
   } else {
-    # Writing entire config - wrap in "default" section if not already wrapped
-    if (!"default" %in% names(config)) {
-      config <- list(default = config)
+    # Writing entire settings - wrap in "default" section if not already wrapped
+    if (!"default" %in% names(settings)) {
+      settings <- list(default = settings)
     }
 
     tryCatch(
-      yaml::write_yaml(config, config_file),
+      yaml::write_yaml(settings, settings_file),
       error = function(e) {
-        stop(sprintf("Failed to write configuration file '%s': %s", config_file, e$message))
+        stop(sprintf("Failed to write settings file '%s': %s", settings_file, e$message))
       }
     )
   }

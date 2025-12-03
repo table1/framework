@@ -10,10 +10,6 @@ renv_status()
 Invisibly returns the status object from renv::status()
 }
 \description{
-A user-facing wrapper around renv::status() that ensures renv is enabled.
+Internal wrapper around renv::status(). Use packages_status() instead.
 }
-\examples{
-\dontrun{
-renv_status()
-}
-}
+\keyword{internal}

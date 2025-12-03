@@ -13,10 +13,6 @@ renv_snapshot(prompt = FALSE)
 Invisibly returns TRUE on success
 }
 \description{
-A user-facing wrapper around renv::snapshot() that ensures renv is enabled.
+Internal wrapper around renv::snapshot(). Use packages_snapshot() instead.
 }
-\examples{
-\dontrun{
-renv_snapshot()
-}
-}
+\keyword{internal}

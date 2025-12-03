@@ -44,7 +44,7 @@
     stop("Cache directory not configured. Add 'cache: outputs/private/cache' to settings/directories.yml")
   }
 
-  config_obj <- config_read()
+  config_obj <- settings_read()
   default_expire <- config_obj$options$data$cache_default_expire
 
   # Determine cache file path
