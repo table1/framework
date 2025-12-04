@@ -43,7 +43,7 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   } else {
     # Try to get data specification from config
     spec <- tryCatch(
-      data_spec_get(path),
+      data_info(path),
       error = function(e) {
         stop(sprintf("Path '%s' is not a valid file and failed to get data specification: %s", path, e$message))
       }
@@ -350,18 +350,31 @@ list_data <- function() {
   data_list()
 }
 
-#' Read data with caching
+#' Read data with caching (DEPRECATED)
 #'
-#' Loads data from the data catalog with automatic caching. If the data is already
-#' in the cache (and not expired), it returns the cached version. Otherwise, it reads
-#' from the file and caches the result.
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This function is deprecated. Use `cache_remember()` with `data_read()` instead:
+#'
+#' ```r
+#' df <- cache_remember("my_data", data_read("source.private.example"))
+#' ```
 #'
 #' @param path Dot notation path to load data (e.g. "source.private.example")
 #' @param expire_after Optional expiration time in hours (default: from config)
 #' @param refresh Optional boolean or function that returns boolean to force refresh
 #' @return The loaded data, either from cache or file
-#' @export
+#' @keywords internal
 data_read_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
+ .Deprecated(
+    msg = paste0(
+      "data_read_or_cache() is deprecated.\n",
+      "Use cache_remember() with data_read() instead:\n",
+      "  df <- cache_remember(\"my_data\", data_read(\"", path, "\"))"
+    )
+  )
+
   # Validate arguments
   checkmate::assert_string(path)
   checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
@@ -434,15 +447,15 @@ data_read_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 #'
 #' @examples
 #' \dontrun{
-#' # Get spec from dot notation
-#' spec <- data_spec_get("source.private.my_data")
+#' # Get info from dot notation
+#' info <- data_info("source.private.my_data")
 #'
-#' # Get spec from file path
-#' spec <- data_spec_get("data/public/example.csv")
+#' # Get info from file path
+#' info <- data_info("data/public/example.csv")
 #' }
 #'
 #' @export
-data_spec_get <- function(path) {
+data_info <- function(path) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
 
@@ -574,6 +587,21 @@ data_spec_get <- function(path) {
   }
 
   get_spec_by_path_type(path, config)
+}
+
+#' Get data specification (DEPRECATED)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This function has been renamed to [data_info()]. Please use that instead.
+#'
+#' @param path Dot notation path or file path
+#' @return A list with data specification
+#' @keywords internal
+data_spec_get <- function(path) {
+  .Deprecated("data_info", msg = "data_spec_get() is deprecated. Use data_info() instead.")
+  data_info(path)
 }
 
 #' Update data with hash in the data table

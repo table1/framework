@@ -45,7 +45,4 @@ This checklist mirrors the automation baked into `Makefile` and ensures we ship 
    git push origin main --tags
    ```
 
-8. **Rebuild CLI installers (optional)**
-   If the CLI changed, re-run `framework::cli_install()` locally to ensure the shim picks up the latest version.
-
 Keeping these steps in version control means every maintainer follows the same path from commit to release.

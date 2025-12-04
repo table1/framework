@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_read.R
 \name{data_read_or_cache}
 \alias{data_read_or_cache}
-\title{Read data with caching}
+\title{Read data with caching (DEPRECATED)}
 \usage{
 data_read_or_cache(path, expire_after = NULL, refresh = FALSE)
 }
@@ -17,7 +17,11 @@ data_read_or_cache(path, expire_after = NULL, refresh = FALSE)
 The loaded data, either from cache or file
 }
 \description{
-Loads data from the data catalog with automatic caching. If the data is already
-in the cache (and not expired), it returns the cached version. Otherwise, it reads
-from the file and caches the result.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function is deprecated. Use \code{cache_remember()} with \code{data_read()} instead:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{df <- cache_remember("my_data", data_read("source.private.example"))
+}\if{html}{\out{</div>}}
 }
+\keyword{internal}

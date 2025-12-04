@@ -2,38 +2,19 @@
 % Please edit documentation in R/data_read.R
 \name{data_spec_get}
 \alias{data_spec_get}
-\title{Get data specification from config}
+\title{Get data specification (DEPRECATED)}
 \usage{
 data_spec_get(path)
 }
 \arguments{
-\item{path}{Dot notation path (e.g. "source.private.example"), relative path,
-or absolute path to a data file}
+\item{path}{Dot notation path or file path}
 }
 \value{
-A list with data specification including:
-\itemize{
-\item \code{path} - Full file path
-\item \code{type} - File type (csv, rds, stata, spss, sas, etc.)
-\item \code{delimiter} - Delimiter for CSV files (comma, tab, etc.)
-\item \code{locked} - Whether file is locked for integrity checking
-\item \code{private} - Whether file is in private data directory
-\item \code{description} - Optional description of the dataset (displayed when loading)
-}
+A list with data specification
 }
 \description{
-Gets the data specification for a given dot notation path from settings.yml.
-Supports dot notation (e.g., "source.private.example"), relative paths, and
-absolute paths. Auto-detects file type from extension and applies intelligent
-defaults for common formats.
-}
-\examples{
-\dontrun{
-# Get spec from dot notation
-spec <- data_spec_get("source.private.my_data")
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 
-# Get spec from file path
-spec <- data_spec_get("data/public/example.csv")
+This function has been renamed to \code{\link[=data_info]{data_info()}}. Please use that instead.
 }
-
-}
+\keyword{internal}

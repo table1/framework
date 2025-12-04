@@ -298,7 +298,7 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
 
   if (update_config) {
     tryCatch({
-      data_spec_update(name, spec)
+      .data_spec_update(name, spec)
       message(sprintf("Data spec added to config: %s", name))
     }, error = function(e) {
       warning(sprintf("Could not update config (database record was still created): %s", e$message))
@@ -418,19 +418,8 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
 #' @return Invisibly returns NULL. Function is called for its side effect of
 #'   updating the YAML configuration file.
 #'
-#' @examples
-#' \dontrun{
-#' # Update a spec in the config
-#' data_spec_update("final.public.test", list(
-#'   path = "data/public/test.csv",
-#'   type = "csv",
-#'   delimiter = "comma",
-#'   locked = TRUE
-#' ))
-#' }
-#'
-#' @export
-data_spec_update <- function(path, spec) {
+#' @keywords internal
+.data_spec_update <- function(path, spec) {
   # Validate arguments
   checkmate::assert_string(path, min.chars = 1)
   checkmate::assert_list(spec)

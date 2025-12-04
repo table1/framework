@@ -36,15 +36,13 @@ stubs_publish()                  # Publish stubs for customization
 ```r
 data_read("inputs_raw.dataset")           # Load from data catalog
 data_read("inputs_intermediate.cleaned")  # Load intermediate data
-data_read_or_cache("slow.computation")    # Load or run expensive computation
+data_info("source.public.example")        # Get data specification
 ```
 
 ### Saving Data
 ```r
 data_save(df, "outputs_private.output")   # Save to catalog
 data_save(df, "outputs_private.secret", encrypted=TRUE)  # Encrypted save
-update_data_spec("source.public.output", spec)  # Update spec
-get_data_spec("source.public.output")   # Get data specification
 ```
 
 ### Data Cache
@@ -244,7 +242,7 @@ capture_output(expr)             # Capture console output
 | `list_metadata()` | List metadata entries |
 | `stubs_list()` | List available stubs |
 | `data_read()` | Load from data catalog |
-| `data_read_or_cache()` | Load or compute |
+| `data_info()` | Get data specification |
 | `make_notebook()` | Create notebook from stub |
 | `make_presentation()` | Create presentation (reveal.js) |
 | `make_qmd()` | Create Quarto notebook |
