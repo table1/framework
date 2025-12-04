@@ -1,3 +1,110 @@
+#' List all cached values
+#'
+#' Returns a data frame of all cache entries with their names, expiration times,
+#' and status (expired or active).
+#'
+#' @return A data frame with columns:
+#'   \describe{
+#'     \item{name}{Cache key name}
+#'     \item{expire_at}{Expiration timestamp (NA if no expiration)}
+#'     \item{created_at}{When the cache was created}
+#'     \item{updated_at}{When the cache was last updated}
+#'     \item{last_read_at}{When the cache was last read}
+#'     \item{status}{Either "active" or "expired"}
+#'   }
+#'   Returns an empty data frame if no cache entries exist.
+#'
+#' @examples
+#' \dontrun{
+#' # List all cache entries
+#' cache_list()
+#'
+#' # Filter to see only expired caches
+#' cache_list() |> dplyr::filter(status == "expired")
+#' }
+#'
+#' @export
+cache_list <- function() {
+
+  # Get database connection
+
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      warning(sprintf("Failed to connect to database: %s", e$message))
+      return(NULL)
+    }
+  )
+
+
+  if (is.null(con)) {
+    return(data.frame(
+      name = character(),
+      expire_at = as.POSIXct(character()),
+      created_at = as.POSIXct(character()),
+      updated_at = as.POSIXct(character()),
+      last_read_at = as.POSIXct(character()),
+      status = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  # Check if cache table exists
+  if (!DBI::dbExistsTable(con, "cache")) {
+    return(data.frame(
+      name = character(),
+      expire_at = as.POSIXct(character()),
+      created_at = as.POSIXct(character()),
+      updated_at = as.POSIXct(character()),
+      last_read_at = as.POSIXct(character()),
+      status = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  # Query all cache entries
+
+  result <- tryCatch(
+    DBI::dbGetQuery(
+      con,
+      "SELECT name, expire_at, created_at, updated_at, last_read_at FROM cache ORDER BY name"
+    ),
+    error = function(e) {
+      warning(sprintf("Failed to query cache table: %s", e$message))
+      return(data.frame())
+    }
+  )
+
+  if (nrow(result) == 0) {
+    return(data.frame(
+      name = character(),
+      expire_at = as.POSIXct(character()),
+      created_at = as.POSIXct(character()),
+      updated_at = as.POSIXct(character()),
+      last_read_at = as.POSIXct(character()),
+      status = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  # Convert timestamps and determine status
+  now <- Sys.time()
+  result$expire_at <- as.POSIXct(result$expire_at)
+  result$created_at <- as.POSIXct(result$created_at)
+  result$updated_at <- as.POSIXct(result$updated_at)
+  result$last_read_at <- as.POSIXct(result$last_read_at)
+
+  result$status <- ifelse(
+    is.na(result$expire_at),
+    "active",
+    ifelse(now > result$expire_at, "expired", "active")
+  )
+
+  result
+}
+
 #' Validate refresh parameter
 #' @param refresh Boolean or function that returns boolean
 #' @return Boolean indicating if refresh is needed

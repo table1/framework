@@ -5,11 +5,12 @@
 Workflow:
   description: Setting up and managing the working environment
   common:
+    - setup
     - scaffold
     - settings
     - gui
-    - standardize_wd
   functions:
+    - setup
     - scaffold
     - settings
     - settings_read
@@ -37,9 +38,7 @@ Data:
     - data_save
     - data_add
     - data_list
-    - data_spec_get
-    - data_spec_update
-    - data_read_or_cache
+    - data_info
 
 Packages:
   description: Package management and renv integration
@@ -91,13 +90,19 @@ Notebooks & Scripts:
 Project Management:
   description: Creating and managing projects
   common:
-    - project_create
-    - project_list
+    - new
+    - new_project
+    - new_project_sensitive
+    - new_presentation
+    - new_course
   functions:
-    - project_create
+    - new
+    - new_project
+    - new_project_sensitive
+    - new_presentation
+    - new_course
     - project_list
     - project_info
-    - bootstrap_project_init
     - status
 
 Publishing:
@@ -145,6 +150,7 @@ Caching:
     - cache_remember
     - cache_get
     - cache
+    - cache_list
     - cache_flush
     - cache_forget
 
@@ -165,6 +171,7 @@ Database:
     - db_drivers_status
 
 AI:
+  display_name: AI
   description: AI assistant integration
   common:
     - ai_sync_context

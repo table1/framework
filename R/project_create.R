@@ -1,7 +1,8 @@
-#' Create a new Framework project from GUI configuration
+#' Create a new Framework project (internal)
 #'
-#' This function creates a complete Framework project from scratch based on
-#' configuration provided by the GUI. This function builds everything programmatically.
+#' Low-level function that creates a complete Framework project. This is called
+#' by the GUI and by user-facing functions like [new()] and [new_project()].
+#' Users should typically use [new()] instead.
 #'
 #' @param name Project name (used for project title)
 #' @param location Full path to the project directory (will be created)
@@ -17,6 +18,7 @@
 #' @param render_dirs Named list of render directory paths for Quarto outputs
 #'
 #' @return List with success status, project path, and project ID
+#' @keywords internal
 #' @export
 project_create <- function(
   name,

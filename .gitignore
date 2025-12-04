@@ -69,7 +69,10 @@ _rendered/
 .vscode
 
 # AI Assistant contexts
-.claude/settings.local.json
+.claude/
+
+# Quarto cache
+.quarto/
 
 # Config directories
 .history

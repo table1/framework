@@ -2,7 +2,7 @@
 % Please edit documentation in R/project_create.R
 \name{project_create}
 \alias{project_create}
-\title{Create a new Framework project from GUI configuration}
+\title{Create a new Framework project (internal)}
 \usage{
 project_create(
   name,
@@ -51,6 +51,8 @@ project_create(
 List with success status, project path, and project ID
 }
 \description{
-This function creates a complete Framework project from scratch based on
-configuration provided by the GUI. This function builds everything programmatically.
+Low-level function that creates a complete Framework project. This is called
+by the GUI and by user-facing functions like \code{\link[=new]{new()}} and \code{\link[=new_project]{new_project()}}.
+Users should typically use \code{\link[=new]{new()}} instead.
 }
+\keyword{internal}

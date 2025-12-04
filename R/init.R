@@ -659,6 +659,7 @@ message("Framework dev mode active - will load from: %s")
 #'
 #' @param output_file Path where init.R should be written. Default: "init.R"
 #' @return Invisibly returns TRUE on success
+#' @keywords internal
 #' @export
 #' @examples
 #' \dontrun{
