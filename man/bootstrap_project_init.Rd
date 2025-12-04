@@ -25,3 +25,4 @@ bootstrap_project_init()
 bootstrap_project_init("docs/init_reference.R")
 }
 }
+\keyword{internal}

@@ -197,12 +197,18 @@ docs_export <- function(output_path = "docs.db",
 
   # Extract keywords
   keywords <- c()
+
   for (el in rd) {
     if (!is.null(attr(el, "Rd_tag")) && attr(el, "Rd_tag") == "\\keyword") {
       keywords <- c(keywords, .rd_get_text(el))
     }
   }
   keywords_str <- if (length(keywords) > 0) paste(keywords, collapse = ",") else NULL
+
+  # Skip functions marked as internal (unless include_internal is TRUE)
+  if ("internal" %in% keywords) {
+    return(FALSE)
+  }
 
   # Look up category_id for this function
   category_id <- category_ids[[name]]
@@ -935,11 +941,13 @@ docs_export <- function(output_path = "docs.db",
   for (cat_name in names(cats)) {
     position <- position + 1
     cat_info <- cats[[cat_name]]
+    # Use display_name if provided, otherwise use the key name
+    display_name <- cat_info$display_name %||% cat_name
     description <- cat_info$description %||% ""
 
     DBI::dbExecute(con,
       "INSERT INTO categories (name, description, position) VALUES (?, ?, ?)",
-      params = list(cat_name, description, position)
+      params = list(display_name, description, position)
     )
 
     cat_id <- DBI::dbGetQuery(con, "SELECT last_insert_rowid() as id")$id

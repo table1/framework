@@ -12,31 +12,11 @@ All development notes, debugging logs, and technical documentation should be pla
 
 Keep the root directory clean - move detailed notes to `docs/`.
 
-### README Editing Policy
+### README Editing
 
-**CRITICAL: NEVER edit `README.md` directly!**
+Edit `README.md` directly. Keep it concise and focused on user-facing documentation.
 
-The README uses a modular parts system located in `readme-parts/`:
-
-- **To edit README content**: Edit the appropriate numbered part file (e.g., `2_quickstart.md`, `4_usage_notebooks.md`)
-- **To rebuild README**: Run `Rscript readme-parts/build.R`
-- **Parts structure**:
-  - `1_header.md` - Title and description
-  - `2_quickstart.md` - Installation and project types
-  - `3_workflow_intro.md` - Core workflow intro
-  - `4_usage_notebooks.md` - **SHARED CONTENT** - make_notebook() documentation (also used in framework-project)
-  - `5_usage_data.md` - Data loading, caching, results (steps 3-6)
-  - `6_rest.md` - Configuration, functions, security, etc.
-
-**IMPORTANT**: This is the source of truth for readme-parts/. The framework-project repo gitignores readme-parts/ and only includes the built README.md.
-
-**Pre-commit hook**: A git pre-commit hook automatically:
-- Rebuilds package documentation (`devtools::document()`) when R/ files are committed
-- Rebuilds README.md when readme-parts/ files are committed
-- **Auto-syncs `2_quickstart.md`** to framework-project and rebuilds its README
-- Hook location: `.git/hooks/pre-commit`
-
-See `readme-parts/README.md` and `docs/readme-parts-guide.md` for complete documentation.
+**Pre-commit hook**: A git pre-commit hook at `.git/hooks/pre-commit` automatically rebuilds package documentation (`devtools::document()`) when R/ files are committed.
 
 ## Project Overview
 
@@ -119,16 +99,30 @@ The GUI's documentation browser reads from `docs.db`, a SQLite database generate
 - Modify `inst/docs-export/categories.yml` (function categories/groupings)
 - Update function documentation that should appear in the GUI
 
-**To regenerate docs.db:**
+**To regenerate docs.db and update all sites:**
 ```bash
-cd /Users/erikwestlund/code/framework
-R -e "devtools::load_all(); docs_export()"
+# One-liner to regenerate and deploy docs everywhere
+cd /Users/erikwestlund/code/framework && \
+R -e "devtools::document(); devtools::load_all(); docs_export()" && \
+cp docs.db inst/gui/docs.db && \
+cp docs.db gui-dev/public/docs.db && \
+cp docs.db ~/code/framework-site/storage/docs.db && \
+cd ~/code/framework-site && php artisan framework:import-docs --fresh
 ```
 
-**Then copy to GUI locations:**
+Or step by step:
 ```bash
+# 1. Generate docs.db
+cd /Users/erikwestlund/code/framework
+R -e "devtools::document(); devtools::load_all(); docs_export()"
+
+# 2. Copy to GUI locations
 cp docs.db inst/gui/docs.db
 cp docs.db gui-dev/public/docs.db
+
+# 3. Import into framework-site (Statamic)
+cp docs.db ~/code/framework-site/storage/docs.db
+cd ~/code/framework-site && php artisan framework:import-docs --fresh
 ```
 
 **Category configuration**: Edit `inst/docs-export/categories.yml` to control:
@@ -140,6 +134,14 @@ cp docs.db gui-dev/public/docs.db
 ```bash
 sqlite3 inst/gui/docs.db "SELECT name FROM categories ORDER BY position"
 ```
+
+**CRITICAL: ALWAYS regenerate docs.db when:**
+- Adding, removing, or renaming exported functions
+- Changing `@export` to `@keywords internal` (or vice versa)
+- Modifying roxygen2 documentation (titles, descriptions, parameters)
+- Editing `inst/docs-export/categories.yml`
+
+The GUI reads documentation from docs.db, NOT from the .Rd files directly. If you forget to regenerate, the GUI will show stale documentation.
 
 ## Configuration System
 
@@ -213,9 +215,6 @@ R -e "library(framework); packageVersion('framework')"
 # Generate documentation from roxygen2 comments
 R -e "devtools::document()"
 
-# Rebuild README from parts
-Rscript readme-parts/build.R
-
 # Install and rebuild documentation
 R -e "devtools::install(quick = TRUE)"
 ```
@@ -228,28 +227,19 @@ R -e "devtools::install(quick = TRUE)"
    - Add function to appropriate section with brief comment
    - Add to alphabetical function reference table
 
-2. **readme-parts/4_usage_notebooks.md** - If function is related to notebooks/scripts
-   - Update examples in "Create Notebooks & Scripts" section
-   - Keep content synchronized with framework-project template
+2. **README.md** - Update the relevant section directly
+   - Keep examples current and concise
 
 3. **docs/*.md** - Topic-specific documentation
    - Update relevant guides (e.g., `docs/make_notebook.md`)
    - Add usage examples and edge cases
 
-4. **README.md** - Rebuild after editing parts:
-   ```bash
-   Rscript readme-parts/build.R
-   ```
-
-5. **R function roxygen2 comments** - Document with examples and seealso links
+4. **R function roxygen2 comments** - Document with examples and seealso links
 
 **Quick verification:**
 ```bash
 # Check if function appears in cheatsheet
 grep "function_name" inst/templates/framework-cheatsheet.fr.md
-
-# Rebuild README to catch any part file changes
-Rscript readme-parts/build.R
 
 # Regenerate R docs
 R -e "devtools::document()"
@@ -591,7 +581,7 @@ Framework uses a **three-tier configuration hierarchy** for maximum flexibility:
   - `FW_DEFAULT_FORMAT`: Default notebook format (quarto or rmarkdown)
   - `FW_IDES`: IDE preferences (vscode, rstudio, both, none)
   - `FW_AI_SUPPORT`, `FW_AI_ASSISTANTS`: AI assistant configuration
-- Updated via `framework configure:*` CLI commands or by editing `~/.frameworkrc` directly
+- Updated via `framework::setup()` or by editing `~/.frameworkrc` directly
 
 **3. Package Defaults** - Last Resort
 - Built into Framework package
@@ -613,7 +603,7 @@ Framework uses a **three-tier configuration hierarchy** for maximum flexibility:
 
 **File Locations:**
 - **Project config**: `./config.yml` (created by `init()`)
-- **Global config**: `~/.frameworkrc` (managed by CLI)
+- **Global config**: `~/.frameworkrc` (managed by `setup()`)
 - **Split files**: `./settings/` directory (optional, for complex projects)
 - **Environment secrets**: `.env` file (gitignored)
 - **Metadata tracking**: `framework.db` (SQLite database)
@@ -669,7 +659,6 @@ Framework uses a consistent naming pattern where namespaced functions (with pref
 - No vignettes currently exist
 - Documentation via:
   - README.md (user guide)
-  - api.md (API reference)
   - CLAUDE.md (development context)
   - Roxygen2 man pages for all exported functions
 - Consider adding vignettes for common workflows before 1.0
