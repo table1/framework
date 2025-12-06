@@ -96,9 +96,9 @@
   settings_file <- file.path(vscode_dir, "settings.json")
 
   # Copy from template
-  template_file <- system.file("templates", "settings.fr.json", package = "framework")
+  template_file <- system.file("templates", "settings.json", package = "framework")
   if (!file.exists(template_file)) {
-    stop("Template settings.fr.json not found in package")
+    stop("Template settings.json not found in package")
   }
 
   file.copy(template_file, settings_file, overwrite = TRUE)

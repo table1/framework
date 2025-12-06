@@ -223,7 +223,7 @@ R -e "devtools::install(quick = TRUE)"
 
 **CRITICAL: When adding or modifying exported functions, ALWAYS update:**
 
-1. **inst/templates/framework-cheatsheet.fr.md** - User-facing quick reference (gets copied to new projects)
+1. **inst/templates/framework-cheatsheet.md** - User-facing quick reference (gets copied to new projects)
    - Add function to appropriate section with brief comment
    - Add to alphabetical function reference table
 
@@ -239,7 +239,7 @@ R -e "devtools::install(quick = TRUE)"
 **Quick verification:**
 ```bash
 # Check if function appears in cheatsheet
-grep "function_name" inst/templates/framework-cheatsheet.fr.md
+grep "function_name" inst/templates/framework-cheatsheet.md
 
 # Regenerate R docs
 R -e "devtools::document()"
@@ -355,14 +355,12 @@ make release       # Full release workflow (clean, docs, test, check)
 
 ### Template System
 
-Templates use `.fr` suffix and are processed during `init()`:
-- `.fr` files are processed and renamed (e.g., `project.fr.Rproj` → `{ProjectName}.Rproj`)
-- `.fr.R` files have `.fr` stripped (e.g., `scaffold.fr.R` → `scaffold.R`)
-- `.fr.qmd` files for Quarto notebooks (Quarto-first approach)
-- `.fr.Rmd` files for RMarkdown notebooks (backward compatibility)
-- `.fr.md` files for markdown templates
-- `{subdir}` and `{ProjectName}` placeholders are substituted
-- Template location: `inst/templates/`
+Templates are stored in `inst/templates/` and copied to new projects:
+- `project.Rproj` → renamed to `{ProjectName}.Rproj`
+- `scaffold.R` → copied as-is
+- `settings.*.yml` → copied as `settings.yml` based on project type
+- AI context templates (`ai-context.*.md`) → used to generate AI instructions
+- `{subdir}` and `{ProjectName}` placeholders are substituted in file content
 
 ### Project Structures
 
@@ -682,10 +680,8 @@ Framework uses a consistent naming pattern where namespaced functions (with pref
   - `test-renv.R` - renv integration
   - And more...
 - Test templates provided in `inst/templates/`:
-  - `test.fr.R` for basic functionality testing
-  - `test-notebook.fr.qmd` for Quarto notebook workflow testing (primary)
-  - `test-notebook.fr.Rmd` for RMarkdown notebook workflow testing (backward compatibility)
-  - Both test notebooks query the framework.db SQLite database to demonstrate database functionality
+  - `test.R` for basic functionality testing
+  - Test notebooks query the framework.db SQLite database to demonstrate database functionality
 
 ### Config System Testing
 

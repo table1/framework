@@ -1,9 +1,9 @@
 #' Create init.R from template
 #' @keywords internal
 .create_init_file <- function(project_name, type, lintr, subdir = NULL) {
-  template_path <- system.file("templates/init.fr.R", package = "framework")
+  template_path <- system.file("templates/init.R", package = "framework")
   if (!file.exists(template_path)) {
-    stop("Template init.fr.R not found in package")
+    stop("Template init.R not found in package")
   }
 
   content <- readLines(template_path, warn = FALSE)
@@ -24,14 +24,14 @@
 #' @keywords internal
 .create_config_file <- function(type = "analysis", attach_defaults = TRUE, subdir = NULL) {
   # Try type-specific template first, fall back to generic
-  template_name <- sprintf("templates/settings.%s.fr.yml", type)
+  template_name <- sprintf("templates/settings.%s.yml", type)
   template_path <- system.file(template_name, package = "framework")
 
   if (!file.exists(template_path)) {
     # Fall back to generic template
-    template_path <- system.file("templates/settings.fr.yml", package = "framework")
+    template_path <- system.file("templates/settings.yml", package = "framework")
     if (!file.exists(template_path)) {
-      stop("Template settings.fr.yml not found in package")
+      stop("Template settings.yml not found in package")
     }
   }
 
@@ -323,8 +323,8 @@ message("Framework dev mode active - will load from: %s")
   if (length(existing_rproj)) file.remove(existing_rproj)
 
   # Copy and rename .Rproj file
-  rproj_template <- system.file("templates", "project.fr.Rproj", package = "framework")
-  if (!file.exists(rproj_template)) stop("Template project.fr.Rproj file not found in package.")
+  rproj_template <- system.file("templates", "project.Rproj", package = "framework")
+  if (!file.exists(rproj_template)) stop("Template project.Rproj file not found in package.")
   rproj_target <- file.path(target_dir, paste0(rproj_name, ".Rproj"))
   file.copy(rproj_template, rproj_target, overwrite = TRUE)
 
@@ -338,36 +338,17 @@ message("Framework dev mode active - will load from: %s")
   for (file in template_files) {
     fname <- basename(file)
 
-    # Skip files already handled explicitly
-    if (fname == "project.fr.Rproj") next
-    if (fname == "init.fr.R") next  # Skip init.R template (handled separately in empty dir case)
-    if (fname == ".env.fr") next  # Skip .env template (removed, use make_env() instead)
-    if (fname == "test.fr.R") next  # Skip test file template
+    # Only copy specific utility templates to new projects
+    # Most templates are handled separately (settings, AI context, notebooks, etc.)
+    copy_templates <- list(
+      ".editorconfig" = ".editorconfig",
+      ".lintr.default" = ".lintr",
+      "scaffold.R" = "scaffold.R"
+    )
 
-    # Skip AI instruction files (handled by .create_ai_instructions based on user selection)
-    if (grepl("^CLAUDE.*\\.fr\\.md$", fname)) next  # Skip all CLAUDE template variants
-    if (fname == "AGENTS.fr.md") next
-    if (fname == "copilot-instructions.fr.md") next
+    if (!fname %in% names(copy_templates)) next
 
-    # Skip type-specific settings and README files
-    if (grepl("^settings\\.(project|course|presentation)\\.fr\\.yml$", fname)) next
-    if (grepl("^README.*\\.fr\\.md$", fname)) next  # Skip all README templates (now in project_structure)
-    if (fname == "settings.fr.yml") next  # Skip generic settings (handled separately)
-
-    if (!grepl("\\.fr($|\\.)", fname)) next
-
-    # Replace `.fr.` with `.` or `.fr` suffix with nothing
-    new_name <- gsub("\\.fr\\.", ".", fname)
-    new_name <- gsub("\\.fr$", "", new_name)
-    # Remove .default from lintr files (both in middle and end)
-    new_name <- gsub("\\.default\\.", ".", new_name)
-    new_name <- gsub("\\.default$", "", new_name)
-
-    # Preserve leading dot
-    if (grepl("^\\.", fname)) {
-      new_name <- paste0(".", sub("^\\.", "", new_name))
-    }
-
+    new_name <- copy_templates[[fname]]
     target_path <- file.path(target_dir, new_name)
     dir.create(dirname(target_path), showWarnings = FALSE, recursive = TRUE)
 
@@ -672,9 +653,9 @@ message("Framework dev mode active - will load from: %s")
 bootstrap_project_init <- function(output_file = "init.R") {
   checkmate::assert_string(output_file, min.chars = 1)
 
-  template_path <- system.file("templates/init.fr.R", package = "framework")
+  template_path <- system.file("templates/init.R", package = "framework")
   if (!file.exists(template_path)) {
-    stop("Template init.fr.R not found in package")
+    stop("Template init.R not found in package")
   }
 
   # Read template
@@ -1085,7 +1066,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
 }
 
 .initialize_framework_db <- function(target_dir = ".") {
-  template_db <- system.file("templates", "framework.fr.db", package = "framework")
+  template_db <- system.file("templates", "framework.db", package = "framework")
   if (!nzchar(template_db) || !file.exists(template_db)) {
     return(invisible(NULL))
   }

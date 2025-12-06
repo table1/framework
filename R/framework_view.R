@@ -26,7 +26,7 @@
 #' view_create(list(a = 1, b = 2, c = list(d = 3)))
 #' }
 #'
-#' @export
+#' @keywords internal
 view_create <- function(x, title = NULL, max_rows = 5000) {
   # Check if x is provided
   if (missing(x)) {
@@ -57,7 +57,7 @@ view_create <- function(x, title = NULL, max_rows = 5000) {
     # Format dates if they exist
     if (is.data.frame(x)) {
       x <- x |>
-        mutate(across(where(lubridate::is.POSIXct), ~ format(., "%Y-%m-%d %H:%M")))
+        dplyr::mutate(dplyr::across(dplyr::where(lubridate::is.POSIXct), ~ format(., "%Y-%m-%d %H:%M")))
     }
 
     # Check if data frame is large and limit rows if necessary
@@ -744,9 +744,11 @@ view_create <- function(x, title = NULL, max_rows = 5000) {
 #' view_detail(list(a = 1, b = 2, c = list(d = 3)))
 #' }
 #'
-#' @seealso \code{\link{view_create}} (underlying implementation)
-#' @export
+#' @seealso \code{\link{view}}
+#' @keywords internal
 view_detail <- function(x, title = NULL, max_rows = 5000) {
+  .Deprecated("view", package = "framework",
+              msg = "view_detail() is deprecated. Use view() instead.")
   view_create(x, title, max_rows)
 }
 
@@ -763,9 +765,39 @@ view_detail <- function(x, title = NULL, max_rows = 5000) {
 #' @return Opens a browser window (called for side effects)
 #' @keywords internal
 framework_view <- function(x, title = NULL, max_rows = 5000) {
-  .Deprecated("view_detail", package = "framework",
-              msg = "framework_view() is deprecated. Use view_detail() instead.")
+  .Deprecated("view", package = "framework",
+              msg = "framework_view() is deprecated. Use view() instead.")
   view_create(x, title, max_rows)
 }
 
 
+#' View data in an interactive browser viewer
+#'
+#' Opens an interactive, browser-based viewer for R objects. This is the primary
+#' function for viewing data frames, plots, lists, and other R objects with
+#' enhanced formatting.
+#'
+#' @param x The data to view (data.frame, plot, list, function, or other R object)
+#' @param title Optional title for the view. If NULL, uses the object name.
+#' @param max_rows Maximum number of rows to display for data frames (default: 5000).
+#'
+#' @return Invisibly returns NULL. Opens a browser window.
+#'
+#' @examples
+#' \dontrun{
+#' # View a data frame
+#' view(mtcars)
+#'
+#' # View with a title
+#' view(iris, title = "Iris Dataset")
+#'
+#' # View a ggplot
+#' library(ggplot2)
+#' p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+#' view(p)
+#' }
+#'
+#' @export
+view <- function(x, title = NULL, max_rows = 5000) {
+  view_create(x, title, max_rows)
+}
