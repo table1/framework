@@ -28,6 +28,69 @@ NULL
   invisible(dir_path)
 }
 
+#' Log a saved result to the framework database
+#'
+#' Internal function called by save_table(), save_figure(), etc. to track
+#' saved outputs in the results table.
+#'
+#' @param name Result name/identifier (typically the filename)
+#' @param path Full file path to the saved result
+#' @param type Result type: "table", "figure", "model", "report", "notebook"
+#' @param public Whether saved to public outputs directory
+#' @param comment Optional description
+#' @return NULL invisibly
+#' @keywords internal
+.save_result <- function(name, path, type, public = FALSE, comment = NULL) {
+  # Try to get hash of file (may not exist yet in some edge cases)
+  hash <- tryCatch({
+    if (file.exists(path)) .calculate_file_hash(path) else NA_character_
+  }, error = function(e) NA_character_)
+
+
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) {
+      # Silently skip if no database connection available
+      return(NULL)
+    }
+  )
+
+  if (is.null(con)) {
+    return(invisible(NULL))
+  }
+
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  now <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+
+  # Check if entry already exists
+ existing <- tryCatch(
+    DBI::dbGetQuery(con, "SELECT id FROM results WHERE name = ?", list(name)),
+    error = function(e) data.frame()
+  )
+
+  tryCatch({
+    if (nrow(existing) > 0) {
+      DBI::dbExecute(
+        con,
+        "UPDATE results SET type = ?, public = ?, comment = ?, hash = ?, updated_at = ? WHERE name = ?",
+        list(type, as.integer(public), comment, hash, now, name)
+      )
+    } else {
+      DBI::dbExecute(
+        con,
+        "INSERT INTO results (name, type, public, blind, comment, hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        list(name, type, as.integer(public), 0L, comment, hash, now, now)
+      )
+    }
+  }, error = function(e) {
+    # Silently skip database errors - don't fail the save operation
+    NULL
+  })
+
+  invisible(NULL)
+}
+
 #' Get the cache directory, respecting FW_CACHE_DIR environment variable
 #'
 #' @return The cache directory path
@@ -141,6 +204,14 @@ save_table <- function(data, name, format = "csv", public = FALSE, overwrite = T
       }
     )
     cli::cli_alert_success("Saved table to {.path {file_path}}")
+
+    # Log to results database
+    .save_result(
+      name = basename(file_path),
+      path = file_path,
+      type = "table",
+      public = public
+    )
   }, error = function(e) {
     cli::cli_abort("Failed to save table: {e$message}")
   })
@@ -231,6 +302,14 @@ save_figure <- function(plot = NULL, name, format = "png", width = 8, height = 6
       cli::cli_abort("plot must be a ggplot2 object or NULL (to save current plot)")
     }
     cli::cli_alert_success("Saved figure to {.path {file_path}}")
+
+    # Log to results database
+    .save_result(
+      name = basename(file_path),
+      path = file_path,
+      type = "figure",
+      public = public
+    )
   }, error = function(e) {
     cli::cli_abort("Failed to save figure: {e$message}")
   })
@@ -312,6 +391,14 @@ save_model <- function(model, name, format = "rds", public = FALSE, overwrite = 
       }
     )
     cli::cli_alert_success("Saved model to {.path {file_path}}")
+
+    # Log to results database
+    .save_result(
+      name = basename(file_path),
+      path = file_path,
+      type = "model",
+      public = public
+    )
   }, error = function(e) {
     cli::cli_abort("Failed to save model: {e$message}")
   })
@@ -393,6 +480,14 @@ save_report <- function(file, name = NULL, public = FALSE, overwrite = TRUE, mov
       file.copy(file, dest_file, overwrite = overwrite)
       cli::cli_alert_success("Saved report to {.path {dest_file}}")
     }
+
+    # Log to results database
+    .save_result(
+      name = basename(dest_file),
+      path = dest_file,
+      type = "report",
+      public = public
+    )
   }, error = function(e) {
     cli::cli_abort("Failed to save report: {e$message}")
   })
@@ -536,11 +631,108 @@ save_notebook <- function(file, name = NULL, format = "html", public = FALSE,
     file.copy(output_files[1], dest_file, overwrite = overwrite)
 
     cli::cli_alert_success("Saved notebook to {.path {dest_file}}")
+
+    # Log to results database
+    .save_result(
+      name = basename(dest_file),
+      path = dest_file,
+      type = "notebook",
+      public = public
+    )
   }, error = function(e) {
     cli::cli_abort("Failed to render notebook: {e$message}")
   })
 
   invisible(dest_file)
+}
+
+# -----------------------------------------------------------------------------
+# Results listing
+# -----------------------------------------------------------------------------
+
+#' List saved results from the framework database
+#'
+#' Retrieves a list of all saved results (tables, figures, models, reports,
+#' notebooks) that have been tracked via the save_* functions.
+#'
+#' @param type Optional filter by type: "table", "figure", "model", "report", "notebook"
+#' @param public Optional filter: TRUE for public results only, FALSE for private only
+#'
+#' @return A data frame with columns: name, type, public, comment, hash, created_at, updated_at.
+#'   Returns an empty data frame if no results found or database unavailable.
+#'
+#' @examples
+#' \dontrun{
+#' # List all results
+#' result_list()
+#'
+#' # List only tables
+#' result_list(type = "table")
+#'
+#' # List only public figures
+#' result_list(type = "figure", public = TRUE)
+#' }
+#'
+#' @export
+result_list <- function(type = NULL, public = NULL) {
+  checkmate::assert_choice(type, c("table", "figure", "model", "report", "notebook"), null.ok = TRUE)
+  checkmate::assert_flag(public, null.ok = TRUE)
+
+  con <- tryCatch(
+    .get_db_connection(),
+    error = function(e) NULL
+  )
+
+  if (is.null(con)) {
+    return(data.frame(
+      name = character(),
+      type = character(),
+      public = logical(),
+      comment = character(),
+      hash = character(),
+      created_at = character(),
+      updated_at = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  # Build query
+  query <- "SELECT name, type, public, comment, hash, created_at, updated_at FROM results WHERE deleted_at IS NULL"
+  params <- list()
+
+  if (!is.null(type)) {
+    query <- paste(query, "AND type = ?")
+    params <- c(params, type)
+  }
+
+  if (!is.null(public)) {
+    query <- paste(query, "AND public = ?")
+    params <- c(params, as.integer(public))
+  }
+
+  query <- paste(query, "ORDER BY updated_at DESC")
+
+  tryCatch({
+    results <- DBI::dbGetQuery(con, query, params)
+    # Convert public column to logical
+    if (nrow(results) > 0 && "public" %in% names(results)) {
+      results$public <- as.logical(results$public)
+    }
+    results
+  }, error = function(e) {
+    data.frame(
+      name = character(),
+      type = character(),
+      public = logical(),
+      comment = character(),
+      hash = character(),
+      created_at = character(),
+      updated_at = character(),
+      stringsAsFactors = FALSE
+    )
+  })
 }
 
 # -----------------------------------------------------------------------------

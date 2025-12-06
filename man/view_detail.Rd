@@ -53,5 +53,6 @@ view_detail(list(a = 1, b = 2, c = list(d = 3)))
 
 }
 \seealso{
-\code{\link{view_create}} (underlying implementation)
+\code{\link{view}}
 }
+\keyword{internal}

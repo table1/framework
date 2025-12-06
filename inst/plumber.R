@@ -2176,6 +2176,155 @@ function(id, req) {
   })
 }
 
+#* List files in a project directory
+#* @get /api/project/<id>/files/<dir>
+#* @param id Project ID
+#* @param dir Directory key (inputs_raw, inputs_intermediate, outputs_public, outputs_private, etc.)
+function(id, dir, res) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    res$status <- 404
+    return(list(error = "Project not found"))
+  }
+
+  # Get settings to map directory key to path
+  settings_file <- NULL
+  if (file.exists(file.path(project$path, "settings.yml"))) {
+    settings_file <- file.path(project$path, "settings.yml")
+  } else if (file.exists(file.path(project$path, "config.yml"))) {
+    settings_file <- file.path(project$path, "config.yml")
+  }
+
+  if (is.null(settings_file)) {
+    return(list(files = list(), directory = dir, error = "No settings file found"))
+  }
+
+  settings <- tryCatch({
+    raw <- yaml::read_yaml(settings_file)
+    raw$default %||% raw
+  }, error = function(e) list())
+
+  # Get directory path from settings
+  dir_path <- settings$directories[[dir]]
+
+  if (is.null(dir_path)) {
+    # Try common directory mappings as fallbacks
+    fallbacks <- list(
+      inputs_raw = "inputs/raw",
+      inputs_intermediate = "inputs/intermediate",
+      inputs_final = "inputs/final",
+      inputs_reference = "inputs/reference",
+      outputs_public = "outputs/public",
+      outputs_private = "outputs/private",
+      outputs_tables = "outputs/tables",
+      outputs_figures = "outputs/figures",
+      outputs_models = "outputs/models",
+      outputs_notebooks = "outputs/notebooks",
+      outputs_reports = "outputs/reports"
+    )
+    dir_path <- fallbacks[[dir]]
+  }
+
+  if (is.null(dir_path)) {
+    res$status <- 400
+    return(list(error = paste("Unknown directory:", dir)))
+  }
+
+  full_path <- file.path(project$path, dir_path)
+  if (!dir.exists(full_path)) {
+    return(list(files = list(), directory = dir_path))
+  }
+
+  # List files recursively
+  files <- list.files(full_path, recursive = TRUE, full.names = FALSE)
+  file_info <- lapply(files, function(f) {
+    fp <- file.path(full_path, f)
+    info <- file.info(fp)
+    list(
+      name = f,
+      path = file.path(dir_path, f),
+      size = info$size,
+      modified = format(info$mtime, "%Y-%m-%d %H:%M:%S"),
+      is_dir = info$isdir
+    )
+  })
+
+  list(files = file_info, directory = dir_path)
+}
+
+#* List saved results from project database
+#* @get /api/project/<id>/results
+#* @param id Project ID
+#* @param type Optional type filter (table, figure, model, report, notebook)
+function(id, type = NULL, res) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    res$status <- 404
+    return(list(error = "Project not found"))
+  }
+
+  # Connect to project's framework.db
+  db_path <- file.path(project$path, "framework.db")
+  if (!file.exists(db_path)) {
+    return(list(results = list()))
+  }
+
+  tryCatch({
+    con <- DBI::dbConnect(RSQLite::SQLite(), db_path)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    query <- "SELECT name, type, public, comment, hash, created_at, updated_at FROM results WHERE deleted_at IS NULL"
+    params <- list()
+
+    if (!is.null(type) && type != "") {
+      query <- paste(query, "AND type = ?")
+      params <- c(params, type)
+    }
+
+    query <- paste(query, "ORDER BY updated_at DESC")
+
+    results <- DBI::dbGetQuery(con, query, params)
+
+    # Convert public column to logical for JSON
+    if (nrow(results) > 0 && "public" %in% names(results)) {
+      results$public <- as.logical(results$public)
+    }
+
+    # Convert to list of lists for proper JSON serialization
+    results_list <- lapply(seq_len(nrow(results)), function(i) {
+      as.list(results[i, ])
+    })
+
+    list(results = results_list)
+  }, error = function(e) {
+    list(results = list(), error = e$message)
+  })
+}
+
 #* Create a new Framework project (new endpoint)
 #* @post /api/projects/create
 #* @param req The request object

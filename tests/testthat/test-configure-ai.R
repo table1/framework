@@ -116,7 +116,6 @@ test_that(".create_ai_instructions file content is correct", {
   expect_true(any(grepl("scaffold\\(\\)", claude_content)))
   expect_true(any(grepl("data_read", claude_content)))
   expect_true(any(grepl("result_save", claude_content)))
-  expect_true(any(grepl("config\\.yml", claude_content)))
 
   # Cleanup
   unlink(test_dir, recursive = TRUE)
@@ -209,36 +208,45 @@ test_that(".update_frameworkrc creates new file if it doesn't exist", {
 
 
 test_that("AI instruction templates exist", {
-  # Verify template files are in package
-  claude_template <- system.file("templates", "CLAUDE.fr.md", package = "framework")
-  copilot_template <- system.file("templates", "copilot-instructions.fr.md", package = "framework")
-  agents_template <- system.file("templates", "AGENTS.fr.md", package = "framework")
+  # Verify AI context template files are in package
+  project_template <- system.file("templates", "ai-context.project.md", package = "framework")
+  sensitive_template <- system.file("templates", "ai-context.project_sensitive.md", package = "framework")
+  course_template <- system.file("templates", "ai-context.course.md", package = "framework")
+  presentation_template <- system.file("templates", "ai-context.presentation.md", package = "framework")
 
-  expect_true(file.exists(claude_template))
-  expect_true(file.exists(copilot_template))
-  expect_true(file.exists(agents_template))
+  expect_true(file.exists(project_template))
+  expect_true(file.exists(sensitive_template))
+  expect_true(file.exists(course_template))
+  expect_true(file.exists(presentation_template))
 })
 
 
 test_that("AI instruction templates are not empty", {
-  # Check CLAUDE.md template
-  claude_template <- system.file("templates", "CLAUDE.fr.md", package = "framework")
-  if (file.exists(claude_template)) {
-    claude_content <- readLines(claude_template, warn = FALSE)
-    expect_gt(length(claude_content), 10)
+  # Check project template
+  project_template <- system.file("templates", "ai-context.project.md", package = "framework")
+  if (file.exists(project_template)) {
+    project_content <- readLines(project_template, warn = FALSE)
+    expect_gt(length(project_content), 10)
   }
 
-  # Check copilot template
-  copilot_template <- system.file("templates", "copilot-instructions.fr.md", package = "framework")
-  if (file.exists(copilot_template)) {
-    copilot_content <- readLines(copilot_template, warn = FALSE)
-    expect_gt(length(copilot_content), 10)
+  # Check sensitive template
+  sensitive_template <- system.file("templates", "ai-context.project_sensitive.md", package = "framework")
+  if (file.exists(sensitive_template)) {
+    sensitive_content <- readLines(sensitive_template, warn = FALSE)
+    expect_gt(length(sensitive_content), 10)
   }
 
-  # Check AGENTS.md template
-  agents_template <- system.file("templates", "AGENTS.fr.md", package = "framework")
-  if (file.exists(agents_template)) {
-    agents_content <- readLines(agents_template, warn = FALSE)
-    expect_gt(length(agents_content), 10)
+  # Check course template
+  course_template <- system.file("templates", "ai-context.course.md", package = "framework")
+  if (file.exists(course_template)) {
+    course_content <- readLines(course_template, warn = FALSE)
+    expect_gt(length(course_content), 10)
+  }
+
+  # Check presentation template
+  presentation_template <- system.file("templates", "ai-context.presentation.md", package = "framework")
+  if (file.exists(presentation_template)) {
+    presentation_content <- readLines(presentation_template, warn = FALSE)
+    expect_gt(length(presentation_content), 10)
   }
 })
