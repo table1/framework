@@ -27,8 +27,8 @@ setup <- function(port = 8080, browse = TRUE) {
   # Ensure global config exists
   init_global_config()
 
-  # Launch GUI
-  gui(port = port, browse = browse)
+  # Launch GUI directly to settings page
+  gui(port = port, browse = browse, route = "#/settings/basics")
 }
 
 #' Launch Framework GUI
@@ -38,6 +38,7 @@ setup <- function(port = 8080, browse = TRUE) {
 #'
 #' @param port Port number to use (default: 8080)
 #' @param browse Automatically open browser (default: TRUE)
+#' @param route Initial route to open (default: NULL for home page)
 #'
 #' @return Invisibly returns the plumber server object
 #'
@@ -48,17 +49,21 @@ setup <- function(port = 8080, browse = TRUE) {
 #'
 #' # Launch on specific port
 #' framework::gui(port = 8888)
+#'
+#' # Open directly to settings
+#' framework::gui(route = "#/settings/basics")
 #' }
 #'
 #' @seealso [setup()] for first-time configuration
 #'
 #' @export
-gui <- function(port = 8080, browse = TRUE) {
+gui <- function(port = 8080, browse = TRUE, route = NULL) {
   # Check if we're in development mode (loaded via devtools::load_all)
+  # Dev mode has inst/ directory; installed packages flatten inst/ contents to root
   is_dev_mode <- FALSE
   pkg_path <- find.package("framework")
-  if (file.exists(file.path(pkg_path, "DESCRIPTION"))) {
-    # We're in a development directory structure
+  if (dir.exists(file.path(pkg_path, "inst"))) {
+    # We're in a development directory structure (inst/ only exists in source)
     is_dev_mode <- TRUE
     dev_root <- pkg_path
   }
@@ -157,7 +162,11 @@ gui <- function(port = 8080, browse = TRUE) {
 
   # Open browser if requested
   if (browse) {
-    utils::browseURL(paste0("http://127.0.0.1:", port))
+    url <- paste0("http://127.0.0.1:", port)
+    if (!is.null(route)) {
+      url <- paste0(url, "/", gsub("^/", "", route))
+    }
+    utils::browseURL(url)
   }
 
   # Run the server (blocking until Ctrl+C)

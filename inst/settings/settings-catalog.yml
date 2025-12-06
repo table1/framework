@@ -215,8 +215,7 @@ project_types:
         label: "Cache"
         default: "outputs/cache"
         enabled_by_default: false
-        always_lazy: true
-        hint: "Temporary artifacts (gitignored). Always created on first use - not shown in directory settings."
+        hint: "Temporary artifacts (gitignored). Created on first use."
       scratch:
         label: "Scratch"
         default: "scratch"
@@ -334,8 +333,7 @@ project_types:
         label: "Cache"
         default: "outputs/private/cache"
         enabled_by_default: false
-        always_lazy: true
-        hint: "Always created on first use - not shown in directory settings."
+        hint: "Temporary artifacts (gitignored). Created on first use."
       scratch:
         label: "Scratch"
         default: "scratch"
@@ -380,7 +378,7 @@ project_types:
       data:
         label: "Data"
         default: "data"
-        enabled_by_default: true
+        enabled_by_default: false
         hint: "Data files for the presentation."
       scripts:
         label: "Scripts"
@@ -397,6 +395,11 @@ project_types:
         default: "outputs"
         enabled_by_default: false
         hint: "Figures, tables, and other presentation outputs."
+      cache:
+        label: "Cache"
+        default: "cache"
+        enabled_by_default: false
+        hint: "Temporary artifacts (gitignored). Created on first use."
 
     quarto:
       render_dir:
@@ -447,6 +450,11 @@ project_types:
         label: "Scripts"
         default: "scripts"
         enabled_by_default: false
+      cache:
+        label: "Cache"
+        default: "cache"
+        enabled_by_default: false
+        hint: "Temporary artifacts (gitignored). Created on first use."
 
     render_dirs:
       slides:

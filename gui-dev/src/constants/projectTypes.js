@@ -2,7 +2,7 @@
  * Project Type Constants
  *
  * These constants define the structure and optional directories for each project type.
- * They should match the settings catalog (inst/config/settings-catalog.yml).
+ * They should match the settings catalog (inst/settings/settings-catalog.yml).
  */
 
 /**
@@ -10,7 +10,7 @@
  * These directories have enabled_by_default: false in the catalog
  *
  * IMPORTANT: This list must stay in sync with:
- * - inst/config/settings-catalog.yml (presentation.directories where enabled_by_default: false)
+ * - inst/settings/settings-catalog.yml (presentation.directories where enabled_by_default: false)
  * - NewProjectView.vue (uses currentProjectTypeOptionalDirectories computed from catalog)
  * - SettingsView.vue (uses presentationOptions reactive object)
  */

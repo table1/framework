@@ -28,7 +28,7 @@
 #' @section Project Discovery:
 #' When called without arguments, `scaffold()` searches for a Framework project by:
 #' - Looking for settings.yml or config.yml in current and parent directories
-#' - Checking for .Rproj files with nearby settings
+#' - Checking for .Rproj or .code-workspace files with nearby settings
 #' - Recognizing common Framework subdirectories (notebooks/, scripts/, etc.)
 #'
 #' This means you can call `scaffold()` from any subdirectory within your project.
@@ -83,7 +83,7 @@ scaffold <- function(config_file = NULL) {
       "Could not locate a Framework project.\n",
       "scaffold() searches for a project by looking for:\n",
       "  - settings.yml or config.yml in current or parent directories\n",
-      "  - .Rproj file with settings file nearby\n",
+      "  - .Rproj or .code-workspace file with settings file nearby\n",
       "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
       "Current directory: ", getwd(), "\n",
       "To create a new project, use: project_create()"
@@ -105,7 +105,7 @@ scaffold <- function(config_file = NULL) {
       "Could not locate a Framework project.\n",
       "scaffold() searches for a project by looking for:\n",
       "  - settings.yml or config.yml in current or parent directories\n",
-      "  - .Rproj file with settings file nearby\n",
+      "  - .Rproj or .code-workspace file with settings file nearby\n",
       "  - Common subdirectories (notebooks/, scripts/, etc.)\n",
       "Current directory: ", getwd(), "\n",
       "Project root found: ", if (!is.null(project_root)) project_root else "none", "\n",

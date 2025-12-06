@@ -518,7 +518,7 @@ const fallbackProjectTypes = {
       outputs_figures: 'outputs/figures',
       outputs_models: 'outputs/models',
       outputs_reports: 'outputs/reports',
-      // cache removed - always lazy-created, not configurable
+      cache: 'outputs/cache',
       scratch: 'scratch'
     },
     render_dirs: {
@@ -552,7 +552,7 @@ const fallbackProjectTypes = {
       outputs_public_models: 'outputs/public/models',
       outputs_public_docs: 'outputs/public/docs',
       outputs_public_data_final: 'outputs/public/data_final',
-      // cache removed - always lazy-created, not configurable
+      cache: 'outputs/private/cache',
       scratch: 'scratch'
     },
     quarto: { render_dir: 'outputs/public/docs' },
@@ -564,7 +564,8 @@ const fallbackProjectTypes = {
     description: 'Single talk or slide deck with minimal analysis scaffolding.',
     directories: {
       presentation_source: 'presentation.qmd',
-      rendered_slides: '.'
+      rendered_slides: '.',
+      cache: 'cache'
     },
     quarto: { render_dir: '.' },
     notebook_template: 'notebook',
@@ -579,7 +580,8 @@ const fallbackProjectTypes = {
       assignments: 'assignments',
       course_docs: 'course_docs',
       readings: 'readings',
-      notebooks: 'modules'
+      notebooks: 'modules',
+      cache: 'cache'
     },
     quarto: { render_dir: 'course_docs' },
     notebook_template: 'notebook',
@@ -659,7 +661,6 @@ const generalOutputFallback = [
   { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
-// Note: Cache is always lazy-created and not configurable (uses FW_CACHE_DIR env var or default)
 const generalUtilityFallback = [
   { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
 ]
@@ -1837,14 +1838,19 @@ const loadSettings = async () => {
       const catalogDirs = catalogData?.project_types?.[projectType]?.directories || {}
       const enabled = getDirectoriesEnabled(projectType)
 
-      // Set all known directories from catalog using enabled_by_default
+      // Set all known directories from catalog
+      // Priority: saved directories_enabled > catalog enabled_by_default > whether dir exists
+      const savedEnabled = settings.value.project_types?.[projectType]?.directories_enabled || {}
       for (const dirKey of Object.keys(catalogDirs)) {
         const catalogDir = catalogDirs[dirKey]
-        // Skip cache - it's always lazy-created and not configurable
-        if (dirKey === 'cache' || catalogDir.always_lazy) continue
-        // Use enabled_by_default from catalog, falling back to whether dir exists in settings
-        const enabledByDefault = catalogDir.enabled_by_default ?? Object.prototype.hasOwnProperty.call(dirs, dirKey)
-        enabled[dirKey] = enabledByDefault
+        // Check if we have a saved enabled state first
+        if (dirKey in savedEnabled) {
+          enabled[dirKey] = savedEnabled[dirKey]
+        } else {
+          // Fall back to enabled_by_default from catalog, then whether dir exists in settings
+          const enabledByDefault = catalogDir.enabled_by_default ?? Object.prototype.hasOwnProperty.call(dirs, dirKey)
+          enabled[dirKey] = enabledByDefault
+        }
       }
 
       // Also check for any extra directories in settings not in catalog

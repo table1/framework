@@ -154,7 +154,7 @@ Framework now uses **all-YAML configuration** for consistency across global and 
 - `projects.yml` - Project registry
 - `settings-catalog.yml` - Templates/schema (copied from package on first run)
 
-**Auto-initialization**: If no global config exists, Framework automatically creates it from `inst/config/global-config-default.yml` on first run (GUI launch or `framework::init_global_config()`).
+**Auto-initialization**: If no global config exists, Framework automatically creates it from `inst/settings/global-settings-default.yml` on first run (GUI launch or `framework::init_global_config()`).
 
 **Why YAML everywhere**:
 - Consistency - one parser, one format, fewer edge cases
@@ -168,7 +168,7 @@ Framework now uses **all-YAML configuration** for consistency across global and 
 
 **CRITICAL: When adding new configurable settings, ALWAYS follow this pattern:**
 
-1. **Add to global defaults** (`inst/config/global-config-default.yml`):
+1. **Add to global defaults** (`inst/settings/global-settings-default.yml`):
    - Add `FW_*` environment variable with sensible default
    - Document in comments what the setting controls
    - Example: `FW_SEED="20241016"  # Random seed for reproducibility`
