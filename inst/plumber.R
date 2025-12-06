@@ -268,10 +268,6 @@ function() {
 
   settings <- framework::read_frameworkrc()
 
-  # DEBUG: Log what we're returning
-  message("[API GET /api/settings/get] global.projects_root from read: ",
-          settings$global$projects_root %||% "NULL")
-
   # Check if v1 format (no meta.version or version < 2)
   needs_migration <- is.null(settings$meta$version) || settings$meta$version < 2
 
@@ -373,10 +369,6 @@ function() {
   if (!is.null(settings$defaults$packages) && is.list(settings$defaults$packages) && length(settings$defaults$packages) == 0) {
     settings$defaults$packages <- I(list())
   }
-
-  # DEBUG: Log final returned value
-  message("[API GET /api/settings/get] Returning global.projects_root: ",
-          settings$global$projects_root %||% "NULL")
 
   return(settings)
 }
@@ -1105,9 +1097,12 @@ function(id) {
 #* @get /api/project/<id>/ai
 #* @param id Project ID
 #* @param canonical_file Optional canonical file to preview content for
-function(id, canonical_file = NULL) {
+function(id, canonical_file = "") {
   config <- framework::read_frameworkrc()
   project_id <- as.integer(id)
+  # Convert empty string to NULL for internal logic
+
+  if (canonical_file == "") canonical_file <- NULL
 
   project <- NULL
   if (!is.null(config$projects) && length(config$projects) > 0) {
@@ -2580,7 +2575,7 @@ function() {
 #* @get /api/docs/functions
 #* @param category_id Optional category ID to filter by
 #* @serializer unboxedJSON
-function(category_id = NULL) {
+function(category_id = "") {
   tryCatch({
     db_path <- .get_docs_db_path()
     if (is.null(db_path)) {
@@ -2590,7 +2585,7 @@ function(category_id = NULL) {
     con <- DBI::dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
     on.exit(DBI::dbDisconnect(con), add = TRUE)
 
-    if (!is.null(category_id) && nzchar(category_id)) {
+    if (nzchar(category_id)) {
       functions <- DBI::dbGetQuery(con, "
         SELECT
           f.id,

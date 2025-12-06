@@ -110,9 +110,19 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
       # Check if file has changed
       if (data_record$hash != current_hash) {
         if (spec$locked) {
-          stop(sprintf("Hash mismatch for locked data: %s", path))
+          stop(sprintf(
+            "Hash mismatch for locked data '%s'\nExpected hash: %s\nCurrent hash:  %s",
+            path,
+            substr(data_record$hash, 1, 12),
+            substr(current_hash, 1, 12)
+          ))
         } else {
-          warning(sprintf("File has changed since last read: %s", path))
+          warning(sprintf(
+            "File hash changed for '%s'\nPrevious hash: %s\nCurrent hash:  %s",
+            path,
+            substr(data_record$hash, 1, 12),
+            substr(current_hash, 1, 12)
+          ))
         }
       }
       # Update hash and metadata

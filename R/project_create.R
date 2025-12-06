@@ -273,7 +273,7 @@ project_create <- function(
 #' Resolve default render directory mappings for a project type from the catalog
 #' @keywords internal
 .default_render_dirs_for_type <- function(type) {
-  catalog_path <- system.file("config/settings-catalog.yml", package = "framework")
+  catalog_path <- system.file("settings/settings-catalog.yml", package = "framework")
   if (!file.exists(catalog_path)) {
     return(list())
   }
@@ -293,7 +293,7 @@ project_create <- function(
 #' Resolve default root render_dir (if defined) for a project type
 #' @keywords internal
 .default_root_render_dir_for_type <- function(type) {
-  catalog_path <- system.file("config/settings-catalog.yml", package = "framework")
+  catalog_path <- system.file("settings/settings-catalog.yml", package = "framework")
   if (!file.exists(catalog_path)) {
     return(NULL)
   }

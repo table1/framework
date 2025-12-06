@@ -97,7 +97,7 @@ If hardcoding is absolutely necessary, add clear comments:
 
 ```javascript
 // SYNC REQUIREMENT: Must match PRESENTATION_OPTIONAL_DIRECTORIES
-// in src/constants/projectTypes.js and inst/config/settings-catalog.yml
+// in src/constants/projectTypes.js and inst/settings/settings-catalog.yml
 // (presentation.directories where enabled_by_default: false)
 // Order matters: inputs, outputs, scripts, functions
 const presentationOptions = reactive({

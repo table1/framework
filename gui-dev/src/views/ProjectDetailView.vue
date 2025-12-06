@@ -2452,9 +2452,9 @@ const confirmDelete = async () => {
     const action = deleteOption.value === 'delete' ? 'deleted' : 'removed from Framework'
     toast.success('Project Removed', `${project.value.name} has been ${action}`)
 
-    // Full page reload to refresh sidebar menu
+    // Full page reload to refresh sidebar menu - redirect to home
     setTimeout(() => {
-      window.location.href = '/projects'
+      window.location.href = '/'
     }, 500) // Small delay to show toast
   } catch (error) {
     console.error('[DELETE] Failed to delete project:', error)

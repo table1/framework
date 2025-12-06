@@ -817,11 +817,19 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
         checkmate::check_list(entry$directories),
         checkmate::check_character(entry$directories)
       )
-      for (dir_value in entry$directories) {
+      for (dir_name in names(entry$directories)) {
+        dir_value <- entry$directories[[dir_name]]
         # Skip empty strings (sent by GUI when field is cleared)
-        if (!is.null(dir_value) && nzchar(dir_value)) {
+        if (!is.null(dir_value) && is.character(dir_value) && nzchar(dir_value)) {
           checkmate::assert_string(dir_value, min.chars = 1)
         }
+      }
+    }
+    # Validate directories_enabled (should be a list of logicals)
+    if (!is.null(entry$directories_enabled)) {
+      checkmate::assert_list(entry$directories_enabled)
+      for (key in names(entry$directories_enabled)) {
+        checkmate::assert_logical(entry$directories_enabled[[key]], len = 1)
       }
     }
     if (!is.null(entry$quarto)) {
@@ -1022,6 +1030,11 @@ configure_global <- function(settings = NULL, validate = TRUE) {
       if (!is.null(settings$project_types[[type_name]]$extra_directories)) {
         updated$project_types[[type_name]]$extra_directories <-
           settings$project_types[[type_name]]$extra_directories
+      }
+      # Replace directories_enabled completely (toggle states for each directory)
+      if (!is.null(settings$project_types[[type_name]]$directories_enabled)) {
+        updated$project_types[[type_name]]$directories_enabled <-
+          settings$project_types[[type_name]]$directories_enabled
       }
     }
   }

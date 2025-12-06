@@ -3,7 +3,7 @@
 #' Get the path to the packaged settings catalog YAML
 #' @keywords internal
 .framework_catalog_default_path <- function() {
-  system.file("config", "settings-catalog.yml", package = "framework", mustWork = TRUE)
+  system.file("settings", "settings-catalog.yml", package = "framework", mustWork = TRUE)
 }
 
 #' Get the path to the user-editable settings catalog override

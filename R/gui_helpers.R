@@ -19,7 +19,7 @@ init_global_config <- function(force = FALSE) {
 
   # Copy default settings if doesn't exist or force is TRUE
   if (!file.exists(settings_path) || force) {
-    default_settings <- system.file("config", "global-settings-default.yml", package = "framework")
+    default_settings <- system.file("settings", "global-settings-default.yml", package = "framework")
     if (file.exists(default_settings)) {
       file.copy(default_settings, settings_path, overwrite = force)
       message("Initialized global settings: ", settings_path)

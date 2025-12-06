@@ -137,14 +137,15 @@ standardize_wd <- function(project_root = NULL) {
       }
     }
 
-    # Last resort: check for .Rproj files in current and parent directories
+    # Last resort: check for .Rproj or .code-workspace files in current and parent directories
     if (is.null(project_root)) {
-      # Walk up looking for .Rproj file
+      # Walk up looking for .Rproj or .code-workspace file
       check_dir <- current
       max_depth <- 10  # Prevent infinite loops
       depth <- 0
 
       while (depth < max_depth) {
+        # Check for .Rproj files
         rproj_files <- list.files(
           path = check_dir,
           pattern = "\\.Rproj$",
@@ -152,14 +153,22 @@ standardize_wd <- function(project_root = NULL) {
           recursive = FALSE
         )
 
-        if (length(rproj_files) > 0) {
-          # Found .Rproj - check if settings file is in R/ subdirectory
+        # Check for .code-workspace files
+        workspace_files <- list.files(
+          path = check_dir,
+          pattern = "\\.code-workspace$",
+          full.names = TRUE,
+          recursive = FALSE
+        )
+
+        if (length(rproj_files) > 0 || length(workspace_files) > 0) {
+          # Found project marker - check if settings file is in R/ subdirectory
           r_dir <- file.path(check_dir, "R")
           if (dir.exists(r_dir) && .has_settings_file(r_dir)) {
             project_root <- r_dir
             break
           }
-          # Or check if settings file is in same directory as .Rproj
+          # Or check if settings file is in same directory as project marker
           if (.has_settings_file(check_dir)) {
             project_root <- check_dir
             break

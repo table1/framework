@@ -135,19 +135,13 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
 .load_ai_template <- function(project_type, project_name = "My Project") {
   template_dir <- system.file("templates", package = "framework")
 
-  # New naming convention: ai-context.{type}.fr.md
-  template_name <- sprintf("ai-context.%s.fr.md", project_type)
+  # Naming convention: ai-context.{type}.md
+  template_name <- sprintf("ai-context.%s.md", project_type)
   template_file <- file.path(template_dir, template_name)
 
   # Fall back to generic project template
-
   if (!file.exists(template_file)) {
-    template_file <- file.path(template_dir, "ai-context.project.fr.md")
-  }
-
-  # Final fallback to old template
-  if (!file.exists(template_file)) {
-    template_file <- file.path(template_dir, "AI_CANONICAL.fr.md")
+    template_file <- file.path(template_dir, "ai-context.project.md")
   }
 
   if (!file.exists(template_file)) {

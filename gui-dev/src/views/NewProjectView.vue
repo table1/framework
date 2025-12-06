@@ -1233,8 +1233,7 @@ const countDirectoriesByCategory = (category) => {
     } else if (category === 'output') {
       return key.startsWith('outputs_')
     } else if (category === 'temporary') {
-      // Cache is always lazy-created and not configurable
-      return key === 'scratch'
+      return key === 'scratch' || key === 'cache'
     }
     return false
   })
@@ -1283,7 +1282,6 @@ const generalOutputFallback = [
   { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
-// Note: Cache is always lazy-created and not configurable (uses FW_CACHE_DIR env var or default)
 const generalUtilityFallback = [
   { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
 ]

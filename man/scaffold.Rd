@@ -45,7 +45,7 @@ After \code{scaffold()} completes, you have access to:
 When called without arguments, \code{scaffold()} searches for a Framework project by:
 \itemize{
 \item Looking for settings.yml or config.yml in current and parent directories
-\item Checking for .Rproj files with nearby settings
+\item Checking for .Rproj or .code-workspace files with nearby settings
 \item Recognizing common Framework subdirectories (notebooks/, scripts/, etc.)
 }
 
