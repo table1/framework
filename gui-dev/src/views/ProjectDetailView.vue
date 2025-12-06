@@ -140,6 +140,33 @@
         </div>
 
         <a
+          href="#inputs"
+          @click.prevent="activeSection = 'inputs'"
+          :class="getSidebarLinkClasses('inputs')"
+        >
+          <ArrowDownTrayIcon class="h-4 w-4" />
+          Inputs
+        </a>
+
+        <a
+          href="#outputs"
+          @click.prevent="activeSection = 'outputs'"
+          :class="getSidebarLinkClasses('outputs')"
+        >
+          <ArrowUpTrayIcon class="h-4 w-4" />
+          Outputs
+        </a>
+
+        <a
+          href="#results"
+          @click.prevent="activeSection = 'results'"
+          :class="getSidebarLinkClasses('results')"
+        >
+          <ChartBarIcon class="h-4 w-4" />
+          Results
+        </a>
+
+        <a
           href="#notebooks"
           @click.prevent="activeSection = 'notebooks'"
           :class="getSidebarLinkClasses('notebooks')"
@@ -449,6 +476,113 @@
           v-model:default-storage-bucket="defaultStorageBucket"
         />
 
+      </div>
+
+      <!-- Inputs Section -->
+      <div v-show="activeSection === 'inputs'" id="inputs">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Input Files</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Browse files in your input directories.
+        </p>
+
+        <Tabs v-model="inputsTab" :tabs="inputTabs" variant="pills" class="mb-6">
+          <TabPanel id="raw" :active="inputsTab === 'raw'">
+            <FileBrowser
+              :files="inputsRaw"
+              :loading="loadingInputs"
+              emptyTitle="No raw input files"
+              emptyDescription="Add raw data files to your inputs/raw directory."
+            />
+          </TabPanel>
+          <TabPanel id="intermediate" :active="inputsTab === 'intermediate'">
+            <FileBrowser
+              :files="inputsIntermediate"
+              :loading="loadingInputs"
+              emptyTitle="No intermediate files"
+              emptyDescription="Processed data files will appear in inputs/intermediate."
+            />
+          </TabPanel>
+          <TabPanel id="final" :active="inputsTab === 'final'">
+            <FileBrowser
+              :files="inputsFinal"
+              :loading="loadingInputs"
+              emptyTitle="No final input files"
+              emptyDescription="Final processed data files will appear in inputs/final."
+            />
+          </TabPanel>
+          <TabPanel id="reference" :active="inputsTab === 'reference'">
+            <FileBrowser
+              :files="inputsReference"
+              :loading="loadingInputs"
+              emptyTitle="No reference files"
+              emptyDescription="Reference data and lookup tables go in inputs/reference."
+            />
+          </TabPanel>
+        </Tabs>
+      </div>
+
+      <!-- Outputs Section -->
+      <div v-show="activeSection === 'outputs'" id="outputs">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Output Files</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Browse files in your output directories.
+        </p>
+
+        <Tabs v-model="outputsTab" :tabs="outputTabs" variant="pills" class="mb-6">
+          <TabPanel id="tables" :active="outputsTab === 'tables'">
+            <FileBrowser
+              :files="outputsTables"
+              :loading="loadingOutputs"
+              emptyTitle="No saved tables"
+              emptyDescription="Tables saved with save_table() will appear here."
+            />
+          </TabPanel>
+          <TabPanel id="figures" :active="outputsTab === 'figures'">
+            <FileBrowser
+              :files="outputsFigures"
+              :loading="loadingOutputs"
+              emptyTitle="No saved figures"
+              emptyDescription="Figures saved with save_figure() will appear here."
+            />
+          </TabPanel>
+          <TabPanel id="models" :active="outputsTab === 'models'">
+            <FileBrowser
+              :files="outputsModels"
+              :loading="loadingOutputs"
+              emptyTitle="No saved models"
+              emptyDescription="Models saved with save_model() will appear here."
+            />
+          </TabPanel>
+          <TabPanel id="reports" :active="outputsTab === 'reports'">
+            <FileBrowser
+              :files="outputsReports"
+              :loading="loadingOutputs"
+              emptyTitle="No saved reports"
+              emptyDescription="Reports saved with save_report() will appear here."
+            />
+          </TabPanel>
+          <TabPanel id="notebooks_output" :active="outputsTab === 'notebooks_output'">
+            <FileBrowser
+              :files="outputsNotebooks"
+              :loading="loadingOutputs"
+              emptyTitle="No rendered notebooks"
+              emptyDescription="Notebooks saved with save_notebook() will appear here."
+            />
+          </TabPanel>
+        </Tabs>
+      </div>
+
+      <!-- Results Section -->
+      <div v-show="activeSection === 'results'" id="results">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Saved Results</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Results tracked in the database via save_table(), save_figure(), save_model(), etc.
+        </p>
+
+        <ResultsList
+          :results="projectResults"
+          :loading="loadingResults"
+        />
       </div>
 
       <!-- Packages Section -->
@@ -891,6 +1025,8 @@ import OverviewCard from '../components/ui/OverviewCard.vue'
 import OverviewSummary from '../components/OverviewSummary.vue'
 import DataCatalogEditModal from '../components/DataCatalogEditModal.vue'
 import DataCatalogTree from '../components/DataCatalogTree.vue'
+import FileBrowser from '../components/FileBrowser.vue'
+import ResultsList from '../components/ResultsList.vue'
 import { createDataAnchorId } from '../utils/dataCatalog.js'
 import AuthorInformationPanel from '../components/settings/AuthorInformationPanel.vue'
 import PackagesEditor from '../components/settings/PackagesEditor.vue'
@@ -927,7 +1063,10 @@ import {
   DocumentCheckIcon,
   AdjustmentsVerticalIcon,
   ServerStackIcon,
-  KeyIcon
+  KeyIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  ChartBarIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -937,7 +1076,7 @@ const project = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeSection = ref('overview')
-const VALID_SECTIONS = ['overview', 'basics', 'settings', 'quarto', 'notebooks', 'connections', 'data', 'packages', 'ai', 'git', 'scaffold', 'env']
+const VALID_SECTIONS = ['overview', 'basics', 'settings', 'quarto', 'notebooks', 'connections', 'data', 'inputs', 'outputs', 'results', 'packages', 'ai', 'git', 'scaffold', 'env']
 
 const dataCatalog = ref(null)
 const dataSearch = ref('')
@@ -949,6 +1088,41 @@ const dataEditError = ref(null)
 const isCreatingDataEntry = ref(false)
 const dataEntriesToDelete = ref(new Set())
 const savingDataDeletes = ref(false)
+
+// Inputs state
+const inputsTab = ref('raw')
+const inputTabs = [
+  { id: 'raw', label: 'Raw' },
+  { id: 'intermediate', label: 'Intermediate' },
+  { id: 'final', label: 'Final' },
+  { id: 'reference', label: 'Reference' }
+]
+const inputsRaw = ref([])
+const inputsIntermediate = ref([])
+const inputsFinal = ref([])
+const inputsReference = ref([])
+const loadingInputs = ref(false)
+
+// Outputs state
+const outputsTab = ref('tables')
+const outputTabs = [
+  { id: 'tables', label: 'Tables' },
+  { id: 'figures', label: 'Figures' },
+  { id: 'models', label: 'Models' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'notebooks_output', label: 'Notebooks' }
+]
+const outputsTables = ref([])
+const outputsFigures = ref([])
+const outputsModels = ref([])
+const outputsReports = ref([])
+const outputsNotebooks = ref([])
+const loadingOutputs = ref(false)
+
+// Results state
+const projectResults = ref([])
+const loadingResults = ref(false)
+
 const projectSettings = ref(null)
 const settingsCatalog = ref(null)
 const editableSettings = ref({})
@@ -1270,6 +1444,21 @@ watch(activeSection, (newSection) => {
 
   if (newSection === 'env' && !envLoaded.value) {
     loadEnv()
+  }
+
+  // Load inputs when Inputs section is activated
+  if (newSection === 'inputs' && inputsRaw.value.length === 0) {
+    loadInputFiles()
+  }
+
+  // Load outputs when Outputs section is activated
+  if (newSection === 'outputs' && outputsTables.value.length === 0) {
+    loadOutputFiles()
+  }
+
+  // Load results when Results section is activated
+  if (newSection === 'results' && projectResults.value.length === 0) {
+    loadResults()
   }
 })
 
@@ -2753,6 +2942,87 @@ const saveEnv = async () => {
     toast.error('Save Failed', err.message)
   } finally {
     savingEnv.value = false
+  }
+}
+
+// Load input files
+const loadInputFiles = async () => {
+  loadingInputs.value = true
+
+  try {
+    const projectId = route.params.id
+    const [rawRes, intRes, finalRes, refRes] = await Promise.all([
+      fetch(`/api/project/${projectId}/files/inputs_raw`),
+      fetch(`/api/project/${projectId}/files/inputs_intermediate`),
+      fetch(`/api/project/${projectId}/files/inputs_final`),
+      fetch(`/api/project/${projectId}/files/inputs_reference`)
+    ])
+
+    const [rawData, intData, finalData, refData] = await Promise.all([
+      rawRes.json(),
+      intRes.json(),
+      finalRes.json(),
+      refRes.json()
+    ])
+
+    inputsRaw.value = rawData.files || []
+    inputsIntermediate.value = intData.files || []
+    inputsFinal.value = finalData.files || []
+    inputsReference.value = refData.files || []
+  } catch (err) {
+    console.error('Failed to load input files:', err)
+  } finally {
+    loadingInputs.value = false
+  }
+}
+
+// Load output files
+const loadOutputFiles = async () => {
+  loadingOutputs.value = true
+
+  try {
+    const projectId = route.params.id
+    const [tablesRes, figuresRes, modelsRes, reportsRes, notebooksRes] = await Promise.all([
+      fetch(`/api/project/${projectId}/files/outputs_tables`),
+      fetch(`/api/project/${projectId}/files/outputs_figures`),
+      fetch(`/api/project/${projectId}/files/outputs_models`),
+      fetch(`/api/project/${projectId}/files/outputs_reports`),
+      fetch(`/api/project/${projectId}/files/outputs_notebooks`)
+    ])
+
+    const [tablesData, figuresData, modelsData, reportsData, notebooksData] = await Promise.all([
+      tablesRes.json(),
+      figuresRes.json(),
+      modelsRes.json(),
+      reportsRes.json(),
+      notebooksRes.json()
+    ])
+
+    outputsTables.value = tablesData.files || []
+    outputsFigures.value = figuresData.files || []
+    outputsModels.value = modelsData.files || []
+    outputsReports.value = reportsData.files || []
+    outputsNotebooks.value = notebooksData.files || []
+  } catch (err) {
+    console.error('Failed to load output files:', err)
+  } finally {
+    loadingOutputs.value = false
+  }
+}
+
+// Load results from database
+const loadResults = async () => {
+  loadingResults.value = true
+
+  try {
+    const response = await fetch(`/api/project/${route.params.id}/results`)
+    const data = await response.json()
+    projectResults.value = data.results || []
+  } catch (err) {
+    console.error('Failed to load results:', err)
+    projectResults.value = []
+  } finally {
+    loadingResults.value = false
   }
 }
 

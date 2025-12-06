@@ -1,7 +1,7 @@
 #' Create the template SQLite database
 #' @keywords internal
 .create_template_db <- function(delete_existing = FALSE) {
-  db_path <- "inst/templates/framework.fr.db"
+  db_path <- "inst/templates/framework.db"
 
   # Validate we're in package root
   if (!file.exists("inst/templates")) {
@@ -73,7 +73,7 @@
 
   if (!file.exists(db_path)) {
     # Copy template database
-    template_db <- system.file("templates", "framework.fr.db", package = "framework")
+    template_db <- system.file("templates", "framework.db", package = "framework")
     if (nzchar(template_db) && file.exists(template_db)) {
       file.copy(template_db, db_path)
     }

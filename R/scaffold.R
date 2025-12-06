@@ -543,7 +543,7 @@ scaffold <- function(config_file = NULL) {
     return(invisible(NULL))
   }
 
-  template_db <- system.file("templates", "framework.fr.db", package = "framework")
+  template_db <- system.file("templates", "framework.db", package = "framework")
   if (!nzchar(template_db) || !file.exists(template_db)) {
     warning(
       "Framework template database not found. Some features may not work until scaffold() creates framework.db.\n",

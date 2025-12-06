@@ -212,8 +212,8 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
     return(c("claude", "copilot", "agents"))
   }
 
-  # Parse comma-separated numbers
-  numbers <- as.integer(strsplit(selection, ",")[[1]])
+  # Parse comma-separated numbers (suppress NA warning for non-numeric input)
+  numbers <- suppressWarnings(as.integer(strsplit(selection, ",")[[1]]))
   numbers <- numbers[!is.na(numbers)]
 
   assistants <- character(0)
