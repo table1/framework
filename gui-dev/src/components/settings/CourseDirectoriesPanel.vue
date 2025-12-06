@@ -76,6 +76,19 @@
         />
       </div>
 
+      <!-- Cache: always available, just a path input (no toggle) -->
+      <div class="space-y-1.5">
+        <label class="block text-sm font-medium text-gray-900 dark:text-white">Cache</label>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Temporary artifacts (gitignored). Created automatically on first use.</p>
+        <Input
+          :model-value="getDirectoryPath('cache')"
+          @update:model-value="(val) => updateDirectoryPath('cache', val)"
+          :placeholder="getDirectoryDefault('cache')"
+          prefix="/"
+          monospace
+        />
+      </div>
+
       <!-- Extra/custom directories from global settings -->
       <div
         v-for="dir in extraDirectories"

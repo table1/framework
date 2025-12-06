@@ -200,7 +200,7 @@ Functions, notebooks, and slides that render to output directories.
 
 Need to add render output defaults to settings catalog:
 
-**Location**: `inst/config/settings-catalog.yml`
+**Location**: `inst/settings/settings-catalog.yml`
 
 Add `output` field to renderable directories:
 ```yaml

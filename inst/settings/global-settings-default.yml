@@ -178,6 +178,7 @@ project_types:
       course_docs: "course_docs"
       readings: "readings"
       notebooks: "modules"
+      cache: "cache"
 
   presentation:
     label: "Presentation"
@@ -189,6 +190,7 @@ project_types:
       presentation_source: "presentation.qmd"
       rendered_slides: "."
       data: "data"
+      cache: "cache"
 
   project_sensitive:
     label: "Privacy Sensitive Project"

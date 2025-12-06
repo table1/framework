@@ -203,6 +203,19 @@
             />
           </div>
 
+          <!-- Cache: always available, just a path input (no toggle) -->
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-900 dark:text-white">Cache</label>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Temporary artifacts (gitignored). Created automatically on first use.</p>
+            <Input
+              :model-value="getDirectoryValue('cache')"
+              @update:model-value="updateDirectory('cache', $event)"
+              prefix="/"
+              monospace
+              :disabled="disabled"
+            />
+          </div>
+
           <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Add Custom Directories</h4>
 
@@ -653,12 +666,26 @@
     </div>
 
     <!-- Utility Section -->
-    <div v-if="!isPresentationProject && !isCourseProject && utilityFields.length > 0" :id="`section-utility`">
+    <div v-if="!isPresentationProject && !isCourseProject" :id="`section-utility`">
       <SettingsPanel
         title="Utility"
-        description="Scratch space and other temporary directories (gitignored by default). Cache is always created on first use."
+        description="Cache and scratch directories (gitignored by default)."
       >
         <div class="space-y-5">
+          <!-- Cache: always available, just a path input (no toggle) -->
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-900 dark:text-white">Cache</label>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Temporary artifacts (gitignored). Created automatically on first use.</p>
+            <Input
+              :model-value="getDirectoryValue('cache')"
+              @update:model-value="updateDirectory('cache', $event)"
+              prefix="/"
+              monospace
+              :disabled="disabled"
+            />
+          </div>
+
+          <!-- Scratch and other utility dirs: toggleable -->
           <div v-for="field in utilityFields" :key="field.key" class="space-y-1.5">
             <Toggle
               :model-value="localEnabled[field.key]"
@@ -859,7 +886,6 @@ const outputFallback = [
   { key: 'outputs_reports', label: 'Reports', hint: 'Final reports and deliverables ready for publication.' }
 ]
 
-// Note: Cache is always lazy-created and not configurable (uses FW_CACHE_DIR env var or default)
 const utilityFallback = [
   { key: 'scratch', label: 'Scratch', hint: 'Short-lived explorations (gitignored).' }
 ]

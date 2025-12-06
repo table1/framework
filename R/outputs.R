@@ -401,6 +401,149 @@ save_report <- function(file, name = NULL, public = FALSE, overwrite = TRUE, mov
 }
 
 # -----------------------------------------------------------------------------
+# Notebook saving (render + move to output directory)
+# -----------------------------------------------------------------------------
+
+#' Save a rendered notebook to the outputs directory
+#'
+#' Renders a Quarto or R Markdown notebook and saves the output to the configured
+#' notebooks output directory. The directory is created lazily on first use.
+#'
+#' @param file Path to the .qmd or .Rmd file to render
+#' @param name Optional new name for the output file (without extension). If NULL,
+#'   uses the original notebook name.
+#' @param format Output format: "html" (default), "pdf", or "docx"
+#' @param public If TRUE, saves to public outputs directory (for project_sensitive type)
+#' @param overwrite If TRUE, overwrites existing files (default: TRUE)
+#' @param embed_resources If TRUE, creates a self-contained file with embedded resources
+#'   (default: TRUE for html format)
+#' @param ... Additional arguments passed to quarto render
+#'
+#' @return The path to the saved file (invisibly)
+#'
+#' @examples
+#' \dontrun{
+#' # Render and save a notebook
+#' save_notebook("notebooks/analysis.qmd")
+#'
+#' # Save with a custom name
+#' save_notebook("notebooks/analysis.qmd", name = "final_analysis")
+#'
+#' # Render to PDF
+#' save_notebook("notebooks/analysis.qmd", format = "pdf")
+#'
+#' # Save to public directory (for sensitive projects)
+#' save_notebook("notebooks/analysis.qmd", public = TRUE)
+#' }
+#'
+#' @export
+save_notebook <- function(file, name = NULL, format = "html", public = FALSE,
+                          overwrite = TRUE, embed_resources = TRUE, ...) {
+  checkmate::assert_file_exists(file, extension = c("qmd", "Qmd", "QMD", "rmd", "Rmd", "RMD"))
+  checkmate::assert_string(name, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_choice(format, c("html", "pdf", "docx"))
+  checkmate::assert_flag(public)
+  checkmate::assert_flag(overwrite)
+  checkmate::assert_flag(embed_resources)
+
+  # Check quarto is available
+  quarto_path <- Sys.which("quarto")
+  if (nchar(quarto_path) == 0) {
+    cli::cli_abort("Quarto not found. Install from {.url https://quarto.org/docs/get-started/}")
+  }
+
+  # Get the appropriate notebooks output directory
+  cfg <- tryCatch(settings_read(), error = function(e) NULL)
+  project_type <- cfg$project_type %||% "project"
+
+  if (project_type == "project_sensitive") {
+    dir_key <- if (public) "outputs_public_notebooks" else "outputs_private_notebooks"
+  } else {
+    dir_key <- "outputs_notebooks"
+  }
+
+  notebooks_dir <- config(dir_key)
+  if (is.null(notebooks_dir)) {
+    notebooks_dir <- if (public) "outputs/public/notebooks" else "outputs/notebooks"
+  }
+
+  # Ensure directory exists (lazy creation)
+  .ensure_output_dir(notebooks_dir, "notebooks")
+
+  # Determine output filename
+  if (is.null(name)) {
+    name <- tools::file_path_sans_ext(basename(file))
+  }
+
+  ext <- switch(format,
+    html = ".html",
+    pdf = ".pdf",
+    docx = ".docx"
+  )
+  dest_file <- file.path(notebooks_dir, paste0(name, ext))
+
+  # Check for existing file
+  if (file.exists(dest_file) && !overwrite) {
+    cli::cli_abort("File already exists: {.path {dest_file}}. Use overwrite = TRUE to replace.")
+  }
+
+  # Create temp directory for rendering
+
+  temp_dir <- tempfile("save_notebook_")
+  dir.create(temp_dir, recursive = TRUE)
+  on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
+
+  # Build quarto render command
+  args <- c(
+    "render",
+    shQuote(normalizePath(file)),
+    "--output-dir", shQuote(temp_dir),
+    "--to", format
+  )
+
+  if (embed_resources && format == "html") {
+    args <- c(args, "--embed-resources")
+  }
+
+  # Execute render
+  cli::cli_alert_info("Rendering {.path {basename(file)}}...")
+
+  tryCatch({
+    result <- system2(quarto_path, args, stdout = TRUE, stderr = TRUE)
+
+    # Check for errors
+    status <- attr(result, "status")
+    if (!is.null(status) && status != 0) {
+      cli::cli_abort(c(
+        "Quarto render failed",
+        paste(result, collapse = "\n")
+      ))
+    }
+
+    # Find the output file
+    output_pattern <- switch(format,
+      html = "\\.html$",
+      pdf = "\\.pdf$",
+      docx = "\\.docx$"
+    )
+    output_files <- list.files(temp_dir, pattern = output_pattern, full.names = TRUE)
+
+    if (length(output_files) == 0) {
+      cli::cli_abort("No {format} output found after rendering")
+    }
+
+    # Move output to destination
+    file.copy(output_files[1], dest_file, overwrite = overwrite)
+
+    cli::cli_alert_success("Saved notebook to {.path {dest_file}}")
+  }, error = function(e) {
+    cli::cli_abort("Failed to render notebook: {e$message}")
+  })
+
+  invisible(dest_file)
+}
+
+# -----------------------------------------------------------------------------
 # Project info / discovery function
 # -----------------------------------------------------------------------------
 
@@ -495,6 +638,7 @@ project_info <- function(verbose = FALSE) {
   cli::cli_text("  {.fn save_table} \u2192 {.path {config('outputs_tables') %||% 'outputs/tables'}}")
   cli::cli_text("  {.fn save_figure} \u2192 {.path {config('outputs_figures') %||% 'outputs/figures'}}")
   cli::cli_text("  {.fn save_model} \u2192 {.path {config('outputs_models') %||% 'outputs/models'}}")
+  cli::cli_text("  {.fn save_notebook} \u2192 {.path {config('outputs_notebooks') %||% 'outputs/notebooks'}}")
   cli::cli_text("  {.fn save_report} \u2192 {.path {config('outputs_reports') %||% 'outputs/reports'}}")
 
   invisible(dir_info)

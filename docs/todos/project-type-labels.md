@@ -11,8 +11,8 @@ Project type labels are currently stored in user's local config (`~/.config/fram
 ## Example
 
 When we renamed "Sensitive Data Project" → "Privacy Sensitive Project", we had to update:
-- `inst/config/settings-catalog.yml`
-- `inst/config/global-settings-default.yml`
+- `inst/settings/settings-catalog.yml`
+- `inst/settings/global-settings-default.yml`
 - User's local `~/.config/framework/settings.yml`
 
 The user's local config overrode everything until manually updated.
@@ -20,7 +20,7 @@ The user's local config overrode everything until manually updated.
 ## Proposed Solution
 
 Labels should NOT be user-configurable. They should always come from the package defaults:
-- Keep labels only in `inst/config/settings-catalog.yml` (single source of truth)
+- Keep labels only in `inst/settings/settings-catalog.yml` (single source of truth)
 - Remove labels from user configs
 - User configs should only store directories, scaffold settings, etc.
 - When loading settings, merge user directories with package labels

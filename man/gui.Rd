@@ -4,12 +4,14 @@
 \alias{gui}
 \title{Launch Framework GUI}
 \usage{
-gui(port = 8080, browse = TRUE)
+gui(port = 8080, browse = TRUE, route = NULL)
 }
 \arguments{
 \item{port}{Port number to use (default: 8080)}
 
 \item{browse}{Automatically open browser (default: TRUE)}
+
+\item{route}{Initial route to open (default: NULL for home page)}
 }
 \value{
 Invisibly returns the plumber server object
@@ -25,6 +27,9 @@ framework::gui()
 
 # Launch on specific port
 framework::gui(port = 8888)
+
+# Open directly to settings
+framework::gui(route = "#/settings/basics")
 }
 
 }

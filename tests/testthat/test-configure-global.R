@@ -239,12 +239,14 @@ test_that("configure_global can skip validation", {
   Sys.setenv(HOME = temp_home)
 
   # Should not error even with invalid data when validate = FALSE
-  expect_silent(
-    configure_global(
-      settings = list(
-        defaults = list(project_type = "invalid")
-      ),
-      validate = FALSE
+  expect_no_error(
+    suppressMessages(
+      configure_global(
+        settings = list(
+          defaults = list(project_type = "invalid")
+        ),
+        validate = FALSE
+      )
     )
   )
 })
@@ -655,5 +657,193 @@ test_that("configure_global preserves global.projects_root when saving other set
   # projects_root should still be there
   saved <- read_frameworkrc()
   expect_equal(saved$global$projects_root, "/my/projects")
+  expect_equal(saved$author$name, "New Author")
+})
+
+
+# ============================================================================
+# Cache Directory Configuration Tests
+# ============================================================================
+
+test_that("configure_global can set cache directory per project type", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Set cache directory for standard project type
+  result <- configure_global(settings = list(
+    project_types = list(
+      project = list(
+        directories = list(
+          cache = "custom/cache/path"
+        )
+      )
+    )
+  ))
+
+  expect_equal(result$project_types$project$directories$cache, "custom/cache/path")
+})
+
+
+test_that("configure_global supports different cache paths per project type", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Set different cache directories for different project types
+  result <- configure_global(settings = list(
+    project_types = list(
+      project = list(
+        directories = list(
+          cache = "outputs/cache"
+        )
+      ),
+      project_sensitive = list(
+        directories = list(
+          cache = "outputs/private/cache"
+        )
+      ),
+      presentation = list(
+        directories = list(
+          cache = "cache"
+        )
+      ),
+      course = list(
+        directories = list(
+          cache = "cache"
+        )
+      )
+    )
+  ))
+
+  expect_equal(result$project_types$project$directories$cache, "outputs/cache")
+  expect_equal(result$project_types$project_sensitive$directories$cache, "outputs/private/cache")
+  expect_equal(result$project_types$presentation$directories$cache, "cache")
+  expect_equal(result$project_types$course$directories$cache, "cache")
+})
+
+
+test_that("configure_global preserves cache directory when updating other settings", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # First: set cache directory
+  configure_global(settings = list(
+    project_types = list(
+      project = list(
+        directories = list(
+          cache = "my-custom-cache"
+        )
+      )
+    )
+  ))
+
+  # Second: update author (without sending project_types)
+  configure_global(settings = list(
+    author = list(
+      name = "Updated Author"
+    )
+  ))
+
+  # cache directory should still be there
+  saved <- read_frameworkrc()
+  expect_equal(saved$project_types$project$directories$cache, "my-custom-cache")
+  expect_equal(saved$author$name, "Updated Author")
+})
+
+
+test_that("configure_global saves and loads directories_enabled", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # Save directories_enabled for project type
+  result <- configure_global(settings = list(
+    project_types = list(
+      project = list(
+        directories_enabled = list(
+          scratch = TRUE,
+          outputs_tables = FALSE,
+          outputs_figures = TRUE
+        )
+      )
+    )
+  ))
+
+  # Verify it was saved
+  expect_equal(result$project_types$project$directories_enabled$scratch, TRUE)
+  expect_equal(result$project_types$project$directories_enabled$outputs_tables, FALSE)
+  expect_equal(result$project_types$project$directories_enabled$outputs_figures, TRUE)
+
+  # Verify it persists in file
+  saved <- read_frameworkrc()
+  expect_equal(saved$project_types$project$directories_enabled$scratch, TRUE)
+  expect_equal(saved$project_types$project$directories_enabled$outputs_tables, FALSE)
+  expect_equal(saved$project_types$project$directories_enabled$outputs_figures, TRUE)
+})
+
+
+test_that("configure_global preserves directories_enabled when updating other fields", {
+  temp_home <- tempdir()
+  old_home <- Sys.getenv("HOME")
+
+  on.exit({
+    Sys.setenv(HOME = old_home)
+    config_dir <- file.path(temp_home, ".config", "framework")
+    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
+  })
+
+  Sys.setenv(HOME = temp_home)
+
+  # First: save directories_enabled
+  configure_global(settings = list(
+    project_types = list(
+      project = list(
+        directories_enabled = list(
+          scratch = TRUE,
+          outputs_tables = FALSE
+        )
+      )
+    )
+  ))
+
+  # Second: update author (without sending directories_enabled)
+  configure_global(settings = list(
+    author = list(name = "New Author")
+  ))
+
+  # directories_enabled should still be there
+  saved <- read_frameworkrc()
+  expect_equal(saved$project_types$project$directories_enabled$scratch, TRUE)
+  expect_equal(saved$project_types$project$directories_enabled$outputs_tables, FALSE)
   expect_equal(saved$author$name, "New Author")
 })

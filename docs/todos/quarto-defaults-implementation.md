@@ -8,7 +8,7 @@ Implement a Quarto configuration system that allows users to set global preferen
 
 ### Phase 1: Data Model Design
 
-**Catalog Schema** (`inst/config/settings-catalog.yml`):
+**Catalog Schema** (`inst/settings/settings-catalog.yml`):
 
 - [ ] Add `quarto_defaults` section to catalog
 - [ ] Define format-based structure (HTML vs revealjs)
