@@ -1,6 +1,14 @@
 # Multi-database CRUD operation tests
 # Tests connection_find_by(), connection_insert(), connection_update(), connection_delete()
 
+# Helper aliases for internal functions used in tests
+connection_find_by <- framework:::connection_find_by
+connection_insert <- framework:::connection_insert
+connection_update <- framework:::connection_update
+connection_delete <- framework:::connection_delete
+connection_restore <- framework:::connection_restore
+connection_find <- framework:::connection_find
+
 test_that("connection_find_by() works across databases", {
   skip_if_no_driver("RSQLite", "SQLite")
 

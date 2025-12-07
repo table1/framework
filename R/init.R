@@ -799,16 +799,27 @@ bootstrap_project_init <- function(output_file = "init.R") {
     # No commits yet - add all files (including any created after init, like .github/)
     system("git add -A", ignore.stdout = TRUE, ignore.stderr = TRUE)
 
-    # Create commit
-    commit_result <- system("git commit -m \"Project initialized.\"", ignore.stdout = TRUE, ignore.stderr = TRUE)
+    # Check identity before committing
+    user_name <- system("git config user.name", intern = TRUE, ignore.stderr = TRUE)
+    user_email <- system("git config user.email", intern = TRUE, ignore.stderr = TRUE)
 
-    if (commit_result == 0) {
-      message("\u2713 Initial commit created")
-    } else {
-      # Commit failed - may need git user config
-      message("Note: Could not create initial commit. Configure git user with:")
+    if (length(user_name) == 0 || length(user_email) == 0) {
+      message("Note: Skipping initial commit. Configure git user with:")
       message("  git config user.name \"Your Name\"")
       message("  git config user.email \"your.email@example.com\"")
+    } else {
+      msg_file <- tempfile("framework_init_commit_")
+      writeLines("Project initialized.", msg_file)
+      on.exit(unlink(msg_file), add = TRUE)
+      commit_result <- system2("git", c("commit", "-F", msg_file), stdout = TRUE, stderr = TRUE)
+
+      if (is.null(attr(commit_result, "status")) || identical(attr(commit_result, "status"), 0)) {
+        message("\u2713 Initial commit created")
+      } else {
+        message("Note: Could not create initial commit. Configure git user with:")
+        message("  git config user.name \"Your Name\"")
+        message("  git config user.email \"your.email@example.com\"")
+      }
     }
   }
 

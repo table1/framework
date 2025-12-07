@@ -33,7 +33,10 @@ create_test_project <- function(dir = create_test_dir(), type = "project") {
   dir.create("scripts", showWarnings = FALSE)
   dir.create("functions", showWarnings = FALSE)
 
-  # Create minimal config.yml
+  # Create settings directory for connections
+  dir.create("settings", showWarnings = FALSE)
+
+  # Create minimal settings.yml (now the primary config file)
   config_content <- list(
     default = list(
       project_name = "TestProject",
@@ -50,10 +53,23 @@ create_test_project <- function(dir = create_test_dir(), type = "project") {
         cache = "outputs/private/cache"
       ),
       packages = list("dplyr"),
-      data = list()
+      data = list(),
+      connections = "settings/connections.yml"
     )
   )
-  yaml::write_yaml(config_content, "config.yml")
+  yaml::write_yaml(config_content, "settings.yml")
+
+  # Create connections config with framework database
+  connections_content <- list(
+    options = list(default_connection = "framework"),
+    connections = list(
+      framework = list(
+        driver = "sqlite",
+        database = "framework.db"
+      )
+    )
+  )
+  yaml::write_yaml(connections_content, "settings/connections.yml")
 
   # Create framework.db with required tables
   conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")

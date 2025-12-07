@@ -1,7 +1,15 @@
 # Multi-database transaction tests
-# Tests connection_transaction(), connection_begin(), connection_commit(), connection_rollback()
+# Tests db_transaction(), connection_begin(), connection_commit(), connection_rollback()
 
-test_that("connection_transaction() commits on success", {
+# Helper aliases for internal functions used in tests
+connection_insert <- framework:::connection_insert
+connection_find <- framework:::connection_find
+connection_begin <- framework:::connection_begin
+connection_commit <- framework:::connection_commit
+connection_rollback <- framework:::connection_rollback
+connection_with_transaction <- framework:::connection_with_transaction
+
+test_that("db_transaction() commits on success", {
   skip_if_no_driver("RSQLite", "SQLite")
 
   db_path <- tempfile(fileext = ".db")
@@ -15,7 +23,7 @@ test_that("connection_transaction() commits on success", {
   create_test_table(conn, "users", with_soft_delete = FALSE)
 
   # Execute transaction
-  result <- connection_transaction(conn, {
+  result <- db_transaction(conn, {
     id1 <- connection_insert(conn, "users", list(name = "Alice", email = "alice@example.com", age = 30))
     id2 <- connection_insert(conn, "users", list(name = "Bob", email = "bob@example.com", age = 25))
     c(id1, id2)
@@ -28,7 +36,7 @@ test_that("connection_transaction() commits on success", {
   expect_equal(users$name, c("Alice", "Bob"))
 })
 
-test_that("connection_transaction() rolls back on error", {
+test_that("db_transaction() rolls back on error", {
   skip_if_no_driver("RSQLite", "SQLite")
 
   db_path <- tempfile(fileext = ".db")
@@ -43,7 +51,7 @@ test_that("connection_transaction() rolls back on error", {
 
   # Transaction that fails
   expect_error({
-    connection_transaction(conn, {
+    db_transaction(conn, {
       connection_insert(conn, "users", list(name = "Alice", email = "alice@example.com", age = 30))
       stop("Intentional error")
       connection_insert(conn, "users", list(name = "Bob", email = "bob@example.com", age = 25))
@@ -55,7 +63,7 @@ test_that("connection_transaction() rolls back on error", {
   expect_equal(nrow(users), 0)
 })
 
-test_that("connection_transaction() preserves return value", {
+test_that("db_transaction() preserves return value", {
   skip_if_no_driver("RSQLite", "SQLite")
 
   db_path <- tempfile(fileext = ".db")
@@ -69,7 +77,7 @@ test_that("connection_transaction() preserves return value", {
   create_test_table(conn, "users", with_soft_delete = FALSE)
 
   # Transaction with return value
-  user_data <- connection_transaction(conn, {
+  user_data <- db_transaction(conn, {
     id <- connection_insert(conn, "users", list(name = "Alice", email = "alice@example.com", age = 30))
     connection_find(conn, "users", id)
   })
@@ -134,7 +142,7 @@ test_that("connection_with_transaction() works", {
   expect_equal(nrow(DBI::dbGetQuery(conn, "SELECT * FROM users")), 1)
 
   # Nested - should use existing transaction
-  connection_transaction(conn, {
+  db_transaction(conn, {
     connection_with_transaction(conn, {
       connection_insert(conn, "users", list(name = "Bob", email = "bob@example.com", age = 25))
     })
@@ -169,7 +177,7 @@ test_that("Transactions work on PostgreSQL if available", {
   on.exit(drop_test_table(conn, "test_transaction_users"), add = TRUE)
 
   # Test transaction
-  connection_transaction(conn, {
+  db_transaction(conn, {
     connection_insert(conn, "test_transaction_users", list(name = "Alice", email = "alice@example.com", age = 30))
     connection_insert(conn, "test_transaction_users", list(name = "Bob", email = "bob@example.com", age = 25))
   })

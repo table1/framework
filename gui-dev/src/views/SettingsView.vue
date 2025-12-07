@@ -1036,9 +1036,7 @@ const templateEditors = reactive({
 const templateVariables = [
   { syntax: '{{author}}', description: 'Author name' },
   { syntax: '{{email}}', description: 'Author email' },
-  { syntax: '{{affiliation}}', description: 'Author affiliation' },
-  { syntax: '{{github_username}}', description: 'GitHub username' },
-  { syntax: '{{github_email}}', description: 'GitHub email' }
+  { syntax: '{{affiliation}}', description: 'Author affiliation' }
 ]
 
 const templateTabs = computed(() => ([

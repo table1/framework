@@ -28,7 +28,7 @@ test_that("scaffold() fails fast when not in a Framework project", {
 
   expect_error(
     scaffold(),
-    "To create a new project, use: init()",
+    "To create a new project, use: project_create()",
     fixed = TRUE
   )
 })

@@ -1,20 +1,18 @@
 test_that(".env file parsing preserves structure", {
-  # Create test project
-  test_dir <- withr::local_tempdir()
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(test_dir)
+  # Create temp path for test
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      git = list(use_git = FALSE)
     )
   })
 
-  project_path <- test_dir  # init() creates files in current directory
+  project_path <- result$path
 
   # Create .env file with specific structure and comments
   original_content <- c(
@@ -41,24 +39,21 @@ test_that(".env file parsing preserves structure", {
 
 test_that(".env file with dotenv_location in parent directory", {
   # Create parent and project directories
-  parent_dir <- withr::local_tempdir()
+  parent_dir <- tempfile("framework_test_parent_")
+  dir.create(parent_dir, recursive = TRUE)
   project_dir <- file.path(parent_dir, "myproject")
-  dir.create(project_dir)
-
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(project_dir)
+  on.exit(unlink(parent_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      git = list(use_git = FALSE)
     )
   })
 
-  # Remove .env that init() may have created
+  # Remove .env that project_create() may have created
   if (file.exists(file.path(project_dir, ".env"))) {
     file.remove(file.path(project_dir, ".env"))
   }
@@ -86,22 +81,20 @@ test_that(".env file with dotenv_location in parent directory", {
 })
 
 test_that(".env file handles special characters in values", {
-  # Create test project
-  test_dir <- withr::local_tempdir()
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(test_dir)
+  # Create temp path for test
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      git = list(use_git = FALSE)
     )
   })
 
-  project_path <- test_dir  # init() creates files in current directory
+  project_path <- result$path
 
   # Create .env with various special cases
   env_content <- c(
@@ -124,22 +117,20 @@ test_that(".env file handles special characters in values", {
 })
 
 test_that(".env file grouping by prefix works", {
-  # Create test project
-  test_dir <- withr::local_tempdir()
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(test_dir)
+  # Create temp path for test
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      git = list(use_git = FALSE)
     )
   })
 
-  project_path <- test_dir  # init() creates files in current directory
+  project_path <- result$path
 
   # Create .env with mixed prefixes
   env_content <- c(
@@ -197,22 +188,21 @@ test_that(".env file grouping by prefix works", {
 })
 
 test_that(".env scanning for env() usage in R files", {
-  # Create test project
-  test_dir <- withr::local_tempdir()
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(test_dir)
+  # Create temp path for test
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      directories = list(functions = "functions"),
+      git = list(use_git = FALSE)
     )
   })
 
-  project_path <- test_dir  # init() creates files in current directory
+  project_path <- result$path
 
   # Create R file with env() calls
   r_code <- c(
@@ -246,22 +236,20 @@ test_that(".env scanning for env() usage in R files", {
 })
 
 test_that(".env file edge cases", {
-  # Create test project
-  test_dir <- withr::local_tempdir()
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(test_dir)
+  # Create temp path for test
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      git = list(use_git = FALSE)
     )
   })
 
-  project_path <- test_dir  # init() creates files in current directory
+  project_path <- result$path
 
   # Test empty .env file
   writeLines("", file.path(project_path, ".env"))
@@ -304,22 +292,20 @@ test_that(".env file edge cases", {
 })
 
 test_that(".env regrouping creates proper structure", {
-  # Create test project
-  test_dir <- withr::local_tempdir()
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-
-  setwd(test_dir)
+  # Create temp path for test
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages({
-    framework::init(
-      project_name = "EnvTest",
+    result <- framework::project_create(
+      name = "EnvTest",
+      location = project_dir,
       type = "project",
-      force = TRUE
+      git = list(use_git = FALSE)
     )
   })
 
-  project_path <- test_dir  # init() creates files in current directory
+  project_path <- result$path
 
   # Simulate regrouping logic
   vars <- list(

@@ -4,7 +4,7 @@
 \alias{make_revealjs}
 \title{Create a Reveal.js Presentation}
 \usage{
-make_revealjs(name, dir = NULL, overwrite = FALSE)
+make_revealjs(name, dir = NULL, overwrite = FALSE, subdir = NULL)
 }
 \arguments{
 \item{name}{Character. The presentation name (with or without .qmd extension)}

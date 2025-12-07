@@ -4,7 +4,7 @@
 \alias{make_rmd}
 \title{Create an RMarkdown Notebook}
 \usage{
-make_rmd(name, dir = NULL, stub = "default", overwrite = FALSE)
+make_rmd(name, dir = NULL, stub = "default", overwrite = FALSE, subdir = NULL)
 }
 \arguments{
 \item{name}{Character. The file name (with or without .Rmd extension)}

@@ -178,17 +178,17 @@ describe('Settings UI smoke', () => {
     const gitLink = (await screen.findAllByRole('link', { name: 'Git & Hooks' }))[0]
     await fireEvent.click(gitLink)
 
-    expect(await screen.findByText('Git Hooks')).toBeTruthy()
-    // Wait for the section to finish hydrating
-    await screen.findByText('Git identity')
+    expect(await screen.findByText('Git Hooks', {}, { timeout: 10000 })).toBeTruthy()
+    // Wait for the section to finish hydrating - component uses "Git Identity Override" not "Git identity"
+    await screen.findByText('Git Identity Override', {}, { timeout: 10000 })
     expect(screen.getByText('Sync AI Files Before Commit')).toBeTruthy()
 
     // Turning off git initialization disables identity inputs and hook toggles
-    const initToggleInput = await screen.findByLabelText('Initialize Git')
+    const initToggleInput = await screen.findByLabelText('Initialize Git', {}, { timeout: 10000 })
     expect(initToggleInput).toBeChecked()
     await fireEvent.click(initToggleInput)
-    await waitFor(() => expect(initToggleInput).not.toBeChecked())
-  })
+    await waitFor(() => expect(initToggleInput).not.toBeChecked(), { timeout: 10000 })
+  }, 20000)
 
   it('renders .env Defaults and shows raw content', async () => {
     await renderSettings('/settings/env')

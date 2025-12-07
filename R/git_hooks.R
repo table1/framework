@@ -81,7 +81,12 @@ git_commit <- function(message, all = FALSE) {
     stop("Commit message is required")
   }
 
-  args <- c("commit", "-m", message)
+  # Write message to a temporary file to avoid shell/spacing issues
+  msg_file <- tempfile("framework_commit_msg_")
+  writeLines(message, msg_file)
+  on.exit(unlink(msg_file), add = TRUE)
+
+  args <- c("commit", "-F", msg_file)
   if (all) args <- c(args, "-a")
 
   result <- system2("git", args, stdout = TRUE, stderr = TRUE)
@@ -299,9 +304,14 @@ git_hooks_install <- function(config_file = NULL,
   }
 
   # Read hook configuration
-  ai_sync_enabled <- config("git.hooks.ai_sync", config_file = config_file, default = FALSE)
-  data_security_enabled <- config("git.hooks.data_security", config_file = config_file, default = FALSE)
-  check_sensitive_dirs_enabled <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
+  ai_sync_enabled <- .get_hook_setting("git.hooks.ai_sync", config_file = config_file, default = FALSE)
+  data_security_enabled <- .get_hook_setting("git.hooks.data_security", config_file = config_file, default = FALSE)
+  check_sensitive_dirs_enabled <- .get_hook_setting(
+    "git.hooks.check_sensitive_dirs",
+    alias = "git.hooks.warn_unignored_sensitive",
+    config_file = config_file,
+    default = FALSE
+  )
 
   if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
     if (verbose) {
@@ -424,7 +434,7 @@ git_hooks_uninstall <- function(verbose = TRUE) {
 #'
 #' @export
 git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
-  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs")
+  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs", "warn_unignored_sensitive")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
@@ -462,7 +472,7 @@ git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #'
 #' @export
 git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
-  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs")
+  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs", "warn_unignored_sensitive")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
@@ -484,9 +494,14 @@ git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   }
 
   # Reinstall hooks (or uninstall if all disabled)
-  ai_sync_enabled <- config("git.hooks.ai_sync", config_file = config_file, default = FALSE)
-  data_security_enabled <- config("git.hooks.data_security", config_file = config_file, default = FALSE)
-  check_sensitive_dirs_enabled <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
+  ai_sync_enabled <- .get_hook_setting("git.hooks.ai_sync", config_file = config_file, default = FALSE)
+  data_security_enabled <- .get_hook_setting("git.hooks.data_security", config_file = config_file, default = FALSE)
+  check_sensitive_dirs_enabled <- .get_hook_setting(
+    "git.hooks.check_sensitive_dirs",
+    alias = "git.hooks.warn_unignored_sensitive",
+    config_file = config_file,
+    default = FALSE
+  )
 
   if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
     git_hooks_uninstall(verbose = verbose)
@@ -521,9 +536,14 @@ git_hooks_list <- function(config_file = NULL) {
     return(invisible(NULL))
   }
 
-  ai_sync <- config("git.hooks.ai_sync", config_file = config_file, default = FALSE)
-  data_security <- config("git.hooks.data_security", config_file = config_file, default = FALSE)
-  check_sensitive_dirs <- config("git.hooks.check_sensitive_dirs", config_file = config_file, default = FALSE)
+  ai_sync <- .get_hook_setting("git.hooks.ai_sync", config_file = config_file, default = FALSE)
+  data_security <- .get_hook_setting("git.hooks.data_security", config_file = config_file, default = FALSE)
+  check_sensitive_dirs <- .get_hook_setting(
+    "git.hooks.check_sensitive_dirs",
+    alias = "git.hooks.warn_unignored_sensitive",
+    config_file = config_file,
+    default = FALSE
+  )
 
   hook_installed <- file.exists(".git/hooks/pre-commit")
 
@@ -571,6 +591,16 @@ git_hooks_list <- function(config_file = NULL) {
   if (!.is_git_repo()) {
     stop("Not a git repository. Run 'git init' first.")
   }
+}
+
+#' Get git hook setting with optional alias fallback
+#' @keywords internal
+.get_hook_setting <- function(key, alias = NULL, config_file = NULL, default = FALSE) {
+  value <- config(key, config_file = config_file, default = default)
+  if (!is.null(alias) && identical(value, default)) {
+    value <- config(alias, config_file = config_file, default = default)
+  }
+  value
 }
 
 

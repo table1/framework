@@ -31,7 +31,7 @@ debug: true
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   # Should treat entire file as default environment
   expect_equal(cfg$database, "localhost")
@@ -61,14 +61,14 @@ production:
   writeLines(config_content, "config.yml")
 
   # Test default environment
-  cfg_default <- read_config("config.yml", environment = "default")
+  cfg_default <- settings_read("config.yml", environment = "default")
   expect_equal(cfg_default$database, "localhost")
   expect_equal(cfg_default$port, 5432)
   expect_true(cfg_default$debug)
   expect_equal(cfg_default$timeout, 30)
 
   # Test production environment (inherits port & timeout from default)
-  cfg_prod <- read_config("config.yml", environment = "production")
+  cfg_prod <- settings_read("config.yml", environment = "production")
   expect_equal(cfg_prod$database, "prod.example.com")
   expect_equal(cfg_prod$port, 5432)  # Inherited from default
   expect_false(cfg_prod$debug)
@@ -100,7 +100,7 @@ production:
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml", environment = "production")
+  cfg <- settings_read("config.yml", environment = "production")
 
   # Production should inherit nested structure
   expect_equal(cfg$connections$db$host, "prod.example.com")
@@ -125,7 +125,7 @@ test_that("config with only production environment errors without default", {
   writeLines(config_content, "config.yml")
 
   expect_error(
-    read_config("config.yml"),
+    settings_read("config.yml"),
     "no 'default' environment"
   )
 
@@ -148,7 +148,7 @@ production:
   writeLines(config_content, "config.yml")
 
   expect_warning(
-    cfg <- read_config("config.yml", environment = "staging"),
+    cfg <- settings_read("config.yml", environment = "staging"),
     "Environment 'staging' not found.*using 'default'"
   )
 
@@ -180,7 +180,7 @@ production:
   Sys.setenv(R_CONFIG_ACTIVE = "production")
 
   # Should use production (no explicit environment arg)
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
   expect_equal(cfg$database, "prod.example.com")
 
   unlink("config.yml")
@@ -215,7 +215,7 @@ test_that("split file reference loads and merges correctly", {
 "
   writeLines(connections_content, "settings/connections.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$project_type, "project")
   expect_equal(cfg$connections$db$host, "localhost")
@@ -248,7 +248,7 @@ test_that("split file with flat structure (no environment sections) works", {
 "
   writeLines(data_content, "settings/data.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$data$example$path, "data/example.csv")
   expect_equal(cfg$data$example$type, "csv")
@@ -290,7 +290,7 @@ production:
   writeLines(connections_content, "settings/connections.yml")
 
   # Test production environment
-  cfg <- read_config("config.yml", environment = "production")
+  cfg <- settings_read("config.yml", environment = "production")
 
   expect_equal(cfg$api_key, "prod-key")
   expect_equal(cfg$connections$db$host, "prod-db.example.com")
@@ -312,7 +312,7 @@ test_that("missing split file errors with clear message", {
   writeLines(config_content, "config.yml")
 
   expect_error(
-    read_config("config.yml"),
+    settings_read("config.yml"),
     "settings/missing.yml.*not found"
   )
 
@@ -341,7 +341,7 @@ test_that("split file with invalid YAML errors clearly", {
   writeLines(bad_content, "settings/bad.yml")
 
   expect_error(
-    read_config("config.yml"),
+    settings_read("config.yml"),
     "Failed to parse.*settings/bad.yml"
   )
 
@@ -377,7 +377,7 @@ test_that("circular split file reference errors gracefully", {
   writeLines(b_content, "settings/b.yml")
 
   expect_error(
-    read_config("config.yml"),
+    settings_read("config.yml"),
     "Circular reference"
   )
 
@@ -416,7 +416,7 @@ test_that("nested split file references work (A -> B -> C)", {
 "
   writeLines(b_content, "settings/b.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$level, "main")
   expect_equal(cfg$level_a, "from_a")
@@ -457,7 +457,7 @@ test_that("main file wins conflict with split file (top-level key)", {
   writeLines(connections_content, "settings/connections.yml")
 
   expect_warning(
-    cfg <- read_config("config.yml"),
+    cfg <- settings_read("config.yml"),
     "default_connection.*defined in both.*main config"
   )
 
@@ -496,7 +496,7 @@ test_that("multiple split files with conflicting keys (first wins)", {
   writeLines(data_content, "settings/data.yml")
 
   expect_warning(
-    cfg <- read_config("config.yml"),
+    cfg <- settings_read("config.yml"),
     "cache_enabled.*already defined"
   )
 
@@ -528,7 +528,7 @@ test_that("!expr evaluates environment variables", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$database_host, "test.example.com")
 
@@ -550,7 +550,7 @@ test_that("!expr with default value works", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$database_host, "localhost")
 
@@ -583,7 +583,7 @@ test_that("!expr works in split files", {
 "
   writeLines(connections_content, "settings/connections.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$connections$db$host, "from_env")
 
@@ -604,7 +604,7 @@ test_that("!expr with invalid expression errors clearly", {
   writeLines(config_content, "config.yml")
 
   expect_error(
-    read_config("config.yml"),
+    settings_read("config.yml"),
     "Failed to evaluate expression"
   )
 
@@ -628,7 +628,7 @@ test_that("env() syntax evaluates environment variables", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$database_host, "value_from_env")
 
@@ -650,7 +650,7 @@ test_that("env() syntax with default value works", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$database_host, "localhost")
 
@@ -683,7 +683,7 @@ test_that("env() syntax works in split files", {
 "
   writeLines(connections_content, "settings/connections.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$connections$db$host, "from_split_env")
 
@@ -708,7 +708,7 @@ test_that("NULL values handled correctly", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_null(cfg$optional_value)
   expect_equal(cfg$required_value, "present")
@@ -729,7 +729,7 @@ test_that("empty sections don't error", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_true(is.null(cfg$connections) || (is.list(cfg$connections) && length(cfg$connections) == 0))
   expect_true(is.null(cfg$data) || (is.list(cfg$data) && length(cfg$data) == 0))
@@ -756,7 +756,7 @@ production:
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml", environment = "production")
+  cfg <- settings_read("config.yml", environment = "production")
 
   # Production should REPLACE array, not merge
   expect_equal(length(cfg$packages), 1)
@@ -777,7 +777,7 @@ test_that("missing config file errors clearly", {
   on.exit(setwd(old_wd))
 
   expect_error(
-    read_config("nonexistent.yml"),
+    settings_read("nonexistent.yml"),
     "not found|does not exist"
   )
 })
@@ -795,7 +795,7 @@ test_that("invalid YAML in main config errors clearly", {
   writeLines(bad_content, "config.yml")
 
   expect_error(
-    read_config("config.yml"),
+    settings_read("config.yml"),
     "Failed to parse"
   )
 
@@ -827,7 +827,7 @@ test_that("existing config.yml files still work", {
 "
   writeLines(config_content, "config.yml")
 
-  cfg <- read_config("config.yml")
+  cfg <- settings_read("config.yml")
 
   expect_equal(cfg$project_type, "project")
   expect_equal(cfg$directories$notebooks, "notebooks")

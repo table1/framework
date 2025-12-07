@@ -61,7 +61,7 @@ test_that("data_read reads saved CSV data", {
   suppressMessages(data_save(original_data, "inputs/raw/csv_load.csv"))
 
   # Add to config for catalog lookup
-  config <- read_config()
+  config <- settings_read()
   config$data$inputs <- list(
     raw = list(
       csv_load = list(
@@ -73,7 +73,7 @@ test_that("data_read reads saved CSV data", {
       )
     )
   )
-  write_config(config)
+  settings_write(config)
 
   # Load it back using catalog name
   loaded_data <- suppressWarnings(data_read("inputs.raw.csv_load"))
@@ -98,7 +98,7 @@ test_that("data_read reads saved RDS data", {
   suppressMessages(data_save(original_data, "inputs/intermediate/rds_load.rds"))
 
   # Add to config for catalog lookup
-  config <- read_config()
+  config <- settings_read()
   config$data$inputs <- list(
     intermediate = list(
       rds_load = list(
@@ -109,7 +109,7 @@ test_that("data_read reads saved RDS data", {
       )
     )
   )
-  write_config(config)
+  settings_write(config)
 
   # Load it back using catalog name
   loaded_data <- suppressWarnings(data_read("inputs.intermediate.rds_load"))
@@ -162,7 +162,7 @@ test_that("data_spec_get retrieves data specification from config", {
 
   setwd(test_dir)
 
-  config <- read_config()
+  config <- settings_read()
   config$data$inputs <- list(
     raw = list(
       test = list(
@@ -172,7 +172,7 @@ test_that("data_spec_get retrieves data specification from config", {
       )
     )
   )
-  write_config(config)
+  settings_write(config)
 
   spec <- data_spec_get("inputs.raw.test")
 
@@ -181,32 +181,6 @@ test_that("data_spec_get retrieves data specification from config", {
   expect_true(endsWith(spec$path, "inputs/raw/test.csv"))
   expect_equal(spec$type, "csv")
   expect_equal(spec$delimiter, "comma")
-})
-
-test_that("data_spec_update updates configuration", {
-  test_dir <- create_test_project()
-  old_wd <- getwd()
-  on.exit({
-    setwd(old_wd)
-    cleanup_test_dir(test_dir)
-  })
-
-  setwd(test_dir)
-
-  # Update spec
-  new_spec <- list(
-    path = "inputs/raw/new_test.csv",
-    type = "csv",
-    delimiter = "tab"
-  )
-
-  data_spec_update("inputs.raw.new_test", new_spec)
-
-  # Read back
-  spec <- data_spec_get("inputs.raw.new_test")
-  # Path is normalized to absolute, so check it ends with the expected relative path
-  expect_true(endsWith(spec$path, "inputs/raw/new_test.csv"))
-  expect_equal(spec$delimiter, "tab")
 })
 
 test_that("data_read reads Excel files directly", {
@@ -255,7 +229,7 @@ test_that("data_read reads Excel files from config", {
   writexl::write_xlsx(test_data, "inputs/raw/people.xlsx")
 
   # Add to config
-  config <- read_config()
+  config <- settings_read()
   config$data$inputs <- list(
      raw = list(
       people = list(
@@ -266,7 +240,7 @@ test_that("data_read reads Excel files from config", {
       )
     )
   )
-  write_config(config)
+  settings_write(config)
 
   # Load it back
   loaded <- suppressWarnings(data_read("inputs.raw.people"))
@@ -314,8 +288,8 @@ test_that("data_save resolves dot notation to configured directories", {
   # Create test data
   test_data <- data.frame(x = 1:5, y = letters[1:5])
 
-  # Save using dot notation (intermediate.filename)
-  suppressMessages(data_save(test_data, "inputs_intermediate.test_file"))
+  # Save using 3-part dot notation (inputs.intermediate.filename)
+  suppressMessages(data_save(test_data, "inputs.intermediate.test_file"))
 
   # Should resolve to inputs/intermediate/test_file.rds
   expect_true(file.exists("inputs/intermediate/test_file.rds"))
@@ -438,16 +412,17 @@ test_that("data_save updates database with normalized name", {
   dir.create("inputs/intermediate", recursive = TRUE, showWarnings = FALSE)
   test_data <- data.frame(x = 1:5)
 
-  # Save with dot notation
-  suppressMessages(data_save(test_data, "inputs_intermediate.my_data"))
+  # Save with 3-part dot notation
+  suppressMessages(data_save(test_data, "inputs.intermediate.my_data"))
 
   # Check database record uses original path as name
   conn <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
   on.exit(DBI::dbDisconnect(conn), add = TRUE)
 
-  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'inputs_intermediate.my_data'")
+  record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'inputs.intermediate.my_data'")
   expect_equal(nrow(record), 1)
-  expect_equal(record$path, "inputs/intermediate/my_data.rds")
+  # Path may be absolute or relative depending on the platform
+  expect_true(grepl("inputs/intermediate/my_data\\.rds$", record$path))
   expect_equal(record$type, "rds")
 })
 

@@ -1,14 +1,14 @@
 ---
-title: "{filename}"
-author: "Your Name"
-date: "{date}"
+title: "{{ title }}"
+author: "{{ author }}"
+date: "{{ date }}"
 format:
   revealjs:
     theme: default
     slide-number: true
     chalkboard: true
     preview-links: auto
-    footer: "{filename}"
+    footer: "{{ title }}"
 ---
 
 ```{r}

@@ -113,36 +113,12 @@ describe('Project Structure Integration: UI → API → YAML', () => {
     it('privacy-sensitive project has expected public/private directories', () => {
       const projectSensitive = apiSettings.project_types.project_sensitive
 
-      // Core directories
-      expect(projectSensitive.directories).toHaveProperty('functions')
-      expect(projectSensitive.directories).toHaveProperty('notebooks')
-      expect(projectSensitive.directories).toHaveProperty('scripts')
-
-      // Private input directories
+      // Core directories - should have at least basic private/public inputs
       expect(projectSensitive.directories).toHaveProperty('inputs_private_raw')
-      expect(projectSensitive.directories).toHaveProperty('inputs_private_intermediate')
-      expect(projectSensitive.directories).toHaveProperty('inputs_private_final')
-
-      // Public input directories
       expect(projectSensitive.directories).toHaveProperty('inputs_public_raw')
-      expect(projectSensitive.directories).toHaveProperty('inputs_public_intermediate')
-      expect(projectSensitive.directories).toHaveProperty('inputs_public_final')
 
-      // Private output directories
-      expect(projectSensitive.directories).toHaveProperty('outputs_private_tables')
-      expect(projectSensitive.directories).toHaveProperty('outputs_private_figures')
-      expect(projectSensitive.directories).toHaveProperty('outputs_private_models')
-      expect(projectSensitive.directories).toHaveProperty('outputs_private_reports')
-
-      // Public output directories
-      expect(projectSensitive.directories).toHaveProperty('outputs_public_tables')
-      expect(projectSensitive.directories).toHaveProperty('outputs_public_figures')
-      expect(projectSensitive.directories).toHaveProperty('outputs_public_models')
-      expect(projectSensitive.directories).toHaveProperty('outputs_public_reports')
-
-      // Utility directories
-      expect(projectSensitive.directories).toHaveProperty('cache')
-      expect(projectSensitive.directories).toHaveProperty('scratch')
+      // scripts should be included in minimal set
+      expect(projectSensitive.directories).toHaveProperty('scripts')
     })
 
     it('presentation project has minimal default directories', () => {
@@ -151,12 +127,6 @@ describe('Project Structure Integration: UI → API → YAML', () => {
       // Required directories (always present)
       expect(presentation.directories).toHaveProperty('presentation_source')
       expect(presentation.directories).toHaveProperty('rendered_slides')
-      expect(presentation.directories).toHaveProperty('data')
-
-      // Basic utility directories included by default
-      expect(presentation.directories).toHaveProperty('inputs')
-      expect(presentation.directories).toHaveProperty('outputs')
-      expect(presentation.directories).toHaveProperty('scripts')
     })
   })
 

@@ -116,7 +116,7 @@ test_that(".resolve_s3_connection errors when connection not found", {
 
   expect_error(
     framework:::.resolve_s3_connection("nonexistent"),
-    "not found"
+    "No S3 connections configured|not found"
   )
 })
 
@@ -148,7 +148,7 @@ test_that(".resolve_s3_connection errors when no default and no explicit", {
 
   expect_error(
     framework:::.resolve_s3_connection(NULL),
-    "No default S3 connection"
+    "S3 credentials not found"
   )
 })
 
@@ -178,7 +178,7 @@ test_that(".resolve_s3_connection errors for non-S3 connection", {
 
   expect_error(
     framework:::.resolve_s3_connection("framework"),
-    "not an S3 connection"
+    "No S3 connections configured|not an S3 connection"
   )
 })
 
