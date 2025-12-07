@@ -16,7 +16,8 @@
   git,
   scaffold,
   settings_dir,
-  connections_file = "settings/connections.yml",
+  connections = NULL,
+  connections_file = NULL,
   render_dirs = NULL,
   quarto = NULL
 )

@@ -8,13 +8,12 @@
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
   # Get cache directory - uses FW_CACHE_DIR env var if set, otherwise config
   cache_dir <- .get_cache_dir()
 
   config_obj <- settings_read()
-  default_expire <- config_obj$options$data$cache_default_expire
+  default_expire <- .normalize_expire_after(config_obj$options$data$cache_default_expire)
 
   # Determine cache file path
   cache_file <- if (is.null(file)) {
@@ -52,9 +51,9 @@
 
   # Calculate expiration time
   now <- lubridate::now()
-  expire_after <- expire_after %||% default_expire
+  expire_after <- .normalize_expire_after(expire_after, default_expire)
   expire_at <- if (!is.null(expire_after)) {
-    now + lubridate::hours(expire_after)
+    now + lubridate::dseconds(expire_after * 3600)
   } else {
     NA
   }
@@ -124,7 +123,7 @@ cache <- function(name, value, file = NULL, expire_after = NULL) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
 
+  expire_after <- .normalize_expire_after(expire_after)
   .set_cache(name, value, file, expire_after)
 }

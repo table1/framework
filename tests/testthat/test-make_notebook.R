@@ -1,9 +1,13 @@
 test_that("make_notebook() detects correct directories", {
-  # Create temp directory
-  tmp <- tempdir()
+  # Create isolated temp directory
+  tmp <- tempfile("test_detect_")
+  dir.create(tmp)
   old_wd <- getwd()
   setwd(tmp)
-  on.exit(setwd(old_wd))
+  on.exit({
+    setwd(old_wd)
+    unlink(tmp, recursive = TRUE)
+  })
 
   # Test 1: notebooks/ directory exists
   dir.create("notebooks", showWarnings = FALSE)
@@ -31,24 +35,26 @@ test_that("make_notebook() detects correct directories", {
 })
 
 test_that("config.yml directory settings are respected", {
-  # Create temp directory with config
-  tmp <- tempdir()
+  # Create isolated temp directory
+  tmp <- tempfile("test_config_")
+  dir.create(tmp)
   old_wd <- getwd()
   setwd(tmp)
-  on.exit(setwd(old_wd))
+  on.exit({
+    setwd(old_wd)
+    unlink(tmp, recursive = TRUE)
+  })
 
-  # Create config with explicit notebook_dir
+  # Create config with explicit notebook_dir (using new directories structure)
   config_content <- "default:
-  options:
-    notebook_dir: my_notebooks
+  directories:
+    notebooks: my_notebooks
 "
   writeLines(config_content, "config.yml")
 
   # Test notebook dir from config
   result <- framework:::.get_notebook_dir_from_config()
   expect_equal(result, "my_notebooks")
-
-  unlink("config.yml")
 })
 
 test_that("slugify converts names correctly", {

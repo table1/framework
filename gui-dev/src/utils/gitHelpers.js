@@ -4,8 +4,6 @@ export const buildGitPanelModel = ({ useGit, gitHooks, git, author } = {}) => {
     initialize: useGit !== false && (git?.initialize !== false),
     user_name: git?.user_name || '',
     user_email: git?.user_email || '',
-    github_username: author?.github_username || '',
-    github_email: author?.github_email || '',
     hooks: {
       ai_sync: hooks.ai_sync || false,
       data_security: hooks.data_security || false,
@@ -19,9 +17,8 @@ export const buildGitPanelModel = ({ useGit, gitHooks, git, author } = {}) => {
  * - gitTarget: object holding git fields (initialize, user_name, user_email, hooks)
  * - gitHooksTarget: object for defaults.git_hooks (optional)
  * - setUseGit: function to set defaults.use_git (optional)
- * - authorTarget: object for author fields (github_username, github_email)
  */
-export const applyGitPanelModel = ({ gitTarget, gitHooksTarget, setUseGit, authorTarget } = {}, model = {}) => {
+export const applyGitPanelModel = ({ gitTarget, gitHooksTarget, setUseGit } = {}, model = {}) => {
   if (typeof setUseGit === 'function') {
     setUseGit(model.initialize)
   }
@@ -41,10 +38,5 @@ export const applyGitPanelModel = ({ gitTarget, gitHooksTarget, setUseGit, autho
     gitHooksTarget.ai_sync = model.hooks?.ai_sync || false
     gitHooksTarget.data_security = model.hooks?.data_security || false
     gitHooksTarget.check_sensitive_dirs = model.hooks?.check_sensitive_dirs || false
-  }
-
-  if (authorTarget) {
-    authorTarget.github_username = model.github_username || ''
-    authorTarget.github_email = model.github_email || ''
   }
 }

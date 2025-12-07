@@ -393,6 +393,9 @@
             :search-term="dataSearch"
             :hierarchical="useHierarchicalDataView"
             :pending-deletes="dataEntriesToDelete"
+            :pending-updates="pendingDataUpdates"
+            :pending-adds="pendingAddedList"
+            :project-path="project?.path || ''"
             @edit="openDataEditor"
             @delete="toggleDataDelete"
           />
@@ -406,32 +409,24 @@
               </p>
               <p class="text-xs text-red-600 dark:text-red-200/80">
                 Changes will be applied when you save.
-              </p>
-            </div>
-            <div class="flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                class="shadow-none"
-                :disabled="savingDataDeletes"
-                @click="clearPendingDataDeletes"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                class="bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600 dark:bg-red-500 dark:hover:bg-red-400"
-                :disabled="savingDataDeletes"
-                @click="savePendingDataDeletes"
-              >
-                {{ savingDataDeletes ? 'Saving…' : 'Save Changes' }}
-              </Button>
-            </div>
+            </p>
           </div>
-          <ul class="mt-3 list-disc space-y-1 pl-5 text-xs font-mono text-red-700 dark:text-red-200/90">
-            <li v-for="key in pendingDeleteList" :key="key">{{ key }}</li>
+        </div>
+        <div v-if="hasPendingDataAdds || pendingDataUpdates" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/40 dark:bg-emerald-900/20">
+          <p class="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+            {{ hasPendingDataAdds ? `${pendingAddedList.length} data source${pendingAddedList.length === 1 ? '' : 's'} added.` : 'Data changes pending save.' }}
+          </p>
+          <p class="text-xs text-emerald-700 dark:text-emerald-200/80">
+            {{ hasPendingDataAdds ? 'Adds will be applied when you save.' : 'Changes will be applied when you save.' }}
+          </p>
+          <ul v-if="pendingAddedList.length > 0" class="mt-2 list-disc space-y-1 pl-5 text-xs font-mono text-emerald-800 dark:text-emerald-100">
+            <li v-for="key in pendingAddedList" :key="key">{{ key }}</li>
           </ul>
         </div>
+        <ul class="mt-3 list-disc space-y-1 pl-5 text-xs font-mono text-red-700 dark:text-red-200/90">
+          <li v-for="key in pendingDeleteList" :key="key">{{ key }}</li>
+        </ul>
+      </div>
 
         <div v-else-if="isFilteringData" class="rounded-xl border border-dashed border-zinc-300 bg-white/70 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
           <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">
@@ -449,6 +444,44 @@
             description="This project doesn't have any data sources defined in its settings"
             icon="database"
           />
+
+          <div v-if="untrackedInputFiles.length > 0" class="mt-6">
+            <div class="space-y-1">
+              <div class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Input files not in catalog</div>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                We scanned your input directory and found these files aren't in the data catalog yet. Click Add to include them.
+              </p>
+            </div>
+
+            <div
+              class="mt-4 space-y-2"
+            >
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-zinc-600 dark:text-zinc-300">
+                  {{ untrackedInputFiles.length }} file{{ untrackedInputFiles.length === 1 ? '' : 's' }} found in inputs/
+                </div>
+                <div v-if="inputFilesError" class="text-xs text-red-600 dark:text-red-400">
+                  {{ inputFilesError }}
+                </div>
+              </div>
+
+              <div class="max-h-64 overflow-y-auto space-y-2">
+                <div
+                  v-for="file in untrackedInputFiles"
+                  :key="file.path"
+                  class="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60"
+                >
+                  <div class="min-w-0">
+                    <div class="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">{{ file.path }}</div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400">Type: {{ file.type || 'auto-detect' }}</div>
+                  </div>
+                  <Button size="xs" variant="secondary" @click="openDataCreatorWithPath(file)">
+                    Add to Data Catalog
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </template>
       </div>
 
@@ -457,6 +490,8 @@
         v-model="isEditingDataEntry"
         :entry="editingDataEntry"
         :saving="savingDataEntry"
+        :project-id="route.params.id"
+        :existing-paths="dataCatalogPaths"
         :error="dataEditError"
         @save="handleDataEntrySave"
         @update:modelValue="handleDataModalVisibility"
@@ -1086,8 +1121,13 @@ const editingDataEntry = ref(null)
 const savingDataEntry = ref(false)
 const dataEditError = ref(null)
 const isCreatingDataEntry = ref(false)
+const pendingDataUpdates = ref(false)
+const pendingAddedKeys = ref(new Set())
+const pendingAddedList = computed(() => Array.from(pendingAddedKeys.value))
+const inputFiles = ref([])
+const loadingInputFiles = ref(false)
+const inputFilesError = ref(null)
 const dataEntriesToDelete = ref(new Set())
-const savingDataDeletes = ref(false)
 
 // Inputs state
 const inputsTab = ref('raw')
@@ -1703,6 +1743,7 @@ const dataSectionSublinks = computed(() => {
     .filter((link) => link.anchorId && link.label)
 })
 const hasPendingDataDeletes = computed(() => dataEntriesToDelete.value.size > 0)
+const hasPendingDataAdds = computed(() => pendingAddedKeys.value.size > 0)
 const pendingDeleteCount = computed(() => dataEntriesToDelete.value.size)
 const pendingDeleteList = computed(() => Array.from(dataEntriesToDelete.value))
 
@@ -1833,6 +1874,57 @@ const canDelete = computed(() => {
   return false
 })
 
+const dataCatalogPaths = computed(() => {
+  const paths = new Set()
+  const walk = (node) => {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) return
+    Object.values(node).forEach((value) => {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        if (typeof value.path === 'string') {
+          const norm = value.path.replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, '')
+          paths.add(norm.toLowerCase())
+        }
+        walk(value)
+      }
+    })
+  }
+  walk(dataCatalog.value)
+  return Array.from(paths)
+})
+
+const normalizedCatalogPaths = computed(() => {
+  const set = new Set()
+  dataCatalogPaths.value.forEach((p) => set.add(p.toLowerCase()))
+  return set
+})
+
+const untrackedInputFiles = computed(() =>
+  inputFiles.value.filter((f) => {
+    const norm = (f.path || '').replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, '').toLowerCase()
+    return norm && !normalizedCatalogPaths.value.has(norm)
+  })
+)
+
+const fetchInputFiles = async () => {
+  loadingInputFiles.value = true
+  inputFilesError.value = null
+  try {
+    const res = await fetch(`/api/project/${route.params.id}/inputs`)
+    const json = await res.json()
+    if (!res.ok || json.error) {
+      inputFilesError.value = json.error || 'Failed to load input files'
+      inputFiles.value = []
+      return
+    }
+    inputFiles.value = Array.isArray(json.files) ? json.files : []
+  } catch (err) {
+    inputFilesError.value = err?.message || 'Failed to load input files'
+    inputFiles.value = []
+  } finally {
+    loadingInputFiles.value = false
+  }
+}
+
 const upsertDataCatalogEntry = (catalog, fullKey, newValue) => {
   const segments = fullKey.split('.').filter(Boolean)
   if (segments.length === 0) return null
@@ -1925,11 +2017,41 @@ const openDataEditor = (node) => {
   isEditingDataEntry.value = true
 }
 
+const deriveKeyFromPath = (path) => {
+  if (!path) return ''
+  let normalized = path.trim()
+  normalized = normalized.replace(/\\/g, '/')
+  normalized = normalized.replace(/^\.\/+/, '')
+  normalized = normalized.replace(/^\/+/, '')
+  normalized = normalized.replace(/\/+$/, '')
+  normalized = normalized.replace(/\.[^./]+$/, '')
+  normalized = normalized.replace(/\/+/g, '.')
+  normalized = normalized.replace(/[^A-Za-z0-9._-]/g, '_')
+  normalized = normalized.replace(/\.{2,}/g, '.')
+  normalized = normalized.replace(/^\.|\.$/g, '')
+  return normalized
+}
+
 const openDataCreator = () => {
   isCreatingDataEntry.value = true
   editingDataEntry.value = {
     fullKey: '',
     data: {}
+  }
+  dataEditError.value = null
+  isEditingDataEntry.value = true
+}
+
+const openDataCreatorWithPath = (file) => {
+  const path = file?.path || ''
+  const type = file?.type || ''
+  isCreatingDataEntry.value = true
+  editingDataEntry.value = {
+    fullKey: deriveKeyFromPath(path),
+    data: {
+      path,
+      type
+    }
   }
   dataEditError.value = null
   isEditingDataEntry.value = true
@@ -1973,13 +2095,16 @@ const handleDataEntrySave = async (payload) => {
   }
 
   dataCatalog.value = updatedCatalog
+  pendingDataUpdates.value = true
+  if (isNew) {
+    const updatedAdds = new Set(pendingAddedKeys.value)
+    updatedAdds.add(fullKey)
+    pendingAddedKeys.value = updatedAdds
+  }
   savingDataEntry.value = true
   dataEditError.value = null
 
   try {
-    await persistDataCatalog(updatedCatalog)
-    ensureDataPathExpanded(fullKey)
-    toast.success(isNew ? 'Data Source Added' : 'Data Catalog Updated', isNew ? 'Data entry created successfully' : 'Data entry saved successfully')
     isEditingDataEntry.value = false
     editingDataEntry.value = null
     isCreatingDataEntry.value = false
@@ -1995,6 +2120,9 @@ const handleDataEntrySave = async (payload) => {
   } finally {
     savingDataEntry.value = false
   }
+
+  // Refresh available inputs list
+  fetchInputFiles()
 }
 
 const removeDataCatalogEntry = (catalog, fullKey) => {
@@ -2030,36 +2158,21 @@ const removeDataCatalogEntry = (catalog, fullKey) => {
   return updatedCatalog
 }
 
-const savePendingDataDeletes = async () => {
-  if (!hasPendingDataDeletes.value) return
-  savingDataDeletes.value = true
-  const currentCatalog = cloneDeep(dataCatalog.value)
-  let nextCatalog = cloneDeep(currentCatalog)
-
-  for (const key of dataEntriesToDelete.value) {
-    const updated = removeDataCatalogEntry(nextCatalog, key)
-    if (!updated) {
-      toast.error('Delete Failed', `Unable to locate ${key} in catalog`)
-      savingDataDeletes.value = false
-      return
-    }
-    nextCatalog = updated
-  }
-
-  try {
-    await persistDataCatalog(nextCatalog)
-    dataCatalog.value = nextCatalog
-    toast.success('Data Catalog Updated', 'Staged deletions have been saved')
-    dataEntriesToDelete.value = new Set()
-  } catch (err) {
-    toast.error('Delete Failed', err.message || 'Failed to save catalog changes')
-  } finally {
-    savingDataDeletes.value = false
-  }
-}
-
 const toggleDataDelete = (node) => {
   if (!node || !node.fullKey) return
+
+  // If this entry was newly added and not yet saved, removing it should cancel the addition
+  if (pendingAddedKeys.value.has(node.fullKey)) {
+    const updatedAdds = new Set(pendingAddedKeys.value)
+    updatedAdds.delete(node.fullKey)
+    pendingAddedKeys.value = updatedAdds
+    const updatedCatalog = removeDataCatalogEntry(dataCatalog.value, node.fullKey)
+    if (updatedCatalog) {
+      dataCatalog.value = updatedCatalog
+    }
+    return
+  }
+
   const updated = new Set(dataEntriesToDelete.value)
   if (updated.has(node.fullKey)) {
     updated.delete(node.fullKey)
@@ -2071,6 +2184,32 @@ const toggleDataDelete = (node) => {
 
 const clearPendingDataDeletes = () => {
   dataEntriesToDelete.value = new Set()
+}
+
+const saveDataCatalogChanges = async () => {
+  // Apply staged deletions to the current catalog before persisting
+  let nextCatalog = cloneDeep(dataCatalog.value)
+  if (hasPendingDataDeletes.value) {
+    for (const key of dataEntriesToDelete.value) {
+      const updated = removeDataCatalogEntry(nextCatalog, key)
+      if (!updated) {
+        toast.error('Delete Failed', `Unable to locate ${key} in catalog`)
+        return
+      }
+      nextCatalog = updated
+    }
+  }
+
+  try {
+    await persistDataCatalog(nextCatalog)
+    dataCatalog.value = nextCatalog
+    dataEntriesToDelete.value = new Set()
+    pendingAddedKeys.value = new Set()
+    pendingDataUpdates.value = false
+    fetchInputFiles()
+  } catch (err) {
+    toast.error('Save Failed', err.message || 'Failed to save data catalog')
+  }
 }
 
 const toggleDataGroup = (key) => {
@@ -2109,7 +2248,8 @@ const loadDataCatalog = async () => {
     const data = await response.json()
 
     if (!data.error) {
-      dataCatalog.value = data.data || data
+      const incoming = data.data || data
+      dataCatalog.value = (!incoming || Array.isArray(incoming)) ? {} : incoming
     }
   } catch (err) {
     console.error('Failed to load data catalog:', err)
@@ -2222,9 +2362,13 @@ const saveCurrentSection = async () => {
     case 'env':
       await saveEnv()
       break
+    case 'data':
+      if (hasPendingDataDeletes.value || pendingDataUpdates.value || hasPendingDataAdds.value) {
+        await saveDataCatalogChanges()
+      }
+      break
     case 'overview':
     case 'notebooks':
-    case 'data':
       toast.info('No Changes to Save', 'This section has no editable settings')
       break
     default:
@@ -2290,11 +2434,6 @@ const saveSettings = async () => {
     const result = await response.json()
 
     if (result.success) {
-      const message = newDirectories.length > 0
-        ? `Settings updated and ${newDirectories.length} director${newDirectories.length === 1 ? 'y' : 'ies'} created`
-        : 'Project settings have been updated'
-
-      toast.success('Settings Saved', message)
       projectSettings.value = JSON.parse(JSON.stringify(editableSettings.value))
       // Reload settings to verify save and show new directories
       await loadProjectSettings()
@@ -2829,7 +2968,6 @@ const saveAISettings = async () => {
     const result = await response.json()
 
     if (result.success) {
-      toast.success('AI Settings Saved', 'AI assistant configuration has been updated')
       aiLoaded.value = false
       await loadAISettings()
     } else {
@@ -2860,7 +2998,6 @@ const saveGitSettings = async () => {
     const result = await response.json()
 
     if (result.success) {
-      toast.success('Git Settings Saved', 'Repository configuration has been updated')
       gitLoaded.value = false
       await loadGitSettings()
     } else {
@@ -2932,7 +3069,6 @@ const saveEnv = async () => {
     const result = await response.json()
 
     if (result.success) {
-      toast.success('.env Saved', 'Environment variables have been updated')
       envLoaded.value = false
       await loadEnv()
     } else {
@@ -3238,6 +3374,11 @@ const regenerateQuartoConfigs = async () => {
 const saveAll = async () => {
   const saves = []
 
+  // Data catalog changes (adds/edits/deletes)
+  if (hasPendingDataDeletes.value || pendingDataUpdates.value || hasPendingDataAdds.value) {
+    saves.push(saveDataCatalogChanges())
+  }
+
   // Settings covers: settings, scaffold, directories
   if (editableSettings.value && Object.keys(editableSettings.value).length > 0) {
     saves.push(saveSettings())
@@ -3275,6 +3416,8 @@ const saveAll = async () => {
 
   if (saves.length > 0) {
     await Promise.all(saves)
+    // Single consolidated toast
+    toast.success('Saved', 'All pending changes have been saved')
   }
 }
 
@@ -3290,6 +3433,7 @@ const handleKeydown = (e) => {
 onMounted(() => {
   initializeSection()
   loadProject()
+  fetchInputFiles()
   loadDataCatalog()
   loadProjectSettings()
   loadQuartoFiles()

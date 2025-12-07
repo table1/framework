@@ -83,7 +83,8 @@ make_notebook <- function(name,
                           type = NULL,
                           dir = NULL,
                           stub = "default",
-                          overwrite = FALSE) {
+                          overwrite = FALSE,
+                          subdir = NULL) {
 
   # Determine type: explicit parameter > config setting > quarto default
   if (is.null(type)) {
@@ -113,6 +114,10 @@ make_notebook <- function(name,
     dir <- .get_notebook_dir_from_config()
   }
 
+  if (!is.null(subdir)) {
+    dir <- file.path(dir, subdir)
+  }
+
   # Ensure directory exists
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
@@ -138,8 +143,9 @@ make_notebook <- function(name,
   # Use the original name (before slugification) for the title
   filename_no_ext <- sub("\\.[^.]+$", "", basename(name_normalized))
   original_name <- sub("\\.[^.]+$", "", basename(name))  # Original name for title
+  creation_date <- as.character(Sys.Date())
   stub_content <- gsub("{filename}", original_name, stub_content, fixed = TRUE)
-  stub_content <- gsub("{date}", Sys.Date(), stub_content, fixed = TRUE)
+  stub_content <- gsub("{date}", creation_date, stub_content, fixed = TRUE)
 
   # Get author info from project config or global config
   cfg <- tryCatch(settings_read(), error = function(e) NULL)
@@ -166,15 +172,19 @@ make_notebook <- function(name,
   author_name <- get_author_field("name", "Your Name")
   author_email <- get_author_field("email", "")
   author_affiliation <- get_author_field("affiliation", "")
-  github_username <- get_author_field("github_username", "")
-  github_email <- get_author_field("github_email", "")
 
   # Replace all template variables ({{variable}} syntax)
-  stub_content <- gsub("\\{\\{author\\}\\}", author_name, stub_content)
-  stub_content <- gsub("\\{\\{email\\}\\}", author_email, stub_content)
-  stub_content <- gsub("\\{\\{affiliation\\}\\}", author_affiliation, stub_content)
-  stub_content <- gsub("\\{\\{github_username\\}\\}", github_username, stub_content)
-  stub_content <- gsub("\\{\\{github_email\\}\\}", github_email, stub_content)
+  stub_content <- .replace_moustache_placeholders(
+    stub_content,
+    list(
+      title = original_name,
+      filename = original_name,
+      date = creation_date,
+      author = author_name,
+      email = author_email,
+      affiliation = author_affiliation
+    )
+  )
 
   # Also support legacy patterns for backward compatibility
   stub_content <- gsub(
@@ -227,6 +237,33 @@ make_notebook <- function(name,
   slug <- gsub("^-+|-+$", "", slug)
 
   slug
+}
+
+#' Replace {{ variable }} placeholders in template content
+#'
+#' Supports both `{{name}}` and `{{ name }}` styles by trimming whitespace
+#' around the variable identifier before replacement.
+#'
+#' @param content Character vector containing template lines.
+#' @param replacements Named list or vector of replacements.
+#' @return Character vector with placeholders replaced.
+#' @keywords internal
+.replace_moustache_placeholders <- function(content, replacements) {
+  if (is.null(replacements) || length(replacements) == 0) {
+    return(content)
+  }
+
+  for (name in names(replacements)) {
+    value <- replacements[[name]]
+    if (is.null(value) || length(value) == 0) {
+      next
+    }
+    value <- as.character(value[[1]])
+    pattern <- sprintf("\\\\{\\\\{\\s*%s\\s*\\\\}\\\\}", name)
+    content <- gsub(pattern, value, content, perl = TRUE)
+  }
+
+  content
 }
 
 
@@ -501,6 +538,7 @@ stubs_list <- function(type = NULL) {
 #' @param name Character. The file name (with or without .qmd extension)
 #' @param dir Character. Directory to create the file in. Uses your project's
 #'   configured `directories$notebooks` setting. Default: "notebooks/".
+#' @param subdir Optional subdirectory under `dir` (e.g., "slides/week-01").
 #' @param stub Character. Name of the stub template to use. Default "default".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
 #'
@@ -520,8 +558,8 @@ stubs_list <- function(type = NULL) {
 #'
 #' @seealso [make_notebook()], [make_rmd()]
 #' @export
-make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
-  make_notebook(name = name, type = "quarto", dir = dir, stub = stub, overwrite = overwrite)
+make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subdir = NULL) {
+  make_notebook(name = name, type = "quarto", dir = dir, stub = stub, overwrite = overwrite, subdir = subdir)
 }
 
 
@@ -552,8 +590,8 @@ make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
 #'
 #' @seealso [make_notebook()], [make_qmd()]
 #' @export
-make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
-  make_notebook(name = name, type = "rmarkdown", dir = dir, stub = stub, overwrite = overwrite)
+make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subdir = NULL) {
+  make_notebook(name = name, type = "rmarkdown", dir = dir, stub = stub, overwrite = overwrite, subdir = subdir)
 }
 
 
@@ -580,8 +618,8 @@ make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE) {
 #'
 #' @seealso [make_notebook()], [make_qmd()], [make_presentation()]
 #' @export
-make_revealjs <- function(name, dir = NULL, overwrite = FALSE) {
-  make_notebook(name = name, type = "quarto", dir = dir, stub = "revealjs", overwrite = overwrite)
+make_revealjs <- function(name, dir = NULL, overwrite = FALSE, subdir = NULL) {
+  make_notebook(name = name, type = "quarto", dir = dir, stub = "revealjs", overwrite = overwrite, subdir = subdir)
 }
 
 
@@ -604,6 +642,6 @@ make_revealjs <- function(name, dir = NULL, overwrite = FALSE) {
 #'
 #' @seealso [make_notebook()], [make_revealjs()]
 #' @export
-make_presentation <- function(name, dir = NULL, overwrite = FALSE) {
-  make_revealjs(name = name, dir = dir, overwrite = overwrite)
+make_presentation <- function(name, dir = NULL, overwrite = FALSE, subdir = NULL) {
+  make_revealjs(name = name, dir = dir, overwrite = overwrite, subdir = subdir)
 }

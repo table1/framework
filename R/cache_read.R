@@ -91,10 +91,20 @@ cache_list <- function() {
 
   # Convert timestamps and determine status
   now <- Sys.time()
-  result$expire_at <- as.POSIXct(result$expire_at)
-  result$created_at <- as.POSIXct(result$created_at)
-  result$updated_at <- as.POSIXct(result$updated_at)
-  result$last_read_at <- as.POSIXct(result$last_read_at)
+
+  safe_posix <- function(x) {
+    tryCatch(
+      as.POSIXct(x),
+      error = function(e) {
+        suppressWarnings(lubridate::ymd_hms(x, quiet = TRUE))
+      }
+    )
+  }
+
+  result$expire_at <- safe_posix(result$expire_at)
+  result$created_at <- safe_posix(result$created_at)
+  result$updated_at <- safe_posix(result$updated_at)
+  result$last_read_at <- safe_posix(result$last_read_at)
 
   result$status <- ifelse(
     is.na(result$expire_at),
@@ -133,6 +143,38 @@ cache_list <- function() {
   refresh
 }
 
+#' Normalize expire_after input to numeric hours
+#' @param expire_after Numeric or character (e.g., "1 day", "12 hours")
+#' @param default Default value if expire_after is NULL/empty
+#' @keywords internal
+.normalize_expire_after <- function(expire_after, default = NULL) {
+  if (is.null(expire_after) || (is.character(expire_after) && !nzchar(trimws(expire_after)))) {
+    return(default)
+  }
+
+  if (is.character(expire_after)) {
+    val <- trimws(tolower(expire_after))
+    pattern <- "^([0-9]*\\.?[0-9]+)\\s*(hour|hours|hr|hrs|h|day|days|d|week|weeks|w)$"
+    m <- regexec(pattern, val)
+    parts <- regmatches(val, m)[[1]]
+    if (length(parts) == 3) {
+      amount <- as.numeric(parts[2])
+      unit <- parts[3]
+      multiplier <- switch(unit,
+        hour = 1, hours = 1, hr = 1, hrs = 1, h = 1,
+        day = 24, days = 24, d = 24,
+        week = 24 * 7, weeks = 24 * 7, w = 24 * 7,
+        1
+      )
+      return(amount * multiplier)
+    }
+    stop("Could not parse expire_after value. Use numbers (hours) or strings like '1 day', '2 hours', '1 week'.")
+  }
+
+  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+  expire_after
+}
+
 #' Get a cache value
 #' @param name The cache name
 #' @param file Optional file path to store the cache (default: `cache/{name}.rds`)
@@ -143,7 +185,7 @@ cache_list <- function() {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+  expire_after <- .normalize_expire_after(expire_after)
 
   # Get cache directory from config
   cache_dir <- config("cache")
@@ -197,7 +239,12 @@ cache_list <- function() {
 
   # Check if cache has expired
   if (!is.na(result$expire_at)) {
-    expire_at <- as.POSIXct(result$expire_at)
+    expire_at <- tryCatch(
+      as.POSIXct(result$expire_at),
+      error = function(e) {
+        suppressWarnings(lubridate::ymd_hms(result$expire_at, quiet = TRUE))
+      }
+    )
     if (Sys.time() > expire_at) {
       message(sprintf("Cache '%s' has expired", name))
       .remove_cache(name, file)
@@ -262,7 +309,7 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+  expire_after <- .normalize_expire_after(expire_after)
 
   result <- .get_cache(name, file, expire_after)
   if (is.null(result)) {
@@ -283,7 +330,8 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #' @param file Optional file path to store the cache
 #'   (default: `cache/{name}.rds`)
 #' @param expire_after Optional expiration time in hours
-#'   (default: from config)
+#'   (default: from config). Character durations like "1 day" or "2 hours" are accepted.
+#' @param expire Optional alias for `expire_after` (accepts the same formats)
 #' @param refresh Optional boolean or function that returns boolean to force
 #'   refresh. If TRUE or if function returns TRUE, cache is invalidated and
 #'   expression is re-evaluated.
@@ -305,11 +353,14 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #' }
 #'
 #' @export
-cache_remember <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE) {
+cache_remember <- function(name, expr, file = NULL, expire_after = NULL, refresh = FALSE, expire = NULL) {
   # Validate arguments
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(file, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_number(expire_after, lower = 0, null.ok = TRUE)
+  if (!is.null(expire) && !is.null(expire_after)) {
+    warning("Both expire and expire_after provided; using expire_after.")
+  }
+  effective_expire <- .normalize_expire_after(expire_after %||% expire)
   checkmate::assert(
     checkmate::check_flag(refresh),
     checkmate::check_function(refresh)
@@ -321,7 +372,7 @@ cache_remember <- function(name, expr, file = NULL, expire_after = NULL, refresh
     .remove_cache(name, file)
   }
 
-  result <- cache_get(name, file, expire_after)
+  result <- cache_get(name, file, effective_expire)
   if (!is.null(result)) {
     return(result)
   }
@@ -334,7 +385,7 @@ cache_remember <- function(name, expr, file = NULL, expire_after = NULL, refresh
   )
 
   tryCatch(
-    cache(name, value, file, expire_after),
+    cache(name, value, file, effective_expire),
     error = function(e) {
       warning(sprintf("Failed to cache value: %s", e$message))
     }

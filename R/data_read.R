@@ -35,6 +35,7 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
         sas7bdat = "sas",
         sas7bcat = "sas",
         xpt = "sas_xpt",
+        parquet = "parquet",
         stop(sprintf("Unsupported file extension: %s", file_ext))
       ),
       locked = FALSE,
@@ -206,6 +207,15 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
     }
   }
 
+  require_arrow <- function() {
+    if (!requireNamespace("arrow", quietly = TRUE)) {
+      stop(
+        "Parquet files require the arrow package.\n",
+        "Install with: install.packages('arrow')"
+      )
+    }
+  }
+
   # Load data
   data <- tryCatch(
     switch(spec$type,
@@ -239,6 +249,10 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
       sas_xpt = {
         require_haven("SAS transport")
         haven::read_xpt(spec$path, ...)
+      },
+      parquet = {
+        require_arrow()
+        arrow::read_parquet(spec$path, as_data_frame = TRUE, ...)
       },
       stop(sprintf("Unsupported file type: %s", spec$type))
     ),
@@ -500,6 +514,11 @@ data_info <- function(path) {
     # Excel files
     if (grepl("\\.(xlsx|xls)$", path, ignore.case = TRUE)) {
       return(list(type = "excel", delimiter = NULL))
+    }
+
+    # Parquet files
+    if (grepl("\\.parquet$", path, ignore.case = TRUE)) {
+      return(list(type = "parquet", delimiter = NULL))
     }
 
     # Stata files

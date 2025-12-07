@@ -92,12 +92,17 @@ project_create <- function(
   # Create subdirectories from directories config
   .create_project_directories(project_dir, directories, extra_directories, render_dirs)
 
-  # Ensure settings directory exists (connections/env files live here)
-  settings_dir <- file.path(project_dir, "settings")
-  dir.create(settings_dir, recursive = TRUE, showWarnings = FALSE)
+  # For project/project_sensitive: use split files in settings/
+  # For course/presentation: everything inline in settings.yml
+  use_split_files <- type %in% c("project", "project_sensitive")
 
-  # Create config.yml with all settings
-  connections_rel_path <- "settings/connections.yml"
+  settings_dir <- file.path(project_dir, "settings")
+  if (use_split_files) {
+    dir.create(settings_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+
+  # Connections: split file for project/project_sensitive, inline for course/presentation
+  connections_rel_path <- if (use_split_files) "settings/connections.yml" else NULL
 
   .create_project_config(
     project_dir = project_dir,
@@ -111,16 +116,20 @@ project_create <- function(
     git = git,
     scaffold = scaffold,
     settings_dir = settings_dir,
+    connections = connections,
     connections_file = connections_rel_path,
     render_dirs = render_dirs,
     quarto = quarto
   )
 
-  .create_connections_file(
-    project_dir = project_dir,
-    connections = connections,
-    relative_path = connections_rel_path
-  )
+  # Only create separate connections file for split-file projects
+  if (use_split_files) {
+    .create_connections_file(
+      project_dir = project_dir,
+      connections = connections,
+      relative_path = connections_rel_path
+    )
+  }
 
   .create_env_file(
     project_dir = project_dir,
@@ -133,7 +142,7 @@ project_create <- function(
   }
 
   # Create AI context files
-  if (ai$enabled && length(ai$assistants) > 0) {
+  if (ai$enabled) {
     .create_ai_files(project_dir, ai$assistants, ai$canonical_content, type)
   }
 
@@ -320,7 +329,8 @@ project_create <- function(
   git,
   scaffold,
   settings_dir,
-  connections_file = "settings/connections.yml",
+  connections = NULL,
+  connections_file = NULL,
   render_dirs = NULL,
   quarto = NULL
 ) {
@@ -332,7 +342,8 @@ project_create <- function(
     # Ensure settings directory exists
     dir.create(settings_dir, recursive = TRUE, showWarnings = FALSE)
 
-    # Main settings.yml with references to split files
+    # Main settings.yml with ONLY top-level metadata and directory structure
+    # Everything else goes in split files
     main_config <- list(
       default = list(
         project_name = name,
@@ -342,15 +353,16 @@ project_create <- function(
         directories = directories,
         extra_directories = if (length(extra_directories) > 0) extra_directories else NULL,
         render_dirs = render_dirs,
-        quarto = quarto,
 
-        # References to split files
+        # References to split files for ALL domain-specific settings
         author = "settings/author.yml",
         packages = "settings/packages.yml",
         git = "settings/git.yml",
         ai = "settings/ai.yml",
         scaffold = "settings/scaffold.yml",
-        connections = connections_file
+        connections = connections_file,
+        quarto = "settings/quarto.yml",
+        data = "settings/data.yml"
       )
     )
 
@@ -391,6 +403,12 @@ project_create <- function(
       notebook_format = scaffold$notebook_format %||% "quarto",
       positron = scaffold$positron %||% FALSE
     )), file.path(settings_dir, "scaffold.yml"))
+
+    # Write quarto settings to split file
+    yaml::write_yaml(list(quarto = quarto %||% list()), file.path(settings_dir, "quarto.yml"))
+
+    # Write empty data catalog to split file
+    yaml::write_yaml(list(data = list()), file.path(settings_dir, "data.yml"))
 
     message("  Created: settings/ directory with split configuration files")
   } else {
@@ -443,7 +461,12 @@ project_create <- function(
           notebook_format = scaffold$notebook_format %||% "quarto",
           positron = scaffold$positron %||% FALSE
         ),
-        connections = connections_file
+
+        # Data catalog (inline for course/presentation)
+        data = list(),
+
+        # Connections (inline for course/presentation)
+        connections = connections %||% .default_connections_configuration()
       )
     )
 
@@ -511,6 +534,10 @@ project_create <- function(
     agents = "AGENTS.md",
     copilot = ".github/copilot-instructions.md"
   )
+
+  if (length(assistants) == 0) {
+    assistants <- list("claude")
+  }
 
   # Get project name from directory
   project_name <- basename(normalizePath(project_dir))
@@ -713,15 +740,25 @@ project_create <- function(
   add_result <- system2("git", c("add", "."), stdout = TRUE, stderr = TRUE)
 
   # Create initial commit with proper message formatting
-  # Use system() with proper shell quoting for the commit message
-  commit_result <- system(
-    "git commit -m 'Initial commit from Framework'",
-    intern = TRUE,
-    ignore.stderr = FALSE
-  )
+  # Skip if git identity is missing to avoid hard failures
+  user_name <- system2("git", c("config", "user.name"), stdout = TRUE, stderr = TRUE)
+  user_email <- system2("git", c("config", "user.email"), stdout = TRUE, stderr = TRUE)
+  missing_identity <- identical(attr(user_name, "status"), 1) || identical(attr(user_email, "status"), 1) ||
+    (length(user_name) == 0 || !nzchar(user_name)) ||
+    (length(user_email) == 0 || !nzchar(user_email))
 
-  if (length(commit_result) > 0 && any(grepl("create mode|Initial commit|file changed|files changed", commit_result))) {
-    message("  Created initial commit")
+  if (missing_identity) {
+    message("  Skipping initial commit (git user.name/user.email not set). Configure git to enable auto-commit.")
+  } else {
+    msg_file <- tempfile("framework_init_commit_")
+    writeLines("Initial commit from Framework", msg_file)
+    on.exit(unlink(msg_file), add = TRUE)
+
+    commit_result <- system2("git", c("commit", "-F", msg_file), stdout = TRUE, stderr = TRUE)
+    status <- attr(commit_result, "status")
+    if (is.null(status) || identical(status, 0)) {
+      message("  Created initial commit")
+    }
   }
 }
 

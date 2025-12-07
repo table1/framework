@@ -9,7 +9,8 @@ make_notebook(
   type = NULL,
   dir = NULL,
   stub = "default",
-  overwrite = FALSE
+  overwrite = FALSE,
+  subdir = NULL
 )
 }
 \arguments{
