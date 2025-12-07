@@ -4,7 +4,14 @@
 \alias{cache_remember}
 \title{Remember a value (get from cache or compute and store)}
 \usage{
-cache_remember(name, expr, file = NULL, expire_after = NULL, refresh = FALSE)
+cache_remember(
+  name,
+  expr,
+  file = NULL,
+  expire_after = NULL,
+  refresh = FALSE,
+  expire = NULL
+)
 }
 \arguments{
 \item{name}{The cache name (non-empty string identifier)}
@@ -16,11 +23,13 @@ Expression is evaluated in the parent frame.}
 (default: \verb{cache/\{name\}.rds})}
 
 \item{expire_after}{Optional expiration time in hours
-(default: from config)}
+(default: from config). Character durations like "1 day" or "2 hours" are accepted.}
 
 \item{refresh}{Optional boolean or function that returns boolean to force
 refresh. If TRUE or if function returns TRUE, cache is invalidated and
 expression is re-evaluated.}
+
+\item{expire}{Optional alias for \code{expire_after} (accepts the same formats)}
 }
 \value{
 The cached value (if cache hit) or the result of evaluating expr

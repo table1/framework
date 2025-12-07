@@ -25,15 +25,15 @@
           />
         </div>
 
-        <Input
-          v-model="form.path"
-          label="File Path"
-          placeholder="inputs/raw/example.csv"
-          required
-          :error="pathFieldError"
-          monospace
-          hint="Provide a path relative to the project root (e.g., inputs/raw/data.csv) or an absolute path."
-        />
+    <Input
+      v-model="form.path"
+      label="File Path"
+      placeholder="inputs/raw/example.csv"
+      required
+      :error="pathFieldError"
+      monospace
+      hint="Provide a path relative to the project root (e.g., inputs/raw/data.csv) or an absolute path."
+    />
 
         <div class="grid gap-4 sm:grid-cols-2">
           <Select
@@ -171,14 +171,14 @@
         :disabled="saving"
         @click="handleSave"
       >
-        {{ saving ? 'Saving…' : 'Save Entry' }}
+        {{ saving ? 'Saving…' : (isCreateMode ? 'Add Entry' : 'Save Entry') }}
       </Button>
     </template>
   </Modal>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import Button from './ui/Button.vue'
 import Input from './ui/Input.vue'
 import Modal from './ui/Modal.vue'
@@ -207,6 +207,14 @@ const props = defineProps({
   error: {
     type: String,
     default: null
+  },
+  projectId: {
+    type: [String, Number],
+    required: true
+  },
+  existingPaths: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -243,16 +251,58 @@ const form = reactive({
   additionalFields: []
 })
 
+const pickerFiles = ref([])
+const pickerError = ref(null)
+const pickerSearch = ref('')
+const showPicker = ref(false)
+
+const normalizedExistingPaths = computed(() => {
+  const set = new Set()
+  props.existingPaths.forEach((p) => {
+    if (typeof p === 'string') {
+      const norm = p.replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, '').toLowerCase()
+      set.add(norm)
+    }
+  })
+  return set
+})
+
+const untrackedFiles = computed(() =>
+  pickerFiles.value.filter((f) => {
+    const norm = (f.path || '').replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, '').toLowerCase()
+    return norm && !normalizedExistingPaths.value.has(norm)
+  })
+)
+
+const filteredFiles = computed(() => {
+  const term = pickerSearch.value.trim().toLowerCase()
+  const source = untrackedFiles.value
+  if (!term) return source
+  return source.filter((f) => f.path.toLowerCase().includes(term))
+})
+
 const shouldShowDelimiter = computed(() => form.type === 'csv_custom')
+
+const deriveKeyFromPath = (path) => {
+  if (!path) return ''
+  let normalized = path.trim()
+  normalized = normalized.replace(/\\/g, '/')
+  normalized = normalized.replace(/^\.\/+/, '')
+  normalized = normalized.replace(/^\/+/, '')
+  normalized = normalized.replace(/\/+$/, '')
+  normalized = normalized.replace(/\.[^./]+$/, '')
+  normalized = normalized.replace(/\/+/g, '.')
+  normalized = normalized.replace(/[^A-Za-z0-9._-]/g, '_')
+  normalized = normalized.replace(/\.{2,}/g, '.')
+  normalized = normalized.replace(/^\.|\.$/g, '')
+  return normalized
+}
 
 const localError = computed(() => {
   if (!props.entry && !isCreateMode.value) return null
   const duplicateKeys = findDuplicateKeys()
   if (duplicateKeys.length > 0) {
     return `Duplicate metadata keys: ${duplicateKeys.join(', ')}`
-  }
-  if (form.additionalFields.some((field) => !field.key.trim())) {
-    return 'Metadata keys cannot be empty.'
   }
   return null
 })
@@ -278,6 +328,9 @@ watch(
 watch(
   () => form.path,
   (newPath) => {
+    if (isCreateMode.value && !form.fullKey.trim()) {
+      form.fullKey = deriveKeyFromPath(newPath)
+    }
     if (typeManuallySelected.value) return
     const guess = guessTypeFromPath(newPath)
     if (!guess) return
@@ -372,6 +425,7 @@ function handleTypeChange (value) {
 function initializeForm (entry) {
   resetForm()
   showValidationErrors.value = false
+  pickerSearch.value = ''
   if (isCreateMode.value) {
     const data = entry?.data || {}
     form.fullKey = entry?.fullKey || ''
@@ -431,6 +485,23 @@ function initializeForm (entry) {
 
   form.additionalFields = extraFields
   parseError.value = null
+}
+
+function togglePicker () {
+  showPicker.value = !showPicker.value
+}
+
+function applyFileSelection (file) {
+  form.path = file.path || ''
+  const guess = guessTypeFromPath(file.path)
+  if (file.type || guess?.type) {
+    form.type = file.type || guess.type
+    form.delimiter = guess?.delimiter || ''
+  }
+  if (isCreateMode.value) {
+    form.fullKey = deriveKeyFromPath(file.path)
+  }
+  showPicker.value = false
 }
 
 function resetForm () {
@@ -511,9 +582,11 @@ function findDuplicateKeys () {
 }
 
 function fieldError (field) {
-  if (!field.key.trim()) return 'Key is required'
-  if (reservedKeys.includes(field.key.trim())) return 'Reserved key name'
-  if (form.additionalFields.some((other) => other !== field && other.key.trim() === field.key.trim())) {
+  const key = field.key.trim()
+  if (!showValidationErrors.value && !key) return null
+  if (!key) return 'Key is required'
+  if (reservedKeys.includes(key)) return 'Reserved key name'
+  if (form.additionalFields.some((other) => other !== field && other.key.trim() === key)) {
     return 'Duplicate key'
   }
   return null
@@ -607,7 +680,11 @@ const buildPayload = () => {
     data[key] = value
   }
 
-  const fullKey = (isCreateMode.value ? form.fullKey : props.entry.fullKey || '').trim()
+  let fullKey = (isCreateMode.value ? form.fullKey : props.entry.fullKey || '').trim()
+
+  if (isCreateMode.value && !fullKey) {
+    fullKey = deriveKeyFromPath(form.path)
+  }
 
   if (!fullKey) {
     throw new Error('Dot notation key is required')
@@ -619,4 +696,18 @@ const buildPayload = () => {
     isNew: isCreateMode.value
   }
 }
+
+onMounted(async () => {
+  try {
+    const res = await fetch(`/api/project/${props.projectId}/inputs`)
+    const json = await res.json()
+    if (!res.ok || json.error) {
+      pickerError.value = json.error || 'Failed to load inputs'
+      return
+    }
+    pickerFiles.value = Array.isArray(json.files) ? json.files : []
+  } catch (err) {
+    pickerError.value = err?.message || 'Failed to load inputs'
+  }
+})
 </script>

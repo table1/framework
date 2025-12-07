@@ -119,99 +119,28 @@ test_that("functions_dir warns when custom dir doesn't exist", {
   file.remove("settings.yml")
 })
 
-test_that("results directories can be customized", {
-  skip_if_not_installed("yaml")
-  test_dir <- create_test_dir()
-  orig_wd <- getwd()
-  on.exit({
-    setwd(orig_wd)
-    cleanup_test_dir(test_dir)
-  })
-
-  # Initialize minimal project
-  setwd(test_dir)
-  suppressMessages(init(project_name = "TestProject", type = "presentation", force = TRUE))
-
-  # Update config with custom results dirs
-  cfg <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
-  cfg$default$directories$outputs_docs_public <- "my-results/pub"
-  cfg$default$directories$outputs_docs <- "my-results/priv"
-  writeLines(yaml::as.yaml(cfg), "settings.yml")
-
-  # Save result - should use custom directories
-  result_save("test", value = list(a = 1), type = "test", public = FALSE)
-
-  # Verify file was saved to custom location
-  expect_true(file.exists("my-results/priv/test.rds"))
-})
-
-test_that("results directories default correctly", {
-  test_dir <- create_test_dir()
-  orig_wd <- getwd()
-  on.exit({
-    setwd(orig_wd)
-    cleanup_test_dir(test_dir)
-  })
-
-  # Initialize minimal project
-  setwd(test_dir)
-  suppressMessages(init(project_name = "TestProject", type = "presentation", force = TRUE))
-
-  # Save result - should use defaults
-  result_save("test", value = list(a = 1), type = "test", public = FALSE)
-  result_save("test_pub", value = list(b = 2), type = "test", public = TRUE)
-
-  # Verify files were saved to default locations
-  expect_true(file.exists("outputs/private/docs/test.rds"))
-  expect_true(file.exists("outputs/public/docs/test_pub.rds"))
-})
-
-test_that("result_get uses custom directories", {
-  skip_if_not_installed("yaml")
-  test_dir <- create_test_dir()
-  orig_wd <- getwd()
-  on.exit({
-    setwd(orig_wd)
-    cleanup_test_dir(test_dir)
-  })
-
-  # Initialize minimal project
-  setwd(test_dir)
-  suppressMessages(init(project_name = "TestProject", type = "presentation", force = TRUE))
-
-  # Update config with custom results dirs
-  cfg <- yaml::read_yaml("settings.yml", eval.expr = FALSE)
-  cfg$default$directories$outputs_docs_public <- "custom/pub"
-  cfg$default$directories$outputs_docs <- "custom/priv"
-  writeLines(yaml::as.yaml(cfg), "settings.yml")
-
-  # Save and retrieve result
-  test_value <- list(x = 42, y = "hello")
-  result_save("mytest", value = test_value, type = "model", public = FALSE)
-
-  retrieved <- result_get("mytest")
-
-  # Verify retrieved value matches
-  expect_equal(retrieved, test_value)
-})
+# Note: Tests for result_save/result_get removed - API changed to save_table/save_model/etc.
+# Tests for results directories can be re-added when using the new API
 
 test_that("custom data directories override defaults", {
   test_dir <- tempdir()
   orig_wd <- getwd()
   setwd(test_dir)
-  on.exit(setwd(orig_wd))
 
-  # Create config with custom data dirs (modifyList will merge with skeleton)
+  on.exit({
+    setwd(orig_wd)
+    if (file.exists("settings.yml")) file.remove("settings.yml")
+  })
+
+  # Create config with custom data dirs
   writeLines(
-    "default:\n  options:\n    data:\n      cache_dir: my-cache\n      scratch_dir: my-scratch",
-    "config.yml"
+    "default:\n  directories:\n    cache: my-cache\n    scratch: my-scratch",
+    "settings.yml"
   )
 
-  config <- read_config()
+  config <- settings_read()
 
-  # Verify custom paths override skeleton defaults
-  expect_equal(config$options$data$cache_dir, "my-cache")
-  expect_equal(config$options$data$scratch_dir, "my-scratch")
-
-  file.remove("config.yml")
+  # Verify custom paths override defaults
+  expect_equal(config$directories$cache, "my-cache")
+  expect_equal(config$directories$scratch, "my-scratch")
 })

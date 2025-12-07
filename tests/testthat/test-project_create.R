@@ -2,15 +2,14 @@ test_that("project_create creates basic project structure", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  # Create temp directory for test
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  # Create temp path for test (don't create the directory - project_create does that)
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   # Create minimal project
   result <- project_create(
     name = "test_project",
-    location = test_root,
+    location = project_dir,
     type = "project",
     author = list(name = "Test User", email = "test@example.com", affiliation = "Test Org"),
     directories = list(
@@ -24,16 +23,19 @@ test_that("project_create creates basic project structure", {
   expect_true(result$success)
   expect_true(dir.exists(result$path))
 
-  # Check config.yml was created
-  config_path <- file.path(result$path, "config.yml")
+  # Check settings.yml was created (project type uses split files)
+  config_path <- file.path(result$path, "settings.yml")
   expect_true(file.exists(config_path))
 
   # Read and validate config
   config <- yaml::read_yaml(config_path)
   expect_equal(config$default$project_name, "test_project")
   expect_equal(config$default$project_type, "project")
-  expect_equal(config$default$author$name, "Test User")
-  expect_equal(config$default$author$email, "test@example.com")
+
+  # Author info is in split file for project type
+  author_config <- yaml::read_yaml(file.path(result$path, "settings/author.yml"))
+  expect_equal(author_config$author$name, "Test User")
+  expect_equal(author_config$author$email, "test@example.com")
 
   # Check directories were created
   expect_true(dir.exists(file.path(result$path, "notebooks")))
@@ -45,8 +47,8 @@ test_that("project_create creates basic project structure", {
   gitignore <- readLines(file.path(result$path, ".gitignore"))
   expect_true("*.Rdata" %in% gitignore)
 
-  # Check .Rproj file was created
-  expect_true(file.exists(file.path(result$path, "test_project.Rproj")))
+  # Check .Rproj file was created (name is kebab-cased)
+  expect_true(file.exists(file.path(result$path, "test-project.Rproj")))
 
   # Check scaffold.R was created
   expect_true(file.exists(file.path(result$path, "scaffold.R")))
@@ -68,9 +70,8 @@ test_that("project_create persists provided connections (db + storage) with defa
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_conn_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  project_dir <- tempfile("framework_conn_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   conn_config <- list(
     default_database = "warehouse",
@@ -99,7 +100,7 @@ test_that("project_create persists provided connections (db + storage) with defa
 
   result <- project_create(
     name = "conn_project",
-    location = test_root,
+    location = project_dir,
     type = "project",
     connections = conn_config,
     git = list(use_git = FALSE)
@@ -124,13 +125,12 @@ test_that("project_create handles packages configuration", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   result <- project_create(
     name = "test_packages",
-    location = test_root,
+    location = project_dir,
     type = "project",
     packages = list(
       use_renv = FALSE,
@@ -144,25 +144,24 @@ test_that("project_create handles packages configuration", {
 
   expect_true(result$success)
 
-  # Read config and check packages
-  config <- yaml::read_yaml(file.path(result$path, "config.yml"))
-  expect_false(config$default$packages$use_renv)
-  expect_length(config$default$packages$default_packages, 2)
-  expect_equal(config$default$packages$default_packages[[1]]$name, "dplyr")
-  expect_true(config$default$packages$default_packages[[1]]$auto_attach)
+  # Read packages split file and check packages
+  packages_config <- yaml::read_yaml(file.path(result$path, "settings/packages.yml"))
+  expect_false(packages_config$packages$use_renv)
+  expect_length(packages_config$packages$default_packages, 2)
+  expect_equal(packages_config$packages$default_packages[[1]]$name, "dplyr")
+  expect_true(packages_config$packages$default_packages[[1]]$auto_attach)
 })
 
 test_that("project_create handles AI configuration", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   result <- project_create(
     name = "test_ai",
-    location = test_root,
+    location = project_dir,
     type = "project",
     ai = list(
       enabled = TRUE,
@@ -190,13 +189,12 @@ test_that("project_create handles scaffold configuration", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   result <- project_create(
     name = "test_scaffold",
-    location = test_root,
+    location = project_dir,
     type = "project",
     scaffold = list(
       seed_on_scaffold = TRUE,
@@ -214,24 +212,23 @@ test_that("project_create handles scaffold configuration", {
   expect_true(any(grepl("set.seed\\(20241109\\)", scaffold)))
   expect_true(any(grepl("theme_bw", scaffold)))
 
-  # Check config
-  config <- yaml::read_yaml(file.path(result$path, "config.yml"))
-  expect_true(config$default$scaffold$seed_on_scaffold)
-  expect_equal(config$default$scaffold$seed, "20241109")
-  expect_equal(config$default$scaffold$ggplot_theme, "theme_bw")
+  # Check scaffold split file
+  scaffold_config <- yaml::read_yaml(file.path(result$path, "settings/scaffold.yml"))
+  expect_true(scaffold_config$scaffold$seed_on_scaffold)
+  expect_equal(scaffold_config$scaffold$seed, "20241109")
+  expect_equal(scaffold_config$scaffold$ggplot_theme, "theme_bw")
 })
 
 test_that("project_create handles extra directories", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   result <- project_create(
     name = "test_extra_dirs",
-    location = test_root,
+    location = project_dir,
     type = "project",
     directories = list(notebooks = "notebooks"),
     extra_directories = list(
@@ -247,8 +244,8 @@ test_that("project_create handles extra directories", {
   expect_true(dir.exists(file.path(result$path, "data/custom")))
   expect_true(dir.exists(file.path(result$path, "outputs/reports")))
 
-  # Check config has extra_directories
-  config <- yaml::read_yaml(file.path(result$path, "config.yml"))
+  # Check main settings.yml has extra_directories (inline in main file)
+  config <- yaml::read_yaml(file.path(result$path, "settings.yml"))
   expect_length(config$default$extra_directories, 2)
   expect_equal(config$default$extra_directories[[1]]$key, "custom_data")
 })
@@ -257,13 +254,12 @@ test_that("project_create applies git hooks and use_git from inputs", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   result <- project_create(
     name = "test_git_hooks",
-    location = test_root,
+    location = project_dir,
     type = "project",
     git = list(
       use_git = TRUE,
@@ -279,37 +275,38 @@ test_that("project_create applies git hooks and use_git from inputs", {
 
   expect_true(result$success)
 
-  config <- yaml::read_yaml(file.path(result$path, "config.yml"))
-  expect_true(config$default$git$initialize)
-  expect_equal(config$default$git$user_name, "Git User")
-  expect_equal(config$default$git$user_email, "git@example.com")
-  expect_true(config$default$git$hooks$ai_sync)
-  expect_false(config$default$git$hooks$data_security)
-  expect_true(config$default$git$hooks$check_sensitive_dirs)
+  # Git config is in split file
+  git_config <- yaml::read_yaml(file.path(result$path, "settings/git.yml"))
+  expect_true(git_config$git$enabled)
+  expect_equal(git_config$git$user_name, "Git User")
+  expect_equal(git_config$git$user_email, "git@example.com")
+  expect_true(git_config$git$hooks$ai_sync)
+  expect_false(git_config$git$hooks$data_security)
+  expect_true(git_config$git$hooks$check_sensitive_dirs)
 })
 
 test_that("project_create fails if directory already exists", {
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  # Use a single temp path for the project
+  project_dir <- tempfile("framework_test_")
+  on.exit(unlink(project_dir, recursive = TRUE), add = TRUE)
 
   # Create first project
   result1 <- project_create(
     name = "duplicate_test",
-    location = test_root,
+    location = project_dir,
     type = "project",
     git = list(use_git = FALSE)
   )
 
   expect_true(result1$success)
 
-  # Try to create second project with same name
+  # Try to create another project at the same location (should fail)
   expect_error(
     project_create(
       name = "duplicate_test",
-      location = test_root,
+      location = project_dir,
       type = "project",
       git = list(use_git = FALSE)
     ),
@@ -327,22 +324,29 @@ test_that("project_create handles different project types", {
   skip_if_not_installed("yaml")
   skip_on_cran()
 
-  test_root <- tempfile("framework_test_")
-  dir.create(test_root)
-  on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
+  # Create a parent temp directory to hold all project directories
+  parent_dir <- tempfile("framework_test_")
+  dir.create(parent_dir)
+  on.exit(unlink(parent_dir, recursive = TRUE), add = TRUE)
 
   # Test each project type
   for (type in c("project", "project_sensitive", "course", "presentation")) {
+    project_dir <- file.path(parent_dir, paste0("test_", type))
     result <- project_create(
       name = paste0("test_", type),
-      location = test_root,
+      location = project_dir,
       type = type,
       git = list(use_git = FALSE)
     )
 
     expect_true(result$success, info = paste("Failed for type:", type))
 
-    config <- yaml::read_yaml(file.path(result$path, "config.yml"))
+    # project and project_sensitive use settings.yml with split files
+    # course and presentation use settings.yml as single file
+    config_path <- file.path(result$path, "settings.yml")
+    expect_true(file.exists(config_path), info = paste("settings.yml not found for type:", type))
+
+    config <- yaml::read_yaml(config_path)
     expect_equal(config$default$project_type, type, info = paste("Wrong type in config for:", type))
   }
 })

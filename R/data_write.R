@@ -151,6 +151,27 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
   )
   message(sprintf("\u2713 Database updated: %s", data_name))
 
+  # Register saved file in settings so data_read() works without manual catalog edits
+  if (!has_slash && !has_extension && grepl("\\.", path)) {
+    # Only attempt to update config for dot-notation paths
+    tryCatch({
+      data_add(
+        file_path = file_path,
+        name = data_name,
+        type = type,
+        delimiter = delimiter,
+        locked = locked,
+        update_config = TRUE
+      )
+    }, error = function(e) {
+      warning(sprintf(
+        "File saved but could not update data catalog for '%s': %s",
+        data_name,
+        e$message
+      ))
+    })
+  }
+
   invisible(data)
 }
 
@@ -190,7 +211,7 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
   # Validate arguments
   checkmate::assert_string(file_path, min.chars = 1)
   checkmate::assert_string(name, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_choice(type, c("csv", "rds", "tsv", "excel", "stata", "spss", "sas"), null.ok = TRUE)
+  checkmate::assert_choice(type, c("csv", "rds", "tsv", "excel", "stata", "spss", "sas", "parquet"), null.ok = TRUE)
   checkmate::assert_choice(delimiter, c("comma", "tab", "semicolon", "space"))
   checkmate::assert_flag(locked)
   checkmate::assert_flag(update_config)
@@ -221,6 +242,7 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
       por = "spss",
       sas7bdat = "sas",
       xpt = "sas",
+      parquet = "parquet",
       stop(sprintf("Cannot auto-detect type for extension: %s. Please specify 'type' parameter.", file_ext))
     )
   }

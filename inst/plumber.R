@@ -612,6 +612,86 @@ function(id, req) {
   })
 }
 
+#* List input files for a project
+#* @get /api/project/<id>/inputs
+#* @param id Project ID
+function(id) {
+  config <- framework::read_frameworkrc()
+  project_id <- as.integer(id)
+
+  project <- NULL
+  if (!is.null(config$projects) && length(config$projects) > 0) {
+    for (proj in config$projects) {
+      if (!is.null(proj$id) && proj$id == project_id) {
+        project <- proj
+        break
+      }
+    }
+  }
+
+  if (is.null(project)) {
+    return(list(error = "Project not found"))
+  }
+
+  tryCatch({
+    old_wd <- getwd()
+    setwd(project$path)
+    on.exit(setwd(old_wd))
+
+    settings_file <- if (file.exists("settings.yml")) "settings.yml" else if (file.exists("config.yml")) "config.yml" else NULL
+    if (is.null(settings_file)) {
+      return(list(error = "No settings file found"))
+    }
+
+    settings_raw <- yaml::read_yaml(settings_file)
+    settings <- settings_raw$default %||% settings_raw
+    dirs <- settings$directories %||% list()
+
+    # Collect unique input directories
+    input_dirs <- unique(unlist(dirs[grepl("^inputs", names(dirs))]))
+    input_dirs <- input_dirs[file.exists(input_dirs)]
+
+    files <- list()
+    if (length(input_dirs) > 0) {
+      for (dir in input_dirs) {
+        paths <- list.files(dir, recursive = TRUE, full.names = TRUE)
+        for (p in paths) {
+          if (file.info(p)$isdir) next
+          rel <- file.path(dir, basename(p))
+          rel <- normalizePath(p, winslash = "/", mustWork = FALSE)
+          rel <- sub(paste0("^", normalizePath(project$path, winslash = "/", mustWork = FALSE), "/?"), "", rel)
+          ext <- tolower(tools::file_ext(p))
+          type <- switch(ext,
+            "csv" = "csv",
+            "tsv" = "tsv",
+            "txt" = "tsv",
+            "dat" = "tsv",
+            "rds" = "rds",
+            "xlsx" = "excel",
+            "xls" = "excel",
+            "dta" = "stata",
+            "sav" = "spss",
+            "zsav" = "spss",
+            "por" = "spss_por",
+            "sas7bdat" = "sas",
+            "sas7bcat" = "sas",
+            "xpt" = "sas_xpt",
+            NULL
+          )
+          files[[length(files) + 1]] <- list(
+            path = rel,
+            type = type
+          )
+        }
+      }
+    }
+
+    list(files = files)
+  }, error = function(e) {
+    list(error = paste("Failed to list input files:", e$message))
+  })
+}
+
 #* Get all settings for a project
 #* @get /api/project/<id>/settings
 #* @param id Project ID
@@ -860,8 +940,27 @@ function(id, req) {
       }
     }
 
+    # Save scaffold settings
+    if (!is.null(body$scaffold)) {
+      if (file.exists("settings/scaffold.yml")) {
+        yaml::write_yaml(list(scaffold = body$scaffold), "settings/scaffold.yml")
+      }
+    }
+
+    # Save quarto settings (to split file if exists)
+    if (!is.null(body$quarto)) {
+      if (file.exists("settings/quarto.yml")) {
+        yaml::write_yaml(list(quarto = body$quarto), "settings/quarto.yml")
+      }
+    }
+
     # Update main settings.yml if needed
-    if (!is.null(body$project_name) || !is.null(body$project_type) || !is.null(body$extra_directories) || !is.null(body$enabled)) {
+    # For split-file projects, directories/extra_directories/render_dirs stay in main file
+    needs_main_update <- !is.null(body$project_name) || !is.null(body$project_type) ||
+                         !is.null(body$extra_directories) || !is.null(body$enabled) ||
+                         !is.null(body$directories) || !is.null(body$render_dirs)
+
+    if (needs_main_update) {
       settings_file <- if (file.exists("settings.yml")) "settings.yml" else "config.yml"
       current_settings <- yaml::read_yaml(settings_file)
 
@@ -870,6 +969,14 @@ function(id, req) {
       }
       if (!is.null(body$project_type)) {
         current_settings$default$project_type <- body$project_type
+      }
+      if (!is.null(body$directories)) {
+        # Directories stay inline in main settings.yml (not a split file)
+        current_settings$default$directories <- body$directories
+      }
+      if (!is.null(body$render_dirs)) {
+        # Render dirs stay inline in main settings.yml
+        current_settings$default$render_dirs <- body$render_dirs
       }
       if (!is.null(body$extra_directories)) {
         # Ensure it's saved as an array (unnamed list) not an object
@@ -1281,8 +1388,9 @@ function(id, req) {
     split_info <- .uses_split_file(project$path, "packages")
 
     # Extract use_renv flag and packages list
+    # Accept both "packages" and "default_packages" for compatibility
     use_renv <- as.logical(body$use_renv %||% FALSE)[1]
-    packages_list <- body$packages %||% list()
+    packages_list <- body$default_packages %||% body$packages %||% list()
 
     # Convert to proper unnamed list for YAML array serialization
     # Each package should be a named list (object) in an unnamed list (array)

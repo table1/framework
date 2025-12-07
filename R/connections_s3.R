@@ -119,47 +119,31 @@ NULL
 #' Looks up an S3 connection from configuration. If no name is provided,
 #' finds the connection marked as default via `default_storage_bucket`.
 #'
-#' S3 connections can be defined in two places:
-#' 1. `connections$storage_buckets` (GUI format) - preferred
-#' 2. `connections` with `driver: s3` (config.yml format) - legacy support
-#'
 #' @param connection Character or NULL. Connection name, or NULL to use default.
 #' @return List with connection configuration including resolved credentials.
 #' @keywords internal
-.resolve_s3_connection <- function(connection = NULL) {
-  config <- settings_read()
-
-  # Storage buckets can be in multiple places depending on config structure:
-  # 1. Top level (split file merged): config$storage_buckets
-  # 2. Nested in connections: config$connections$storage_buckets
+.collect_all_s3_connections <- function(config) {
   storage_buckets <- config$storage_buckets %||%
     config$connections$storage_buckets %||%
     list()
 
-  # Similarly for default_storage_bucket
   default_bucket_name <- config$default_storage_bucket %||%
     config$connections$default_storage_bucket
 
-  # Also check for legacy format (connections with driver: s3)
-  legacy_s3 <- list()
-  conns_to_check <- config$connections
-  if (is.list(conns_to_check)) {
-    for (name in names(conns_to_check)) {
-      conn <- conns_to_check[[name]]
-      if (is.list(conn)) {
-        is_s3 <- identical(conn$driver, "s3") || identical(conn$type, "s3")
-        if (is_s3) {
-          legacy_s3[[name]] <- conn
-        }
-      }
-    }
-  }
+  list(
+    connections = storage_buckets,
+    default_bucket = default_bucket_name
+  )
+}
 
-  # Merge: storage_buckets takes precedence over legacy format
-  all_s3 <- c(storage_buckets, legacy_s3[!names(legacy_s3) %in% names(storage_buckets)])
+.resolve_s3_connection <- function(connection = NULL) {
+  config <- settings_read()
+  s3_sources <- .collect_all_s3_connections(config)
+  all_s3 <- s3_sources$connections
+  default_bucket_name <- s3_sources$default_bucket
 
   if (length(all_s3) == 0) {
-    stop("No S3 connections configured. Add one via the GUI or in config.yml:\n\n",
+    stop("No S3 connections configured. Add one via the GUI or in settings.yml:\n\n",
          "connections:\n",
          "  storage_buckets:\n",
          "    my_s3:\n",
@@ -201,13 +185,11 @@ NULL
     }
   }
 
-  stop(
-    "No default S3 connection configured. Either:\n",
-    "  1. Specify connection explicitly: publish(..., connection = \"", names(all_s3)[1], "\")\n",
-    "  2. Set default_storage_bucket in config.yml or via GUI\n",
-    "\nAvailable S3 connections: ", paste(names(all_s3), collapse = ", "),
-    call. = FALSE
-  )
+  # Final fallback: use the first defined connection
+  first_name <- names(all_s3)[1]
+  conn <- all_s3[[first_name]]
+  conn$name <- first_name
+  return(.s3_client(conn))
 }
 
 
@@ -331,9 +313,17 @@ key <- gsub("//+", "/", key)
 .s3_public_url <- function(key, s3_config) {
   if (!is.null(s3_config$endpoint)) {
     # Custom endpoint (MinIO, etc.)
-    # Reconstruct with proper protocol
-    protocol <- if (isTRUE(s3_config$use_https)) "https" else "http"
-    sprintf("%s://%s/%s/%s", protocol, s3_config$endpoint, s3_config$bucket, key)
+    endpoint <- s3_config$endpoint
+
+    # Check if endpoint already has a protocol
+    if (grepl("^https?://", endpoint)) {
+      # Endpoint already has protocol, use it directly
+      sprintf("%s/%s/%s", endpoint, s3_config$bucket, key)
+    } else {
+      # No protocol, add one based on use_https setting
+      protocol <- if (isTRUE(s3_config$use_https)) "https" else "http"
+      sprintf("%s://%s/%s/%s", protocol, endpoint, s3_config$bucket, key)
+    }
   } else {
     # Standard AWS S3 URL
     sprintf("https://%s.s3.%s.amazonaws.com/%s",

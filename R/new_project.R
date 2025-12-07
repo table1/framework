@@ -117,6 +117,9 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
     assistants = defaults$ai_assistants %||% list(),
     canonical_content = ""
   )
+  if (ai_config$enabled && length(ai_config$assistants) == 0) {
+    ai_config$assistants <- list("claude")
+  }
 
   git_config <- list(
     use_git = isTRUE(defaults$use_git),

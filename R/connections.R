@@ -124,3 +124,108 @@ db_list <- function() {
   invisible(NULL)
 }
 
+#' List all connections (databases and object storage)
+#'
+#' Prints both database connections defined under `connections:` and object
+#' storage profiles (S3-compatible buckets). Use this to see everything Framework
+#' can talk to from your config.
+#'
+#' @return Invisibly returns NULL after printing summaries.
+#' @export
+connections_list <- function() {
+  config <- settings_read()
+  db_conns <- config$connections
+  storage_buckets <- config$connections$storage_buckets
+  default_storage <- config$connections$default_storage_bucket %||% config$default_storage_bucket
+
+  if (is.list(db_conns)) {
+    db_conns <- db_conns[!names(db_conns) %in% c("storage_buckets", "default_storage_bucket")]
+  } else {
+    db_conns <- list()
+  }
+
+  if (!length(storage_buckets) && length(config$storage_buckets)) {
+    storage_buckets <- config$storage_buckets
+  }
+
+  if (is.null(default_storage) && !is.null(config$default_storage_bucket)) {
+    default_storage <- config$default_storage_bucket
+  }
+
+  if (!length(storage_buckets)) {
+    storage_buckets <- list()
+  }
+
+  has_db <- length(db_conns) > 0
+  has_storage <- length(storage_buckets) > 0
+
+  if (!has_db && !has_storage) {
+    message("No connections found in configuration")
+    return(invisible(NULL))
+  }
+
+  if (has_db) {
+    message(sprintf("\n%d database %s:\n",
+                    length(db_conns),
+                    if (length(db_conns) == 1) "connection" else "connections"))
+
+    for (name in names(db_conns)) {
+      conn <- db_conns[[name]]
+      if (!is.list(conn)) next
+
+      driver <- if (!is.null(conn$driver)) toupper(conn$driver) else "UNKNOWN"
+      message(sprintf("• %s [%s]", name, driver))
+
+      if (!is.null(conn$host)) {
+        port_info <- if (!is.null(conn$port)) sprintf(":%s", conn$port) else ""
+        message(sprintf("  Host: %s%s", conn$host, port_info))
+      }
+
+      if (!is.null(conn$database) || !is.null(conn$dbname)) {
+        db <- conn$database %||% conn$dbname
+        message(sprintf("  Database: %s", db))
+      }
+
+      if (!is.null(conn$path)) {
+        message(sprintf("  Path: %s", conn$path))
+      }
+
+      message("")
+    }
+  }
+
+  if (has_storage) {
+    message(sprintf("\n%d object storage %s:\n",
+                    length(storage_buckets),
+                    if (length(storage_buckets) == 1) "connection" else "connections"))
+
+    for (name in names(storage_buckets)) {
+      conn <- storage_buckets[[name]]
+      if (!is.list(conn)) next
+
+      provider <- conn$provider %||% conn$driver %||% conn$type %||% "s3"
+      marker <- if (!is.null(default_storage) && identical(name, default_storage)) " (default)" else ""
+      message(sprintf("• %s [%s]%s", name, toupper(provider), marker))
+
+      if (!is.null(conn$bucket)) {
+        message(sprintf("  Bucket: %s", conn$bucket))
+      }
+
+      if (!is.null(conn$region)) {
+        message(sprintf("  Region: %s", conn$region))
+      }
+
+      if (!is.null(conn$endpoint)) {
+        message(sprintf("  Endpoint: %s", conn$endpoint))
+      }
+
+      if (!is.null(conn$prefix) && nzchar(conn$prefix)) {
+        message(sprintf("  Prefix: %s", conn$prefix))
+      }
+
+      message("")
+    }
+  }
+
+  invisible(NULL)
+}

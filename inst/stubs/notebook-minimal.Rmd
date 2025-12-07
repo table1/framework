@@ -1,6 +1,6 @@
 ---
-title: "{filename}"
-date: "{date}"
+title: "{{ title }}"
+date: "{{ date }}"
 output: html_document
 ---
 

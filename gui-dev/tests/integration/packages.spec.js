@@ -135,7 +135,8 @@ describe('Packages & Dependencies Integration: UI → API → YAML', () => {
       const packages = toPackageModel(apiSettings).default_packages
       const packageNames = packages.map((p) => p.name)
 
-      const corePackages = ['dplyr', 'ggplot2', 'tidyr', 'stringr']
+      // Check that at least the basic packages are present (dplyr, ggplot2, readr are the catalog defaults)
+      const corePackages = ['dplyr', 'ggplot2', 'readr']
       corePackages.forEach((pkgName) => {
         expect(packageNames).toContain(pkgName)
       })

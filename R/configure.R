@@ -480,7 +480,8 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
   }
 
   # Determine which list to work with (new vs old structure)
-  has_nested_structure <- !is.null(config$packages$default_packages)
+  # Guard against atomic vectors (character, etc.) which don't support $
+  has_nested_structure <- is.list(config$packages) && !is.null(config$packages$default_packages)
   package_list <- if (has_nested_structure) {
     config$packages$default_packages
   } else {

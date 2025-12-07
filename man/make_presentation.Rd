@@ -4,7 +4,7 @@
 \alias{make_presentation}
 \title{Create a Presentation}
 \usage{
-make_presentation(name, dir = NULL, overwrite = FALSE)
+make_presentation(name, dir = NULL, overwrite = FALSE, subdir = NULL)
 }
 \arguments{
 \item{name}{Character. The presentation name (with or without .qmd extension)}

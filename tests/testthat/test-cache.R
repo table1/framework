@@ -85,7 +85,7 @@ test_that("cache_flush removes all cached values", {
   expect_null(suppressMessages(cache_get("cache3")))
 })
 
-test_that("get_or_cache caches computation result", {
+test_that("cache_remember caches computation result", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -100,7 +100,7 @@ test_that("get_or_cache caches computation result", {
   writeLines("0", counter_file)
 
   # First call should execute and cache
-  result1 <- suppressMessages(get_or_cache("test_compute", {
+  result1 <- suppressMessages(cache_remember("test_compute", {
     count <- as.integer(readLines(counter_file))
     writeLines(as.character(count + 1), counter_file)
     Sys.sleep(0.1)
@@ -111,7 +111,7 @@ test_that("get_or_cache caches computation result", {
   expect_equal(as.integer(readLines(counter_file)), 1)
 
   # Second call should use cache (counter won't increment)
-  result2 <- suppressMessages(get_or_cache("test_compute", {
+  result2 <- suppressMessages(cache_remember("test_compute", {
     count <- as.integer(readLines(counter_file))
     writeLines(as.character(count + 1), counter_file)
     99
@@ -123,7 +123,7 @@ test_that("get_or_cache caches computation result", {
   unlink(counter_file)
 })
 
-test_that("get_or_cache with refresh=TRUE recomputes", {
+test_that("cache_remember with refresh=TRUE recomputes", {
   test_dir <- create_test_project()
   old_wd <- getwd()
   on.exit({
@@ -134,14 +134,14 @@ test_that("get_or_cache with refresh=TRUE recomputes", {
   setwd(test_dir)
 
   # First call
-  result1 <- suppressMessages(get_or_cache("test_refresh", {
+  result1 <- suppressMessages(cache_remember("test_refresh", {
     42
   }))
 
   expect_equal(result1, 42)
 
   # Second call with refresh
-  result2 <- suppressMessages(get_or_cache("test_refresh", {
+  result2 <- suppressMessages(cache_remember("test_refresh", {
     99
   }, refresh = TRUE))
 

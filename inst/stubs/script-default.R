@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
-# {filename}
-# Created: {date}
+# {{ title }}
+# Created: {{ date }}
 
 # Load project environment
 library(framework)

@@ -4,7 +4,7 @@
 \alias{make_qmd}
 \title{Create a Quarto Notebook}
 \usage{
-make_qmd(name, dir = NULL, stub = "default", overwrite = FALSE)
+make_qmd(name, dir = NULL, stub = "default", overwrite = FALSE, subdir = NULL)
 }
 \arguments{
 \item{name}{Character. The file name (with or without .qmd extension)}
@@ -15,6 +15,8 @@ configured \code{directories$notebooks} setting. Default: "notebooks/".}
 \item{stub}{Character. Name of the stub template to use. Default "default".}
 
 \item{overwrite}{Logical. Whether to overwrite existing file. Default FALSE.}
+
+\item{subdir}{Optional subdirectory under \code{dir} (e.g., "slides/week-01").}
 }
 \value{
 Invisible path to created notebook
