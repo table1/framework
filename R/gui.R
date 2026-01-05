@@ -166,7 +166,17 @@ gui <- function(port = 8080, browse = TRUE, route = NULL) {
     if (!is.null(route)) {
       url <- paste0(url, "/", gsub("^/", "", route))
     }
-    utils::browseURL(url)
+    browser_opt <- getOption("browser")
+    if (is.null(browser_opt) || !nzchar(browser_opt)) {
+      message("Note: No browser configured. Open manually: ", url)
+    } else {
+      tryCatch(
+        utils::browseURL(url),
+        error = function(e) {
+          message("Could not open browser. Open manually: ", url)
+        }
+      )
+    }
   }
 
   # Run the server (blocking until Ctrl+C)
