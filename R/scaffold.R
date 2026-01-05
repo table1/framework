@@ -530,7 +530,7 @@ scaffold <- function(config_file = NULL) {
   format(value_utc, "%Y-%m-%dT%H:%M:%OSZ")
 }
 
-#' Ensure framework database exists
+#' Ensure framework database exists with all required tables
 #' @param project_root Optional project root used to resolve the database path.
 #' @keywords internal
 .ensure_framework_db <- function(project_root = NULL) {
@@ -539,42 +539,109 @@ scaffold <- function(config_file = NULL) {
   }
   db_path <- if (!is.null(project_root)) file.path(project_root, "framework.db") else "framework.db"
 
-  if (file.exists(db_path)) {
-    return(invisible(NULL))
-  }
-
-  template_db <- system.file("templates", "framework.db", package = "framework")
-  if (!nzchar(template_db) || !file.exists(template_db)) {
-    warning(
-      "Framework template database not found. Some features may not work until scaffold() creates framework.db.\n",
-      "You can generate the template by reinstalling the framework package."
-    )
-    return(invisible(NULL))
-  }
-
-  message(
-    "\u26A0 Framework database not found. Creating framework.db...\n",
-    "  This database tracks data integrity, cache, and results.\n",
-    "  It's already in .gitignore and safe to commit the schema."
+  # Required tables and their CREATE statements
+  required_tables <- list(
+    results = "CREATE TABLE IF NOT EXISTS results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE,
+      type TEXT,
+      public BOOLEAN,
+      blind BOOLEAN,
+      comment TEXT,
+      hash TEXT,
+      last_read_at DATETIME,
+      created_at DATETIME,
+      updated_at DATETIME,
+      deleted_at DATETIME
+    )",
+    data = "CREATE TABLE IF NOT EXISTS data (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE,
+      path TEXT,
+      type TEXT,
+      delimiter TEXT,
+      locked BOOLEAN,
+      encrypted BOOLEAN,
+      hash TEXT,
+      last_read_at DATETIME,
+      created_at DATETIME,
+      updated_at DATETIME,
+      deleted_at DATETIME
+    )",
+    cache = "CREATE TABLE IF NOT EXISTS cache (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE,
+      file_path TEXT,
+      hash TEXT,
+      expire_at DATETIME,
+      last_read_at DATETIME,
+      created_at DATETIME,
+      updated_at DATETIME,
+      deleted_at DATETIME
+    )",
+    connections = "CREATE TABLE IF NOT EXISTS connections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE,
+      driver TEXT,
+      host TEXT,
+      port INTEGER,
+      database TEXT,
+      schema TEXT,
+      user TEXT,
+      password TEXT,
+      last_used_at DATETIME,
+      created_at DATETIME,
+      updated_at DATETIME,
+      deleted_at DATETIME
+    )",
+    meta = "CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      created_at DATETIME,
+      updated_at DATETIME
+    )"
   )
 
-  success <- tryCatch(
-    file.copy(template_db, db_path, overwrite = FALSE),
-    warning = function(w) FALSE,
+  db_existed <- file.exists(db_path)
+
+  # Connect (creates file if doesn't exist)
+  con <- tryCatch(
+    DBI::dbConnect(RSQLite::SQLite(), db_path),
     error = function(e) {
-      warning(
-        "Could not create framework.db: ", e$message, "\n",
-        "Some Framework features (data tracking, caching, results) may not work.\n",
-        "You can manually create it by running scaffold() from the project root."
-      )
-      FALSE
+      warning("Could not connect to framework.db: ", e$message)
+      return(NULL)
     }
   )
 
-  if (isTRUE(success)) {
-    message(
-      "\u2713 Framework database created successfully"
-    )
+  if (is.null(con)) {
+    return(invisible(NULL))
+  }
+
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+  # Get existing tables
+  existing_tables <- DBI::dbListTables(con)
+
+  # Create any missing tables
+
+  tables_created <- character(0)
+  for (table_name in names(required_tables)) {
+    if (!table_name %in% existing_tables) {
+      tryCatch({
+        DBI::dbExecute(con, required_tables[[table_name]])
+        tables_created <- c(tables_created, table_name)
+      }, error = function(e) {
+        warning(sprintf("Could not create table '%s': %s", table_name, e$message))
+      })
+    }
+  }
+
+  # Report what happened
+
+  if (!db_existed) {
+    message("\u2713 Created framework.db with schema")
+  } else if (length(tables_created) > 0) {
+    message(sprintf("\u2713 Added missing tables to framework.db: %s", paste(tables_created, collapse = ", ")))
   }
 
   invisible(NULL)
