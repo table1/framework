@@ -208,21 +208,33 @@ status <- function() {
 
   # Database connections
   if (!is.null(config) && !is.null(config$connections)) {
-    cat("\033[1;33m")  # Bold yellow
-    cat("Database Connections:\n")
-    cat("\033[0m")  # Reset
-
-    conn_names <- names(config$connections)
-    for (conn_name in conn_names) {
-      conn <- config$connections[[conn_name]]
-      if (!is.null(conn$type)) {
-        cat(sprintf("  %s (%s)\n", conn_name, conn$type))
-      } else {
-        cat(sprintf("  %s\n", conn_name))
+    # Get database connections: check databases sub-key first (GUI format), then flat (legacy)
+    db_conns <- config$connections$databases
+    if (is.null(db_conns) || length(db_conns) == 0) {
+      db_conns <- config$connections
+      if (is.list(db_conns)) {
+        db_conns <- db_conns[!names(db_conns) %in% c("storage_buckets", "default_storage_bucket", "default_database", "databases")]
+        db_conns <- Filter(function(x) is.list(x) && !is.null(x$driver), db_conns)
       }
     }
 
-    cat("\n")
+    if (length(db_conns) > 0) {
+      cat("\033[1;33m")
+      cat("Database Connections:\n")
+      cat("\033[0m")
+
+      for (conn_name in names(db_conns)) {
+        conn <- db_conns[[conn_name]]
+        driver <- conn$driver %||% conn$type
+        if (!is.null(driver)) {
+          cat(sprintf("  %s (%s)\n", conn_name, driver))
+        } else {
+          cat(sprintf("  %s\n", conn_name))
+        }
+      }
+
+      cat("\n")
+    }
   }
 
   cat("\033[1;34m")  # Bold blue

@@ -30,11 +30,12 @@ db_connect <- function(name) {
     }
   )
 
-  if (is.null(config$connections[[name]])) {
+  # Look up connection: check databases sub-key first (GUI format), then flat (legacy)
+  conn_config <- config$connections$databases[[name]] %||% config$connections[[name]]
+
+  if (is.null(conn_config) || !is.list(conn_config)) {
     stop(sprintf("No connection configuration found for '%s'", name))
   }
-
-  conn_config <- config$connections[[name]]
 
   # Validate driver
   if (is.null(conn_config$driver)) {
@@ -79,18 +80,30 @@ db_connect <- function(name) {
 db_list <- function() {
   config <- settings_read()
 
-  if (is.null(config$connections) || length(config$connections) == 0) {
+  # Get database connections: check databases sub-key first (GUI format), then flat (legacy)
+  db_conns <- config$connections$databases
+  if (is.null(db_conns) || length(db_conns) == 0) {
+    # Fallback to flat format - filter out non-connection keys
+    db_conns <- config$connections
+    if (is.list(db_conns)) {
+      db_conns <- db_conns[!names(db_conns) %in% c("storage_buckets", "default_storage_bucket", "default_database")]
+      # Only keep entries that look like connection configs (have driver key)
+      db_conns <- Filter(function(x) is.list(x) && !is.null(x$driver), db_conns)
+    }
+  }
+
+  if (is.null(db_conns) || length(db_conns) == 0) {
     message("No database connections found in configuration")
     return(invisible(NULL))
   }
 
   # Print formatted output
   message(sprintf("\n%d %s found:\n",
-                  length(config$connections),
-                  if (length(config$connections) == 1) "connection" else "connections"))
+                  length(db_conns),
+                  if (length(db_conns) == 1) "connection" else "connections"))
 
-  for (name in names(config$connections)) {
-    conn <- config$connections[[name]]
+  for (name in names(db_conns)) {
+    conn <- db_conns[[name]]
 
     # Connection name with driver badge
     driver <- if (!is.null(conn$driver)) toupper(conn$driver) else "UNKNOWN"
@@ -134,14 +147,20 @@ db_list <- function() {
 #' @export
 connections_list <- function() {
   config <- settings_read()
-  db_conns <- config$connections
   storage_buckets <- config$connections$storage_buckets
   default_storage <- config$connections$default_storage_bucket %||% config$default_storage_bucket
 
-  if (is.list(db_conns)) {
-    db_conns <- db_conns[!names(db_conns) %in% c("storage_buckets", "default_storage_bucket")]
-  } else {
-    db_conns <- list()
+  # Get database connections: check databases sub-key first (GUI format), then flat (legacy)
+  db_conns <- config$connections$databases
+  if (is.null(db_conns) || length(db_conns) == 0) {
+    db_conns <- config$connections
+    if (is.list(db_conns)) {
+      db_conns <- db_conns[!names(db_conns) %in% c("storage_buckets", "default_storage_bucket", "default_database", "databases")]
+      # Only keep entries that look like connection configs (have driver key)
+      db_conns <- Filter(function(x) is.list(x) && !is.null(x$driver), db_conns)
+    } else {
+      db_conns <- list()
+    }
   }
 
   if (!length(storage_buckets) && length(config$storage_buckets)) {

@@ -2220,12 +2220,13 @@ function(id, req) {
           next
         }
 
-        # Parse KEY=VALUE
+        # Parse KEY=VALUE (handles empty values like KEY=)
         if (grepl("=", line)) {
-          parts <- strsplit(line, "=", fixed = TRUE)[[1]]
-          if (length(parts) >= 2) {
-            key <- trimws(parts[1])
+          # Split only on first = to handle values containing =
+          eq_pos <- regexpr("=", line, fixed = TRUE)
+          key <- trimws(substr(line, 1, eq_pos - 1))
 
+          if (nzchar(key)) {
             # If this key is in our update, replace the value
             if (!is.null(body$variables[[key]])) {
               new_value <- body$variables[[key]]
