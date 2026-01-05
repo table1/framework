@@ -72,6 +72,7 @@ framework.db-shm
 # QUARTO / RMARKDOWN ARTIFACTS
 # ============================================================================
 
+.quarto/
 _freeze/
 *_cache/
 *_files/

@@ -119,11 +119,12 @@ connection_pool <- function(name,
     }
   )
 
-  if (is.null(config$connections[[name]])) {
+  # Look up connection: check databases sub-key first (GUI format), then flat (legacy)
+  conn_config <- config$connections$databases[[name]] %||% config$connections[[name]]
+
+  if (is.null(conn_config) || !is.list(conn_config)) {
     stop(sprintf("No connection configuration found for '%s'", name), call. = FALSE)
   }
-
-  conn_config <- config$connections[[name]]
 
   # Validate driver
   if (is.null(conn_config$driver)) {
