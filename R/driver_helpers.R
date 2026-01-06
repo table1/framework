@@ -16,23 +16,47 @@
 #' .require_driver("MySQL", "RMariaDB")
 #' }
 .require_driver <- function(driver_name, package_name, install_command = NULL) {
+
   # Validate arguments
   checkmate::assert_string(driver_name, min.chars = 1)
   checkmate::assert_string(package_name, min.chars = 1)
   checkmate::assert_string(install_command, null.ok = TRUE)
 
   if (!requireNamespace(package_name, quietly = TRUE)) {
-    # Default install command
-    if (is.null(install_command)) {
-      install_command <- sprintf("install.packages('%s')", package_name)
+    # Check if custom install command (can't auto-install, e.g. ODBC drivers)
+    if (!is.null(install_command)) {
+      stop(sprintf(
+        "%s connections require the %s package.\n\nInstall with:\n%s",
+        driver_name,
+        package_name,
+        install_command
+      ), call. = FALSE)
     }
 
-    stop(sprintf(
-      "%s connections require the %s package.\n\nInstall with: %s",
-      driver_name,
-      package_name,
-      install_command
-    ), call. = FALSE)
+    # Auto-install the package
+    message(sprintf("Installing %s package for %s connections...", package_name, driver_name))
+
+    tryCatch({
+      utils::install.packages(package_name, quiet = TRUE)
+    }, error = function(e) {
+      stop(sprintf(
+        "Failed to install %s package: %s\n\nTry manually: install.packages('%s')",
+        package_name,
+        e$message,
+        package_name
+      ), call. = FALSE)
+    })
+
+    # Verify installation succeeded
+    if (!requireNamespace(package_name, quietly = TRUE)) {
+      stop(sprintf(
+        "Failed to install %s package.\n\nTry manually: install.packages('%s')",
+        package_name,
+        package_name
+      ), call. = FALSE)
+    }
+
+    message(sprintf("\u2713 %s package installed successfully", package_name))
   }
 
   invisible(NULL)
