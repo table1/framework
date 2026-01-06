@@ -176,7 +176,33 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
     }
   }
 
-  # Resolve split file references recursively
+  # Load .env file BEFORE resolving split files (which evaluates env() expressions)
+  # This ensures environment variables are available for interpolation
+  project_root <- dirname(settings_file)
+  dotenv_path <- config$dotenv_location
+  if (!is.null(dotenv_path)) {
+    # Custom dotenv location specified
+    if (!grepl("^(/|[A-Za-z]:)", dotenv_path)) {
+      dotenv_path <- file.path(project_root, dotenv_path)
+    }
+    if (dir.exists(dotenv_path)) {
+      dotenv_path <- file.path(dotenv_path, ".env")
+    }
+  } else {
+    # Default: .env in project root
+    dotenv_path <- file.path(project_root, ".env")
+  }
+
+  if (file.exists(dotenv_path)) {
+    tryCatch(
+      dotenv::load_dot_env(dotenv_path),
+      error = function(e) {
+        warning(sprintf("Failed to load .env file: %s", e$message))
+      }
+    )
+  }
+
+  # Resolve split file references recursively (this evaluates env() in split files)
   config <- .resolve_split_files(config, active_env, settings_file, character())
 
   # Initialize standard sections AFTER split file resolution (if still missing)
@@ -191,7 +217,7 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
     config$options <- list()
   }
 
-  # Evaluate !expr expressions
+  # Evaluate !expr expressions and env() calls in main config
   config <- .eval_expressions(config)
 
   config
