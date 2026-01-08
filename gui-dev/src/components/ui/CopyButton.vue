@@ -88,22 +88,64 @@ const variantClasses = computed(() => {
   return 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
 })
 
-const copyToClipboard = async () => {
+/**
+ * Fallback copy method using execCommand for non-HTTPS contexts
+ * and platforms where navigator.clipboard isn't available
+ */
+const fallbackCopyToClipboard = (text) => {
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+  
+  // Avoid scrolling to bottom
+  textArea.style.top = '0'
+  textArea.style.left = '0'
+  textArea.style.position = 'fixed'
+  textArea.style.opacity = '0'
+  
+  document.body.appendChild(textArea)
+  textArea.focus()
+  textArea.select()
+  
+  let success = false
   try {
-    await navigator.clipboard.writeText(props.value)
+    success = document.execCommand('copy')
+  } catch (err) {
+    console.error('execCommand copy failed:', err)
+  }
+  
+  document.body.removeChild(textArea)
+  return success
+}
+
+const copyToClipboard = async () => {
+  let success = false
+  
+  // Try modern clipboard API first (requires HTTPS or localhost)
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(props.value)
+      success = true
+    } catch (err) {
+      console.warn('navigator.clipboard failed, trying fallback:', err)
+    }
+  }
+  
+  // Fallback for HTTP or when clipboard API fails
+  if (!success) {
+    success = fallbackCopyToClipboard(props.value)
+  }
+  
+  if (success) {
     copied.value = true
-
-    // Show toast
     toast.success('Copied!', props.successMessage)
-
+    
     // Reset the copied state after 2 seconds
     if (resetTimeout) clearTimeout(resetTimeout)
     resetTimeout = setTimeout(() => {
       copied.value = false
     }, 2000)
-  } catch (err) {
+  } else {
     toast.error('Copy failed', 'Could not copy to clipboard')
-    console.error('Failed to copy:', err)
   }
 }
 </script>

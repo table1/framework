@@ -150,7 +150,7 @@ The GUI reads documentation from docs.db, NOT from the .Rd files directly. If yo
 Framework now uses **all-YAML configuration** for consistency across global and project settings.
 
 **Global Config Location**: `~/.config/framework/`
-- `config.yml` - User defaults (author, preferences, default packages, etc.)
+- `settings.yml` - User defaults (author, preferences, default packages, etc.)
 - `projects.yml` - Project registry
 - `settings-catalog.yml` - Templates/schema (copied from package on first run)
 
@@ -173,10 +173,10 @@ Framework now uses **all-YAML configuration** for consistency across global and 
    - Document in comments what the setting controls
    - Example: `FW_SEED="20241016"  # Random seed for reproducibility`
 
-2. **Add to project templates** (all three `config.yml` files):
-   - `inst/project_structure/project/config.yml`
-   - `inst/project_structure/course/config.yml`
-   - `inst/project_structure/presentation/config.yml`
+2. **Add to project templates** (all three `settings.yml` files):
+   - `inst/project_structure/project/settings.yml`
+   - `inst/project_structure/course/settings.yml`
+   - `inst/project_structure/presentation/settings.yml`
    - Include inline comments explaining the setting
    - Reference global fallback in comments
 
@@ -289,7 +289,7 @@ make release       # Full release workflow (clean, docs, test, check)
 3. **Configuration Management (`R/config.R`)** - **RECENTLY OVERHAULED**
    - **Laravel-inspired hybrid config system** with bulletproof resolution
    - **`config()` helper** with dot-notation access: `config("notebooks")`, `config("connections.db.host")`
-   - **Directories inline** in main `config.yml` for discoverability (R ecosystem convention)
+   - **Directories inline** in main `settings.yml` for discoverability (R ecosystem convention)
    - **Split files optional** for complex domain-specific settings (data catalog, connections)
    - **Smart lookups**: `config("notebooks")` checks `directories$notebooks` then `options$notebook_dir` (legacy)
    - **Backward compatible** with old `options$notebook_dir` structure
@@ -320,13 +320,13 @@ make release       # Full release workflow (clean, docs, test, check)
 8. **Working Directory Utilities (`R/framework_util.R`)**
    - `standardize_wd()` function for normalizing working directory
    - Useful for Quarto/RMarkdown documents rendered from subdirectories
-   - Auto-detects project root via config.yml, .Rproj, or common subdirectories
+   - Auto-detects project root via settings.yml, .Rproj, or common subdirectories
    - Sets both working directory and knitr's root.dir option
 
 9. **renv Integration (`R/renv.R`, `R/packages.R`)** - NEW
    - **Optional** reproducibility via renv (OFF by default, opt-in)
    - `renv_enable()` and `renv_disable()` to toggle integration
-   - Version pinning syntax in config.yml: `dplyr@1.1.0`, `user/repo@branch`
+   - Version pinning syntax in settings.yml: `dplyr@1.1.0`, `user/repo@branch`
    - Package helpers: `packages_snapshot()`, `packages_restore()`, `packages_status()`, `packages_update()`
    - Educational messaging on first `scaffold()` (suppressible via `options: renv_nag: false`)
    - Smart routing: installs use renv when enabled, standard install.packages() otherwise
@@ -371,10 +371,10 @@ Templates are stored in `inst/templates/` and copied to new projects:
 
 ### Overview
 
-Framework uses a **Laravel-inspired hybrid configuration system** that prioritizes discoverability while allowing scalability. The system supports both flat files (everything in one `config.yml`) and split files (domain-specific settings in `settings/*.yml`).
+Framework uses a **Laravel-inspired hybrid configuration system** that prioritizes discoverability while allowing scalability. The system supports both flat files (everything in one `settings.yml`) and split files (domain-specific settings in `settings/*.yml`).
 
 **Design Philosophy:**
-- **Simple by default**: Most users work with a single `config.yml` file
+- **Simple by default**: Most users work with a single `settings.yml` file
 - **Complex when needed**: Split files for data catalogs, connections, etc.
 - **Discoverable**: Directory paths visible immediately in main file
 - **R conventions**: Follows R ecosystem pattern of single primary config (like `_targets.R`, `_bookdown.yml`)
@@ -467,10 +467,10 @@ config("missing.key")            # → NULL
 
 **Core Rule: Main file ALWAYS wins** ✅
 
-When the same key exists in both `config.yml` and a split file (e.g., `settings/connections.yml`), Framework follows a strict precedence rule based on Zen Consensus (Gemini + Claude):
+When the same key exists in both `settings.yml` and a split file (e.g., `settings/connections.yml`), Framework follows a strict precedence rule based on Zen Consensus (Gemini + Claude):
 
 **Precedence Order:**
-1. **Main config.yml** - Takes absolute precedence
+1. **Main settings.yml** - Takes absolute precedence
 2. **Split files** - Only used when key is not in main config
 3. **Package defaults** - Used when key is missing entirely
 
@@ -512,8 +512,8 @@ Framework emits **warnings** for two scenarios:
 
 2. **Main file conflict** - Both files define the same key:
    ```
-   Warning: Key 'default_connection' defined in both config.yml and
-   'settings/connections.yml'. Using value from config.yml (main file
+   Warning: Key 'default_connection' defined in both settings.yml and
+   'settings/connections.yml'. Using value from settings.yml (main file
    takes precedence).
    ```
 
@@ -527,7 +527,7 @@ Framework emits **warnings** for two scenarios:
 **Example - Conflict Scenario:**
 
 ```yaml
-# config.yml
+# settings.yml
 default:
   connections: settings/connections.yml
   default_connection: primary_db  # ← Main file value
@@ -551,9 +551,9 @@ default_connection: backup_db  # ← Split file tries to override (IGNORED!)
 
 **Best Practice:**
 
-Keep top-level configuration keys in `config.yml`:
+Keep top-level configuration keys in `settings.yml`:
 ```yaml
-# config.yml - Single source of truth for top-level keys
+# settings.yml - Single source of truth for top-level keys
 default:
   directories: { notebooks: notebooks, scripts: scripts }
   connections: settings/connections.yml
@@ -566,7 +566,7 @@ default:
 
 Framework uses a **three-tier configuration hierarchy** for maximum flexibility:
 
-**1. Project-Level Config** (`config.yml`) - Highest Priority
+**1. Project-Level Config** (`settings.yml`) - Highest Priority
 - Created during `init()` in each project
 - Project-specific settings (seed, packages, directories, data catalog, etc.)
 - Overrides global defaults
@@ -589,7 +589,7 @@ Framework uses a **three-tier configuration hierarchy** for maximum flexibility:
 
 ```r
 # Random seed resolution (in scaffold())
-1. Check config$seed in project config.yml
+1. Check config$seed in project settings.yml
 2. Fall back to Sys.getenv("FW_SEED") from ~/.frameworkrc
 3. Skip seeding if neither is set
 
@@ -600,8 +600,8 @@ Framework uses a **three-tier configuration hierarchy** for maximum flexibility:
 ```
 
 **File Locations:**
-- **Project config**: `./config.yml` (created by `init()`)
-- **Global config**: `~/.frameworkrc` (managed by `setup()`)
+- **Project config**: `./settings.yml` (created by `init()`)
+- **Global config**: `~/.config/framework/settings.yml` (managed by `setup()`)
 - **Split files**: `./settings/` directory (optional, for complex projects)
 - **Environment secrets**: `.env` file (gitignored)
 - **Metadata tracking**: `framework.db` (SQLite database)
