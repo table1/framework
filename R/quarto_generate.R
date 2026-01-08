@@ -310,11 +310,16 @@ quarto_regenerate <- function(project_path, backup = TRUE) {
     stop("Project settings.yml/config.yml not found")
   }
 
-  config <- yaml::read_yaml(config_path)
-  project_type <- config$default$project_type %||% "project"
-  render_dirs <- config$default$render_dirs
-  directories <- config$default$directories
-  quarto_settings <- config$default$quarto
+  # Use settings_read() to properly resolve split files
+wd <- getwd()
+  on.exit(setwd(wd), add = TRUE)
+  setwd(project_path)
+  config <- settings_read(config_path)
+
+  project_type <- config$project_type %||% "project"
+  render_dirs <- config$render_dirs
+  directories <- config$directories
+  quarto_settings <- config$quarto
   # Backup existing files if requested
   backed_up <- character(0)
   if (backup) {
