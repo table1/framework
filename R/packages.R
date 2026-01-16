@@ -1,8 +1,8 @@
 #' Extract package list from config
 #'
 #' Handles two config structures:
-#' 1. New: packages = list(use_renv = ..., default_packages = [...])
-#' 2. Old: packages = [list of package specs]
+#' 1. New: packages = list(use_renv = ..., default_packages = ...)
+#' 2. Old: packages as a flat list of package specs
 #'
 #' @param config Configuration object from settings_read()
 #' @return List of package specifications, or empty list if none
@@ -677,7 +677,7 @@ packages_list <- function() {
 
     version_label <- if (!is.null(spec$version)) sprintf(" (v%s)", spec$version) else ""
 
-    message(sprintf("• %s [%s]%s", spec$name, source_label, version_label))
+    message(sprintf("- %s [%s]%s", spec$name, source_label, version_label))
     message(sprintf("  Auto-attach: %s", if (isTRUE(spec$auto_attach)) "yes" else "no"))
     message("")
   }

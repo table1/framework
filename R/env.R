@@ -73,11 +73,11 @@
     # Append to existing file
     existing_content <- readLines(env_path, warn = FALSE)
     writeLines(c(existing_content, content), env_path)
-    message(sprintf("✓ Appended %d variable(s) to .env", length(vars)))
+    message(sprintf("[ok] Appended %d variable(s) to .env", length(vars)))
   } else {
     # Create new file
     writeLines(content, env_path)
-    message(sprintf("✓ Created .env with %d variable(s)", length(vars)))
+    message(sprintf("[ok] Created .env with %d variable(s)", length(vars)))
   }
 
   # Show what was added (without revealing values)
@@ -241,18 +241,18 @@ env_clear <- function(keep = character()) {
   to_remove <- setdiff(all_objects, keep)
   if (length(to_remove) > 0) {
     rm(list = to_remove, envir = .GlobalEnv)
-    message(sprintf("✓ Removed %d object%s", length(to_remove), if (length(to_remove) == 1) "" else "s"))
+    message(sprintf("[ok] Removed %d object%s", length(to_remove), if (length(to_remove) == 1) "" else "s"))
     if (length(keep) > 0) {
       message(sprintf("  Kept: %s", paste(keep, collapse = ", ")))
     }
   } else {
-    message("✓ No objects to remove")
+    message("[ok] No objects to remove")
   }
 
   # Clear plots
   if (dev.cur() != 1) {
     dev.off(dev.list())
-    message("✓ Cleared plot devices")
+    message("[ok] Cleared plot devices")
   }
 
   # Detach loaded packages (with dependency resolution to avoid warnings)
@@ -281,12 +281,12 @@ env_clear <- function(keep = character()) {
         }
       }
     })
-    message(sprintf("✓ Detached %d package%s", length(pkgs), if (length(pkgs) == 1) "" else "s"))
+    message(sprintf("[ok] Detached %d package%s", length(pkgs), if (length(pkgs) == 1) "" else "s"))
   }
 
   # Run garbage collection
   gc_result <- gc(verbose = FALSE)
-  message("✓ Garbage collection complete")
+  message("[ok] Garbage collection complete")
 
   invisible(NULL)
 }
@@ -318,7 +318,7 @@ env_summary <- function() {
     message(sprintf("Loaded Packages (%d):", length(pkgs)))
     for (pkg in pkgs) {
       version <- packageVersion(pkg)
-      message(sprintf("  • %s (%s)", pkg, version))
+      message(sprintf("  - %s (%s)", pkg, version))
     }
   } else {
     message("Loaded Packages: none")

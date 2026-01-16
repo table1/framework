@@ -23,6 +23,7 @@
 #'   "default". User can create custom stubs in `stubs/notebook-{stub}.qmd`,
 #'   `stubs/notebook-{stub}.Rmd`, or `stubs/script-{stub}.R`.
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#' @param subdir Optional subdirectory under `dir` (e.g., "analyses/exploratory").
 #'
 #' @return Invisible path to created notebook
 #'
@@ -239,7 +240,7 @@ make_notebook <- function(name,
   slug
 }
 
-#' Replace {{ variable }} placeholders in template content
+#' Replace moustache-style placeholders in template content
 #'
 #' Supports both `{{name}}` and `{{ name }}` styles by trimming whitespace
 #' around the variable identifier before replacement.
@@ -259,7 +260,7 @@ make_notebook <- function(name,
       next
     }
     value <- as.character(value[[1]])
-    pattern <- sprintf("\\\\{\\\\{\\s*%s\\s*\\\\}\\\\}", name)
+    pattern <- sprintf("\\{\\{\\s*%s\\s*\\}\\}", name)
     content <- gsub(pattern, value, content, perl = TRUE)
   }
 
@@ -573,6 +574,7 @@ make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subd
 #'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param stub Character. Name of the stub template to use. Default "default".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#' @param subdir Optional subdirectory under `dir` (e.g., "analyses/exploratory").
 #'
 #' @return Invisible path to created notebook
 #'
@@ -604,6 +606,7 @@ make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subd
 #' @param dir Character. Directory to create the file in. Uses your project's
 #'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#' @param subdir Optional subdirectory under `dir` (e.g., "slides/week-01").
 #'
 #' @return Invisible path to created presentation
 #'
@@ -631,6 +634,7 @@ make_revealjs <- function(name, dir = NULL, overwrite = FALSE, subdir = NULL) {
 #' @param dir Character. Directory to create the file in. Uses your project's
 #'   configured `directories$notebooks` setting. Default: "notebooks/".
 #' @param overwrite Logical. Whether to overwrite existing file. Default FALSE.
+#' @param subdir Optional subdirectory under `dir` (e.g., "slides/week-01").
 #'
 #' @return Invisible path to created presentation
 #'

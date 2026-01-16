@@ -114,13 +114,13 @@ NULL
 }
 
 
-#' Resolve S3 connection by name or default
+#' Collect all S3 connections from config
 #'
-#' Looks up an S3 connection from configuration. If no name is provided,
-#' finds the connection marked as default via `default_storage_bucket`.
+#' Gathers all S3/storage bucket connections from configuration,
+#' along with the default bucket name if specified.
 #'
-#' @param connection Character or NULL. Connection name, or NULL to use default.
-#' @return List with connection configuration including resolved credentials.
+#' @param config Configuration object from settings_read().
+#' @return List with connections and default_bucket fields.
 #' @keywords internal
 .collect_all_s3_connections <- function(config) {
   storage_buckets <- config$storage_buckets %||%

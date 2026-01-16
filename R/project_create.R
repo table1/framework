@@ -182,7 +182,7 @@ project_create <- function(
       root_output_dir = root_output_dir
     )
     if (quarto_result$success) {
-      message("✓ Generated ", quarto_result$count, " Quarto configuration file(s)")
+      message("[ok] Generated ", quarto_result$count, " Quarto configuration file(s)")
     }
   }
 
@@ -197,7 +197,7 @@ project_create <- function(
     project_id <- add_project_to_config(project_dir)
   }
 
-  message("✓ Project created successfully: ", project_dir)
+  message("[ok] Project created successfully: ", project_dir)
 
   list(
     success = TRUE,

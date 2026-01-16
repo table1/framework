@@ -56,7 +56,7 @@ ai_sync_context <- function(config_file = NULL,
   # Check if config exists
   if (!file.exists(config_file)) {
     if (verbose) {
-      message("✗ Config file not found: ", config_file)
+      message("[x] Config file not found: ", config_file)
     }
     return(invisible(list(success = FALSE, reason = "config_not_found")))
   }
@@ -66,7 +66,7 @@ ai_sync_context <- function(config_file = NULL,
 
   if (canonical_file == "" || is.null(canonical_file)) {
     if (verbose) {
-      message("ℹ No canonical AI file configured")
+      message("Note: No canonical AI file configured")
       message("  Set ai.canonical_file in settings.yml to enable sync")
     }
     return(invisible(list(success = FALSE, reason = "not_configured")))
@@ -75,7 +75,7 @@ ai_sync_context <- function(config_file = NULL,
   # Check if canonical file exists
   if (!file.exists(canonical_file)) {
     if (verbose) {
-      message("✗ Canonical file not found: ", canonical_file)
+      message("[x] Canonical file not found: ", canonical_file)
     }
     return(invisible(list(success = FALSE, reason = "canonical_not_found")))
   }
@@ -95,7 +95,7 @@ ai_sync_context <- function(config_file = NULL,
 
   if (length(target_files) == 0) {
     if (verbose) {
-      message("ℹ No other AI files to sync")
+      message("Note: No other AI files to sync")
     }
     return(invisible(list(success = TRUE, synced = 0)))
   }
@@ -112,7 +112,7 @@ ai_sync_context <- function(config_file = NULL,
 
       if (!is.na(target_mtime) && target_mtime >= canonical_mtime) {
         if (verbose) {
-          message("  ✓ ", target_file, " (already up to date)")
+          message("  [ok] ", target_file, " (already up to date)")
         }
         sync_results[[target_file]] <- "up_to_date"
         next
@@ -138,18 +138,18 @@ ai_sync_context <- function(config_file = NULL,
       synced_count <- synced_count + 1
       sync_results[[target_file]] <- "synced"
       if (verbose) {
-        message("  ✓ Synced to ", target_file)
+        message("  [ok] Synced to ", target_file)
       }
     }, error = function(e) {
       sync_results[[target_file]] <- paste0("error: ", e$message)
       if (verbose) {
-        message("  ✗ Failed to sync ", target_file, ": ", e$message)
+        message("  [x] Failed to sync ", target_file, ": ", e$message)
       }
     })
   }
 
   if (verbose && synced_count > 0) {
-    message("\n✓ Synced ", synced_count, " file(s) from ", canonical_file)
+    message("\n[ok] Synced ", synced_count, " file(s) from ", canonical_file)
   }
 
   invisible(list(

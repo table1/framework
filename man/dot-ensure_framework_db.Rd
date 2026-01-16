@@ -2,7 +2,7 @@
 % Please edit documentation in R/scaffold.R
 \name{.ensure_framework_db}
 \alias{.ensure_framework_db}
-\title{Ensure framework database exists}
+\title{Ensure framework database exists with all required tables}
 \usage{
 .ensure_framework_db(project_root = NULL)
 }
@@ -10,6 +10,6 @@
 \item{project_root}{Optional project root used to resolve the database path.}
 }
 \description{
-Ensure framework database exists
+Ensure framework database exists with all required tables
 }
 \keyword{internal}

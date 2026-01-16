@@ -43,7 +43,7 @@ load_settings_catalog <- function(include_user = TRUE, validate = TRUE) {
       )
 
       if (is.list(user_catalog)) {
-        catalog <- stats::modifyList(catalog, user_catalog, keep.null = TRUE)
+        catalog <- modifyList(catalog, user_catalog, keep.null = TRUE)
       }
     }
   }

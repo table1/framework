@@ -15,6 +15,7 @@ Workflow:
     - settings
     - settings_read
     - settings_write
+    - configure_global
     - gui
     - standardize_wd
     - env_clear
@@ -23,6 +24,7 @@ Workflow:
     - scratch_clean
     - now
     - capture_output
+    - view
     - view_create
     - view_detail
 
@@ -67,6 +69,8 @@ Saving Work:
     - save_table
     - save_report
     - save_model
+    - save_notebook
+    - result_list
 
 Notebooks & Scripts:
   description: Creating notebooks, scripts, and presentations

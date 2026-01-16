@@ -102,7 +102,7 @@ db_drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
     cat("\n=== Install Database Drivers ===\n\n")
     cat("Available drivers:\n")
     for (i in seq_len(nrow(status))) {
-      installed <- if (status$installed[i]) "✓" else " "
+      installed <- if (status$installed[i]) "x" else " "
       cat(sprintf("  [%s] %s (%s)\n",
                   installed,
                   status$driver[i],
@@ -305,11 +305,11 @@ connection_check <- function(connection_name) {
     cat(sprintf("\n=== Connection Check: %s ===\n\n", connection_name))
     cat(sprintf("Driver: %s\n", if (is.na(driver)) "(not set)" else driver))
     cat(sprintf("Package: %s\n", if (is.na(package)) "(unknown)" else package))
-    cat(sprintf("Package installed: %s\n", if (package_installed) "✓" else "✗"))
-    cat(sprintf("Config valid: %s\n\n", if (config_valid) "✓" else "✗"))
+    cat(sprintf("Package installed: %s\n", if (package_installed) "yes" else "no"))
+    cat(sprintf("Config valid: %s\n\n", if (config_valid) "yes" else "no"))
     cat("Issues:\n")
     for (msg in messages) {
-      cat(sprintf("  • %s\n", msg))
+      cat(sprintf("  - %s\n", msg))
     }
     cat("\n")
   }

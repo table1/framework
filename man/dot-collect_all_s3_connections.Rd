@@ -2,18 +2,18 @@
 % Please edit documentation in R/connections_s3.R
 \name{.collect_all_s3_connections}
 \alias{.collect_all_s3_connections}
-\title{Resolve S3 connection by name or default}
+\title{Collect all S3 connections from config}
 \usage{
 .collect_all_s3_connections(config)
 }
 \arguments{
-\item{connection}{Character or NULL. Connection name, or NULL to use default.}
+\item{config}{Configuration object from settings_read().}
 }
 \value{
-List with connection configuration including resolved credentials.
+List with connections and default_bucket fields.
 }
 \description{
-Looks up an S3 connection from configuration. If no name is provided,
-finds the connection marked as default via \code{default_storage_bucket}.
+Gathers all S3/storage bucket connections from configuration,
+along with the default bucket name if specified.
 }
 \keyword{internal}

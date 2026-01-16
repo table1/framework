@@ -22,9 +22,9 @@ status <- function() {
 
   cat("\n")
   cat("\033[1;34m")  # Bold blue
-  cat("═══════════════════════════════════════════════════\n")
+  cat("===================================================\n")
   cat("  FRAMEWORK PROJECT STATUS\n")
-  cat("═══════════════════════════════════════════════════\n")
+  cat("===================================================\n")
   cat("\033[0m")  # Reset
   cat("\n")
 
@@ -181,8 +181,8 @@ status <- function() {
     for (name in names(dirs)) {
       path <- dirs[[name]]
       exists <- dir.exists(path)
-      status <- if (exists) "\033[0;32m✓\033[0m" else "\033[1;31m✗\033[0m"
-      cat(sprintf("  %s %s → %s\n", status, name, path))
+      status <- if (exists) "\033[0;32mok\033[0m" else "\033[1;31mx\033[0m"
+      cat(sprintf("  %s %s -> %s\n", status, name, path))
     }
 
     cat("\n")
@@ -238,7 +238,7 @@ status <- function() {
   }
 
   cat("\033[1;34m")  # Bold blue
-  cat("═══════════════════════════════════════════════════\n")
+  cat("===================================================\n")
   cat("\033[0m")  # Reset
   cat("\n")
 

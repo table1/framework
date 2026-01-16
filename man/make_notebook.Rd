@@ -37,6 +37,8 @@ configured \code{directories$notebooks} setting. Default: "notebooks/".}
 \verb{stubs/notebook-\{stub\}.Rmd}, or \verb{stubs/script-\{stub\}.R}.}
 
 \item{overwrite}{Logical. Whether to overwrite existing file. Default FALSE.}
+
+\item{subdir}{Optional subdirectory under \code{dir} (e.g., "analyses/exploratory").}
 }
 \value{
 Invisible path to created notebook
