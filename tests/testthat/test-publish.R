@@ -121,7 +121,9 @@ test_that(".resolve_s3_connection errors when connection not found", {
 })
 
 
-test_that(".resolve_s3_connection errors when no default and no explicit", {
+test_that(".resolve_s3_connection errors when credentials are missing", {
+  skip_if_not_installed("aws.s3")
+
   test_dir <- create_test_dir()
   old_wd <- getwd()
   on.exit({
@@ -131,20 +133,21 @@ test_that(".resolve_s3_connection errors when no default and no explicit", {
 
   setwd(test_dir)
 
-  # S3 connection exists but not marked as default
+  # S3 connection exists but no credentials
   config <- list(
     default = list(
       connections = list(
-        my_s3 = list(
-          driver = "s3",
-          bucket = "test-bucket",
-          region = "us-east-1"
+        storage_buckets = list(
+          my_s3 = list(
+            bucket = "test-bucket",
+            region = "us-east-1"
+          )
         )
       )
     )
   )
 
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   expect_error(
     framework:::.resolve_s3_connection(NULL),

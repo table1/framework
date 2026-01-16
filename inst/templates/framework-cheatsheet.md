@@ -34,9 +34,14 @@ stubs_publish()                  # Publish stubs for customization
 
 ### Loading Data
 ```r
+# From data catalog (dot notation)
 data_read("inputs_raw.dataset")           # Load from data catalog
 data_read("inputs_intermediate.cleaned")  # Load intermediate data
 data_info("source.public.example")        # Get data specification
+
+# Direct file path (bypass catalog)
+data_read("path/to/file.csv")             # Read CSV directly
+data_read("data/results.rds")             # Read RDS directly
 ```
 
 ### Saving Data
@@ -58,23 +63,49 @@ cache_flush()                    # Clear all cache
 
 ## Database Operations
 
-### Connections
-```r
-get_connection("db_name")        # Get database connection
-db_find(conn, "table", id)       # Find record by ID
+### Connection Configuration (settings.yml)
+```yaml
+connections:
+  db:
+    driver: postgresql           # postgresql, sqlite, mysql, etc.
+    host: !expr Sys.getenv("DB_HOST")
+    database: !expr Sys.getenv("DB_NAME")
+    user: !expr Sys.getenv("DB_USER")
+    password: !expr Sys.getenv("DB_PASS")
 ```
 
-### Queries
+### Using Connections
 ```r
-results <- query_get("SELECT * FROM users", "mydb")  # Run query
-affected <- query_execute("UPDATE ...", "mydb")      # Execute non-query
+db_connect("db")                 # Get database connection
+db_query("SELECT * FROM users", "db")  # Run query
+db_execute("UPDATE ...", "db")   # Execute non-query
+db_list()                        # List configured connections
+```
+
+### Database Introspection
+```r
+conn <- db_connect("db")
+.list_tables(conn)               # List tables in database
+.list_columns(conn, "users")     # List columns in table
+.has_column(conn, "users", "id") # Check if column exists
 ```
 
 ---
 
 ## Configuration
 
-### Settings Helper (Dot Notation)
+### The config Object (After scaffold())
+After running `scaffold()`, a `config` object is created in your global environment:
+
+```r
+config("notebooks")                 # Smart lookup (checks directories section)
+config("directories.notebooks")     # Explicit nested value with dot notation
+config("connections.db.host")       # Access deep nested values
+config("seed")                      # Get random seed
+config("missing", default = "x")    # Provide fallback for missing keys
+```
+
+### Settings Helper (Alternative)
 ```r
 settings()                          # View entire settings (pretty-printed in console)
 settings("directories")             # Get all directories
@@ -84,22 +115,49 @@ settings("connections.db.host")     # Access deep nested values
 settings("missing", default = "x")  # Provide fallback for missing keys
 ```
 
-### Settings Files
+### Reading/Writing Config Files
 ```r
-settings <- read_config()        # Read settings.yml (or settings.yml)
-write_config(settings)           # Write settings back
+settings_read()                  # Read settings.yml
+settings_read("custom.yml")      # Read specific config file
+settings_write(config, "file")   # Write settings back
 ```
 
 ### AI Assistant Support
 ```r
-configure_ai_agents()            # Configure AI assistant support
+ai_sync_context()                # Sync AI context files
+ai_generate_context()            # Generate AI context
+ai_regenerate_context()          # Regenerate AI context
 ```
 
 ---
 
-## Package Management (renv Integration)
+## Package Management
 
-### Setup
+### Package Configuration in settings.yml
+```yaml
+packages:
+  # Simple CRAN packages
+  - dplyr
+  - ggplot2
+
+  # Version pinning
+  - dplyr@1.1.0
+
+  # GitHub packages (shorthand)
+  - tidyverse/dplyr
+  - tidyverse/dplyr@main    # specific branch/tag
+
+  # Bioconductor packages
+  - bioc::DESeq2
+
+  # Explicit specification (for auto_attach control)
+  - name: purrr
+    auto_attach: true        # Load with scaffold()
+  - name: httr2
+    auto_attach: false       # Install but don't attach
+```
+
+### renv Integration (Optional)
 ```r
 renv_enable()                    # Enable renv for project
 renv_disable()                   # Disable renv
@@ -108,10 +166,12 @@ renv_enabled()                   # Check if renv is enabled
 
 ### Package Operations
 ```r
-packages_snapshot()              # Save package versions
-packages_restore()               # Restore saved versions
-packages_status()                # Check package status
-packages_update()                # Update packages
+packages_install()               # Install all configured packages
+packages_list()                  # List configured packages
+packages_snapshot()              # Save package versions (renv)
+packages_restore()               # Restore saved versions (renv)
+packages_status()                # Check package status (renv)
+packages_update()                # Update packages (renv)
 ```
 
 ---
@@ -224,63 +284,89 @@ capture_output(expr)             # Capture console output
 
 | Function | Purpose |
 |----------|---------|
+| `ai_generate_context()` | Generate AI context files |
+| `ai_regenerate_context()` | Regenerate AI context files |
+| `ai_sync_context()` | Sync AI assistant context files |
 | `cache()` | Store value in cache |
 | `cache_flush()` | Clear all cache |
 | `cache_forget()` | Delete cached item |
 | `cache_get()` | Retrieve from cache |
+| `cache_list()` | List cached items |
+| `cache_remember()` | Cache expensive computation |
 | `capture_output()` | Capture console output |
-| `configure_ai_agents()` | Configure AI assistant support |
-| `data_read()` | Read data (internal) |
-| `data_save()` | Save data (internal) |
-| `db_find()` | Find record by ID |
-| `framework_view()` | View framework database |
-| `get_connection()` | Get database connection |
-| `get_data_spec()` | Get data specification |
-| `get_or_cache()` | Cache expensive computation |
-| `init()` | Create new project |
-| `is_initialized()` | Check initialization status |
-| `list_metadata()` | List metadata entries |
-| `stubs_list()` | List available stubs |
-| `data_read()` | Load from data catalog |
+| `config()` | Access configuration with dot notation (after scaffold) |
+| `data_add()` | Add data to catalog |
 | `data_info()` | Get data specification |
+| `data_read()` | Load from data catalog or file path |
+| `data_save()` | Save to data catalog |
+| `db_connect()` | Get database connection |
+| `db_execute()` | Execute non-query SQL |
+| `db_query()` | Execute query and return results |
+| `db_list()` | List configured database connections |
+| `db_transaction()` | Run code in a database transaction |
+| `db_with()` | Execute code with a connection |
+| `git_add()` | Stage files for commit |
+| `git_commit()` | Commit staged changes |
+| `git_diff()` | Show changes |
+| `git_hooks_enable()` | Enable git hooks |
+| `git_hooks_disable()` | Disable git hooks |
+| `git_hooks_install()` | Install git hooks |
+| `git_hooks_list()` | List installed hooks |
+| `git_log()` | Show commit history |
+| `git_pull()` | Pull from remote |
+| `git_push()` | Push to remote |
+| `git_security_audit()` | Audit for security issues |
+| `git_status()` | Show repository status |
+| `gui()` | Launch Framework GUI |
 | `make_notebook()` | Create notebook from stub |
 | `make_presentation()` | Create presentation (reveal.js) |
 | `make_qmd()` | Create Quarto notebook |
 | `make_revealjs()` | Create reveal.js presentation |
 | `make_rmd()` | Create RMarkdown notebook |
 | `make_script()` | Create script from stub |
+| `new()` | Create new project (interactive) |
+| `new_course()` | Create course project |
+| `new_presentation()` | Create presentation project |
+| `new_project()` | Create standard project |
+| `new_project_sensitive()` | Create project for sensitive data |
 | `now()` | Current timestamp |
-| `packages_restore()` | Restore package versions |
-| `packages_snapshot()` | Save package versions |
-| `packages_status()` | Check package status |
-| `packages_update()` | Update packages |
+| `packages_install()` | Install configured packages |
+| `packages_list()` | List configured packages |
+| `packages_restore()` | Restore package versions (renv) |
+| `packages_snapshot()` | Save package versions (renv) |
+| `packages_status()` | Check package status (renv) |
+| `packages_update()` | Update packages (renv) |
+| `project_info()` | Display project information |
+| `project_list()` | List registered projects |
 | `publish()` | Upload file or directory to S3 |
 | `publish_data()` | Publish data frame or file to S3 |
 | `publish_dir()` | Upload directory to S3 |
 | `publish_list()` | List published files in S3 |
 | `publish_notebook()` | Render and publish Quarto notebook to S3 |
-| `query_execute()` | Execute query on connection |
-| `query_get()` | Get query results |
-| `read_config()` | Read configuration |
-| `remove_init()` | Remove init marker |
-| `renv_disable()` | Disable renv |
-| `renv_enable()` | Enable renv |
+| `quarto_generate_all()` | Generate all _quarto.yml files |
+| `quarto_regenerate()` | Regenerate _quarto.yml with backup |
+| `renv_disable()` | Disable renv integration |
+| `renv_enable()` | Enable renv integration |
 | `renv_enabled()` | Check renv status |
-| `restore_framework_view()` | Restore view preferences |
-| `result_get()` | Load result |
-| `result_list()` | List all results |
-| `result_save()` | Save result |
-| `s3_test()` | Test S3 connection |
-| `data_save()` | Save to data catalog |
+| `result_list()` | List saved results |
+| `save_figure()` | Save figure to outputs |
+| `save_model()` | Save model to outputs |
+| `save_notebook()` | Save notebook output |
+| `save_report()` | Save report to outputs |
+| `save_table()` | Save table to outputs |
 | `scaffold()` | Load project environment |
 | `scratch_capture()` | Save to scratch space |
 | `scratch_clean()` | Clean scratch directory |
+| `settings()` | Access project settings |
+| `settings_read()` | Read configuration file |
+| `settings_write()` | Write configuration file |
+| `setup()` | Configure global Framework settings |
 | `standardize_wd()` | Normalize working directory |
+| `status()` | Show project status |
+| `storage_test()` | Test S3 connection |
+| `stubs_list()` | List available stubs |
 | `stubs_path()` | Get stubs directory path |
 | `stubs_publish()` | Publish stubs for customization |
-| `update_data_spec()` | Update data specification |
-| `use_framework_view()` | Enable auto-view |
-| `write_config()` | Write configuration |
 
 ---
 

@@ -123,7 +123,7 @@ stubs_publish <- function(type = "all", overwrite = FALSE, stubs = NULL) {
   if (length(published) == 0) {
     message("No stubs were published.")
   } else {
-    message(sprintf("\n✓ Published %d stub(s) to %s/", length(published), user_stubs_dir))
+    message(sprintf("\n[ok] Published %d stub(s) to %s/", length(published), user_stubs_dir))
     message("  Edit these files to customize your templates.")
   }
 

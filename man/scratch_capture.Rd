@@ -29,6 +29,7 @@ If no name is provided, uses the name of the object passed in.
 If no location is provided, uses the scratch directory from the configuration.
 }
 \examples{
+\dontrun{
 # Save a character vector as text
 scratch_capture(c("hello", "world"))
 
@@ -37,5 +38,6 @@ scratch_capture(mtcars)
 
 # Save an R object as RDS
 scratch_capture(list(a = 1, b = 2), to = "rds")
+}
 
 }

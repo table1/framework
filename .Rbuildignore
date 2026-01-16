@@ -52,6 +52,21 @@
 
 # Other
 ^\.cursorignore$
-^\.Rbuildignore\.bak$^readme-parts$
-
+^\.Rbuildignore\.bak$
 ^readme-parts$
+
+# GUI development (not needed in package)
+^gui-dev$
+
+# Other non-standard files
+^content$
+^docker-compose\.test\.yml$
+^docs\.db$
+^resources$
+^scripts$
+^settings\.json$
+
+# Hidden files in inst that shouldn't be distributed
+inst/\.RData$
+inst/templates/\.editorconfig$
+inst/templates/\.lintr\.default$

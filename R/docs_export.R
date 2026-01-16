@@ -373,7 +373,7 @@ docs_export <- function(output_path = "docs.db",
     }
 
     # Check if this line is a list item (starts with - or number.)
-    is_list_item <- grepl("^\\s*[-•]\\s|^\\s*\\d+\\.\\s", line)
+    is_list_item <- grepl("^\\s*[-*]\\s|^\\s*\\d+\\.\\s", line)
     is_blank <- !nzchar(trimws(line))
 
     if (is_list_item) {

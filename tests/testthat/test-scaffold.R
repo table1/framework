@@ -249,7 +249,7 @@ test_that(".ensure_framework_db respects project root", {
   unlink("framework.db")
   dir.create(file.path(test_dir, "notebooks"), showWarnings = FALSE)
   setwd(file.path(test_dir, "notebooks"))
-  expect_message(framework:::.ensure_framework_db(), "Framework database not found")
+  expect_message(framework:::.ensure_framework_db(), "Created framework.db")
   expect_true(file.exists(file.path(test_dir, "framework.db")))
 })
 

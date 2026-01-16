@@ -131,6 +131,16 @@ create_test_project <- function(dir = create_test_dir(), type = "project") {
     )
   ")
 
+  # Create meta table (for scaffold history, etc.)
+  DBI::dbExecute(conn, "
+    CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  ")
+
   dir
 }
 

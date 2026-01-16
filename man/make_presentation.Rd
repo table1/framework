@@ -13,6 +13,8 @@ make_presentation(name, dir = NULL, overwrite = FALSE, subdir = NULL)
 configured \code{directories$notebooks} setting. Default: "notebooks/".}
 
 \item{overwrite}{Logical. Whether to overwrite existing file. Default FALSE.}
+
+\item{subdir}{Optional subdirectory under \code{dir} (e.g., "slides/week-01").}
 }
 \value{
 Invisible path to created presentation

@@ -2,8 +2,8 @@ Package: framework
 Type: Package
 Title: A Framework for Data Management
 Version: 0.10.1
-Authors@R: 
-    person("Erik", "Westlund", , "ewestlund@jhu.edu", role = c("aut", "cre"))
+Authors@R:
+    person("Erik", "Westlund", , "ewestlund@jhu.edu", role = c("aut", "cre", "cph"))
 Maintainer: Erik Westlund <ewestlund@jhu.edu>
 Description: A framework for managing data files, configurations, and database connections.
 License: MIT + file LICENSE
@@ -15,37 +15,46 @@ Imports:
     DBI,
     RSQLite,
     yaml,
-    glue,
     fs,
     readr,
     dotenv,
     openssl,
     lubridate,
-    httpuv,
     jsonlite,
-    config,
     plumber
 Suggests:
     testthat (>= 3.0.0),
-    cyclocomp,
-    usethis,
-    languageserver,
-    tm,
-    devtools,
-    httpgd,
-    DT,
-    renv,
-    remotes,
-    cli,
-    withr,
-    pool,
-    RPostgres,
-    RMariaDB,
-    odbc,
-    duckdb,
-    haven,
-    readxl,
+    arrow,
     aws.s3,
-    aws.signature
+    aws.signature,
+    BiocManager,
+    cli,
+    cyclocomp,
+    devtools,
+    dplyr,
+    DT,
+    duckdb,
+    ggplot2,
+    haven,
+    htmltools,
+    htmlwidgets,
+    httpgd,
+    knitr,
+    languageserver,
+    odbc,
+    pool,
+    prismjs,
+    qs,
+    R.utils,
+    readxl,
+    remotes,
+    renv,
+    RMariaDB,
+    rmarkdown,
+    RPostgres,
+    tm,
+    usethis,
+    withr,
+    writexl
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)

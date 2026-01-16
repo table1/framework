@@ -15,8 +15,8 @@ List of package specifications, or empty list if none
 \description{
 Handles two config structures:
 \enumerate{
-\item New: packages = list(use_renv = ..., default_packages = \link{...})
-\item Old: packages = \link{list of package specs}
+\item New: packages = list(use_renv = ..., default_packages = ...)
+\item Old: packages as a flat list of package specs
 }
 }
 \keyword{internal}

@@ -49,10 +49,10 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
   .update_frameworkrc(frameworkrc, support = support, assistants = assistants %||% character(0))
 
   if (support == "yes" && length(assistants) > 0) {
-    message("✓ AI assistant support enabled")
+    message("[ok] AI assistant support enabled")
     message("  Assistants: ", paste(assistants, collapse = ", "))
   } else if (support == "never") {
-    message("✓ AI assistant support disabled")
+    message("[ok] AI assistant support disabled")
   }
 
   invisible(TRUE)

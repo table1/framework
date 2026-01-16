@@ -271,7 +271,7 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 
   # Output description if available
   if (!is.null(spec$description) && nzchar(spec$description)) {
-    message(sprintf("ℹ %s: %s", path, spec$description))
+    message(sprintf("Note: %s: %s", path, spec$description))
   }
 
   data
@@ -348,19 +348,19 @@ data_list <- function() {
   for (entry in entries_list) {
     # Name with type badge
     type_badge <- sprintf("[%s]", toupper(entry$type))
-    message(sprintf("• %s %s", entry$name, type_badge))
+    message(sprintf("- %s %s", entry$name, type_badge))
 
     # Path
     message(sprintf("  Path: %s", entry$path))
 
     # Flags (locked)
     if (entry$locked) {
-      message("  🔒 locked")
+      message("  [locked]")
     }
 
     # Description (if available)
     if (!is.na(entry$description) && nzchar(entry$description)) {
-      message(sprintf("  ℹ %s", entry$description))
+      message(sprintf("  %s", entry$description))
     }
 
     message("")  # Blank line between entries

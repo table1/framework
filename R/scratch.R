@@ -17,6 +17,7 @@
 #' @return The input object `x` invisibly.
 #'
 #' @examples
+#' \dontrun{
 #' # Save a character vector as text
 #' scratch_capture(c("hello", "world"))
 #'
@@ -25,6 +26,7 @@
 #'
 #' # Save an R object as RDS
 #' scratch_capture(list(a = 1, b = 2), to = "rds")
+#' }
 #'
 #' @export
 scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf) {

@@ -107,7 +107,7 @@ db_list <- function() {
 
     # Connection name with driver badge
     driver <- if (!is.null(conn$driver)) toupper(conn$driver) else "UNKNOWN"
-    message(sprintf("• %s [%s]", name, driver))
+    message(sprintf("- %s [%s]", name, driver))
 
     # Host (if available)
     if (!is.null(conn$host)) {
@@ -193,7 +193,7 @@ connections_list <- function() {
       if (!is.list(conn)) next
 
       driver <- if (!is.null(conn$driver)) toupper(conn$driver) else "UNKNOWN"
-      message(sprintf("• %s [%s]", name, driver))
+      message(sprintf("- %s [%s]", name, driver))
 
       if (!is.null(conn$host)) {
         port_info <- if (!is.null(conn$port)) sprintf(":%s", conn$port) else ""
@@ -224,7 +224,7 @@ connections_list <- function() {
 
       provider <- conn$provider %||% conn$driver %||% conn$type %||% "s3"
       marker <- if (!is.null(default_storage) && identical(name, default_storage)) " (default)" else ""
-      message(sprintf("• %s [%s]%s", name, toupper(provider), marker))
+      message(sprintf("- %s [%s]%s", name, toupper(provider), marker))
 
       if (!is.null(conn$bucket)) {
         message(sprintf("  Bucket: %s", conn$bucket))

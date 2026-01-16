@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_notebook.R
 \name{.replace_moustache_placeholders}
 \alias{.replace_moustache_placeholders}
-\title{Replace {{ variable }} placeholders in template content}
+\title{Replace moustache-style placeholders in template content}
 \usage{
 .replace_moustache_placeholders(content, replacements)
 }

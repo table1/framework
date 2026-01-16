@@ -189,10 +189,10 @@ message("Framework dev mode active - will load from: %s")
   # Show summary of settings
   cat("Project Configuration:\n")
   if (!is.null(project_name)) {
-    cat(sprintf("  • Name: %s\n", project_name))
+    cat(sprintf("  -Name: %s\n", project_name))
   }
-  cat(sprintf("  • Type: %s\n", type))
-  cat(sprintf("  • renv: %s\n", if (use_renv) "enabled" else "disabled"))
+  cat(sprintf("  -Type: %s\n", type))
+  cat(sprintf("  -renv: %s\n", if (use_renv) "enabled" else "disabled"))
   cat("\n")
 
   cat("Next steps:\n")
@@ -203,19 +203,19 @@ message("Framework dev mode active - will load from: %s")
   cat("       scaffold()\n")
   cat("  4. Start analyzing!\n\n")
   cat("Optional:\n")
-  cat("  • Add database connections: configure_connection()\n")
-  cat("  • Store secrets: Edit .env file directly\n\n")
+  cat("  -Add database connections: configure_connection()\n")
+  cat("  -Store secrets: Edit .env file directly\n\n")
 
   # Additional context based on project type
   if (type == "course") {
     cat("Course-specific features:\n")
-    cat("  • slides/ - Author lecture decks (render to slides/_rendered/{{ slug }}.html)\n")
-    cat("  • assignments/ - Organize homework and lab materials\n")
-    cat("  • data/ - Store shared datasets for demonstrations\n\n")
+    cat("  -slides/ - Author lecture decks (render to slides/_rendered/{{ slug }}.html)\n")
+    cat("  -assignments/ - Organize homework and lab materials\n")
+    cat("  -data/ - Store shared datasets for demonstrations\n\n")
   } else if (type == "presentation") {
     cat("Presentation tips:\n")
-    cat("  • Use make_notebook() to create your presentation\n")
-    cat("  • Quarto reveal.js format recommended\n\n")
+    cat("  -Use make_notebook() to create your presentation\n")
+    cat("  -Quarto reveal.js format recommended\n\n")
   }
 }
 
@@ -674,7 +674,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
 
   # Write file
   writeLines(content, output_file)
-  message(sprintf("✓ Created %s", output_file))
+  message(sprintf("[ok] Created %s", output_file))
   message("  This file shows initialization logic for reference.")
   message("  Placeholders like {{PROJECT_NAME}} would be replaced during actual project_create().")
 
@@ -963,7 +963,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
       if (ai_sync_enabled) hooks_msg <- c(hooks_msg, "AI context sync")
       if (data_security_enabled) hooks_msg <- c(hooks_msg, "data security check")
 
-      message(sprintf("✓ Installed git hooks: %s", paste(hooks_msg, collapse = ", ")))
+      message(sprintf("[ok] Installed git hooks: %s", paste(hooks_msg, collapse = ", ")))
     }, error = function(e) {
       message("Note: Could not install git hooks. You can run 'framework hooks:install' later")
     })
