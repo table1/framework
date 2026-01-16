@@ -320,6 +320,8 @@ wd <- getwd()
   render_dirs <- config$render_dirs
   directories <- config$directories
   quarto_settings <- config$quarto
+  root_output_dir <- quarto_settings$render_dir
+
   # Backup existing files if requested
   backed_up <- character(0)
   if (backup) {

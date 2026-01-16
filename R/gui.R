@@ -37,6 +37,9 @@ setup <- function(port = 8080, browse = TRUE) {
 #' project management, and settings configuration.
 #'
 #' @param port Port number to use (default: 8080)
+#' @param host Host address to bind to. Default "127.0.0.1" for local access only.
+#'   Use "0.0.0.0" to allow connections from other machines (requires appropriate
+#'   network security).
 #' @param browse Automatically open browser (default: TRUE)
 #' @param route Initial route to open (default: NULL for home page)
 #'
@@ -52,12 +55,15 @@ setup <- function(port = 8080, browse = TRUE) {
 #'
 #' # Open directly to settings
 #' framework::gui(route = "#/settings/basics")
+#'
+#' # Run as standalone server (no browser, accessible from network)
+#' framework::gui(port = 8080, host = "0.0.0.0", browse = FALSE)
 #' }
 #'
 #' @seealso [setup()] for first-time configuration
 #'
 #' @export
-gui <- function(port = 8080, browse = TRUE, route = NULL) {
+gui <- function(port = 8080, host = "127.0.0.1", browse = TRUE, route = NULL) {
   # Check if we're in development mode (loaded via devtools::load_all)
   # Dev mode has inst/ directory; installed packages flatten inst/ contents to root
   is_dev_mode <- FALSE
@@ -156,13 +162,19 @@ gui <- function(port = 8080, browse = TRUE, route = NULL) {
   cat("\n================================================================\n")
   cat("Framework GUI\n")
   cat("================================================================\n")
-  cat("Running at: http://127.0.0.1:", port, "\n", sep = "")
+  display_host <- if (host == "0.0.0.0") "localhost" else host
+  cat("Running at: http://", display_host, ":", port, "\n", sep = "")
+  if (host == "0.0.0.0") {
+    cat("Listening on all interfaces (0.0.0.0)\n")
+  }
   cat("Press Ctrl+C to stop\n")
   cat("================================================================\n\n")
 
   # Open browser if requested
   if (browse) {
-    url <- paste0("http://127.0.0.1:", port)
+    # Always open localhost in browser, even if binding to 0.0.0.0
+    browser_host <- if (host == "0.0.0.0") "127.0.0.1" else host
+    url <- paste0("http://", browser_host, ":", port)
     if (!is.null(route)) {
       url <- paste0(url, "/", gsub("^/", "", route))
     }
@@ -180,5 +192,5 @@ gui <- function(port = 8080, browse = TRUE, route = NULL) {
   }
 
   # Run the server (blocking until Ctrl+C)
-  pr$run(port = port, host = "127.0.0.1")
+  pr$run(port = port, host = host)
 }

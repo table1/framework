@@ -166,7 +166,7 @@ db_drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
 
   # Show updated status
   cat("\n")
-  drivers_status()
+  db_drivers_status()
 
   invisible(NULL)
 }

@@ -729,7 +729,7 @@ project_create <- function(
   # hooks_install() reads settings from config file, so just call it with force=TRUE
   if (length(hooks) > 0 && any(unlist(hooks))) {
     tryCatch({
-      hooks_install(force = TRUE, verbose = FALSE)
+      git_hooks_install(force = TRUE, verbose = FALSE)
       message("  Installed git hooks")
     }, error = function(e) {
       warning("Failed to install git hooks: ", e$message)

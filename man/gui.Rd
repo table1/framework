@@ -4,10 +4,14 @@
 \alias{gui}
 \title{Launch Framework GUI}
 \usage{
-gui(port = 8080, browse = TRUE, route = NULL)
+gui(port = 8080, host = "127.0.0.1", browse = TRUE, route = NULL)
 }
 \arguments{
 \item{port}{Port number to use (default: 8080)}
+
+\item{host}{Host address to bind to. Default "127.0.0.1" for local access only.
+Use "0.0.0.0" to allow connections from other machines (requires appropriate
+network security).}
 
 \item{browse}{Automatically open browser (default: TRUE)}
 
@@ -30,6 +34,9 @@ framework::gui(port = 8888)
 
 # Open directly to settings
 framework::gui(route = "#/settings/basics")
+
+# Run as standalone server (no browser, accessible from network)
+framework::gui(port = 8080, host = "0.0.0.0", browse = FALSE)
 }
 
 }

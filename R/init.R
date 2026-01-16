@@ -956,7 +956,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
       }
 
       # Install hooks
-      hooks_install(config_file = (.get_settings_file() %||% "settings.yml"), force = TRUE, verbose = FALSE)
+      git_hooks_install(config_file = (.get_settings_file() %||% "settings.yml"), force = TRUE, verbose = FALSE)
 
       # Show message about what was installed
       hooks_msg <- character()
