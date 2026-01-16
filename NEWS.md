@@ -1,3 +1,10 @@
+# framework 1.0.0
+
+* First stable release
+* Zero CRAN check errors/warnings (1 acceptable note for global config object)
+* Complete documentation for all exported functions
+* Comprehensive test suite (300+ tests)
+
 # framework 0.10.1
 
 * Fixed non-ASCII characters in R source files for CRAN compatibility

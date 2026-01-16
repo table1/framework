@@ -4,12 +4,12 @@
 \name{framework-package}
 \alias{framework}
 \alias{framework-package}
-\title{framework: A Framework for Data Management}
+\title{framework: Structured Data Science in R}
 \description{
-A framework for managing data files, configurations, and database connections.
+Conventions and helpers for building organized, reproducible R projects. Manages packages, tracks data integrity via SHA-256 hashes, handles database connections, generates Quarto notebooks, provides intelligent caching, and simplifies publishing to S3-compatible storage. Reduces boilerplate while enforcing best practices for data science workflows.
 }
 \author{
-\strong{Maintainer}: Erik Westlund \email{ewestlund@jhu.edu} [copyright holder]
+\strong{Maintainer}: Erik Westlund \email{erik@pequod.sh} [copyright holder]
 
 }
 \keyword{internal}

@@ -352,7 +352,13 @@ scaffold <- function(config_file = NULL) {
         "functions"
       }
       if (dir.exists(func_dir_path)) {
-        .source_dir(func_dir_path)
+        func_files <- list.files(func_dir_path, pattern = "\\.R$", full.names = TRUE)
+        for (file in func_files) {
+          source(file, local = FALSE)
+        }
+        if (length(func_files) > 0) {
+          message(sprintf("Loaded %d function(s) from %s", length(func_files), func_dir_path))
+        }
       }
       return(invisible(NULL))
     }

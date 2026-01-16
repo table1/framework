@@ -1,0 +1,14 @@
+* using log directory ‘/home/erik/Projects/framework/framework.Rcheck’
+* using R version 4.5.2 (2025-10-31)
+* using platform: x86_64-pc-linux-gnu
+* R was compiled by
+    gcc (GCC) 15.2.1 20251112
+    GNU Fortran (GCC) 15.2.1 20251112
+* running under: Arch Linux
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘framework/DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘framework’ version ‘1.0.0’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ...
