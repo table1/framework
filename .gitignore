@@ -22,6 +22,10 @@ results/private/**
 data/*/.gitkeep
 !data/*/.gitkeep
 
+# Build artifacts
+*.Rcheck/
+*.tar.gz
+
 # R specific
 .Rproj.user
 .Rhistory
