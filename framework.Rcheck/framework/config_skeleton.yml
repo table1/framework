@@ -1,0 +1,40 @@
+directories:
+  notebooks: notebooks
+  scripts: scripts
+  functions: functions
+  inputs_raw: inputs/raw
+  inputs_intermediate: inputs/intermediate
+  inputs_final: inputs/final
+  inputs_reference: inputs/reference
+  outputs_private: outputs/private
+  outputs_public: outputs/public
+  outputs_docs: outputs/private/docs
+  outputs_docs_public: outputs/public/docs
+  outputs_final: outputs/private/final
+  outputs_final_public: outputs/public/final
+  cache: outputs/private/cache
+  scratch: outputs/private/scratch
+
+options:
+  # Environment and database
+  dotenv_location: "."
+  framework_db: framework.db
+  data:
+    cache_default_expire: NULL
+
+connections:
+
+data:
+
+git:
+  url: null
+  author: null
+  email: null
+
+packages:
+  auto_install: true
+  auto_update: false
+
+security:
+  data_key: null
+  results_key: null 

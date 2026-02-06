@@ -1,13 +1,34 @@
+#' Get Framework config directory path
+#'
+#' Returns the path to Framework's global configuration directory.
+#' Uses `tools::R_user_dir("framework", "config")` by default (CRAN compliant).
+#' Can be overridden with the `FW_CONFIG_HOME` environment variable.
+#'
+#' @return Character string with the config directory path
+#' @export
+fw_config_dir <- function() {
+  # Allow override via environment variable
+
+  custom_dir <- Sys.getenv("FW_CONFIG_HOME", "")
+  if (nzchar(custom_dir)) {
+    return(path.expand(custom_dir))
+  }
+
+  # CRAN-compliant default: tools::R_user_dir
+  tools::R_user_dir("framework", "config")
+}
+
 #' Initialize global Framework settings
 #'
-#' Creates ~/.config/framework/ directory and copies default settings files
-#' if they don't already exist.
+#' Creates the Framework config directory (via `fw_config_dir()`) and copies
+#' default settings files if they don't already exist. Also handles migration
+#' from previous R versions or legacy `~/.config/framework` location.
 #'
 #' @param force If TRUE, overwrites existing settings (default: FALSE)
 #' @return Invisibly returns NULL
 #' @keywords internal
 init_global_config <- function(force = FALSE) {
-  config_dir <- path.expand("~/.config/framework")
+  config_dir <- fw_config_dir()
   settings_path <- file.path(config_dir, "settings.yml")
   projects_path <- file.path(config_dir, "projects.yml")
 
@@ -15,6 +36,25 @@ init_global_config <- function(force = FALSE) {
   if (!dir.exists(config_dir)) {
     dir.create(config_dir, recursive = TRUE)
     message("Created Framework settings directory: ", config_dir)
+  }
+
+  # Attempt migration from legacy location (interactive only)
+  # Migrate if: no settings file exists, OR settings file looks like stale test data
+  needs_migration <- !file.exists(settings_path)
+  if (!needs_migration && !force && file.exists(settings_path)) {
+    tryCatch({
+      existing <- yaml::read_yaml(settings_path)
+      # Detect stale test data: author name is placeholder or projects_root points to nonexistent path
+      author_name <- existing$author$name %||% ""
+      if (author_name %in% c("", "First User", "Test User", "Test Author")) {
+        needs_migration <- TRUE
+      }
+    }, error = function(e) {
+      needs_migration <<- TRUE
+    })
+  }
+  if (needs_migration && !force && interactive()) {
+    .migrate_config_from_previous(config_dir)
   }
 
   # Copy default settings if doesn't exist or force is TRUE
@@ -35,6 +75,52 @@ init_global_config <- function(force = FALSE) {
   }
 
   invisible(NULL)
+}
+
+#' Migrate config from previous R versions or legacy location
+#'
+#' Checks for configs in legacy ~/.config/framework location
+#' and copies them to the current R_user_dir location if found.
+#'
+#' @param target_dir Target config directory
+#' @return TRUE if migration occurred, FALSE otherwise
+#' @keywords internal
+.migrate_config_from_previous <- function(target_dir) {
+  # Check legacy ~/.config/framework (pre-1.0 location)
+  legacy_dir <- path.expand("~/.config/framework")
+  if (dir.exists(legacy_dir) && file.exists(file.path(legacy_dir, "settings.yml"))) {
+    message("Migrating settings from legacy location: ", legacy_dir)
+    .copy_config_files(legacy_dir, target_dir, overwrite = TRUE)
+    return(TRUE)
+  }
+
+  FALSE
+}
+
+#' Copy config files between directories
+#' @keywords internal
+.copy_config_files <- function(from_dir, to_dir, overwrite = FALSE) {
+  # Copy config files
+  files_to_copy <- c("settings.yml", "projects.yml", "settings-catalog.yml")
+  for (f in files_to_copy) {
+    src <- file.path(from_dir, f)
+    if (file.exists(src)) {
+      file.copy(src, file.path(to_dir, f), overwrite = overwrite)
+    }
+  }
+
+  # Copy templates directory if it exists
+  templates_src <- file.path(from_dir, "templates")
+  if (dir.exists(templates_src)) {
+    templates_dst <- file.path(to_dir, "templates")
+    if (!dir.exists(templates_dst)) {
+      dir.create(templates_dst, recursive = TRUE)
+    }
+    template_files <- list.files(templates_src, full.names = TRUE)
+    for (tf in template_files) {
+      file.copy(tf, templates_dst, overwrite = overwrite)
+    }
+  }
 }
 
 #' Get default global configuration structure
@@ -145,8 +231,8 @@ get_default_global_config <- function() {
 #' @return List containing global configuration
 #' @export
 read_frameworkrc <- function(use_defaults = TRUE) {
-  # New YAML path (preferred)
-  config_dir <- path.expand("~/.config/framework")
+  # Use CRAN-compliant config directory
+  config_dir <- fw_config_dir()
   new_settings_path <- file.path(config_dir, "settings.yml")
   new_projects_path <- file.path(config_dir, "projects.yml")
 
@@ -285,7 +371,7 @@ read_frameworkrc <- function(use_defaults = TRUE) {
 #' @return Invisibly returns NULL
 #' @export
 write_frameworkrc <- function(config) {
-  config_dir <- path.expand("~/.config/framework")
+  config_dir <- fw_config_dir()
   settings_path <- file.path(config_dir, "settings.yml")
   projects_path <- file.path(config_dir, "projects.yml")
 

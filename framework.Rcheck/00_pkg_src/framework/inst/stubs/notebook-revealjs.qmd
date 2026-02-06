@@ -1,0 +1,38 @@
+---
+title: "{{ title }}"
+author: "{{ author }}"
+date: "{{ date }}"
+format:
+  revealjs:
+    theme: default
+    slide-number: true
+    chalkboard: true
+    preview-links: auto
+    footer: "{{ title }}"
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(framework)
+scaffold()
+```
+
+## Introduction
+
+- Point 1
+- Point 2
+- Point 3
+
+## Slide 2
+
+Content here
+
+```{r}
+# Your code here
+```
+
+## Slide 3
+
+More content

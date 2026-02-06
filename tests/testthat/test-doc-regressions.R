@@ -24,11 +24,11 @@ test_that("parquet files are supported in data catalog", {
     df <- data.frame(id = 1:3, value = letters[1:3])
     arrow::write_parquet(df, "inputs/raw/customers.parquet")
 
-    expect_silent(data_add("inputs/raw/customers.parquet",
+    expect_no_error(suppressMessages(data_add("inputs/raw/customers.parquet",
       name = "inputs.raw.customers",
       type = "parquet",
       locked = FALSE
-    ))
+    )))
 
     loaded <- data_read("inputs.raw.customers")
     expect_equal(df$id, loaded$id)

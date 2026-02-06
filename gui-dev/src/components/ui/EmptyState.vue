@@ -46,7 +46,7 @@ const props = defineProps({
   icon: {
     type: String,
     default: null,
-    validator: (value) => ['database', 'folder', 'document', 'users', 'inbox', 'photo'].includes(value)
+    validator: (value) => ['database', 'folder', 'document', 'users', 'inbox', 'photo', 'chart', 'filter', 'search'].includes(value)
   },
   action: {
     type: Boolean,
@@ -104,6 +104,16 @@ const iconComponent = computed(() => {
     ]),
     photo: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
       h('path', { d: 'M4 8a4 4 0 014-4h32a4 4 0 014 4v32a4 4 0 01-4 4H8a4 4 0 01-4-4V8zm10 6a3 3 0 100-6 3 3 0 000 6zM4 40l12-12 8 8 8-8L44 40' })
+    ]),
+    chart: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M6 40h36M10 32V20m8 12V14m8 18V8m8 24V18' })
+    ]),
+    filter: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M6 10h36l-14 16v10l-8 4V26L6 10z' })
+    ]),
+    search: () => h('svg', { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('circle', { cx: '20', cy: '20', r: '14' }),
+      h('path', { d: 'M30 30l12 12' })
     ])
   }
 

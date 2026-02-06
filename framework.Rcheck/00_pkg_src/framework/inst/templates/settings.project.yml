@@ -1,0 +1,132 @@
+default:
+  # --------------------------------------------------------------------------
+  # Project Metadata
+  # --------------------------------------------------------------------------
+  project_type: project  # Type: project, course, or presentation
+
+  # Project author information (used in notebooks, reports, etc.)
+  author:
+    name: "Your Name"
+    email: "your.email@example.com"
+    affiliation: "Your Institution"
+
+  # --------------------------------------------------------------------------
+  # Package Dependencies
+  # --------------------------------------------------------------------------
+  # Packages to install and optionally auto-load during scaffold()
+  # Use auto_attach: true to load automatically, false to install only
+  # Version pinning: dplyr@1.1.0, user/repo@branch
+  # --------------------------------------------------------------------------
+  packages:
+    # Tidyverse packages for data manipulation and visualization
+    - name: dplyr
+      auto_attach: true
+    - name: tidyr
+      auto_attach: true
+    - name: ggplot2
+      auto_attach: true
+    - name: readr
+      auto_attach: false
+    # Note: framework and rmarkdown are installed automatically
+    # when you enable renv
+
+  # --------------------------------------------------------------------------
+  # Project Directories
+  # --------------------------------------------------------------------------
+  # Define the core directory structure for your project.
+  # Most users can leave these as defaults.
+  # All paths are relative to the project root.
+  # --------------------------------------------------------------------------
+  directories:
+    # Source code and notebooks
+    notebooks: notebooks          # Where make_notebook() creates files
+    scripts: scripts              # Where make_script() creates files
+    functions: functions          # Single dir or list: [functions, helpers]
+
+    # Input data (read-only)
+    inputs_raw: inputs/raw
+    inputs_intermediate: inputs/intermediate
+    inputs_final: inputs/final
+    inputs_reference: inputs/reference
+
+    # Derived outputs (write-only)
+    outputs_private: outputs/private
+    outputs_public: outputs/public
+
+    # Cache and scratch space
+    cache: outputs/private/cache
+    scratch: outputs/private/scratch
+
+  # --------------------------------------------------------------------------
+  # Project Behavior
+  # --------------------------------------------------------------------------
+  seed: 123
+  seed_on_scaffold: false
+
+  # --------------------------------------------------------------------------
+  # AI Assistant Configuration
+  # --------------------------------------------------------------------------
+  # Which AI assistant instruction file is the canonical source
+  # Other files will be synced from this one when using git hooks
+  # --------------------------------------------------------------------------
+  ai:
+    canonical_file: ""  # Options: AGENTS.md, CLAUDE.md, .github/copilot-instructions.md
+
+  # --------------------------------------------------------------------------
+  # Git Hooks
+  # --------------------------------------------------------------------------
+  # Automated tasks to run on git commits
+  # Enable/disable with: framework hooks:enable <name>
+  # --------------------------------------------------------------------------
+  git:
+    hooks:
+      ai_sync: false          # Sync AI assistant files before commit
+      data_security: false    # Check for secrets/credentials before commit
+
+  # --------------------------------------------------------------------------
+  # Data Catalog
+  # --------------------------------------------------------------------------
+  # Simple approach: Define data sources inline
+  # Complex projects: Use split file (data: settings/data.yml)
+  # --------------------------------------------------------------------------
+  data:
+    # Example: Uncomment and modify
+    # raw:
+    #   example:
+    #     path: inputs/raw/example.csv
+    #     type: csv
+    # intermediate:
+    # final:
+    # reference:
+
+  # --------------------------------------------------------------------------
+  # Database Connections
+  # --------------------------------------------------------------------------
+  # Simple approach: Define connections inline
+  # Complex projects: Use split file (connections: settings/connections.yml)
+  #
+  # ⚠️ PRECEDENCE RULE: Main settings.yml ALWAYS wins
+  # If you define 'default_connection' here AND in settings/connections.yml,
+  # the value here takes precedence. Framework will warn about the conflict.
+  # --------------------------------------------------------------------------
+  connections:
+    # Example: Uncomment and modify
+    # db:
+    #   driver: postgresql
+    #   host: !expr Sys.getenv("DB_HOST")
+    #   database: !expr Sys.getenv("DB_NAME")
+    #   user: !expr Sys.getenv("DB_USER")
+    #   password: !expr Sys.getenv("DB_PASS")
+
+  # Split File Example:
+  # To use split files for complex configurations:
+  #   1. Create settings/connections.yml
+  #   2. Replace the connections section above with:
+  #      connections: settings/connections.yml
+  #   3. Keep top-level keys here in main settings.yml:
+  #      default_connection: db  # ← Keep in main settings.yml, not split file!
+
+  # Security settings
+  security:
+    data_key: !expr Sys.getenv("DATA_ENCRYPTION_KEY", "")
+    results_key: !expr Sys.getenv("RESULTS_ENCRYPTION_KEY", "")

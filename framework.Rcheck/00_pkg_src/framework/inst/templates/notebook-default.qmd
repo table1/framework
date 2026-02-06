@@ -1,0 +1,44 @@
+---
+title: "New Analysis"
+author: "{{author}}"
+date: today
+format:
+  html:
+    theme: cosmo
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(framework)
+
+# Bootstrap the project environment
+scaffold()
+```
+
+## Overview
+
+Describe the purpose of this notebook and the questions you are answering.
+
+## Data
+
+```{r load-data}
+# Load data from catalog
+# my_data <- data_read("inputs.raw.example")
+
+# Or load directly
+# my_data <- read_csv(config("inputs_raw") %+% "/example.csv")
+```
+
+## Analysis
+
+Add sections for your exploratory analysis, modeling, and outputs.
+
+## Next Steps
+
+- [ ] TODO item 1
+- [ ] TODO item 2

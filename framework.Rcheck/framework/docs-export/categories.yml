@@ -1,0 +1,185 @@
+# Function Categories for Documentation
+# Each category has a display name, description, list of functions, and optional common functions
+# Common functions appear first in the UI under "Common Functions" header
+
+Workflow:
+  description: Setting up and managing the working environment
+  common:
+    - setup
+    - scaffold
+    - settings
+    - gui
+  functions:
+    - setup
+    - scaffold
+    - settings
+    - settings_read
+    - settings_write
+    - configure_global
+    - gui
+    - standardize_wd
+    - env_clear
+    - env_summary
+    - scratch_capture
+    - scratch_clean
+    - now
+    - capture_output
+    - view
+    - view_create
+    - view_detail
+
+Data:
+  description: Reading, writing, and managing data files
+  common:
+    - data_read
+    - data_save
+    - data_add
+    - data_list
+  functions:
+    - data_read
+    - data_save
+    - data_add
+    - data_list
+    - data_info
+
+Packages:
+  description: Package management and renv integration
+  common:
+    - packages_install
+    - packages_restore
+  functions:
+    - packages_install
+    - packages_list
+    - packages_restore
+    - packages_snapshot
+    - packages_status
+    - packages_update
+    - renv_enable
+    - renv_disable
+    - renv_enabled
+
+Saving Work:
+  description: Saving figures, tables, reports, and models
+  common:
+    - save_figure
+    - save_model
+    - save_report
+  functions:
+    - save_figure
+    - save_table
+    - save_report
+    - save_model
+    - save_notebook
+    - result_list
+
+Notebooks & Scripts:
+  description: Creating notebooks, scripts, and presentations
+  common:
+    - make_notebook
+    - make_presentation
+    - make_script
+  functions:
+    - make_notebook
+    - make_qmd
+    - make_rmd
+    - make_script
+    - make_revealjs
+    - make_presentation
+    - stubs_list
+    - stubs_path
+    - stubs_publish
+    - quarto_generate_all
+    - quarto_regenerate
+
+Project Management:
+  description: Creating and managing projects
+  common:
+    - new
+    - new_project
+    - new_project_sensitive
+    - new_presentation
+    - new_course
+  functions:
+    - new
+    - new_project
+    - new_project_sensitive
+    - new_presentation
+    - new_course
+    - project_list
+    - project_info
+    - status
+
+Publishing:
+  description: Publishing outputs and reports
+  common:
+    - publish
+    - publish_data
+    - publish_notebook
+  functions:
+    - publish
+    - publish_data
+    - publish_dir
+    - publish_list
+    - publish_notebook
+    - storage_test
+
+Git:
+  description: Git commands and hook management
+  common:
+    - git_status
+    - git_add
+    - git_commit
+  functions:
+    - git_status
+    - git_add
+    - git_commit
+    - git_push
+    - git_pull
+    - git_diff
+    - git_log
+    - git_security_audit
+    - git_hooks_install
+    - git_hooks_uninstall
+    - git_hooks_enable
+    - git_hooks_disable
+    - git_hooks_list
+
+Caching:
+  description: Caching computed values for performance
+  common:
+    - cache_remember
+    - cache_get
+    - cache
+  functions:
+    - cache_remember
+    - cache_get
+    - cache
+    - cache_list
+    - cache_flush
+    - cache_forget
+
+Database:
+  description: Database connections and queries
+  common:
+    - db_query
+    - db_execute
+    - db_connect
+  functions:
+    - db_connect
+    - db_query
+    - db_execute
+    - db_list
+    - db_with
+    - db_transaction
+    - db_drivers_install
+    - db_drivers_status
+
+AI:
+  display_name: AI
+  description: AI assistant integration
+  common:
+    - ai_sync_context
+  functions:
+    - ai_generate_context
+    - ai_regenerate_context
+    - ai_sync_context

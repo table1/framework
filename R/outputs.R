@@ -328,10 +328,9 @@ save_figure <- function(plot = NULL, name, format = "png", width = 8, height = 6
 #'
 #' @param model A fitted model object (lm, glm, tidymodels workflow, etc.)
 #' @param name The name for the output file (without extension)
-#' @param format Output format: "rds" (default) or "qs" (faster, requires qs package)
 #' @param public If TRUE, saves to public outputs directory (for project_sensitive type)
 #' @param overwrite If TRUE, overwrites existing files (default: TRUE)
-#' @param ... Additional arguments passed to the underlying save function
+#' @param ... Additional arguments passed to [saveRDS()]
 #'
 #' @return The path to the saved file (invisibly)
 #'
@@ -340,15 +339,11 @@ save_figure <- function(plot = NULL, name, format = "png", width = 8, height = 6
 #' # Fit and save a model
 #' model <- lm(mpg ~ hp + wt, data = mtcars)
 #' save_model(model, "mpg_regression")
-#'
-#' # Save with qs for faster serialization
-#' save_model(model, "mpg_regression", format = "qs")
 #' }
 #'
 #' @export
-save_model <- function(model, name, format = "rds", public = FALSE, overwrite = TRUE, ...) {
+save_model <- function(model, name, public = FALSE, overwrite = TRUE, ...) {
   checkmate::assert_string(name, min.chars = 1)
-  checkmate::assert_choice(format, c("rds", "qs"))
   checkmate::assert_flag(public)
   checkmate::assert_flag(overwrite)
 
@@ -371,8 +366,7 @@ save_model <- function(model, name, format = "rds", public = FALSE, overwrite = 
   .ensure_output_dir(models_dir, "models")
 
   # Determine file path
-  ext <- paste0(".", format)
-  file_path <- file.path(models_dir, paste0(name, ext))
+  file_path <- file.path(models_dir, paste0(name, ".rds"))
 
   # Check for existing file
   if (file.exists(file_path) && !overwrite) {
@@ -381,15 +375,7 @@ save_model <- function(model, name, format = "rds", public = FALSE, overwrite = 
 
   # Save the model
   tryCatch({
-    switch(format,
-      rds = saveRDS(model, file_path, ...),
-      qs = {
-        if (!requireNamespace("qs", quietly = TRUE)) {
-          cli::cli_abort("Package {.pkg qs} is required for qs format. Install with: install.packages('qs')")
-        }
-        qs::qsave(model, file_path, ...)
-      }
-    )
+    saveRDS(model, file_path, ...)
     cli::cli_alert_success("Saved model to {.path {file_path}}")
 
     # Log to results database

@@ -1,0 +1,14 @@
+---
+title: "{{ title }}"
+date: "{{ date }}"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(framework)
+scaffold()
+```
+
+```{r}
+# Your code here
+```

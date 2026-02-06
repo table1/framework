@@ -20,7 +20,7 @@ const props = defineProps({
   language: {
     type: String,
     default: 'r',
-    validator: (value) => ['r', 'markdown', 'text', 'gitignore'].includes(value)
+    validator: (value) => ['r', 'markdown', 'text', 'gitignore', 'yaml'].includes(value)
   },
   minHeight: {
     type: String,
