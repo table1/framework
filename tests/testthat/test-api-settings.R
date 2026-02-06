@@ -1,14 +1,10 @@
+# Skip API settings tests on CRAN - they write to user config directory
+
 test_that("API /api/settings/save accepts valid settings", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Simulate what the API endpoint does: JSON -> R list -> configure_global
   request_body <- jsonlite::toJSON(list(
@@ -43,16 +39,10 @@ test_that("API /api/settings/save accepts valid settings", {
 })
 
 test_that("API /api/settings/save persists git hooks and use_git flags", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # First save: enable git and specific hooks
   framework::configure_global(settings = list(
@@ -92,16 +82,10 @@ test_that("API /api/settings/save persists git hooks and use_git flags", {
 })
 
 test_that("API /api/settings/save persists scaffold behavior settings", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   framework::configure_global(settings = list(
     defaults = list(
@@ -124,16 +108,10 @@ test_that("API /api/settings/save persists scaffold behavior settings", {
 })
 
 test_that("API /api/settings/save persists AI assistant settings", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   framework::configure_global(settings = list(
     defaults = list(
@@ -165,16 +143,10 @@ test_that("API /api/settings/save persists AI assistant settings", {
 
 
 test_that("API /api/settings/save validates extra_directories", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Test valid extra_directories
   request_body <- jsonlite::toJSON(list(
@@ -206,16 +178,10 @@ test_that("API /api/settings/save validates extra_directories", {
 
 
 test_that("API /api/settings/save rejects invalid extra_directories", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Test invalid key format
   request_body <- jsonlite::toJSON(list(
@@ -242,16 +208,10 @@ test_that("API /api/settings/save rejects invalid extra_directories", {
 
 
 test_that("API /api/settings/save rejects duplicate keys", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Test duplicate keys
   request_body <- jsonlite::toJSON(list(
@@ -279,16 +239,10 @@ test_that("API /api/settings/save rejects duplicate keys", {
 
 
 test_that("API /api/settings/save rejects absolute paths", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Test absolute path
   request_body <- jsonlite::toJSON(list(
@@ -315,16 +269,10 @@ test_that("API /api/settings/save rejects absolute paths", {
 
 
 test_that("API /api/settings/save rejects path traversal", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Test path traversal
   request_body <- jsonlite::toJSON(list(
@@ -351,16 +299,10 @@ test_that("API /api/settings/save rejects path traversal", {
 
 
 test_that("API /api/settings/save handles JSON array serialization correctly", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Simulate how frontend sends data (with simplifyDataFrame = FALSE)
   request_body <- jsonlite::toJSON(list(
@@ -399,16 +341,10 @@ test_that("API /api/settings/save handles JSON array serialization correctly", {
 
 
 test_that("API /api/settings/save preserves extra_directories through updates", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # First save: Set extra_directories
   request1 <- jsonlite::toJSON(list(
@@ -441,16 +377,10 @@ test_that("API /api/settings/save preserves extra_directories through updates", 
 
 
 test_that("API /api/settings/save persists global.projects_root via JSON", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Simulate exactly what the GUI sends
   request_body <- jsonlite::toJSON(list(
@@ -480,23 +410,17 @@ test_that("API /api/settings/save persists global.projects_root via JSON", {
   expect_equal(saved$global$projects_root, "/Users/test/new-projects")
 
   # Also verify by reading raw YAML
-  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  settings_path <- file.path(fw_config_dir(), "settings.yml")
   saved_yaml <- yaml::read_yaml(settings_path)
   expect_equal(saved_yaml$global$projects_root, "/Users/test/new-projects")
 })
 
 
 test_that("API saves global.projects_root when sent with full payload like GUI", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # This mimics the FULL payload the GUI sends (with all the extra fields)
   request_body <- jsonlite::toJSON(list(

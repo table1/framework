@@ -1,17 +1,9 @@
 # Template management utilities -------------------------------------------------
 
-#' Get the Framework user configuration directory
-#'
-#' Returns ~/.config/framework for consistency with settings location
-#' @keywords internal
-.framework_config_dir <- function() {
-  path.expand("~/.config/framework")
-}
-
 #' Get the Framework templates directory
 #' @keywords internal
 .framework_templates_dir <- function(...) {
-  file.path(.framework_config_dir(), "templates", ...)
+  file.path(fw_config_dir(), "templates", ...)
 }
 
 # Mapping of logical template names to package resources

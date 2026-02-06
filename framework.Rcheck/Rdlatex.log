@@ -1,0 +1,1872 @@
+Hmm ... looks like a package
+Converting parsed Rd's to LaTeX ...............................
+Creating pdf output from LaTeX ...
+
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+(./Rd2.tex
+(/usr/share/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2024/06/29 v1.4n Standard LaTeX document class
+(/usr/share/texmf-dist/tex/latex/base/bk10.clo))
+(/usr/share/texmf/tex/latex/Rd.sty
+(/usr/share/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/share/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/share/texmf-dist/tex/latex/tools/longtable.sty)
+(/usr/share/texmf-dist/tex/latex/tools/bm.sty)
+(/usr/share/texmf-dist/tex/latex/base/alltt.sty)
+(/usr/share/texmf-dist/tex/latex/tools/verbatim.sty)
+(/usr/share/texmf-dist/tex/latex/url/url.sty)
+(/usr/share/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty)
+(/usr/share/texmf-dist/tex/latex/amsfonts/amssymb.sty)
+(/usr/share/texmf-dist/tex/latex/jknapltx/mathrsfs.sty)
+(/usr/share/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/share/texmf-dist/tex/latex/psnfss/times.sty)
+(/usr/share/texmf-dist/tex/latex/graphics/color.sty
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/share/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/share/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/share/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/share/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/share/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(/usr/share/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/share/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/share/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/share/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/share/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(/usr/share/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/share/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+(/usr/share/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(/usr/share/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/share/texmf-dist/tex/generic/stringenc/stringenc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/share/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/share/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/share/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+(/usr/share/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
+(/usr/share/texmf-dist/tex/latex/hyperref/hpdftex.def
+(/usr/share/texmf-dist/tex/latex/base/atveryend-ltx.sty)
+(/usr/share/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+(/usr/share/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty))))
+(/usr/share/texmf-dist/tex/latex/base/makeidx.sty)
+Writing index file Rd2.idx
+(/usr/share/texmf-dist/tex/latex/psnfss/t1ptm.fd)
+(/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
+No file Rd2.aux.
+(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (/usr/share/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd)
+(/usr/share/texmf-dist/tex/latex/jknapltx/ursfs.fd)
+(/usr/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd)
+No file Rd2.toc.
+
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/fon
+ts/enc/dvips/base/8r.enc}{/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-sup
+er-ts1.enc}]
+[2]
+[3]
+[4]
+[5]
+[6]
+[7]
+[8]
+[9]
+[10]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 546--546
+ []\T1/pcr/m/n/10 .create_ai_files(project_dir, assistants, canonical_content, 
+type) 
+
+[11]
+Overfull \hbox (1.53706pt too wide) in paragraph at lines 576--577
+[]\T1/ptm/m/n/10 Project type for tem-plate se-lec-tion ("project", "project_se
+nsitive", "course", "pre-
+
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 600--600
+ []\T1/pcr/m/n/10 .create_config_file(type = "analysis", attach_defaults = TRUE
+, subdir = NULL) 
+
+[12]
+Overfull \hbox (6.78088pt too wide) in paragraph at lines 658--658
+ []\T1/pcr/m/n/10 .create_ide_configs(project_name, target_dir = ".", python = 
+FALSE) 
+
+[13]
+[14]
+[15]
+[16]
+[17]
+[18]
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 922--922
+ []\T1/pcr/m/n/10 .create_vscode_workspace(project_name, target_dir = ".", pyth
+on = FALSE) 
+
+[19]
+[20]
+[21]
+Overfull \hbox (60.78088pt too wide) in paragraph at lines 1052--1052
+ []\T1/pcr/m/n/10 .display_next_steps(project_name = NULL, type = "project", us
+e_renv = FALSE) 
+
+[22]
+[23]
+[24]
+[25]
+[26]
+[27]
+[28]
+[29]
+Overfull \hbox (42.78088pt too wide) in paragraph at lines 1463--1463
+ []\T1/pcr/m/n/10 .get_hook_setting(key, alias = NULL, config_file = NULL, defa
+ult = FALSE) 
+
+[30]
+[31]
+[32]
+[33]
+[34]
+[35]
+[36]
+[37]
+[38]
+[39]
+[40]
+[41]
+[42]
+[43]
+Overfull \hbox (42.78088pt too wide) in paragraph at lines 2105--2105
+ []\T1/pcr/m/n/10 .normalize_notebook_name(name, type = c("quarto", "rmarkdown"
+, "script")) 
+
+[44]
+Overfull \hbox (6.52681pt too wide) in paragraph at lines 2169--2172
+[]\T1/ptm/m/n/10 Parses pack-age spec-i-fi-ca-tions that may in-clude ex-plicit
+ sources, ver-sion pins, or GitHub/Bioconductor
+
+[45]
+Overfull \hbox (36.7804pt too wide) in paragraph at lines 2209--2209
+ []\T1/pcr/m/n/9 .parse_package_spec(list(name = "DESeq2", source = "bioc", aut
+o_attach = FALSE))[] 
+
+[46]
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 2286--2286
+ []\T1/pcr/m/n/10 .prompt_ai_support_install(support = "never", assistants = ch
+aracter(0)) 
+
+[47]
+[48]
+[49]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 2437--2437
+ []\T1/pcr/m/n/10 .require_driver(driver_name, package_name, install_command = 
+NULL) 
+
+Overfull \hbox (6.67805pt too wide) in paragraph at lines 2443--2444
+[]\T1/ptm/m/n/10 Character. Human-readable name of the database (e.g., "Post-gr
+eSQL", "MySQL") 
+
+[50]
+[51]
+[52]
+[53]
+[54]
+[55]
+[56]
+[57]
+[58]
+[59]
+Overfull \hbox (60.78088pt too wide) in paragraph at lines 3024--3024
+ []\T1/pcr/m/n/10 add_project_to_config(project_dir, project_name = NULL, proje
+ct_type = NULL) 
+
+[60]
+[61]
+Overfull \hbox (48.78088pt too wide) in paragraph at lines 3096--3096
+ []\T1/pcr/m/n/10 ai_regenerate_context(project_path = ".", sections = NULL, ai
+_file = NULL) 
+
+[62]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 3136--3136
+ []\T1/pcr/m/n/10 ai_sync_context(config_file = NULL, force = FALSE, verbose = 
+TRUE) 
+
+[63]
+[64]
+[65]
+[66]
+[67]
+[68]
+[69]
+[70]
+[71]
+Overfull \hbox (4.02647pt too wide) in paragraph at lines 3698--3700
+[]\T1/ptm/m/n/10 Interactively con-fig-ure project di-rec-tory struc-ture in se
+t-tings.yml (or set-tings.yml for legacy projects).
+
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 3704--3704
+ []\T1/pcr/m/n/10 configure_directories(directory = NULL, path = NULL, interact
+ive = TRUE) 
+
+[72]
+[73]
+[74]
+[75]
+[76]
+[77]
+[78]
+Overfull \hbox (15.20726pt too wide) in paragraph at lines 4136--4138
+[]\T1/ptm/m/n/10 Whether to in-clude soft-deleted records (de-fault: FALSE). On
+ly ap-plies if deleted_at
+
+[79]
+Overfull \hbox (15.20726pt too wide) in paragraph at lines 4178--4180
+[]\T1/ptm/m/n/10 Whether to in-clude soft-deleted records (de-fault: FALSE). On
+ly ap-plies if deleted_at
+
+Overfull \hbox (22.55609pt too wide) in paragraph at lines 4190--4192
+[]\T1/ptm/m/n/10 Inserts a new record into a ta-ble with au-to-matic times-tamp
+ han-dling. If the ta-ble has cre-ated_at/updated_at
+
+Overfull \hbox (6.78088pt too wide) in paragraph at lines 4196--4196
+ []\T1/pcr/m/n/10 connection_insert(conn, table_name, values, auto_timestamps =
+ TRUE) 
+
+[80]
+[81]
+[82]
+[83]
+Overfull \hbox (0.60687pt too wide) in paragraph at lines 4430--4432
+[]\T1/ptm/m/n/10 Restores a soft-deleted record by set-ting deleted_at to NULL.
+ Only works on ta-bles with a deleted_at
+
+[84]
+Overfull \hbox (30.78088pt too wide) in paragraph at lines 4485--4485
+ []\T1/pcr/m/n/10 connection_update(conn, table_name, id, values, auto_timestam
+ps = TRUE) 
+
+[85]
+[86]
+Overfull \hbox (29.00894pt too wide) in paragraph at lines 4605--4607
+[]\T1/ptm/m/n/10 Optional dot no-ta-tion name for the data cat-a-log (e.g., []\
+T1/pcr/m/n/10 inputs.raw.survey_data[]\T1/ptm/m/n/10 ).
+
+Overfull \hbox (20.58041pt too wide) in paragraph at lines 4626--4626
+ []\T1/pcr/m/n/9 data_add("inputs/raw/survey_results.csv", name = "inputs.raw.s
+urvey_results")[] 
+
+[87]
+[88]
+Overfull \hbox (6.0968pt too wide) in paragraph at lines 4721--4723
+[]\T1/ptm/m/n/10 Supports CSV, TSV, RDS, Ex-cel (.xlsx, .xls), Stata (.dta), SP
+SS (.sav, .zsav, .por), and SAS (.sas7bdat,
+
+[89]
+Overfull \hbox (21.72723pt too wide) in paragraph at lines 4739--4740
+[]\T1/ptm/m/n/10 Additional ar-gu-ments passed to read func-tions (readr::read_
+delim, readxl::read_excel,
+
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 4750--4750
+ []\T1/pcr/m/n/10 df <- cache_remember("my_data", data_read("source.private.exa
+mple")) 
+
+[90]
+Overfull \hbox (10.11862pt too wide) in paragraph at lines 4800--4801
+[]\T1/ptm/m/n/10 Dot no-ta-tion: []\T1/pcr/m/n/10 inputs.raw.filename []\T1/ptm
+/m/n/10 re-solves to in-puts/raw/filename.rds 
+
+Overfull \hbox (65.0692pt too wide) in paragraph at lines 4806--4808
+[]\T1/ptm/m/n/10 Dot no-ta-tion uses your con-fig-ured di-rec-to-ries (e.g., []
+\T1/pcr/m/n/10 inputs.raw[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 inputs.intermediat
+e[]\T1/ptm/m/n/10 ,
+
+[91]
+[92]
+[93]
+[94]
+[95] (/usr/share/texmf-dist/tex/latex/psnfss/ts1pcr.fd)
+Overfull \hbox (15.18042pt too wide) in paragraph at lines 5112--5112
+ []  \T1/pcr/m/n/9 DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES (
+\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 Alice\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 , 30)")[] 
+
+Overfull \hbox (4.38043pt too wide) in paragraph at lines 5113--5113
+ []  \T1/pcr/m/n/9 DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES (
+\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 Bob\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 , 25)")[] 
+
+[96]
+[97]
+Overfull \hbox (47.58038pt too wide) in paragraph at lines 5257--5257
+ []\T1/pcr/m/n/9 DBI::dbGetQuery(con, "SELECT name, title FROM functions WHERE 
+name LIKE \TS1/pcr/m/n/9 '\T1/pcr/m/n/9 data_%\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 ")[
+] 
+
+[98]
+Overfull \hbox (3.60764pt too wide) in paragraph at lines 5322--5323
+[]\T1/pcr/m/n/10 .has_column(PqConnection)[]\T1/ptm/m/n/10 : Post-greSQL im-ple
+-men-ta-tion us-ing in-for-ma-tion_schema 
+
+Overfull \hbox (20.26793pt too wide) in paragraph at lines 5328--5329
+[]\T1/pcr/m/n/10 .has_column(duckdb_connection)[]\T1/ptm/m/n/10 : DuckDB im-ple
+-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[99]
+Overfull \hbox (15.60764pt too wide) in paragraph at lines 5402--5403
+[]\T1/pcr/m/n/10 .list_columns(PqConnection)[]\T1/ptm/m/n/10 : Post-greSQL im-p
+le-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[100]
+Overfull \hbox (32.26793pt too wide) in paragraph at lines 5408--5409
+[]\T1/pcr/m/n/10 .list_columns(duckdb_connection)[]\T1/ptm/m/n/10 : DuckDB im-p
+le-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[101]
+Overfull \hbox (10.09682pt too wide) in paragraph at lines 5513--5516
+[]\T1/ptm/m/n/10 Provides the base-line .env con-tent that ships with Frame-wor
+k. Other helper func-tions (project_create(),
+
+[102]
+Overfull \hbox (5.35852pt too wide) in paragraph at lines 5550--5552
+[]\T1/ptm/m/n/10 Either a char-ac-ter string (raw .env con-tent) or a list with
+ []\T1/pcr/m/n/10 raw []\T1/ptm/m/n/10 and/or []\T1/pcr/m/n/10 variables[]\T1/p
+tm/m/n/10 . 
+
+[103]
+[104]
+Overfull \hbox (59.34842pt too wide) in paragraph at lines 5640--5643
+[]\T1/ptm/m/n/10 Returns the path to Frame-work's global con-fig-u-ra-tion di-r
+ec-tory. Uses []\T1/pcr/m/n/10 tools::R_user_dir("framework",
+
+[105]
+[106]
+[107]
+[108]
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 5882--5882
+ []\T1/pcr/m/n/10 git_hooks_install(config_file = NULL, force = FALSE, verbose 
+= TRUE) 
+
+[109]
+[110]
+[111]
+Overfull \hbox (138.78088pt too wide) in paragraph at lines 6088--6088
+ []  \T1/pcr/m/n/10 extensions = c("csv", "rds", "tsv", "txt", "dat", "xlsx", "
+xls", "sqlite", "db", "dta",[] 
+
+[112]
+Overfull \hbox (126.78088pt too wide) in paragraph at lines 6089--6089
+ []    \T1/pcr/m/n/10 "sav", "zsav", "por", "sas7bdat", "sas7bcat", "xpt", "par
+quet", "feather", "arrow",[] 
+
+[113]
+[114]
+Overfull \hbox (57.04758pt too wide) in paragraph at lines 6259--6262
+\T1/ptm/m/n/10 if they don't al-ready ex-ist. Also han-dles mi-gra-tion from pr
+e-vi-ous R ver-sions or legacy \T1/pcr/m/n/10 ~/.config/framework
+
+[115]
+[116]
+Overfull \hbox (21.86911pt too wide) in paragraph at lines 6364--6366
+[]\T1/ptm/m/n/10 .R: R script Ex-am-ples: []\T1/pcr/m/n/10 1-init[]\T1/ptm/m/n/
+10 , []\T1/pcr/m/n/10 1-init.qmd[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 analysis.Rm
+d[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 script.R 
+
+[117]
+Overfull \hbox (129.43037pt too wide) in paragraph at lines 6374--6375
+[]\T1/ptm/m/n/10 Checks con-fig []\T1/pcr/m/n/10 default_notebook_format []\T1/
+ptm/m/n/10 (or legacy []\T1/pcr/m/n/10 options$default_notebook_format[]\T1/ptm
+/m/n/10 ) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6380--6382
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (65.55995pt too wide) in paragraph at lines 6383--6386
+\T1/ptm/m/n/10 ate cus-tom stubs in \T1/pcr/m/n/10 stubs/notebook-{stub}.qmd\T1
+/ptm/m/n/10 , \T1/pcr/m/n/10 stubs/notebook-{stub}.Rmd\T1/ptm/m/n/10 ,
+
+Overfull \hbox (76.62747pt too wide) in paragraph at lines 6431--6432
+[]\T1/ptm/m/n/10 Framework stubs: \T1/pcr/m/n/10 inst/stubs/notebook-{stub}.qmd
+ \T1/ptm/m/n/10 or \T1/pcr/m/n/10 inst/stubs/notebook-{stub}.Rmd 
+
+[118]
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 6492--6492
+ []\T1/pcr/m/n/10 make_presentation(name, dir = NULL, overwrite = FALSE, subdir
+ = NULL) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6500--6502
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+[119]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 6536--6536
+ []\T1/pcr/m/n/10 make_qmd(name, dir = NULL, stub = "default", overwrite = FALS
+E, subdir = NULL) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6544--6546
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+[120]
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6596--6598
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 6635--6635
+ []\T1/pcr/m/n/10 make_rmd(name, dir = NULL, stub = "default", overwrite = FALS
+E, subdir = NULL) 
+
+[121]
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6643--6645
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 6687--6687
+ []\T1/pcr/m/n/10 make_script(name, dir = NULL, stub = "default", overwrite = F
+ALSE) 
+
+[122]
+[123]
+Overfull \hbox (14.34094pt too wide) in paragraph at lines 6797--6798
+[][][]\T1/pcr/m/n/10 new_project()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10
+ new_project_sensitive()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10 new_prese
+ntation()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10 new_course()[][][] 
+
+[124]
+Overfull \hbox (2.0288pt too wide) in paragraph at lines 6816--6818
+[]\T1/ptm/m/n/10 Shorthand for []\T1/pcr/m/n/10 new_project(..., type = "course
+")[]\T1/ptm/m/n/10 . Cre-ates a project struc-tured for teach-
+
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 6822--6822
+ []\T1/pcr/m/n/10 new_course(name = NULL, location = NULL, browse = interactive
+(), ...) 
+
+[125]
+Overfull \hbox (54.78088pt too wide) in paragraph at lines 6866--6866
+ []\T1/pcr/m/n/10 new_presentation(name = NULL, location = NULL, browse = inter
+active(), ...) 
+
+[126]
+[127]
+Overfull \hbox (25.98041pt too wide) in paragraph at lines 6980--6980
+ []\T1/pcr/m/n/9 new_project("medical-study", "~/projects/medical", type = "pro
+ject_sensitive")[] 
+
+[128]
+[129]
+[130]
+[131]
+Overfull \hbox (11.54759pt too wide) in paragraph at lines 7224--7225
+[]\T1/ptm/m/n/10 Character string. Human-readable la-bel for the di-rec-tory (e
+.g., "Anal-y-sis Archive"). 
+
+[132]
+[133]
+Overfull \hbox (30.78088pt too wide) in paragraph at lines 7302--7302
+ []  \T1/pcr/m/n/10 ai = list(enabled = FALSE, assistants = c(), canonical_cont
+ent = ""),[] 
+
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 7303--7303
+ []  \T1/pcr/m/n/10 git = list(use_git = TRUE, hooks = list(), gitignore_conten
+t = ""),[] 
+
+Overfull \hbox (108.78088pt too wide) in paragraph at lines 7304--7304
+ []  \T1/pcr/m/n/10 scaffold = list(seed_on_scaffold = FALSE, seed = "", set_th
+eme_on_scaffold = TRUE,[] 
+
+[134]
+Overfull \hbox (55.78767pt too wide) in paragraph at lines 7401--7404
+[]\T1/ptm/m/n/10 Upload files or di-rec-to-ries to an S3 bucket. This is the ge
+neric pub-lish-ing func-tion - use []\T1/pcr/m/n/10 publish_notebook()
+
+[135]
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 7457--7457
+ []\T1/pcr/m/n/10 publish_data(data, dest, format = "csv", connection = NULL, c
+ompress = FALSE) 
+
+[136]
+[137]
+[138]
+Overfull \hbox (40.53854pt too wide) in paragraph at lines 7618--7620
+[]\T1/ptm/m/n/10 Logical. Whether to em-bed all re-sources. De-fault TRUE. Ig-n
+ored if []\T1/pcr/m/n/10 static_hosting:
+
+[139]
+[140]
+[141]
+Overfull \hbox (72.75815pt too wide) in paragraph at lines 7788--7790
+[]\T1/ptm/m/n/10 Deactivates renv in-te-gra-tion while pre-serv-ing renv.lock f
+or fu-ture use. Re-moves the []\T1/pcr/m/n/10 .framework_renv_enabled
+
+[142]
+[143]
+Overfull \hbox (0.76859pt too wide) in paragraph at lines 7858--7860
+[]\T1/ptm/m/n/10 Determines whether renv in-te-gra-tion is ac-tive by check-ing
+ for the []\T1/pcr/m/n/10 .framework_renv_enabled
+
+[144]
+[145]
+[146]
+[147]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 8118--8118
+ []\T1/pcr/m/n/10 save_model(model, name, format = "rds", public = FALSE, overw
+rite = TRUE, ...) 
+
+[148]
+[149]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 8229--8229
+ []\T1/pcr/m/n/10 save_report(file, name = NULL, public = FALSE, overwrite = TR
+UE, move = FALSE) 
+
+[150]
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 8273--8273
+ []\T1/pcr/m/n/10 save_table(data, name, format = "csv", public = FALSE, overwr
+ite = TRUE, ...) 
+
+[151]
+Overfull \hbox (4.96693pt too wide) in paragraph at lines 8329--8331
+[]\T1/ptm/m/n/10 Path to con-fig-u-ra-tion file. If NULL (de-fault), au-to-mat-
+i-cally dis-cov-ers set-tings.yml
+
+[152]
+[153]
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 8433--8433
+ []\T1/pcr/m/n/10 scratch_capture(x, name = NULL, to = NULL, location = NULL, n
+ = Inf) 
+
+[154]
+Overfull \hbox (84.0pt too wide) in paragraph at lines 8514--8515
+[]\T1/ptm/m/n/10 Direct: []\T1/pcr/m/n/10 settings("notebooks") []\T1/ptm/m/n/1
+0 checks []\T1/pcr/m/n/10 directories$notebooks[]\T1/ptm/m/n/10 , then []\T1/pc
+r/m/n/10 options$notebook_dir 
+
+Overfull \hbox (38.71994pt too wide) in paragraph at lines 8515--8516
+[]\T1/ptm/m/n/10 Explicit: []\T1/pcr/m/n/10 settings("directories.notebooks") [
+]\T1/ptm/m/n/10 checks only []\T1/pcr/m/n/10 directories$notebooks 
+
+[155]
+[156]
+[157]
+[158]
+[159]
+[160]
+[161]
+[162]
+[163]
+[164]
+[165]
+No file Rd2.ind.
+
+[166] (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.aux)
+
+Package rerunfilecheck Warning: File `Rd2.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ )
+(see the transcript file for additional information)</usr/share/texmf-dist/font
+s/type1/public/cm-super/sfrm1000.pfb></usr/share/texmf-dist/fonts/type1/public/
+cm-super/sftt1000.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb
+></usr/share/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-dist
+/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/
+utmr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (166 pages, 327028 bytes).
+Transcript written on Rd2.log.
+This is makeindex, version 2.17 [TeX Live 2026/dev] (kpathsea + Thai support).
+Scanning input file Rd2.idx....done (572 entries accepted, 0 rejected).
+Sorting entries.......done (5472 comparisons).
+Generating output file Rd2.ind....done (634 lines written, 0 warnings).
+Output written in Rd2.ind.
+Transcript written in Rd2.ilg.
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+(./Rd2.tex
+(/usr/share/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2024/06/29 v1.4n Standard LaTeX document class
+(/usr/share/texmf-dist/tex/latex/base/bk10.clo))
+(/usr/share/texmf/tex/latex/Rd.sty
+(/usr/share/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/share/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/share/texmf-dist/tex/latex/tools/longtable.sty)
+(/usr/share/texmf-dist/tex/latex/tools/bm.sty)
+(/usr/share/texmf-dist/tex/latex/base/alltt.sty)
+(/usr/share/texmf-dist/tex/latex/tools/verbatim.sty)
+(/usr/share/texmf-dist/tex/latex/url/url.sty)
+(/usr/share/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty)
+(/usr/share/texmf-dist/tex/latex/amsfonts/amssymb.sty)
+(/usr/share/texmf-dist/tex/latex/jknapltx/mathrsfs.sty)
+(/usr/share/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/share/texmf-dist/tex/latex/psnfss/times.sty)
+(/usr/share/texmf-dist/tex/latex/graphics/color.sty
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/share/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/share/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/share/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/share/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/share/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(/usr/share/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/share/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/share/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/share/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/share/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(/usr/share/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/share/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+(/usr/share/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(/usr/share/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/share/texmf-dist/tex/generic/stringenc/stringenc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/share/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/share/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/share/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+(/usr/share/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
+(/usr/share/texmf-dist/tex/latex/hyperref/hpdftex.def
+(/usr/share/texmf-dist/tex/latex/base/atveryend-ltx.sty)
+(/usr/share/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+(/usr/share/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty))))
+(/usr/share/texmf-dist/tex/latex/base/makeidx.sty)
+Writing index file Rd2.idx
+(/usr/share/texmf-dist/tex/latex/psnfss/t1ptm.fd)
+(/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
+(/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.aux)
+(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.out)
+(/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.out)
+(/usr/share/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd)
+(/usr/share/texmf-dist/tex/latex/jknapltx/ursfs.fd)
+(/usr/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd)
+(/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.toc
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/fon
+ts/enc/dvips/base/8r.enc}{/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-sup
+er-ts1.enc}]
+[2]
+[3]
+[4]
+[5]
+[6])
+[7]
+[8]
+[9]
+[10]
+[11]
+[12]
+[13]
+[14]
+[15]
+[16]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 546--546
+ []\T1/pcr/m/n/10 .create_ai_files(project_dir, assistants, canonical_content, 
+type) 
+
+[17]
+Overfull \hbox (1.53706pt too wide) in paragraph at lines 576--577
+[]\T1/ptm/m/n/10 Project type for tem-plate se-lec-tion ("project", "project_se
+nsitive", "course", "pre-
+
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 600--600
+ []\T1/pcr/m/n/10 .create_config_file(type = "analysis", attach_defaults = TRUE
+, subdir = NULL) 
+
+[18]
+Overfull \hbox (6.78088pt too wide) in paragraph at lines 658--658
+ []\T1/pcr/m/n/10 .create_ide_configs(project_name, target_dir = ".", python = 
+FALSE) 
+
+[19]
+[20]
+[21]
+[22]
+[23]
+[24]
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 922--922
+ []\T1/pcr/m/n/10 .create_vscode_workspace(project_name, target_dir = ".", pyth
+on = FALSE) 
+
+[25]
+[26]
+[27]
+Overfull \hbox (60.78088pt too wide) in paragraph at lines 1052--1052
+ []\T1/pcr/m/n/10 .display_next_steps(project_name = NULL, type = "project", us
+e_renv = FALSE) 
+
+[28]
+[29]
+[30]
+[31]
+[32]
+[33]
+[34]
+[35]
+Overfull \hbox (42.78088pt too wide) in paragraph at lines 1463--1463
+ []\T1/pcr/m/n/10 .get_hook_setting(key, alias = NULL, config_file = NULL, defa
+ult = FALSE) 
+
+[36]
+[37]
+[38]
+[39]
+[40]
+[41]
+[42]
+[43]
+[44]
+[45]
+[46]
+[47]
+[48]
+[49]
+Overfull \hbox (42.78088pt too wide) in paragraph at lines 2105--2105
+ []\T1/pcr/m/n/10 .normalize_notebook_name(name, type = c("quarto", "rmarkdown"
+, "script")) 
+
+[50]
+Overfull \hbox (6.52681pt too wide) in paragraph at lines 2169--2172
+[]\T1/ptm/m/n/10 Parses pack-age spec-i-fi-ca-tions that may in-clude ex-plicit
+ sources, ver-sion pins, or GitHub/Bioconductor
+
+[51]
+Overfull \hbox (36.7804pt too wide) in paragraph at lines 2209--2209
+ []\T1/pcr/m/n/9 .parse_package_spec(list(name = "DESeq2", source = "bioc", aut
+o_attach = FALSE))[] 
+
+[52]
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 2286--2286
+ []\T1/pcr/m/n/10 .prompt_ai_support_install(support = "never", assistants = ch
+aracter(0)) 
+
+[53]
+[54]
+[55]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 2437--2437
+ []\T1/pcr/m/n/10 .require_driver(driver_name, package_name, install_command = 
+NULL) 
+
+Overfull \hbox (6.67805pt too wide) in paragraph at lines 2443--2444
+[]\T1/ptm/m/n/10 Character. Human-readable name of the database (e.g., "Post-gr
+eSQL", "MySQL") 
+
+[56]
+[57]
+[58]
+[59]
+[60]
+[61]
+[62]
+[63]
+[64]
+[65]
+Overfull \hbox (60.78088pt too wide) in paragraph at lines 3024--3024
+ []\T1/pcr/m/n/10 add_project_to_config(project_dir, project_name = NULL, proje
+ct_type = NULL) 
+
+[66]
+[67]
+Overfull \hbox (48.78088pt too wide) in paragraph at lines 3096--3096
+ []\T1/pcr/m/n/10 ai_regenerate_context(project_path = ".", sections = NULL, ai
+_file = NULL) 
+
+[68]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 3136--3136
+ []\T1/pcr/m/n/10 ai_sync_context(config_file = NULL, force = FALSE, verbose = 
+TRUE) 
+
+[69]
+[70]
+[71]
+[72]
+[73]
+[74]
+[75]
+[76]
+[77]
+Overfull \hbox (4.02647pt too wide) in paragraph at lines 3698--3700
+[]\T1/ptm/m/n/10 Interactively con-fig-ure project di-rec-tory struc-ture in se
+t-tings.yml (or set-tings.yml for legacy projects).
+
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 3704--3704
+ []\T1/pcr/m/n/10 configure_directories(directory = NULL, path = NULL, interact
+ive = TRUE) 
+
+[78]
+[79]
+[80]
+[81]
+[82]
+[83]
+[84]
+Overfull \hbox (15.20726pt too wide) in paragraph at lines 4136--4138
+[]\T1/ptm/m/n/10 Whether to in-clude soft-deleted records (de-fault: FALSE). On
+ly ap-plies if deleted_at
+
+[85]
+Overfull \hbox (15.20726pt too wide) in paragraph at lines 4178--4180
+[]\T1/ptm/m/n/10 Whether to in-clude soft-deleted records (de-fault: FALSE). On
+ly ap-plies if deleted_at
+
+Overfull \hbox (22.55609pt too wide) in paragraph at lines 4190--4192
+[]\T1/ptm/m/n/10 Inserts a new record into a ta-ble with au-to-matic times-tamp
+ han-dling. If the ta-ble has cre-ated_at/updated_at
+
+Overfull \hbox (6.78088pt too wide) in paragraph at lines 4196--4196
+ []\T1/pcr/m/n/10 connection_insert(conn, table_name, values, auto_timestamps =
+ TRUE) 
+
+[86]
+[87]
+[88]
+[89]
+Overfull \hbox (0.60687pt too wide) in paragraph at lines 4430--4432
+[]\T1/ptm/m/n/10 Restores a soft-deleted record by set-ting deleted_at to NULL.
+ Only works on ta-bles with a deleted_at
+
+[90]
+Overfull \hbox (30.78088pt too wide) in paragraph at lines 4485--4485
+ []\T1/pcr/m/n/10 connection_update(conn, table_name, id, values, auto_timestam
+ps = TRUE) 
+
+[91]
+[92]
+Overfull \hbox (29.00894pt too wide) in paragraph at lines 4605--4607
+[]\T1/ptm/m/n/10 Optional dot no-ta-tion name for the data cat-a-log (e.g., []\
+T1/pcr/m/n/10 inputs.raw.survey_data[]\T1/ptm/m/n/10 ).
+
+Overfull \hbox (20.58041pt too wide) in paragraph at lines 4626--4626
+ []\T1/pcr/m/n/9 data_add("inputs/raw/survey_results.csv", name = "inputs.raw.s
+urvey_results")[] 
+
+[93]
+[94]
+Overfull \hbox (6.0968pt too wide) in paragraph at lines 4721--4723
+[]\T1/ptm/m/n/10 Supports CSV, TSV, RDS, Ex-cel (.xlsx, .xls), Stata (.dta), SP
+SS (.sav, .zsav, .por), and SAS (.sas7bdat,
+
+[95]
+Overfull \hbox (21.72723pt too wide) in paragraph at lines 4739--4740
+[]\T1/ptm/m/n/10 Additional ar-gu-ments passed to read func-tions (readr::read_
+delim, readxl::read_excel,
+
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 4750--4750
+ []\T1/pcr/m/n/10 df <- cache_remember("my_data", data_read("source.private.exa
+mple")) 
+
+[96]
+Overfull \hbox (10.11862pt too wide) in paragraph at lines 4800--4801
+[]\T1/ptm/m/n/10 Dot no-ta-tion: []\T1/pcr/m/n/10 inputs.raw.filename []\T1/ptm
+/m/n/10 re-solves to in-puts/raw/filename.rds 
+
+Overfull \hbox (65.0692pt too wide) in paragraph at lines 4806--4808
+[]\T1/ptm/m/n/10 Dot no-ta-tion uses your con-fig-ured di-rec-to-ries (e.g., []
+\T1/pcr/m/n/10 inputs.raw[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 inputs.intermediat
+e[]\T1/ptm/m/n/10 ,
+
+[97]
+[98]
+[99]
+[100]
+[101] (/usr/share/texmf-dist/tex/latex/psnfss/ts1pcr.fd)
+Overfull \hbox (15.18042pt too wide) in paragraph at lines 5112--5112
+ []  \T1/pcr/m/n/9 DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES (
+\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 Alice\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 , 30)")[] 
+
+Overfull \hbox (4.38043pt too wide) in paragraph at lines 5113--5113
+ []  \T1/pcr/m/n/9 DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES (
+\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 Bob\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 , 25)")[] 
+
+[102]
+[103]
+Overfull \hbox (47.58038pt too wide) in paragraph at lines 5257--5257
+ []\T1/pcr/m/n/9 DBI::dbGetQuery(con, "SELECT name, title FROM functions WHERE 
+name LIKE \TS1/pcr/m/n/9 '\T1/pcr/m/n/9 data_%\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 ")[
+] 
+
+[104]
+Overfull \hbox (3.60764pt too wide) in paragraph at lines 5322--5323
+[]\T1/pcr/m/n/10 .has_column(PqConnection)[]\T1/ptm/m/n/10 : Post-greSQL im-ple
+-men-ta-tion us-ing in-for-ma-tion_schema 
+
+Overfull \hbox (20.26793pt too wide) in paragraph at lines 5328--5329
+[]\T1/pcr/m/n/10 .has_column(duckdb_connection)[]\T1/ptm/m/n/10 : DuckDB im-ple
+-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[105]
+Overfull \hbox (15.60764pt too wide) in paragraph at lines 5402--5403
+[]\T1/pcr/m/n/10 .list_columns(PqConnection)[]\T1/ptm/m/n/10 : Post-greSQL im-p
+le-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[106]
+Overfull \hbox (32.26793pt too wide) in paragraph at lines 5408--5409
+[]\T1/pcr/m/n/10 .list_columns(duckdb_connection)[]\T1/ptm/m/n/10 : DuckDB im-p
+le-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[107]
+Overfull \hbox (10.09682pt too wide) in paragraph at lines 5513--5516
+[]\T1/ptm/m/n/10 Provides the base-line .env con-tent that ships with Frame-wor
+k. Other helper func-tions (project_create(),
+
+[108]
+Overfull \hbox (5.35852pt too wide) in paragraph at lines 5550--5552
+[]\T1/ptm/m/n/10 Either a char-ac-ter string (raw .env con-tent) or a list with
+ []\T1/pcr/m/n/10 raw []\T1/ptm/m/n/10 and/or []\T1/pcr/m/n/10 variables[]\T1/p
+tm/m/n/10 . 
+
+[109]
+[110]
+Overfull \hbox (59.34842pt too wide) in paragraph at lines 5640--5643
+[]\T1/ptm/m/n/10 Returns the path to Frame-work's global con-fig-u-ra-tion di-r
+ec-tory. Uses []\T1/pcr/m/n/10 tools::R_user_dir("framework",
+
+[111]
+[112]
+[113]
+[114]
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 5882--5882
+ []\T1/pcr/m/n/10 git_hooks_install(config_file = NULL, force = FALSE, verbose 
+= TRUE) 
+
+[115]
+[116]
+[117]
+Overfull \hbox (138.78088pt too wide) in paragraph at lines 6088--6088
+ []  \T1/pcr/m/n/10 extensions = c("csv", "rds", "tsv", "txt", "dat", "xlsx", "
+xls", "sqlite", "db", "dta",[] 
+
+[118]
+Overfull \hbox (126.78088pt too wide) in paragraph at lines 6089--6089
+ []    \T1/pcr/m/n/10 "sav", "zsav", "por", "sas7bdat", "sas7bcat", "xpt", "par
+quet", "feather", "arrow",[] 
+
+[119]
+[120]
+Overfull \hbox (57.04758pt too wide) in paragraph at lines 6259--6262
+\T1/ptm/m/n/10 if they don't al-ready ex-ist. Also han-dles mi-gra-tion from pr
+e-vi-ous R ver-sions or legacy \T1/pcr/m/n/10 ~/.config/framework
+
+[121]
+[122]
+Overfull \hbox (21.86911pt too wide) in paragraph at lines 6364--6366
+[]\T1/ptm/m/n/10 .R: R script Ex-am-ples: []\T1/pcr/m/n/10 1-init[]\T1/ptm/m/n/
+10 , []\T1/pcr/m/n/10 1-init.qmd[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 analysis.Rm
+d[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 script.R 
+
+[123]
+Overfull \hbox (129.43037pt too wide) in paragraph at lines 6374--6375
+[]\T1/ptm/m/n/10 Checks con-fig []\T1/pcr/m/n/10 default_notebook_format []\T1/
+ptm/m/n/10 (or legacy []\T1/pcr/m/n/10 options$default_notebook_format[]\T1/ptm
+/m/n/10 ) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6380--6382
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (65.55995pt too wide) in paragraph at lines 6383--6386
+\T1/ptm/m/n/10 ate cus-tom stubs in \T1/pcr/m/n/10 stubs/notebook-{stub}.qmd\T1
+/ptm/m/n/10 , \T1/pcr/m/n/10 stubs/notebook-{stub}.Rmd\T1/ptm/m/n/10 ,
+
+Overfull \hbox (76.62747pt too wide) in paragraph at lines 6431--6432
+[]\T1/ptm/m/n/10 Framework stubs: \T1/pcr/m/n/10 inst/stubs/notebook-{stub}.qmd
+ \T1/ptm/m/n/10 or \T1/pcr/m/n/10 inst/stubs/notebook-{stub}.Rmd 
+
+[124]
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 6492--6492
+ []\T1/pcr/m/n/10 make_presentation(name, dir = NULL, overwrite = FALSE, subdir
+ = NULL) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6500--6502
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+[125]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 6536--6536
+ []\T1/pcr/m/n/10 make_qmd(name, dir = NULL, stub = "default", overwrite = FALS
+E, subdir = NULL) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6544--6546
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+[126]
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6596--6598
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 6635--6635
+ []\T1/pcr/m/n/10 make_rmd(name, dir = NULL, stub = "default", overwrite = FALS
+E, subdir = NULL) 
+
+[127]
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6643--6645
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 6687--6687
+ []\T1/pcr/m/n/10 make_script(name, dir = NULL, stub = "default", overwrite = F
+ALSE) 
+
+[128]
+[129]
+Overfull \hbox (14.34094pt too wide) in paragraph at lines 6797--6798
+[][][]\T1/pcr/m/n/10 new_project()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10
+ new_project_sensitive()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10 new_prese
+ntation()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10 new_course()[][][] 
+
+[130]
+Overfull \hbox (2.0288pt too wide) in paragraph at lines 6816--6818
+[]\T1/ptm/m/n/10 Shorthand for []\T1/pcr/m/n/10 new_project(..., type = "course
+")[]\T1/ptm/m/n/10 . Cre-ates a project struc-tured for teach-
+
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 6822--6822
+ []\T1/pcr/m/n/10 new_course(name = NULL, location = NULL, browse = interactive
+(), ...) 
+
+[131]
+Overfull \hbox (54.78088pt too wide) in paragraph at lines 6866--6866
+ []\T1/pcr/m/n/10 new_presentation(name = NULL, location = NULL, browse = inter
+active(), ...) 
+
+[132]
+[133]
+Overfull \hbox (25.98041pt too wide) in paragraph at lines 6980--6980
+ []\T1/pcr/m/n/9 new_project("medical-study", "~/projects/medical", type = "pro
+ject_sensitive")[] 
+
+[134]
+[135]
+[136]
+[137]
+Overfull \hbox (11.54759pt too wide) in paragraph at lines 7224--7225
+[]\T1/ptm/m/n/10 Character string. Human-readable la-bel for the di-rec-tory (e
+.g., "Anal-y-sis Archive"). 
+
+[138]
+[139]
+Overfull \hbox (30.78088pt too wide) in paragraph at lines 7302--7302
+ []  \T1/pcr/m/n/10 ai = list(enabled = FALSE, assistants = c(), canonical_cont
+ent = ""),[] 
+
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 7303--7303
+ []  \T1/pcr/m/n/10 git = list(use_git = TRUE, hooks = list(), gitignore_conten
+t = ""),[] 
+
+Overfull \hbox (108.78088pt too wide) in paragraph at lines 7304--7304
+ []  \T1/pcr/m/n/10 scaffold = list(seed_on_scaffold = FALSE, seed = "", set_th
+eme_on_scaffold = TRUE,[] 
+
+[140]
+Overfull \hbox (55.78767pt too wide) in paragraph at lines 7401--7404
+[]\T1/ptm/m/n/10 Upload files or di-rec-to-ries to an S3 bucket. This is the ge
+neric pub-lish-ing func-tion - use []\T1/pcr/m/n/10 publish_notebook()
+
+[141]
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 7457--7457
+ []\T1/pcr/m/n/10 publish_data(data, dest, format = "csv", connection = NULL, c
+ompress = FALSE) 
+
+[142]
+[143]
+[144]
+Overfull \hbox (40.53854pt too wide) in paragraph at lines 7618--7620
+[]\T1/ptm/m/n/10 Logical. Whether to em-bed all re-sources. De-fault TRUE. Ig-n
+ored if []\T1/pcr/m/n/10 static_hosting:
+
+[145]
+[146]
+[147]
+Overfull \hbox (72.75815pt too wide) in paragraph at lines 7788--7790
+[]\T1/ptm/m/n/10 Deactivates renv in-te-gra-tion while pre-serv-ing renv.lock f
+or fu-ture use. Re-moves the []\T1/pcr/m/n/10 .framework_renv_enabled
+
+[148]
+[149]
+Overfull \hbox (0.76859pt too wide) in paragraph at lines 7858--7860
+[]\T1/ptm/m/n/10 Determines whether renv in-te-gra-tion is ac-tive by check-ing
+ for the []\T1/pcr/m/n/10 .framework_renv_enabled
+
+[150]
+[151]
+[152]
+[153]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 8118--8118
+ []\T1/pcr/m/n/10 save_model(model, name, format = "rds", public = FALSE, overw
+rite = TRUE, ...) 
+
+[154]
+[155]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 8229--8229
+ []\T1/pcr/m/n/10 save_report(file, name = NULL, public = FALSE, overwrite = TR
+UE, move = FALSE) 
+
+[156]
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 8273--8273
+ []\T1/pcr/m/n/10 save_table(data, name, format = "csv", public = FALSE, overwr
+ite = TRUE, ...) 
+
+[157]
+Overfull \hbox (4.96693pt too wide) in paragraph at lines 8329--8331
+[]\T1/ptm/m/n/10 Path to con-fig-u-ra-tion file. If NULL (de-fault), au-to-mat-
+i-cally dis-cov-ers set-tings.yml
+
+[158]
+[159]
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 8433--8433
+ []\T1/pcr/m/n/10 scratch_capture(x, name = NULL, to = NULL, location = NULL, n
+ = Inf) 
+
+[160]
+Overfull \hbox (84.0pt too wide) in paragraph at lines 8514--8515
+[]\T1/ptm/m/n/10 Direct: []\T1/pcr/m/n/10 settings("notebooks") []\T1/ptm/m/n/1
+0 checks []\T1/pcr/m/n/10 directories$notebooks[]\T1/ptm/m/n/10 , then []\T1/pc
+r/m/n/10 options$notebook_dir 
+
+Overfull \hbox (38.71994pt too wide) in paragraph at lines 8515--8516
+[]\T1/ptm/m/n/10 Explicit: []\T1/pcr/m/n/10 settings("directories.notebooks") [
+]\T1/ptm/m/n/10 checks only []\T1/pcr/m/n/10 directories$notebooks 
+
+[161]
+[162]
+[163]
+[164]
+[165]
+[166]
+[167]
+[168]
+[169]
+[170]
+[171] (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.ind
+[172]
+Overfull \hbox (13.3567pt too wide) in paragraph at lines 9--11
+[]| \T1/pcr/m/n/10 .catalog_project_type_defaults\T1/ptm/m/n/10 , 
+
+Overfull \hbox (1.3567pt too wide) in paragraph at lines 20--21
+[]| \T1/pcr/m/n/10 .check_private_data_exposure\T1/ptm/m/n/10 , 
+
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 59--61
+[]| \T1/pcr/m/n/10 .default_render_dirs_for_type\T1/ptm/m/n/10 , 
+
+Overfull \hbox (31.3567pt too wide) in paragraph at lines 61--63
+[]| \T1/pcr/m/n/10 .default_root_render_dir_for_type\T1/ptm/m/n/10 , 
+
+Overfull \hbox (19.3567pt too wide) in paragraph at lines 71--73
+[]| \T1/pcr/m/n/10 .framework_catalog_default_path\T1/ptm/m/n/10 , 
+
+Overfull \hbox (1.3567pt too wide) in paragraph at lines 73--74
+[]| \T1/pcr/m/n/10 .framework_catalog_user_path\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 76--77
+[]| \T1/pcr/m/n/10 .generate_environment_section\T1/ptm/m/n/10 , 
+
+Overfull \hbox (1.3567pt too wide) in paragraph at lines 77--78
+[]| \T1/pcr/m/n/10 .generate_function_reference\T1/ptm/m/n/10 , 
+
+[173]
+Overfull \hbox (13.3567pt too wide) in paragraph at lines 82--84
+[]| \T1/pcr/m/n/10 .generate_project_type_section\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 94--96
+[]| \T1/pcr/m/n/10 .get_notebook_dir_from_config\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 96--98
+[]| \T1/pcr/m/n/10 .get_package_list_from_config\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 126--128
+[]| \T1/pcr/m/n/10 .migrate_config_from_previous\T1/ptm/m/n/10 , 
+
+
+Overfull \hbox (19.3567pt too wide) in paragraph at lines 143--145
+[]| \T1/pcr/m/n/10 .replace_moustache_placeholders\T1/ptm/m/n/10 , 
+
+[174]
+
+Overfull \hbox (11.3567pt too wide) in paragraph at lines 279--281
+[]\T1/pcr/m/n/10 .default_root_render_dir_for_type\T1/ptm/m/n/10 , 
+
+[175]
+
+[176]
+
+[177]
+
+[178]) (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.aux)
+
+Package rerunfilecheck Warning: File `Rd2.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ )
+(see the transcript file for additional information)</usr/share/texmf-dist/font
+s/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-dist/fonts/type1/public
+/cm-super/sfrm1000.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sftt1
+000.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/t
+exmf-dist/fonts/type1/urw/courier/ucrro8a.pfb></usr/share/texmf-dist/fonts/type
+1/urw/times/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb>
+</usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/
+fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (178 pages, 407837 bytes).
+Transcript written on Rd2.log.
+This is makeindex, version 2.17 [TeX Live 2026/dev] (kpathsea + Thai support).
+Scanning input file Rd2.idx....done (572 entries accepted, 0 rejected).
+Sorting entries.......done (5472 comparisons).
+Generating output file Rd2.ind....done (634 lines written, 0 warnings).
+Output written in Rd2.ind.
+Transcript written in Rd2.ilg.
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+(./Rd2.tex
+(/usr/share/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2024/06/29 v1.4n Standard LaTeX document class
+(/usr/share/texmf-dist/tex/latex/base/bk10.clo))
+(/usr/share/texmf/tex/latex/Rd.sty
+(/usr/share/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/share/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/share/texmf-dist/tex/latex/tools/longtable.sty)
+(/usr/share/texmf-dist/tex/latex/tools/bm.sty)
+(/usr/share/texmf-dist/tex/latex/base/alltt.sty)
+(/usr/share/texmf-dist/tex/latex/tools/verbatim.sty)
+(/usr/share/texmf-dist/tex/latex/url/url.sty)
+(/usr/share/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty)
+(/usr/share/texmf-dist/tex/latex/amsfonts/amssymb.sty)
+(/usr/share/texmf-dist/tex/latex/jknapltx/mathrsfs.sty)
+(/usr/share/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/share/texmf-dist/tex/latex/psnfss/times.sty)
+(/usr/share/texmf-dist/tex/latex/graphics/color.sty
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/share/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/share/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/share/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/share/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/share/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(/usr/share/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/share/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/share/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/share/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/share/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(/usr/share/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/share/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+(/usr/share/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(/usr/share/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/share/texmf-dist/tex/generic/stringenc/stringenc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/share/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/share/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/share/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+(/usr/share/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
+(/usr/share/texmf-dist/tex/latex/hyperref/hpdftex.def
+(/usr/share/texmf-dist/tex/latex/base/atveryend-ltx.sty)
+(/usr/share/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+(/usr/share/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty))))
+(/usr/share/texmf-dist/tex/latex/base/makeidx.sty)
+Writing index file Rd2.idx
+(/usr/share/texmf-dist/tex/latex/psnfss/t1ptm.fd)
+(/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
+(/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.aux)
+(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.out)
+(/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.out)
+(/usr/share/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd)
+(/usr/share/texmf-dist/tex/latex/jknapltx/ursfs.fd)
+(/usr/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd)
+(/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.toc
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/fon
+ts/enc/dvips/base/8r.enc}{/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-sup
+er-ts1.enc}]
+[2]
+[3]
+[4]
+[5]
+[6])
+[7]
+[8]
+[9]
+[10]
+[11]
+[12]
+[13]
+[14]
+[15]
+[16]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 546--546
+ []\T1/pcr/m/n/10 .create_ai_files(project_dir, assistants, canonical_content, 
+type) 
+
+[17]
+Overfull \hbox (1.53706pt too wide) in paragraph at lines 576--577
+[]\T1/ptm/m/n/10 Project type for tem-plate se-lec-tion ("project", "project_se
+nsitive", "course", "pre-
+
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 600--600
+ []\T1/pcr/m/n/10 .create_config_file(type = "analysis", attach_defaults = TRUE
+, subdir = NULL) 
+
+[18]
+Overfull \hbox (6.78088pt too wide) in paragraph at lines 658--658
+ []\T1/pcr/m/n/10 .create_ide_configs(project_name, target_dir = ".", python = 
+FALSE) 
+
+[19]
+[20]
+[21]
+[22]
+[23]
+[24]
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 922--922
+ []\T1/pcr/m/n/10 .create_vscode_workspace(project_name, target_dir = ".", pyth
+on = FALSE) 
+
+[25]
+[26]
+[27]
+Overfull \hbox (60.78088pt too wide) in paragraph at lines 1052--1052
+ []\T1/pcr/m/n/10 .display_next_steps(project_name = NULL, type = "project", us
+e_renv = FALSE) 
+
+[28]
+[29]
+[30]
+[31]
+[32]
+[33]
+[34]
+[35]
+Overfull \hbox (42.78088pt too wide) in paragraph at lines 1463--1463
+ []\T1/pcr/m/n/10 .get_hook_setting(key, alias = NULL, config_file = NULL, defa
+ult = FALSE) 
+
+[36]
+[37]
+[38]
+[39]
+[40]
+[41]
+[42]
+[43]
+[44]
+[45]
+[46]
+[47]
+[48]
+[49]
+Overfull \hbox (42.78088pt too wide) in paragraph at lines 2105--2105
+ []\T1/pcr/m/n/10 .normalize_notebook_name(name, type = c("quarto", "rmarkdown"
+, "script")) 
+
+[50]
+Overfull \hbox (6.52681pt too wide) in paragraph at lines 2169--2172
+[]\T1/ptm/m/n/10 Parses pack-age spec-i-fi-ca-tions that may in-clude ex-plicit
+ sources, ver-sion pins, or GitHub/Bioconductor
+
+[51]
+Overfull \hbox (36.7804pt too wide) in paragraph at lines 2209--2209
+ []\T1/pcr/m/n/9 .parse_package_spec(list(name = "DESeq2", source = "bioc", aut
+o_attach = FALSE))[] 
+
+[52]
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 2286--2286
+ []\T1/pcr/m/n/10 .prompt_ai_support_install(support = "never", assistants = ch
+aracter(0)) 
+
+[53]
+[54]
+[55]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 2437--2437
+ []\T1/pcr/m/n/10 .require_driver(driver_name, package_name, install_command = 
+NULL) 
+
+Overfull \hbox (6.67805pt too wide) in paragraph at lines 2443--2444
+[]\T1/ptm/m/n/10 Character. Human-readable name of the database (e.g., "Post-gr
+eSQL", "MySQL") 
+
+[56]
+[57]
+[58]
+[59]
+[60]
+[61]
+[62]
+[63]
+[64]
+[65]
+Overfull \hbox (60.78088pt too wide) in paragraph at lines 3024--3024
+ []\T1/pcr/m/n/10 add_project_to_config(project_dir, project_name = NULL, proje
+ct_type = NULL) 
+
+[66]
+[67]
+Overfull \hbox (48.78088pt too wide) in paragraph at lines 3096--3096
+ []\T1/pcr/m/n/10 ai_regenerate_context(project_path = ".", sections = NULL, ai
+_file = NULL) 
+
+[68]
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 3136--3136
+ []\T1/pcr/m/n/10 ai_sync_context(config_file = NULL, force = FALSE, verbose = 
+TRUE) 
+
+[69]
+[70]
+[71]
+[72]
+[73]
+[74]
+[75]
+[76]
+[77]
+Overfull \hbox (4.02647pt too wide) in paragraph at lines 3698--3700
+[]\T1/ptm/m/n/10 Interactively con-fig-ure project di-rec-tory struc-ture in se
+t-tings.yml (or set-tings.yml for legacy projects).
+
+Overfull \hbox (36.78088pt too wide) in paragraph at lines 3704--3704
+ []\T1/pcr/m/n/10 configure_directories(directory = NULL, path = NULL, interact
+ive = TRUE) 
+
+[78]
+[79]
+[80]
+[81]
+[82]
+[83]
+[84]
+Overfull \hbox (15.20726pt too wide) in paragraph at lines 4136--4138
+[]\T1/ptm/m/n/10 Whether to in-clude soft-deleted records (de-fault: FALSE). On
+ly ap-plies if deleted_at
+
+[85]
+Overfull \hbox (15.20726pt too wide) in paragraph at lines 4178--4180
+[]\T1/ptm/m/n/10 Whether to in-clude soft-deleted records (de-fault: FALSE). On
+ly ap-plies if deleted_at
+
+Overfull \hbox (22.55609pt too wide) in paragraph at lines 4190--4192
+[]\T1/ptm/m/n/10 Inserts a new record into a ta-ble with au-to-matic times-tamp
+ han-dling. If the ta-ble has cre-ated_at/updated_at
+
+Overfull \hbox (6.78088pt too wide) in paragraph at lines 4196--4196
+ []\T1/pcr/m/n/10 connection_insert(conn, table_name, values, auto_timestamps =
+ TRUE) 
+
+[86]
+[87]
+[88]
+[89]
+Overfull \hbox (0.60687pt too wide) in paragraph at lines 4430--4432
+[]\T1/ptm/m/n/10 Restores a soft-deleted record by set-ting deleted_at to NULL.
+ Only works on ta-bles with a deleted_at
+
+[90]
+Overfull \hbox (30.78088pt too wide) in paragraph at lines 4485--4485
+ []\T1/pcr/m/n/10 connection_update(conn, table_name, id, values, auto_timestam
+ps = TRUE) 
+
+[91]
+[92]
+Overfull \hbox (29.00894pt too wide) in paragraph at lines 4605--4607
+[]\T1/ptm/m/n/10 Optional dot no-ta-tion name for the data cat-a-log (e.g., []\
+T1/pcr/m/n/10 inputs.raw.survey_data[]\T1/ptm/m/n/10 ).
+
+Overfull \hbox (20.58041pt too wide) in paragraph at lines 4626--4626
+ []\T1/pcr/m/n/9 data_add("inputs/raw/survey_results.csv", name = "inputs.raw.s
+urvey_results")[] 
+
+[93]
+[94]
+Overfull \hbox (6.0968pt too wide) in paragraph at lines 4721--4723
+[]\T1/ptm/m/n/10 Supports CSV, TSV, RDS, Ex-cel (.xlsx, .xls), Stata (.dta), SP
+SS (.sav, .zsav, .por), and SAS (.sas7bdat,
+
+[95]
+Overfull \hbox (21.72723pt too wide) in paragraph at lines 4739--4740
+[]\T1/ptm/m/n/10 Additional ar-gu-ments passed to read func-tions (readr::read_
+delim, readxl::read_excel,
+
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 4750--4750
+ []\T1/pcr/m/n/10 df <- cache_remember("my_data", data_read("source.private.exa
+mple")) 
+
+[96]
+Overfull \hbox (10.11862pt too wide) in paragraph at lines 4800--4801
+[]\T1/ptm/m/n/10 Dot no-ta-tion: []\T1/pcr/m/n/10 inputs.raw.filename []\T1/ptm
+/m/n/10 re-solves to in-puts/raw/filename.rds 
+
+Overfull \hbox (65.0692pt too wide) in paragraph at lines 4806--4808
+[]\T1/ptm/m/n/10 Dot no-ta-tion uses your con-fig-ured di-rec-to-ries (e.g., []
+\T1/pcr/m/n/10 inputs.raw[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 inputs.intermediat
+e[]\T1/ptm/m/n/10 ,
+
+[97]
+[98]
+[99]
+[100]
+[101] (/usr/share/texmf-dist/tex/latex/psnfss/ts1pcr.fd)
+Overfull \hbox (15.18042pt too wide) in paragraph at lines 5112--5112
+ []  \T1/pcr/m/n/9 DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES (
+\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 Alice\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 , 30)")[] 
+
+Overfull \hbox (4.38043pt too wide) in paragraph at lines 5113--5113
+ []  \T1/pcr/m/n/9 DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES (
+\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 Bob\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 , 25)")[] 
+
+[102]
+[103]
+Overfull \hbox (47.58038pt too wide) in paragraph at lines 5257--5257
+ []\T1/pcr/m/n/9 DBI::dbGetQuery(con, "SELECT name, title FROM functions WHERE 
+name LIKE \TS1/pcr/m/n/9 '\T1/pcr/m/n/9 data_%\TS1/pcr/m/n/9 '\T1/pcr/m/n/9 ")[
+] 
+
+[104]
+Overfull \hbox (3.60764pt too wide) in paragraph at lines 5322--5323
+[]\T1/pcr/m/n/10 .has_column(PqConnection)[]\T1/ptm/m/n/10 : Post-greSQL im-ple
+-men-ta-tion us-ing in-for-ma-tion_schema 
+
+Overfull \hbox (20.26793pt too wide) in paragraph at lines 5328--5329
+[]\T1/pcr/m/n/10 .has_column(duckdb_connection)[]\T1/ptm/m/n/10 : DuckDB im-ple
+-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[105]
+Overfull \hbox (15.60764pt too wide) in paragraph at lines 5402--5403
+[]\T1/pcr/m/n/10 .list_columns(PqConnection)[]\T1/ptm/m/n/10 : Post-greSQL im-p
+le-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[106]
+Overfull \hbox (32.26793pt too wide) in paragraph at lines 5408--5409
+[]\T1/pcr/m/n/10 .list_columns(duckdb_connection)[]\T1/ptm/m/n/10 : DuckDB im-p
+le-men-ta-tion us-ing in-for-ma-tion_schema 
+
+[107]
+Overfull \hbox (10.09682pt too wide) in paragraph at lines 5513--5516
+[]\T1/ptm/m/n/10 Provides the base-line .env con-tent that ships with Frame-wor
+k. Other helper func-tions (project_create(),
+
+[108]
+Overfull \hbox (5.35852pt too wide) in paragraph at lines 5550--5552
+[]\T1/ptm/m/n/10 Either a char-ac-ter string (raw .env con-tent) or a list with
+ []\T1/pcr/m/n/10 raw []\T1/ptm/m/n/10 and/or []\T1/pcr/m/n/10 variables[]\T1/p
+tm/m/n/10 . 
+
+[109]
+[110]
+Overfull \hbox (59.34842pt too wide) in paragraph at lines 5640--5643
+[]\T1/ptm/m/n/10 Returns the path to Frame-work's global con-fig-u-ra-tion di-r
+ec-tory. Uses []\T1/pcr/m/n/10 tools::R_user_dir("framework",
+
+[111]
+[112]
+[113]
+[114]
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 5882--5882
+ []\T1/pcr/m/n/10 git_hooks_install(config_file = NULL, force = FALSE, verbose 
+= TRUE) 
+
+[115]
+[116]
+[117]
+Overfull \hbox (138.78088pt too wide) in paragraph at lines 6088--6088
+ []  \T1/pcr/m/n/10 extensions = c("csv", "rds", "tsv", "txt", "dat", "xlsx", "
+xls", "sqlite", "db", "dta",[] 
+
+[118]
+Overfull \hbox (126.78088pt too wide) in paragraph at lines 6089--6089
+ []    \T1/pcr/m/n/10 "sav", "zsav", "por", "sas7bdat", "sas7bcat", "xpt", "par
+quet", "feather", "arrow",[] 
+
+[119]
+[120]
+Overfull \hbox (57.04758pt too wide) in paragraph at lines 6259--6262
+\T1/ptm/m/n/10 if they don't al-ready ex-ist. Also han-dles mi-gra-tion from pr
+e-vi-ous R ver-sions or legacy \T1/pcr/m/n/10 ~/.config/framework
+
+[121]
+[122]
+Overfull \hbox (21.86911pt too wide) in paragraph at lines 6364--6366
+[]\T1/ptm/m/n/10 .R: R script Ex-am-ples: []\T1/pcr/m/n/10 1-init[]\T1/ptm/m/n/
+10 , []\T1/pcr/m/n/10 1-init.qmd[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 analysis.Rm
+d[]\T1/ptm/m/n/10 , []\T1/pcr/m/n/10 script.R 
+
+[123]
+Overfull \hbox (129.43037pt too wide) in paragraph at lines 6374--6375
+[]\T1/ptm/m/n/10 Checks con-fig []\T1/pcr/m/n/10 default_notebook_format []\T1/
+ptm/m/n/10 (or legacy []\T1/pcr/m/n/10 options$default_notebook_format[]\T1/ptm
+/m/n/10 ) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6380--6382
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (65.55995pt too wide) in paragraph at lines 6383--6386
+\T1/ptm/m/n/10 ate cus-tom stubs in \T1/pcr/m/n/10 stubs/notebook-{stub}.qmd\T1
+/ptm/m/n/10 , \T1/pcr/m/n/10 stubs/notebook-{stub}.Rmd\T1/ptm/m/n/10 ,
+
+Overfull \hbox (76.62747pt too wide) in paragraph at lines 6431--6432
+[]\T1/ptm/m/n/10 Framework stubs: \T1/pcr/m/n/10 inst/stubs/notebook-{stub}.qmd
+ \T1/ptm/m/n/10 or \T1/pcr/m/n/10 inst/stubs/notebook-{stub}.Rmd 
+
+[124]
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 6492--6492
+ []\T1/pcr/m/n/10 make_presentation(name, dir = NULL, overwrite = FALSE, subdir
+ = NULL) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6500--6502
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+[125]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 6536--6536
+ []\T1/pcr/m/n/10 make_qmd(name, dir = NULL, stub = "default", overwrite = FALS
+E, subdir = NULL) 
+
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6544--6546
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+[126]
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6596--6598
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 6635--6635
+ []\T1/pcr/m/n/10 make_rmd(name, dir = NULL, stub = "default", overwrite = FALS
+E, subdir = NULL) 
+
+[127]
+Overfull \hbox (91.99817pt too wide) in paragraph at lines 6643--6645
+[]\T1/ptm/m/n/10 Character. Di-rec-tory to cre-ate the file in. Uses your proje
+ct's con-fig-ured []\T1/pcr/m/n/10 directories$notebooks
+
+Overfull \hbox (0.78088pt too wide) in paragraph at lines 6687--6687
+ []\T1/pcr/m/n/10 make_script(name, dir = NULL, stub = "default", overwrite = F
+ALSE) 
+
+[128]
+[129]
+Overfull \hbox (14.34094pt too wide) in paragraph at lines 6797--6798
+[][][]\T1/pcr/m/n/10 new_project()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10
+ new_project_sensitive()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10 new_prese
+ntation()[][][][]\T1/ptm/m/n/10 , [][][]\T1/pcr/m/n/10 new_course()[][][] 
+
+[130]
+Overfull \hbox (2.0288pt too wide) in paragraph at lines 6816--6818
+[]\T1/ptm/m/n/10 Shorthand for []\T1/pcr/m/n/10 new_project(..., type = "course
+")[]\T1/ptm/m/n/10 . Cre-ates a project struc-tured for teach-
+
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 6822--6822
+ []\T1/pcr/m/n/10 new_course(name = NULL, location = NULL, browse = interactive
+(), ...) 
+
+[131]
+Overfull \hbox (54.78088pt too wide) in paragraph at lines 6866--6866
+ []\T1/pcr/m/n/10 new_presentation(name = NULL, location = NULL, browse = inter
+active(), ...) 
+
+[132]
+[133]
+Overfull \hbox (25.98041pt too wide) in paragraph at lines 6980--6980
+ []\T1/pcr/m/n/9 new_project("medical-study", "~/projects/medical", type = "pro
+ject_sensitive")[] 
+
+[134]
+[135]
+[136]
+[137]
+Overfull \hbox (11.54759pt too wide) in paragraph at lines 7224--7225
+[]\T1/ptm/m/n/10 Character string. Human-readable la-bel for the di-rec-tory (e
+.g., "Anal-y-sis Archive"). 
+
+[138]
+[139]
+Overfull \hbox (30.78088pt too wide) in paragraph at lines 7302--7302
+ []  \T1/pcr/m/n/10 ai = list(enabled = FALSE, assistants = c(), canonical_cont
+ent = ""),[] 
+
+Overfull \hbox (18.78088pt too wide) in paragraph at lines 7303--7303
+ []  \T1/pcr/m/n/10 git = list(use_git = TRUE, hooks = list(), gitignore_conten
+t = ""),[] 
+
+Overfull \hbox (108.78088pt too wide) in paragraph at lines 7304--7304
+ []  \T1/pcr/m/n/10 scaffold = list(seed_on_scaffold = FALSE, seed = "", set_th
+eme_on_scaffold = TRUE,[] 
+
+[140]
+Overfull \hbox (55.78767pt too wide) in paragraph at lines 7401--7404
+[]\T1/ptm/m/n/10 Upload files or di-rec-to-ries to an S3 bucket. This is the ge
+neric pub-lish-ing func-tion - use []\T1/pcr/m/n/10 publish_notebook()
+
+[141]
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 7457--7457
+ []\T1/pcr/m/n/10 publish_data(data, dest, format = "csv", connection = NULL, c
+ompress = FALSE) 
+
+[142]
+[143]
+[144]
+Overfull \hbox (40.53854pt too wide) in paragraph at lines 7618--7620
+[]\T1/ptm/m/n/10 Logical. Whether to em-bed all re-sources. De-fault TRUE. Ig-n
+ored if []\T1/pcr/m/n/10 static_hosting:
+
+[145]
+[146]
+[147]
+Overfull \hbox (72.75815pt too wide) in paragraph at lines 7788--7790
+[]\T1/ptm/m/n/10 Deactivates renv in-te-gra-tion while pre-serv-ing renv.lock f
+or fu-ture use. Re-moves the []\T1/pcr/m/n/10 .framework_renv_enabled
+
+[148]
+[149]
+Overfull \hbox (0.76859pt too wide) in paragraph at lines 7858--7860
+[]\T1/ptm/m/n/10 Determines whether renv in-te-gra-tion is ac-tive by check-ing
+ for the []\T1/pcr/m/n/10 .framework_renv_enabled
+
+[150]
+[151]
+[152]
+[153]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 8118--8118
+ []\T1/pcr/m/n/10 save_model(model, name, format = "rds", public = FALSE, overw
+rite = TRUE, ...) 
+
+[154]
+[155]
+Overfull \hbox (72.78088pt too wide) in paragraph at lines 8229--8229
+ []\T1/pcr/m/n/10 save_report(file, name = NULL, public = FALSE, overwrite = TR
+UE, move = FALSE) 
+
+[156]
+Overfull \hbox (66.78088pt too wide) in paragraph at lines 8273--8273
+ []\T1/pcr/m/n/10 save_table(data, name, format = "csv", public = FALSE, overwr
+ite = TRUE, ...) 
+
+[157]
+Overfull \hbox (4.96693pt too wide) in paragraph at lines 8329--8331
+[]\T1/ptm/m/n/10 Path to con-fig-u-ra-tion file. If NULL (de-fault), au-to-mat-
+i-cally dis-cov-ers set-tings.yml
+
+[158]
+[159]
+Overfull \hbox (12.78088pt too wide) in paragraph at lines 8433--8433
+ []\T1/pcr/m/n/10 scratch_capture(x, name = NULL, to = NULL, location = NULL, n
+ = Inf) 
+
+[160]
+Overfull \hbox (84.0pt too wide) in paragraph at lines 8514--8515
+[]\T1/ptm/m/n/10 Direct: []\T1/pcr/m/n/10 settings("notebooks") []\T1/ptm/m/n/1
+0 checks []\T1/pcr/m/n/10 directories$notebooks[]\T1/ptm/m/n/10 , then []\T1/pc
+r/m/n/10 options$notebook_dir 
+
+Overfull \hbox (38.71994pt too wide) in paragraph at lines 8515--8516
+[]\T1/ptm/m/n/10 Explicit: []\T1/pcr/m/n/10 settings("directories.notebooks") [
+]\T1/ptm/m/n/10 checks only []\T1/pcr/m/n/10 directories$notebooks 
+
+[161]
+[162]
+[163]
+[164]
+[165]
+[166]
+[167]
+[168]
+[169]
+[170]
+[171] (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.ind
+[172]
+Overfull \hbox (13.3567pt too wide) in paragraph at lines 9--11
+[]| \T1/pcr/m/n/10 .catalog_project_type_defaults\T1/ptm/m/n/10 , 
+
+Overfull \hbox (1.3567pt too wide) in paragraph at lines 20--21
+[]| \T1/pcr/m/n/10 .check_private_data_exposure\T1/ptm/m/n/10 , 
+
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 59--61
+[]| \T1/pcr/m/n/10 .default_render_dirs_for_type\T1/ptm/m/n/10 , 
+
+Overfull \hbox (31.3567pt too wide) in paragraph at lines 61--63
+[]| \T1/pcr/m/n/10 .default_root_render_dir_for_type\T1/ptm/m/n/10 , 
+
+Overfull \hbox (19.3567pt too wide) in paragraph at lines 71--73
+[]| \T1/pcr/m/n/10 .framework_catalog_default_path\T1/ptm/m/n/10 , 
+
+Overfull \hbox (1.3567pt too wide) in paragraph at lines 73--74
+[]| \T1/pcr/m/n/10 .framework_catalog_user_path\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 76--77
+[]| \T1/pcr/m/n/10 .generate_environment_section\T1/ptm/m/n/10 , 
+
+Overfull \hbox (1.3567pt too wide) in paragraph at lines 77--78
+[]| \T1/pcr/m/n/10 .generate_function_reference\T1/ptm/m/n/10 , 
+
+[173]
+Overfull \hbox (13.3567pt too wide) in paragraph at lines 82--84
+[]| \T1/pcr/m/n/10 .generate_project_type_section\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 94--96
+[]| \T1/pcr/m/n/10 .get_notebook_dir_from_config\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 96--98
+[]| \T1/pcr/m/n/10 .get_package_list_from_config\T1/ptm/m/n/10 , 
+
+Overfull \hbox (7.3567pt too wide) in paragraph at lines 126--128
+[]| \T1/pcr/m/n/10 .migrate_config_from_previous\T1/ptm/m/n/10 , 
+
+
+Overfull \hbox (19.3567pt too wide) in paragraph at lines 143--145
+[]| \T1/pcr/m/n/10 .replace_moustache_placeholders\T1/ptm/m/n/10 , 
+
+[174]
+
+Overfull \hbox (11.3567pt too wide) in paragraph at lines 279--281
+[]\T1/pcr/m/n/10 .default_root_render_dir_for_type\T1/ptm/m/n/10 , 
+
+[175]
+
+[176]
+
+[177]
+
+[178]) (/tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d/Rd2.aux) )
+(see the transcript file for additional information)</usr/share/texmf-dist/font
+s/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-dist/fonts/type1/public
+/cm-super/sfrm1000.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sftt1
+000.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/t
+exmf-dist/fonts/type1/urw/courier/ucrro8a.pfb></usr/share/texmf-dist/fonts/type
+1/urw/times/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb>
+</usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/
+fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (178 pages, 408631 bytes).
+Transcript written on Rd2.log.
+Saving output to ‘framework-manual.pdf’ ...
+Done
+You may want to clean up by 'rm -Rf /tmp/Rtmpq0KSI8/Rd2pdf3b491c6c33df2d'

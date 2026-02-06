@@ -1117,7 +1117,7 @@ configure_global <- function(settings = NULL, validate = TRUE) {
   write_frameworkrc(updated_for_save)
 
   if (validate) {
-    message("\u2713 Global settings updated in ~/.config/framework/settings.yml")
+    message("[ok] Global settings updated in ", file.path(fw_config_dir(), "settings.yml"))
   }
 
   invisible(updated)
@@ -1221,6 +1221,9 @@ get_global_setting <- function(key, default = "", print = TRUE) {
 
     # Remove leading slash if present
     relative_part <- sub("^[/\\\\]", "", relative_part)
+
+    # Remove trailing slash from relative part
+    relative_part <- sub("[/\\\\]$", "", relative_part)
 
     # Construct tilde path
     if (relative_part == "") {

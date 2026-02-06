@@ -1,0 +1,477 @@
+# Settings catalog describing default configuration fields, labels, and hints.
+# This file is intended to be user-editable (e.g. via GUI or CLI).
+# VERSION 2: Reorganized around scaffold() workflow
+# -----------------------------------------------------------------------------
+
+meta:
+  version: 2
+  description: "Framework settings catalog - reorganized around scaffold workflow"
+
+# Global defaults
+global:
+  projects_root: "~/projects"
+
+# Author information (used in both Global Settings and New Project)
+author:
+  name: "Your Name"
+  email: "your.email@example.com"
+  affiliation: "Your Institution"
+
+# Default settings for new projects
+defaults:
+  project_type: "project"
+
+  # Scaffold Behavior (runtime settings)
+  scaffold:
+    seed_on_scaffold: false
+    seed: "123"
+    set_theme_on_scaffold: false
+    ggplot_theme: "theme_minimal"
+    source_all_functions: true
+    notebook_format: "quarto"
+    ide: "vscode"
+
+  # Packages & Dependencies
+  packages:
+    use_renv: false
+    default_packages:
+      - name: "dplyr"
+        source: "cran"
+        auto_attach: false
+      - name: "ggplot2"
+        source: "cran"
+        auto_attach: false
+      - name: "readr"
+        source: "cran"
+        auto_attach: false
+
+  # .env template defaults
+  env:
+    raw: |-
+      # Framework environment defaults
+      # Populate these values before running scaffold() or publishing.
+
+      # PostgreSQL connection (example)
+      POSTGRES_HOST=
+      POSTGRES_PORT=5432
+      POSTGRES_DB=
+      POSTGRES_SCHEMA=public
+      POSTGRES_USER=
+      POSTGRES_PASSWORD=
+
+      # S3-compatible storage (AWS S3, MinIO, etc.)
+      S3_BUCKET=
+      S3_ACCESS_KEY=
+      S3_SECRET_KEY=
+      S3_REGION=
+      S3_ENDPOINT=
+      S3_SESSION_TOKEN=
+
+  # Default connection definitions
+  connections:
+    options:
+      default_connection: "framework"
+      default_s3_connection: ""  # Name of default S3 connection for publishing
+    connections:
+      framework:
+        driver: "sqlite"
+        database: "framework.db"
+      # Example S3 connection (uncomment and configure to enable publishing)
+      # s3_public:
+      #   driver: "s3"
+      #   bucket: "my-bucket"
+      #   region: "us-east-1"
+      #   prefix: "framework-outputs"  # Optional prefix for all uploads
+      #   default: true                # Mark as default S3 connection
+      #   # Credentials from .env: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+      #   # Or inline (not recommended):
+      #   # access_key_id: "${S3_ACCESS_KEY}"
+      #   # secret_access_key: "${S3_SECRET_KEY}"
+
+  # AI Assistants
+  ai:
+    enabled: true
+    canonical_file: "CLAUDE.md"
+    preferred_assistant: "claude"
+    assistants:
+      - "claude"
+
+  # Git & Hooks
+  git:
+    initialize: true
+    gitignore_template: "gitignore-project"
+    hooks:
+      ai_sync: false
+      data_security: false
+      check_sensitive_dirs: false
+
+  # Quarto Defaults - applied when generating _quarto.yml files
+  quarto:
+    html:
+      format: "html"
+      embed_resources: true
+      theme: "default"
+      toc: true
+      toc_depth: 3
+      code_fold: false
+      code_tools: false
+      highlight_style: "github"
+    revealjs:
+      format: "revealjs"
+      theme: "default"
+      incremental: false
+      slide_number: true
+      transition: "slide"
+      background_transition: "fade"
+      controls: true
+      progress: true
+      center: true
+      highlight_style: "github"
+
+# Stubs & Templates
+templates:
+  notebook:
+    quarto_default: "notebook-default.qmd"
+    rmarkdown_default: "notebook-default.Rmd"
+  script:
+    r_default: "script-default.R"
+  gitignore:
+    available:
+      - "gitignore-project"
+      - "gitignore-sensitive"
+      - "gitignore-course"
+      - "gitignore-presentation"
+
+# Project Structure - organized by project type
+project_types:
+  project:
+    label: "Standard Project Structure"
+    description: "Full-featured with organized data, work, and output directories"
+
+    # Scaffold settings (per-type)
+    scaffold:
+      set_theme_on_scaffold: false
+      ggplot_theme: "theme_minimal"
+
+    directories:
+      functions:
+        label: "Functions"
+        default: "functions"
+        enabled_by_default: true
+        hint: "R files here are sourced by scaffold(), so helper functions are live in every project session."
+      notebooks:
+        label: "Notebooks"
+        default: "notebooks"
+        enabled_by_default: true
+        hint: "Quarto or R Markdown notebooks for analysis."
+      scripts:
+        label: "Scripts"
+        default: "scripts"
+        enabled_by_default: true
+        hint: "Reusable R scripts, job runners, or automation tasks."
+      inputs_raw:
+        label: "Raw data"
+        default: "inputs/raw"
+        enabled_by_default: true
+        hint: "Read-only exports from source systems."
+      inputs_intermediate:
+        label: "Intermediate data"
+        default: "inputs/intermediate"
+        enabled_by_default: true
+        hint: "Data after light cleaning or pre-processing steps."
+      inputs_final:
+        label: "Analysis-ready data"
+        default: "inputs/final"
+        enabled_by_default: true
+        hint: "Final inputs ready for modeling or reporting."
+      docs:
+        label: "Documentation"
+        default: "docs"
+        enabled_by_default: false
+        hint: "Codebooks, documentation, and other reference materials."
+      outputs_tables:
+        label: "Tables"
+        default: "outputs/tables"
+        enabled_by_default: false
+        hint: "Publishable tables ready for reports or manuscripts. Created on first use by save_table()."
+      outputs_figures:
+        label: "Figures"
+        default: "outputs/figures"
+        enabled_by_default: false
+        hint: "Final plots and graphics. Created on first use by save_figure()."
+      outputs_models:
+        label: "Models"
+        default: "outputs/models"
+        enabled_by_default: false
+        hint: "Serialized models or model summaries. Created on first use by save_model()."
+      outputs_reports:
+        label: "Reports"
+        default: "outputs/reports"
+        enabled_by_default: false
+        hint: "Final reports and deliverables ready for publication."
+      cache:
+        label: "Cache"
+        default: "outputs/cache"
+        enabled_by_default: false
+        hint: "Temporary artifacts (gitignored). Created on first use."
+      scratch:
+        label: "Scratch"
+        default: "scratch"
+        enabled_by_default: false
+        hint: "Short-lived explorations (gitignored)."
+
+    # Quarto render directories (per workspace directory)
+    render_dirs:
+      notebooks:
+        label: "Notebooks render directory"
+        default: "outputs/notebooks"
+        hint: "Where Quarto/RMarkdown notebooks are rendered to."
+      docs:
+        label: "Documentation render directory"
+        default: "outputs/docs"
+        hint: "Where documentation is rendered to."
+
+    quarto:
+      render_dir:
+        label: "Quarto render directory"
+        default: "outputs/notebooks"
+
+    notebook_template:
+      default: "notebook"
+
+  project_sensitive:
+    label: "Privacy Sensitive Project Structure"
+    description: "Enhanced privacy controls for sensitive data with dedicated private/public flows"
+
+    scaffold:
+      set_theme_on_scaffold: false
+      ggplot_theme: "theme_minimal"
+
+    directories:
+      functions:
+        label: "Functions"
+        default: "functions"
+        enabled_by_default: true
+      notebooks:
+        label: "Notebooks"
+        default: "notebooks"
+        enabled_by_default: true
+      scripts:
+        label: "Scripts"
+        default: "scripts"
+        enabled_by_default: true
+      docs:
+        label: "Documentation"
+        default: "docs"
+        enabled_by_default: false
+        hint: "Codebooks, documentation, and other reference materials."
+      inputs_private_raw:
+        label: "Raw data (private)"
+        default: "inputs/private/raw"
+        enabled_by_default: true
+      inputs_public_raw:
+        label: "Raw data (public)"
+        default: "inputs/public/raw"
+        enabled_by_default: true
+      inputs_private_intermediate:
+        label: "Intermediate data (private)"
+        default: "inputs/private/intermediate"
+        enabled_by_default: true
+      inputs_public_intermediate:
+        label: "Intermediate data (public)"
+        default: "inputs/public/intermediate"
+        enabled_by_default: true
+      inputs_private_final:
+        label: "Analysis-ready data (private)"
+        default: "inputs/private/final"
+        enabled_by_default: true
+      inputs_public_final:
+        label: "Analysis-ready data (public)"
+        default: "inputs/public/final"
+        enabled_by_default: true
+      outputs_private_tables:
+        label: "Tables (private)"
+        default: "outputs/private/tables"
+        enabled_by_default: false
+        hint: "Created on first use by save_table()."
+      outputs_public_tables:
+        label: "Tables (public)"
+        default: "outputs/public/tables"
+        enabled_by_default: false
+        hint: "Created on first use by save_table(public = TRUE)."
+      outputs_private_figures:
+        label: "Figures (private)"
+        default: "outputs/private/figures"
+        enabled_by_default: false
+        hint: "Created on first use by save_figure()."
+      outputs_public_figures:
+        label: "Figures (public)"
+        default: "outputs/public/figures"
+        enabled_by_default: false
+        hint: "Created on first use by save_figure(public = TRUE)."
+      outputs_private_models:
+        label: "Models (private)"
+        default: "outputs/private/models"
+        enabled_by_default: false
+        hint: "Created on first use by save_model()."
+      outputs_public_models:
+        label: "Models (public)"
+        default: "outputs/public/models"
+        enabled_by_default: false
+        hint: "Created on first use by save_model(public = TRUE)."
+      outputs_private_reports:
+        label: "Reports (private)"
+        default: "outputs/private/reports"
+        enabled_by_default: false
+      outputs_public_reports:
+        label: "Reports (public)"
+        default: "outputs/public/reports"
+        enabled_by_default: false
+      cache:
+        label: "Cache"
+        default: "outputs/private/cache"
+        enabled_by_default: false
+        hint: "Temporary artifacts (gitignored). Created on first use."
+      scratch:
+        label: "Scratch"
+        default: "scratch"
+        enabled_by_default: false
+
+    # Quarto render directories (per workspace directory)
+    render_dirs:
+      notebooks:
+        label: "Notebooks render directory"
+        default: "outputs/private/notebooks"
+        hint: "Where Quarto/RMarkdown notebooks are rendered to."
+      docs:
+        label: "Documentation render directory"
+        default: "outputs/private/docs"
+        hint: "Where documentation is rendered to."
+
+    quarto:
+      render_dir:
+        label: "Quarto render directory"
+        default: "outputs/public/docs"
+
+    notebook_template:
+      default: "notebook"
+
+  presentation:
+    label: "Presentation Structure"
+    description: "Minimal structure for slides and presentations"
+
+    scaffold:
+      set_theme_on_scaffold: false
+      ggplot_theme: "theme_minimal"
+
+    directories:
+      presentation_source:
+        label: "Presentation source file"
+        default: "presentation.qmd"
+        enabled_by_default: true
+      rendered_slides:
+        label: "Rendered slides directory"
+        default: "."
+        enabled_by_default: true
+      data:
+        label: "Data"
+        default: "data"
+        enabled_by_default: false
+        hint: "Data files for the presentation."
+      scripts:
+        label: "Scripts"
+        default: "scripts"
+        enabled_by_default: false
+        hint: "Data processing or analysis scripts."
+      functions:
+        label: "Functions"
+        default: "functions"
+        enabled_by_default: false
+        hint: "Helper functions for analysis or visualization."
+      outputs:
+        label: "Outputs"
+        default: "outputs"
+        enabled_by_default: false
+        hint: "Figures, tables, and other presentation outputs."
+      cache:
+        label: "Cache"
+        default: "cache"
+        enabled_by_default: false
+        hint: "Temporary artifacts (gitignored). Created on first use."
+
+    quarto:
+      render_dir:
+        label: "Quarto render directory"
+        default: "."
+
+    notebook_template:
+      default: "notebook"
+
+  course:
+    label: "Course Structure"
+    description: "Simplified structure for teaching materials with modules and assignments"
+
+    scaffold:
+      set_theme_on_scaffold: false
+      ggplot_theme: "theme_minimal"
+
+    directories:
+      data:
+        label: "Course data"
+        default: "data"
+        enabled_by_default: true
+      slides:
+        label: "Slides"
+        default: "slides"
+        enabled_by_default: true
+      assignments:
+        label: "Assignments"
+        default: "assignments"
+        enabled_by_default: true
+      course_docs:
+        label: "Course documents"
+        default: "course_docs"
+        enabled_by_default: true
+      readings:
+        label: "Readings"
+        default: "readings"
+        enabled_by_default: true
+      notebooks:
+        label: "Module notebooks"
+        default: "modules"
+        enabled_by_default: false
+      functions:
+        label: "Functions"
+        default: "functions"
+        enabled_by_default: false
+      scripts:
+        label: "Scripts"
+        default: "scripts"
+        enabled_by_default: false
+      cache:
+        label: "Cache"
+        default: "cache"
+        enabled_by_default: false
+        hint: "Temporary artifacts (gitignored). Created on first use."
+
+    render_dirs:
+      slides:
+        label: "Slides render directory"
+        default: "rendered/slides"
+      assignments:
+        label: "Assignments render directory"
+        default: "rendered/assignments"
+      course_docs:
+        label: "Course documents render directory"
+        default: "rendered/course_docs"
+      modules:
+        label: "Modules render directory"
+        default: "rendered/modules"
+
+    quarto:
+      render_dir:
+        label: "Quarto render directory"
+        default: "rendered/slides"
+
+    notebook_template:
+      default: "notebook"

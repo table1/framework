@@ -24,7 +24,7 @@
 #' framework::new_project()  # Create projects using saved defaults
 #' ```
 #'
-#' Global settings from `~/.config/framework/settings.yml` are used for:
+#' Global settings from `tools::R_user_dir("framework", "config")` are used for:
 #' - Author information (name, email, affiliation
 #' - Default packages
 #' - Directory structure
@@ -49,7 +49,7 @@
 #' @export
 new_project <- function(name = NULL, location = NULL, type = "project", browse = interactive(), ...) {
   # Check global config exists
-  config_dir <- path.expand("~/.config/framework")
+  config_dir <- fw_config_dir()
   settings_path <- file.path(config_dir, "settings.yml")
 
   if (!file.exists(settings_path)) {

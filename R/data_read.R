@@ -226,27 +226,36 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
         readr::read_delim(spec$path, show_col_types = FALSE, delim = "\t", ...)
       },
       rds = readRDS(spec$path),
-      excel = {
+      excel = ,
+      xlsx = ,
+      xls = {
         require_readxl()
         readxl::read_excel(spec$path, ...)
       },
-      stata = {
+      stata = ,
+      dta = {
         require_haven("Stata")
         haven::read_dta(spec$path, ...)
       },
-      spss = {
+      spss = ,
+      sav = ,
+      zsav = {
         require_haven("SPSS")
         haven::read_sav(spec$path, ...)
       },
-      spss_por = {
+      spss_por = ,
+      por = {
         require_haven("SPSS portable")
         haven::read_por(spec$path, ...)
       },
-      sas = {
+      sas = ,
+      sas7bdat = ,
+      sas7bcat = {
         require_haven("SAS")
         haven::read_sas(spec$path, ...)
       },
-      sas_xpt = {
+      sas_xpt = ,
+      xpt = {
         require_haven("SAS transport")
         haven::read_xpt(spec$path, ...)
       },
@@ -262,7 +271,7 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   )
 
   # Strip haven attributes if requested (default behavior)
-  if (!keep_attributes && spec$type %in% c("stata", "spss", "spss_por", "sas", "sas_xpt")) {
+  if (!keep_attributes && spec$type %in% c("stata", "dta", "spss", "sav", "zsav", "spss_por", "por", "sas", "sas7bdat", "sas7bcat", "sas_xpt", "xpt")) {
     data <- haven::zap_formats(data)
     data <- haven::zap_labels(data)
     data <- haven::zap_label(data)
@@ -564,7 +573,9 @@ data_info <- function(path) {
   create_spec <- function(path, existing_spec = NULL) {
     # Normalize relative paths against config directory
     # (paths from config are relative to config file, not current directory)
-    if (!grepl("^/", path)) {
+    # Check for both Unix absolute (/...) and Windows absolute (C:/... or C:\...)
+    is_absolute <- grepl("^/", path) || grepl("^[A-Za-z]:[/\\\\]", path)
+    if (!is_absolute) {
       # Relative path - resolve against config directory
       full_path <- file.path(config_dir, path)
       # Normalize to handle .. and . in path

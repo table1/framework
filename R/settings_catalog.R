@@ -9,7 +9,7 @@
 #' Get the path to the user-editable settings catalog override
 #' @keywords internal
 .framework_catalog_user_path <- function() {
-  file.path(.framework_config_dir(), "settings-catalog.yml")
+  file.path(fw_config_dir(), "settings-catalog.yml")
 }
 
 #' Read the Framework settings catalog

@@ -43,7 +43,7 @@ framework::setup()        # One-time global configuration
 framework::new_project()  # Create projects using saved defaults
 }\if{html}{\out{</div>}}
 
-Global settings from \verb{~/.config/framework/settings.yml} are used for:
+Global settings from \code{tools::R_user_dir("framework", "config")} are used for:
 \itemize{
 \item Author information (name, email, affiliation
 \item Default packages

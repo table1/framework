@@ -64,7 +64,9 @@ status <- function() {
   cat("Git:\n")
   cat("\033[0m")  # Reset
 
-  git_available <- tryCatch({
+  # Check if git is installed
+  git_installed <- nzchar(Sys.which("git"))
+  git_available <- git_installed && tryCatch({
     system("git rev-parse --git-dir", ignore.stdout = TRUE, ignore.stderr = TRUE) == 0
   }, error = function(e) FALSE)
 
@@ -103,6 +105,8 @@ status <- function() {
     } else {
       cat("  \033[1;31mNo commits yet\033[0m\n")
     }
+  } else if (!git_installed) {
+    cat("  Git not installed\n")
   } else {
     cat("  Not a git repository\n")
   }

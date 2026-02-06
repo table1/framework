@@ -1,0 +1,2678 @@
+
+R version 4.5.2 (2025-10-31) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "framework"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> base::assign(".ExTimings", "framework-Ex.timings", pos = 'CheckExEnv')
+> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+> base::assign(".format_ptime",
++ function(x) {
++   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
++   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
++   options(OutDec = '.')
++   format(x[1L:3L], digits = 7L)
++ },
++ pos = 'CheckExEnv')
+> 
+> ### * </HEADER>
+> library('framework')
+
+Attaching package: ‘framework’
+
+The following object is masked from ‘package:methods’:
+
+    new
+
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("ai_generate_context")
+> ### * ai_generate_context
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: ai_generate_context
+> ### Title: Generate AI Context File
+> ### Aliases: ai_generate_context
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Generate AI context for current project
+> ##D content <- ai_generate_context()
+> ##D 
+> ##D # Generate for a specific project type
+> ##D content <- ai_generate_context(project_type = "project_sensitive")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("ai_generate_context", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("ai_regenerate_context")
+> ### * ai_regenerate_context
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: ai_regenerate_context
+> ### Title: Regenerate Dynamic Sections in AI Context File
+> ### Aliases: ai_regenerate_context
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Regenerate all dynamic sections
+> ##D ai_regenerate_context()
+> ##D 
+> ##D # Regenerate only packages section
+> ##D ai_regenerate_context(sections = "packages")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("ai_regenerate_context", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("ai_sync_context")
+> ### * ai_sync_context
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: ai_sync_context
+> ### Title: Sync AI Assistant Context Files
+> ### Aliases: ai_sync_context
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Sync AI context files
+> ##D ai_sync_context()
+> ##D 
+> ##D # Force sync even if targets are newer
+> ##D ai_sync_context(force = TRUE)
+> ##D 
+> ##D # Silent sync (for git hooks)
+> ##D ai_sync_context(verbose = FALSE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("ai_sync_context", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("bootstrap_project_init")
+> ### * bootstrap_project_init
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: bootstrap_project_init
+> ### Title: Bootstrap project initialization file
+> ### Aliases: bootstrap_project_init
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create init.R to see initialization logic
+> ##D bootstrap_project_init()
+> ##D 
+> ##D # Write to a different location
+> ##D bootstrap_project_init("docs/init_reference.R")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("bootstrap_project_init", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("cache_list")
+> ### * cache_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: cache_list
+> ### Title: List all cached values
+> ### Aliases: cache_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all cache entries
+> ##D cache_list()
+> ##D 
+> ##D # Filter to see only expired caches
+> ##D cache_list() |> dplyr::filter(status == "expired")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("cache_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("cache_remember")
+> ### * cache_remember
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: cache_remember
+> ### Title: Remember a value (get from cache or compute and store)
+> ### Aliases: cache_remember
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Cache expensive computation
+> ##D result <- cache_remember("my_analysis", {
+> ##D   expensive_computation()
+> ##D })
+> ##D 
+> ##D # Force refresh when data changes
+> ##D result <- cache_remember("analysis", {
+> ##D   run_analysis()
+> ##D }, refresh = file.mtime("data.csv") > cache_time)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("cache_remember", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_ai_agents")
+> ### * configure_ai_agents
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_ai_agents
+> ### Title: Configure AI Assistant Support
+> ### Aliases: configure_ai_agents
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Enable AI support with Claude and Copilot
+> ##D configure_ai_agents(support = "yes", assistants = c("claude", "copilot"))
+> ##D 
+> ##D # Disable AI support
+> ##D configure_ai_agents(support = "never")
+> ##D 
+> ##D # Show current status
+> ##D configure_ai_agents()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_ai_agents", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_author")
+> ### * configure_author
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_author
+> ### Title: Configure Author Information
+> ### Aliases: configure_author
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Interactive mode (prompts for all fields)
+> ##D configure_author()
+> ##D 
+> ##D # Provide values directly
+> ##D configure_author(
+> ##D   name = "Jane Doe",
+> ##D   email = "jane@example.com",
+> ##D   affiliation = "University of Example"
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_author", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_connection")
+> ### * configure_connection
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_connection
+> ### Title: Configure Database Connection
+> ### Aliases: configure_connection
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Interactive mode
+> ##D configure_connection()
+> ##D 
+> ##D # SQLite connection
+> ##D configure_connection(
+> ##D   name = "mydb",
+> ##D   driver = "sqlite",
+> ##D   database = "data/mydb.db"
+> ##D )
+> ##D 
+> ##D # PostgreSQL connection
+> ##D configure_connection(
+> ##D   name = "warehouse",
+> ##D   driver = "postgresql",
+> ##D   host = "localhost",
+> ##D   port = 5432,
+> ##D   database = "analytics",
+> ##D   user = "analyst"
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_connection", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_data")
+> ### * configure_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_data
+> ### Title: Configure Data Source
+> ### Aliases: configure_data
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Interactive mode
+> ##D configure_data()
+> ##D 
+> ##D # Provide values directly
+> ##D configure_data(
+> ##D   path = "source.private.survey",
+> ##D   file = "inputs/raw/survey.csv",
+> ##D   type = "csv",
+> ##D   locked = TRUE
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_directories")
+> ### * configure_directories
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_directories
+> ### Title: Configure Project Directories
+> ### Aliases: configure_directories
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Interactive mode
+> ##D configure_directories()
+> ##D 
+> ##D # Set specific directory
+> ##D configure_directories(
+> ##D   directory = "notebooks",
+> ##D   path = "analysis"
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_directories", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_global")
+> ### * configure_global
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_global
+> ### Title: Configure Global Framework Settings
+> ### Aliases: configure_global
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Update author information
+> ##D configure_global(settings = list(
+> ##D   author = list(
+> ##D     name = "Jane Doe",
+> ##D     email = "jane@example.com"
+> ##D   )
+> ##D ))
+> ##D 
+> ##D # Update default project type
+> ##D configure_global(settings = list(
+> ##D   defaults = list(
+> ##D     project_type = "presentation"
+> ##D   )
+> ##D ))
+> ##D 
+> ##D # Get current settings (read-only)
+> ##D current <- configure_global()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_global", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("configure_packages")
+> ### * configure_packages
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: configure_packages
+> ### Title: Configure Package Dependencies
+> ### Aliases: configure_packages
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Interactive mode
+> ##D configure_packages()
+> ##D 
+> ##D # Add CRAN package with auto-attach
+> ##D configure_packages(
+> ##D   package = "dplyr",
+> ##D   auto_attach = TRUE
+> ##D )
+> ##D 
+> ##D # Add GitHub package
+> ##D configure_packages(
+> ##D   package = "tidyverse/dplyr@main",
+> ##D   auto_attach = FALSE
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("configure_packages", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("connection_find")
+> ### * connection_find
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: connection_find
+> ### Title: Find a record by ID
+> ### Aliases: connection_find
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D conn <- db_connect("postgres")
+> ##D user <- connection_find(conn, "users", 42)
+> ##D DBI::dbDisconnect(conn)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("connection_find", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("connection_pool")
+> ### * connection_pool
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: connection_pool
+> ### Title: Get or create a connection pool
+> ### Aliases: connection_pool
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Get a pool (reuses existing pool if already created)
+> ##D pool <- connection_pool("my_db")
+> ##D 
+> ##D # Use like a regular connection
+> ##D users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
+> ##D 
+> ##D # No need to disconnect - pool manages connections automatically
+> ##D 
+> ##D # Multiple operations reuse connections
+> ##D result <- connection_with_pool("my_db", {
+> ##D   users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
+> ##D   posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
+> ##D   list(users = users, posts = posts)
+> ##D })
+> ##D 
+> ##D # Clean up all pools when done (optional)
+> ##D connection_pool_close_all()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("connection_pool", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("connection_pool_close")
+> ### * connection_pool_close
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: connection_pool_close
+> ### Title: Close a specific connection pool
+> ### Aliases: connection_pool_close
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D connection_pool_close("my_db")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("connection_pool_close", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("connection_pool_close_all")
+> ### * connection_pool_close_all
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: connection_pool_close_all
+> ### Title: Close all connection pools
+> ### Aliases: connection_pool_close_all
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Close all pools
+> ##D connection_pool_close_all()
+> ##D 
+> ##D # Quiet mode
+> ##D connection_pool_close_all(quiet = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("connection_pool_close_all", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("connection_pool_list")
+> ### * connection_pool_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: connection_pool_list
+> ### Title: List active connection pools
+> ### Aliases: connection_pool_list
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D connection_pool_list()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("connection_pool_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("connection_with_pool")
+> ### * connection_with_pool
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: connection_with_pool
+> ### Title: Execute code with a connection pool
+> ### Aliases: connection_with_pool
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Simple usage
+> ##D users <- connection_with_pool("my_db", {
+> ##D   DBI::dbGetQuery(pool, "SELECT * FROM users WHERE active = TRUE")
+> ##D })
+> ##D 
+> ##D # Multiple operations
+> ##D result <- connection_with_pool("my_db", {
+> ##D   users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
+> ##D   posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
+> ##D   list(users = users, posts = posts)
+> ##D })
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("connection_with_pool", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("data_add")
+> ### * data_add
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: data_add
+> ### Title: Add an existing file to the data catalog
+> ### Aliases: data_add
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Add a downloaded CSV file to the catalog
+> ##D data_add("inputs/raw/survey_results.csv", name = "inputs.raw.survey_results")
+> ##D 
+> ##D # Now you can read it with dot notation
+> ##D data_read("inputs.raw.survey_results")
+> ##D 
+> ##D # Add with auto-generated name
+> ##D data_add("inputs/intermediate/cleaned_data.rds")
+> ##D # Name will be derived as "inputs.intermediate.cleaned_data"
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("data_add", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("data_info")
+> ### * data_info
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: data_info
+> ### Title: Get data specification from config
+> ### Aliases: data_info
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Get info from dot notation
+> ##D info <- data_info("source.private.my_data")
+> ##D 
+> ##D # Get info from file path
+> ##D info <- data_info("data/public/example.csv")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("data_info", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("data_list")
+> ### * data_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: data_list
+> ### Title: List all data entries from config
+> ### Aliases: data_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all data entries
+> ##D data_list()
+> ##D 
+> ##D # Use the alias
+> ##D list_data()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("data_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_connect")
+> ### * db_connect
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_connect
+> ### Title: Get a database connection
+> ### Aliases: db_connect
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Preferred: use db_query() which auto-disconnects
+> ##D users <- db_query("SELECT * FROM users", "postgres")
+> ##D 
+> ##D # Manual connection management (remember to disconnect!)
+> ##D conn <- db_connect("postgres")
+> ##D DBI::dbListTables(conn)
+> ##D DBI::dbDisconnect(conn)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_connect", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_drivers_install")
+> ### * db_drivers_install
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_drivers_install
+> ### Title: Install database drivers
+> ### Aliases: db_drivers_install
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Install specific drivers
+> ##D db_drivers_install(c("postgres", "mysql"))
+> ##D 
+> ##D # Interactive mode
+> ##D db_drivers_install()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_drivers_install", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_drivers_status")
+> ### * db_drivers_status
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_drivers_status
+> ### Title: Check if database drivers are installed
+> ### Aliases: db_drivers_status
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Check all drivers
+> ##D db_drivers_status()
+> ##D 
+> ##D # Quiet mode (no messages)
+> ##D db_drivers_status(quiet = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_drivers_status", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_execute")
+> ### * db_execute
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_execute
+> ### Title: Execute a database statement
+> ### Aliases: db_execute
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D rows <- db_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_execute", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_list")
+> ### * db_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_list
+> ### Title: List all database connections from configuration
+> ### Aliases: db_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all connections
+> ##D db_list()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_query")
+> ### * db_query
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_query
+> ### Title: Get data from a database query
+> ### Aliases: db_query
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D users <- db_query("SELECT * FROM users", "my_db")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_query", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_transaction")
+> ### * db_transaction
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_transaction
+> ### Title: Execute code within a database transaction
+> ### Aliases: db_transaction
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D conn <- db_connect("postgres")
+> ##D 
+> ##D # Basic transaction
+> ##D db_transaction(conn, {
+> ##D   DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES ('Alice', 30)")
+> ##D   DBI::dbExecute(conn, "INSERT INTO users (name, age) VALUES ('Bob', 25)")
+> ##D })
+> ##D 
+> ##D # Transaction with error handling - auto-rollback on error
+> ##D tryCatch({
+> ##D   db_transaction(conn, {
+> ##D     DBI::dbExecute(conn, "INSERT INTO users (name) VALUES ('Alice')")
+> ##D     stop("Something went wrong")  # This will trigger rollback
+> ##D   })
+> ##D }, error = function(e) {
+> ##D   message("Transaction failed: ", e$message)
+> ##D })
+> ##D 
+> ##D DBI::dbDisconnect(conn)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_transaction", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("db_with")
+> ### * db_with
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: db_with
+> ### Title: Execute code with a managed database connection
+> ### Aliases: db_with
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Safe - connection auto-closes
+> ##D users <- db_with("my_db", {
+> ##D   DBI::dbGetQuery(conn, "SELECT * FROM users WHERE active = TRUE")
+> ##D })
+> ##D 
+> ##D # Multiple operations with same connection
+> ##D result <- db_with("my_db", {
+> ##D   DBI::dbExecute(conn, "INSERT INTO users (name) VALUES ('Alice')")
+> ##D   DBI::dbGetQuery(conn, "SELECT * FROM users")
+> ##D })
+> ##D 
+> ##D # Connection closes even on error
+> ##D tryCatch(
+> ##D   db_with("my_db", {
+> ##D     stop("Something went wrong")  # Connection still closes
+> ##D   }),
+> ##D   error = function(e) message(e$message)
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("db_with", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("docs_export")
+> ### * docs_export
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: docs_export
+> ### Title: Export Package Documentation to Database
+> ### Aliases: docs_export
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Export to default location (exported functions only)
+> ##D docs_export()
+> ##D 
+> ##D # Export to custom location
+> ##D docs_export("inst/gui/docs.db")
+> ##D 
+> ##D # Include internal/private functions too
+> ##D docs_export("all_docs.db", include_internal = TRUE)
+> ##D 
+> ##D # Query the exported docs
+> ##D con <- DBI::dbConnect(RSQLite::SQLite(), "docs.db")
+> ##D DBI::dbGetQuery(con, "SELECT name, title FROM functions WHERE name LIKE 'data_%'")
+> ##D DBI::dbDisconnect(con)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("docs_export", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-get_driver_info")
+> ### * dot-get_driver_info
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: .get_driver_info
+> ### Title: Get driver information for a given database type
+> ### Aliases: .get_driver_info
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D .get_driver_info("postgres")
+> ##D .get_driver_info("mysql")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-get_driver_info", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-has_column")
+> ### * dot-has_column
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dot-has_column
+> ### Title: Check if a column exists in a table (S3 generic)
+> ### Aliases: dot-has_column .has_column .has_column.SQLiteConnection
+> ###   .has_column.PqConnection .has_column.MariaDBConnection
+> ###   '.has_column.Microsoft SQL Server' .has_column.duckdb_connection
+> ###   .has_column.default
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D conn <- connection_get("my_db")
+> ##D has_deleted_at <- .has_column(conn, "users", "deleted_at")
+> ##D DBI::dbDisconnect(conn)
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-has_column", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-list_columns")
+> ### * dot-list_columns
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dot-list_columns
+> ### Title: List all columns in a table (S3 generic)
+> ### Aliases: dot-list_columns .list_columns .list_columns.SQLiteConnection
+> ###   .list_columns.PqConnection .list_columns.MariaDBConnection
+> ###   '.list_columns.Microsoft SQL Server' .list_columns.duckdb_connection
+> ###   .list_columns.default
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D conn <- connection_get("my_db")
+> ##D columns <- .list_columns(conn, "users")
+> ##D DBI::dbDisconnect(conn)
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-list_columns", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-list_tables")
+> ### * dot-list_tables
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dot-list_tables
+> ### Title: List all tables in a database (S3 generic)
+> ### Aliases: dot-list_tables .list_tables .list_tables.default
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D conn <- connection_get("my_db")
+> ##D tables <- .list_tables(conn)
+> ##D DBI::dbDisconnect(conn)
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-list_tables", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-make_env")
+> ### * dot-make_env
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: .make_env
+> ### Title: Create or append to .env file
+> ### Aliases: .make_env
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create .env with database credentials
+> ##D .make_env(
+> ##D   DB_HOST = "localhost",
+> ##D   DB_PORT = "5432",
+> ##D   DB_PASSWORD = "secret",
+> ##D   comment = "Database connection"
+> ##D )
+> ##D 
+> ##D # Add API keys
+> ##D .make_env(
+> ##D   OPENAI_API_KEY = "sk-...",
+> ##D   comment = "API credentials"
+> ##D )
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-make_env", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-parse_package_spec")
+> ### * dot-parse_package_spec
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: .parse_package_spec
+> ### Title: Parse package specification with source detection
+> ### Aliases: .parse_package_spec
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D .parse_package_spec("dplyr")
+> ##D .parse_package_spec("dplyr@1.1.0")
+> ##D .parse_package_spec("tidyverse/dplyr@main")
+> ##D .parse_package_spec(list(name = "DESeq2", source = "bioc", auto_attach = FALSE))
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-parse_package_spec", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-require_driver")
+> ### * dot-require_driver
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: .require_driver
+> ### Title: Check if a database driver package is available
+> ### Aliases: .require_driver
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D .require_driver("PostgreSQL", "RPostgres")
+> ##D .require_driver("MySQL", "RMariaDB")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-require_driver", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dot-validate_driver")
+> ### * dot-validate_driver
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: .validate_driver
+> ### Title: Validate driver availability before connection
+> ### Aliases: .validate_driver
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D .validate_driver("postgres")
+> ##D .validate_driver("mysql")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dot-validate_driver", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("env_clear")
+> ### * env_clear
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: env_clear
+> ### Title: Clear R environment
+> ### Aliases: env_clear
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Clean everything
+> ##D env_clear()
+> ##D 
+> ##D # Keep specific objects
+> ##D env_clear(keep = c("config", "data"))
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("env_clear", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("env_summary")
+> ### * env_summary
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: env_summary
+> ### Title: Summarize R environment
+> ### Aliases: env_summary
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D env_summary()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("env_summary", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("get_global_setting")
+> ### * get_global_setting
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: get_global_setting
+> ### Title: Get Global Configuration Setting
+> ### Aliases: get_global_setting
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Get IDE setting
+> ##D get_global_setting("defaults.ide")
+> ##D 
+> ##D # Get with default value
+> ##D get_global_setting("defaults.notebook_format", default = "quarto")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("get_global_setting", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_add")
+> ### * git_add
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_add
+> ### Title: Stage Files for Commit
+> ### Aliases: git_add
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_add()              # Stage all changes
+> ##D git_add("README.md")   # Stage specific file
+> ##D git_add(c("R/foo.R", "R/bar.R"))
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_add", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_commit")
+> ### * git_commit
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_commit
+> ### Title: Commit Staged Changes
+> ### Aliases: git_commit
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_commit("Fix bug in data loading")
+> ##D git_commit("Update README", all = TRUE)  # Stage and commit
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_commit", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_diff")
+> ### * git_diff
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_diff
+> ### Title: Show Changes (Diff)
+> ### Aliases: git_diff
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_diff()             # Show unstaged changes
+> ##D git_diff(staged = TRUE) # Show staged changes
+> ##D git_diff(file = "R/foo.R")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_diff", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_hooks_enable")
+> ### * git_hooks_enable
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_hooks_enable
+> ### Title: Enable Specific Git Hook
+> ### Aliases: git_hooks_enable
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_hooks_enable("ai_sync")
+> ##D git_hooks_enable("data_security")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_hooks_enable", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_hooks_install")
+> ### * git_hooks_install
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_hooks_install
+> ### Title: Install Git Pre-commit Hook
+> ### Aliases: git_hooks_install
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Install hooks based on settings.yml
+> ##D git_hooks_install()
+> ##D 
+> ##D # Force reinstall (overwrites existing hook)
+> ##D git_hooks_install(force = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_hooks_install", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_log")
+> ### * git_log
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_log
+> ### Title: Show Commit Log
+> ### Aliases: git_log
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_log()
+> ##D git_log(n = 5)
+> ##D git_log(oneline = FALSE)  # Full format
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_log", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_pull")
+> ### * git_pull
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_pull
+> ### Title: Pull from Remote
+> ### Aliases: git_pull
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_pull()
+> ##D git_pull(remote = "origin", branch = "main")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_pull", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_push")
+> ### * git_push
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_push
+> ### Title: Push to Remote
+> ### Aliases: git_push
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_push()
+> ##D git_push(remote = "origin", branch = "main")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_push", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_security_audit")
+> ### * git_security_audit
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_security_audit
+> ### Title: Security audit for Framework projects
+> ### Aliases: git_security_audit
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Basic audit (report only)
+> ##D audit <- git_security_audit()
+> ##D print(audit$summary)
+> ##D View(audit$findings$orphaned_files)
+> ##D 
+> ##D # Quick scan without git history
+> ##D audit <- git_security_audit(check_git_history = FALSE)
+> ##D 
+> ##D # Verbose with limited git history
+> ##D audit <- git_security_audit(history_depth = 100, verbose = TRUE)
+> ##D 
+> ##D # Auto-fix mode (updates .gitignore)
+> ##D audit <- git_security_audit(auto_fix = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_security_audit", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("git_status")
+> ### * git_status
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: git_status
+> ### Title: Show Git Status
+> ### Aliases: git_status
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D git_status()
+> ##D git_status(short = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("git_status", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("gui")
+> ### * gui
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: gui
+> ### Title: Launch Framework GUI
+> ### Aliases: gui
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Launch the GUI
+> ##D framework::gui()
+> ##D 
+> ##D # Launch on specific port
+> ##D framework::gui(port = 8888)
+> ##D 
+> ##D # Open directly to settings
+> ##D framework::gui(route = "#/settings/basics")
+> ##D 
+> ##D # Run as standalone server (no browser, accessible from network)
+> ##D framework::gui(port = 8080, host = "0.0.0.0", browse = FALSE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("gui", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("make_notebook")
+> ### * make_notebook
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: make_notebook
+> ### Title: Create a Notebook or Script from Stub Template
+> ### Aliases: make_notebook
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create notebooks/1-init.qmd (defaults to Quarto)
+> ##D make_notebook("1-init")
+> ##D 
+> ##D # Create notebooks/analysis.Rmd (RMarkdown, extension-based)
+> ##D make_notebook("analysis.Rmd")
+> ##D 
+> ##D # Explicit type parameter
+> ##D make_notebook("report", type = "rmarkdown")
+> ##D 
+> ##D # Use custom stub template
+> ##D make_notebook("report", stub = "minimal")
+> ##D 
+> ##D # Create in specific directory
+> ##D make_notebook("explore", dir = "work")
+> ##D 
+> ##D # Convenient aliases (recommended for explicit types)
+> ##D make_qmd("analysis")       # Always creates .qmd
+> ##D make_rmd("report")         # Always creates .Rmd
+> ##D make_revealjs("slides")    # Creates reveal.js presentation
+> ##D make_presentation("deck")  # Alias for make_revealjs()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("make_notebook", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("make_presentation")
+> ### * make_presentation
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: make_presentation
+> ### Title: Create a Presentation
+> ### Aliases: make_presentation
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create notebooks/deck.qmd with reveal.js format
+> ##D make_presentation("deck")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("make_presentation", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("make_qmd")
+> ### * make_qmd
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: make_qmd
+> ### Title: Create a Quarto Notebook
+> ### Aliases: make_qmd
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create notebooks/analysis.qmd
+> ##D make_qmd("analysis")
+> ##D 
+> ##D # Use custom stub
+> ##D make_qmd("report", stub = "minimal")
+> ##D 
+> ##D # Create in specific directory
+> ##D make_qmd("explore", dir = "work")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("make_qmd", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("make_revealjs")
+> ### * make_revealjs
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: make_revealjs
+> ### Title: Create a Reveal.js Presentation
+> ### Aliases: make_revealjs
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create notebooks/slides.qmd with reveal.js format
+> ##D make_revealjs("slides")
+> ##D 
+> ##D # Create in specific directory
+> ##D make_revealjs("presentation", dir = "presentations")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("make_revealjs", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("make_rmd")
+> ### * make_rmd
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: make_rmd
+> ### Title: Create an RMarkdown Notebook
+> ### Aliases: make_rmd
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create notebooks/analysis.Rmd
+> ##D make_rmd("analysis")
+> ##D 
+> ##D # Use custom stub
+> ##D make_rmd("report", stub = "minimal")
+> ##D 
+> ##D # Create in specific directory
+> ##D make_rmd("explore", dir = "work")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("make_rmd", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("make_script")
+> ### * make_script
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: make_script
+> ### Title: Create an R Script from Stub Template
+> ### Aliases: make_script
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create script (extension optional)
+> ##D make_script("process-data")
+> ##D make_script("process-data.R")
+> ##D 
+> ##D # Use custom stub
+> ##D make_script("etl-pipeline", stub = "etl")
+> ##D 
+> ##D # Create in specific directory
+> ##D make_script("analysis", dir = "analysis/")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("make_script", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new")
+> ### * new
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new
+> ### Title: Create a New Project (Master Wrapper)
+> ### Aliases: new
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Create different project types
+> ##D new("analysis", "~/projects/analysis")
+> ##D new("study", "~/projects/study", type = "project_sensitive")
+> ##D new("slides", "~/projects/slides", type = "presentation")
+> ##D new("course-materials", "~/projects/course", type = "course")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_course")
+> ### * new_course
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_course
+> ### Title: Create a Course Project
+> ### Aliases: new_course
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D new_course("stats-101", "~/projects/stats-101")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_course", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_presentation")
+> ### * new_presentation
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_presentation
+> ### Title: Create a Presentation Project
+> ### Aliases: new_presentation
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D new_presentation("quarterly-review", "~/projects/q4-review")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_presentation", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_project")
+> ### * new_project
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_project
+> ### Title: Create a New Framework Project
+> ### Aliases: new_project
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Interactive - prompts for name and location
+> ##D new_project()
+> ##D 
+> ##D # With name and location specified
+> ##D new_project("my-analysis", "~/projects/my-analysis")
+> ##D 
+> ##D # Create a sensitive data project
+> ##D new_project("medical-study", "~/projects/medical", type = "project_sensitive")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_project", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_project_sensitive")
+> ### * new_project_sensitive
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_project_sensitive
+> ### Title: Create a Sensitive Data Project
+> ### Aliases: new_project_sensitive
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D new_project_sensitive("medical-study", "~/projects/medical")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_project_sensitive", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("packages_install")
+> ### * packages_install
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: packages_install
+> ### Title: Install packages from configuration
+> ### Aliases: packages_install
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Install all configured packages
+> ##D packages_install()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("packages_install", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("packages_list")
+> ### * packages_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: packages_list
+> ### Title: List all packages from configuration
+> ### Aliases: packages_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all packages
+> ##D packages_list()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("packages_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("packages_update")
+> ### * packages_update
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: packages_update
+> ### Title: Update packages from configuration
+> ### Aliases: packages_update
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Update all packages
+> ##D packages_update()
+> ##D 
+> ##D # Update specific packages
+> ##D packages_update(c("dplyr", "ggplot2"))
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("packages_update", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("project_info")
+> ### * project_info
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: project_info
+> ### Title: Display project structure information
+> ### Aliases: project_info
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Show project structure
+> ##D project_info()
+> ##D 
+> ##D # Get detailed info
+> ##D project_info(verbose = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("project_info", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("publish")
+> ### * publish
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: publish
+> ### Title: Publishing Functions
+> ### Aliases: publish
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Upload a single file
+> ##D publish("outputs/report.html")
+> ##D # -> https://bucket.s3.region.amazonaws.com/prefix/report.html
+> ##D 
+> ##D # Upload with custom destination
+> ##D publish("outputs/report.html", dest = "reports/q4-2024.html")
+> ##D 
+> ##D # Upload a directory
+> ##D publish("outputs/charts/", dest = "reports/charts/")
+> ##D 
+> ##D # Use specific connection
+> ##D publish("data.csv", connection = "s3_backup")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("publish", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("publish_data")
+> ### * publish_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: publish_data
+> ### Title: Publish data to S3
+> ### Aliases: publish_data
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Publish a data frame
+> ##D publish_data(my_df, "datasets/customers.csv")
+> ##D 
+> ##D # Publish as RDS
+> ##D publish_data(my_df, "datasets/customers.rds", format = "rds")
+> ##D 
+> ##D # Publish existing file
+> ##D publish_data("outputs/model.rds", "models/v2/model.rds")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("publish_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("publish_dir")
+> ### * publish_dir
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: publish_dir
+> ### Title: Publish a directory to S3
+> ### Aliases: publish_dir
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Upload entire directory
+> ##D publish_dir("outputs/dashboard/")
+> ##D 
+> ##D # Upload to specific location
+> ##D publish_dir("outputs/dashboard/", dest = "dashboards/v2/")
+> ##D 
+> ##D # Upload only HTML files
+> ##D publish_dir("outputs/", pattern = "\\.html$")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("publish_dir", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("publish_list")
+> ### * publish_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: publish_list
+> ### Title: List published files in S3
+> ### Aliases: publish_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all published files
+> ##D publish_list()
+> ##D 
+> ##D # List files under a prefix
+> ##D publish_list("reports/")
+> ##D 
+> ##D # List from specific connection
+> ##D publish_list(connection = "s3_backup")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("publish_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("publish_notebook")
+> ### * publish_notebook
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: publish_notebook
+> ### Title: Publish a Quarto notebook to S3
+> ### Aliases: publish_notebook
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # With static_hosting: true -> returns /analysis/
+> ##D # With static_hosting: false -> returns /analysis.html
+> ##D publish_notebook("notebooks/analysis.qmd")
+> ##D 
+> ##D # Publish to specific location
+> ##D publish_notebook("notebooks/analysis.qmd", dest = "reports/2024/q4")
+> ##D 
+> ##D # Publish non-self-contained (only with static_hosting: true)
+> ##D publish_notebook("notebooks/analysis.qmd", self_contained = FALSE)
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("publish_notebook", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("renv_disable")
+> ### * renv_disable
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: renv_disable
+> ### Title: Disable renv for this project
+> ### Aliases: renv_disable
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D renv_disable()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("renv_disable", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("renv_enable")
+> ### * renv_enable
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: renv_enable
+> ### Title: Enable renv for this project
+> ### Aliases: renv_enable
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D renv_enable()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("renv_enable", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("renv_enabled")
+> ### * renv_enabled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: renv_enabled
+> ### Title: Check if renv is enabled for this project
+> ### Aliases: renv_enabled
+> 
+> ### ** Examples
+> 
+> if (renv_enabled()) {
++   message("Using renv for package management")
++ }
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("renv_enabled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("result_list")
+> ### * result_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: result_list
+> ### Title: List saved results from the framework database
+> ### Aliases: result_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all results
+> ##D result_list()
+> ##D 
+> ##D # List only tables
+> ##D result_list(type = "table")
+> ##D 
+> ##D # List only public figures
+> ##D result_list(type = "figure", public = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("result_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("save_figure")
+> ### * save_figure
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: save_figure
+> ### Title: Save a figure to the outputs directory
+> ### Aliases: save_figure
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Save a ggplot
+> ##D p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+> ##D save_figure(p, "mpg_vs_hp")
+> ##D 
+> ##D # Save as PDF for publication
+> ##D save_figure(p, "mpg_vs_hp", format = "pdf", width = 10, height = 8)
+> ##D 
+> ##D # Save to public directory
+> ##D save_figure(p, "summary_plot", public = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("save_figure", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("save_model")
+> ### * save_model
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: save_model
+> ### Title: Save a model to the outputs directory
+> ### Aliases: save_model
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Fit and save a model
+> ##D model <- lm(mpg ~ hp + wt, data = mtcars)
+> ##D save_model(model, "mpg_regression")
+> ##D 
+> ##D # Save with qs for faster serialization
+> ##D save_model(model, "mpg_regression", format = "qs")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("save_model", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("save_notebook")
+> ### * save_notebook
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: save_notebook
+> ### Title: Save a rendered notebook to the outputs directory
+> ### Aliases: save_notebook
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Render and save a notebook
+> ##D save_notebook("notebooks/analysis.qmd")
+> ##D 
+> ##D # Save with a custom name
+> ##D save_notebook("notebooks/analysis.qmd", name = "final_analysis")
+> ##D 
+> ##D # Render to PDF
+> ##D save_notebook("notebooks/analysis.qmd", format = "pdf")
+> ##D 
+> ##D # Save to public directory (for sensitive projects)
+> ##D save_notebook("notebooks/analysis.qmd", public = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("save_notebook", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("save_report")
+> ### * save_report
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: save_report
+> ### Title: Save a report to the outputs directory
+> ### Aliases: save_report
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Save a rendered HTML report
+> ##D save_report("notebooks/analysis.html", "final_analysis")
+> ##D 
+> ##D # Save to public directory
+> ##D save_report("notebooks/summary.pdf", "public_summary", public = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("save_report", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("save_table")
+> ### * save_table
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: save_table
+> ### Title: Save a table to the outputs directory
+> ### Aliases: save_table
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Save a simple table
+> ##D save_table(my_results, "regression_results")
+> ##D 
+> ##D # Save as Excel
+> ##D save_table(my_results, "regression_results", format = "xlsx")
+> ##D 
+> ##D # Save to public directory (for sensitive projects)
+> ##D save_table(summary_stats, "summary", public = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("save_table", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("scaffold")
+> ### * scaffold
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: scaffold
+> ### Title: Initialize and load the project environment
+> ### Aliases: scaffold
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # At the top of every notebook or script:
+> ##D library(framework)
+> ##D scaffold()
+> ##D 
+> ##D # Now you can use your configured packages and functions
+> ##D # Access settings via the config object:
+> ##D config("directories.notebooks")
+> ##D config("seed")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("scaffold", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("scratch_capture")
+> ### * scratch_capture
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: scratch_capture
+> ### Title: Capture and Save Data to File
+> ### Aliases: scratch_capture
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Save a character vector as text
+> ##D scratch_capture(c("hello", "world"))
+> ##D 
+> ##D # Save a data frame as TSV
+> ##D scratch_capture(mtcars)
+> ##D 
+> ##D # Save an R object as RDS
+> ##D scratch_capture(list(a = 1, b = 2), to = "rds")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("scratch_capture", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("settings")
+> ### * settings
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: settings
+> ### Title: Get settings value by dot-notation key
+> ### Aliases: settings
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Get notebook directory (checks both locations)
+> ##D settings("notebooks")
+> ##D 
+> ##D # Get explicit nested setting
+> ##D settings("directories.notebooks")
+> ##D settings("connections.db.host")
+> ##D 
+> ##D # Get entire section
+> ##D settings("directories")  # Returns all directory settings
+> ##D settings("connections")  # Returns all connection settings
+> ##D 
+> ##D # View entire settings
+> ##D settings()  # Returns full configuration
+> ##D 
+> ##D # With default value
+> ##D settings("missing_key", default = "fallback")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("settings", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("setup")
+> ### * setup
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: setup
+> ### Title: Setup Framework (First-Time Configuration)
+> ### Aliases: setup
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # First-time setup
+> ##D framework::setup()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("setup", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("standardize_wd")
+> ### * standardize_wd
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: standardize_wd
+> ### Title: Standardize Working Directory for Framework Projects
+> ### Aliases: standardize_wd
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D library(framework)
+> ##D standardize_wd()
+> ##D scaffold()
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("standardize_wd", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("status")
+> ### * status
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: status
+> ### Title: Show Framework project status
+> ### Aliases: status
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D status()
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("status", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("storage_test")
+> ### * storage_test
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: storage_test
+> ### Title: Test storage connection
+> ### Aliases: storage_test
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Test default storage connection
+> ##D storage_test()
+> ##D 
+> ##D # Test specific connection
+> ##D storage_test("my_s3_backup")
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("storage_test", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("stubs_list")
+> ### * stubs_list
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: stubs_list
+> ### Title: List Available Stubs
+> ### Aliases: stubs_list
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # List all stubs
+> ##D stubs_list()
+> ##D 
+> ##D # List only Quarto stubs
+> ##D stubs_list("quarto")
+> ##D 
+> ##D # List only script stubs
+> ##D stubs_list("script")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("stubs_list", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("stubs_path")
+> ### * stubs_path
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: stubs_path
+> ### Title: Get Path to Stub Templates Directory
+> ### Aliases: stubs_path
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Get active stubs directory
+> ##D stubs_path()
+> ##D 
+> ##D # Get framework stubs directory
+> ##D stubs_path("framework")
+> ##D 
+> ##D # Get user stubs directory
+> ##D stubs_path("user")
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("stubs_path", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("stubs_publish")
+> ### * stubs_publish
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: stubs_publish
+> ### Title: Publish Stub Templates for Customization
+> ### Aliases: stubs_publish
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Publish all stubs
+> ##D stubs_publish()
+> ##D 
+> ##D # Publish only notebook stubs
+> ##D stubs_publish("notebooks")
+> ##D 
+> ##D # Publish specific stub
+> ##D stubs_publish(stubs = "default")
+> ##D 
+> ##D # Overwrite existing stubs
+> ##D stubs_publish(overwrite = TRUE)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("stubs_publish", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("view")
+> ### * view
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: view
+> ### Title: View data in an interactive browser viewer
+> ### Aliases: view
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # View a data frame
+> ##D view(mtcars)
+> ##D 
+> ##D # View with a title
+> ##D view(iris, title = "Iris Dataset")
+> ##D 
+> ##D # View a ggplot
+> ##D library(ggplot2)
+> ##D p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+> ##D view(p)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("view", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("view_create")
+> ### * view_create
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: view_create
+> ### Title: Create an enhanced view of R objects in the browser
+> ### Aliases: view_create
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # View a data frame with interactive table
+> ##D view_create(mtcars)
+> ##D 
+> ##D # View a plot
+> ##D library(ggplot2)
+> ##D p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+> ##D view_create(p, title = "MPG vs HP")
+> ##D 
+> ##D # View a list with YAML and R structure tabs
+> ##D view_create(list(a = 1, b = 2, c = list(d = 3)))
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("view_create", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("view_detail")
+> ### * view_detail
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: view_detail
+> ### Title: View data with enhanced browser-based interface
+> ### Aliases: view_detail
+> ### Keywords: internal
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # View a data frame with interactive table
+> ##D view_detail(mtcars)
+> ##D 
+> ##D # View with custom title
+> ##D view_detail(iris, title = "Iris Dataset")
+> ##D 
+> ##D # View a plot
+> ##D library(ggplot2)
+> ##D p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+> ##D view_detail(p)
+> ##D 
+> ##D # View a list
+> ##D view_detail(list(a = 1, b = 2, c = list(d = 3)))
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("view_detail", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  1.873 0.018 1.916 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

@@ -80,11 +80,8 @@ connection_pool <- function(name,
     )
   }
 
-  # Get or create pool environment
-  if (!exists(".framework_pools", envir = .GlobalEnv, inherits = FALSE)) {
-    assign(".framework_pools", new.env(parent = emptyenv()), envir = .GlobalEnv)
-  }
-  pools_env <- get(".framework_pools", envir = .GlobalEnv)
+  # Get pool environment (initialized in .onLoad)
+  pools_env <- .framework_env$pools
 
   # Check if pool already exists
   if (exists(name, envir = pools_env) && !recreate) {
@@ -294,12 +291,7 @@ connection_pool_close <- function(name, quiet = FALSE) {
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_flag(quiet)
 
-  if (!exists(".framework_pools", envir = .GlobalEnv, inherits = FALSE)) {
-    if (!quiet) message(sprintf("No pool found for: %s", name))
-    return(invisible(FALSE))
-  }
-
-  pools_env <- get(".framework_pools", envir = .GlobalEnv)
+  pools_env <- .framework_env$pools
 
   if (!exists(name, envir = pools_env)) {
     if (!quiet) message(sprintf("No pool found for: %s", name))
@@ -340,12 +332,7 @@ connection_pool_close <- function(name, quiet = FALSE) {
 connection_pool_close_all <- function(quiet = FALSE) {
   checkmate::assert_flag(quiet)
 
-  if (!exists(".framework_pools", envir = .GlobalEnv, inherits = FALSE)) {
-    if (!quiet) message("No connection pools found")
-    return(invisible(0))
-  }
-
-  pools_env <- get(".framework_pools", envir = .GlobalEnv)
+  pools_env <- .framework_env$pools
   pool_names <- ls(envir = pools_env)
 
   if (length(pool_names) == 0) {
@@ -385,16 +372,7 @@ connection_pool_close_all <- function(quiet = FALSE) {
 #'
 #' @keywords internal
 connection_pool_list <- function() {
-  if (!exists(".framework_pools", envir = .GlobalEnv, inherits = FALSE)) {
-    return(data.frame(
-      name = character(0),
-      valid = logical(0),
-      connections = integer(0),
-      stringsAsFactors = FALSE
-    ))
-  }
-
-  pools_env <- get(".framework_pools", envir = .GlobalEnv)
+  pools_env <- .framework_env$pools
   pool_names <- ls(envir = pools_env)
 
   if (length(pool_names) == 0) {

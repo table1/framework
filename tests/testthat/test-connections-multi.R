@@ -116,9 +116,10 @@ test_that("DuckDB connections work if available", {
 
 test_that("Driver validation catches missing packages", {
   # Test with a driver that doesn't exist
+  # The function attempts to install the package, which fails for non-existent packages
   expect_error(
     .require_driver("FakeDB", "NonExistentPackage"),
-    "FakeDB connections require the NonExistentPackage package"
+    "Failed to install NonExistentPackage"
   )
 })
 

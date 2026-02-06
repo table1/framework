@@ -1,5 +1,24 @@
 # Test helper functions
 
+# Create an isolated config environment for tests
+# This prevents tests from modifying real user config
+setup_isolated_config <- function() {
+  temp_config <- tempfile("fw_config_")
+  dir.create(temp_config, recursive = TRUE)
+  old_value <- Sys.getenv("FW_CONFIG_HOME", unset = NA)
+  Sys.setenv(FW_CONFIG_HOME = temp_config)
+
+  # Return cleanup function
+  function() {
+    if (is.na(old_value)) {
+      Sys.unsetenv("FW_CONFIG_HOME")
+    } else {
+      Sys.setenv(FW_CONFIG_HOME = old_value)
+    }
+    unlink(temp_config, recursive = TRUE)
+  }
+}
+
 # Create a temporary test directory
 create_test_dir <- function() {
   dir <- tempfile("framework_test_")

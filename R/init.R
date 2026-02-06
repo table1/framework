@@ -716,6 +716,12 @@ bootstrap_project_init <- function(output_file = "init.R") {
 #' Initialize git repository
 #' @keywords internal
 .init_git_repo <- function(target_dir = ".") {
+  # Check git is available
+  if (!nzchar(Sys.which("git"))) {
+    message("Note: Git not found. Skipping repository initialization.")
+    return(invisible(NULL))
+  }
+
   git_dir <- file.path(target_dir, ".git")
 
   if (file.exists(git_dir)) {
@@ -768,6 +774,11 @@ bootstrap_project_init <- function(output_file = "init.R") {
 #' Create initial git commit after all initialization is complete
 #' @keywords internal
 .create_initial_commit <- function(target_dir = ".") {
+  # Check git is available
+  if (!nzchar(Sys.which("git"))) {
+    return(invisible(NULL))
+  }
+
   # Change to target directory
   old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)

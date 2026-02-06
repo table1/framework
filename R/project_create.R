@@ -717,6 +717,13 @@ project_create <- function(
 #' Initialize git repository
 #' @keywords internal
 .init_git_repo <- function(project_dir, hooks) {
+  # Check git is available
+  if (!nzchar(Sys.which("git"))) {
+    message("  Git not found - skipping repository initialization")
+    message("  Install git and run 'git init' manually to enable version control")
+    return(invisible(NULL))
+  }
+
   old_wd <- getwd()
   on.exit(setwd(old_wd))
   setwd(project_dir)

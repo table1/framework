@@ -1,0 +1,117 @@
+add_project_to_config   Add project to global configuration
+ai_generate_context     Generate AI Context File
+ai_regenerate_context   Regenerate Dynamic Sections in AI Context File
+ai_sync_context         Sync AI Assistant Context Files
+cache                   Cache a value
+cache_flush             Clear all cached values
+cache_forget            Remove a cached value
+cache_get               Get a cached value
+cache_list              List all cached values
+cache_remember          Remember a value (get from cache or compute and
+                        store)
+capture_output          Capture console output and errors from an
+                        expression
+configure_global        Configure Global Framework Settings
+connections_list        List all connections (databases and object
+                        storage)
+connections_s3          S3 Connection Functions
+data_add                Add an existing file to the data catalog
+data_info               Get data specification from config
+data_list               List all data entries from config
+data_read               Read data using dot notation path or direct
+                        file path
+data_save               Save data using dot notation or file path
+db_connect              Get a database connection
+db_drivers_install      Install database drivers
+db_drivers_status       Check if database drivers are installed
+db_execute              Execute a database statement
+db_list                 List all database connections from
+                        configuration
+db_query                Get data from a database query
+db_transaction          Execute code within a database transaction
+db_with                 Execute code with a managed database connection
+docs_export             Export Package Documentation to Database
+env_clear               Clear R environment
+env_summary             Summarize R environment
+fw_config_dir           Get Framework config directory path
+git_add                 Stage Files for Commit
+git_commit              Commit Staged Changes
+git_diff                Show Changes (Diff)
+git_hooks_disable       Disable Specific Git Hook
+git_hooks_enable        Enable Specific Git Hook
+git_hooks_install       Install Git Pre-commit Hook
+git_hooks_list          List Git Hook Status
+git_hooks_uninstall     Uninstall Git Pre-commit Hook
+git_log                 Show Commit Log
+git_pull                Pull from Remote
+git_push                Push to Remote
+git_security_audit      Security audit for Framework projects
+git_status              Show Git Status
+gui                     Launch Framework GUI
+load_settings_catalog   Read the Framework settings catalog
+make_notebook           Create a Notebook or Script from Stub Template
+make_presentation       Create a Presentation
+make_qmd                Create a Quarto Notebook
+make_revealjs           Create a Reveal.js Presentation
+make_rmd                Create an RMarkdown Notebook
+make_script             Create an R Script from Stub Template
+new                     Create a New Project (Master Wrapper)
+new_course              Create a Course Project
+new_presentation        Create a Presentation Project
+new_project             Create a New Framework Project
+new_project_sensitive   Create a Sensitive Data Project
+now                     Get current datetime
+outputs                 Output Save Functions
+packages_install        Install packages from configuration
+packages_list           List all packages from configuration
+packages_restore        Restore packages from renv.lock
+packages_snapshot       Snapshot current package library (renv)
+packages_status         Show renv package status
+packages_update         Update packages from configuration
+project_info            Display project structure information
+project_list            List all projects in global configuration
+publish                 Publishing Functions
+publish_data            Publish data to S3
+publish_dir             Publish a directory to S3
+publish_list            List published files in S3
+publish_notebook        Publish a Quarto notebook to S3
+quarto_generate_all     Generate Quarto Configurations for Project
+quarto_regenerate       Regenerate Quarto Configurations
+read_framework_template
+                        Read the contents of a Framework template
+read_frameworkrc        Read global Framework configuration
+remove_project_from_config
+                        Remove project from global configuration
+renv_disable            Disable renv for this project
+renv_enable             Enable renv for this project
+renv_enabled            Check if renv is enabled for this project
+reset_framework_template
+                        Reset a Framework template back to the packaged
+                        default
+result_list             List saved results from the framework database
+save_figure             Save a figure to the outputs directory
+save_model              Save a model to the outputs directory
+save_notebook           Save a rendered notebook to the outputs
+                        directory
+save_report             Save a report to the outputs directory
+save_table              Save a table to the outputs directory
+scaffold                Initialize and load the project environment
+scratch_capture         Capture and Save Data to File
+scratch_clean           Clean up the scratch directory by deleting all
+                        files
+settings                Get settings value by dot-notation key
+settings_read           Read project settings
+settings_write          Write project settings
+setup                   Setup Framework (First-Time Configuration)
+standardize_wd          Standardize Working Directory for Framework
+                        Projects
+status                  Show Framework project status
+storage_test            Test storage connection
+stubs_list              List Available Stubs
+stubs_path              Get Path to Stub Templates Directory
+stubs_publish           Publish Stub Templates for Customization
+view                    View data in an interactive browser viewer
+write_framework_template
+                        Overwrite a Framework template with new
+                        contents
+write_frameworkrc       Write global Framework configuration

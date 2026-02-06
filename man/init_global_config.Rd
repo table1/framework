@@ -13,7 +13,8 @@ init_global_config(force = FALSE)
 Invisibly returns NULL
 }
 \description{
-Creates ~/.config/framework/ directory and copies default settings files
-if they don't already exist.
+Creates the Framework config directory (via \code{fw_config_dir()}) and copies
+default settings files if they don't already exist. Also handles migration
+from previous R versions or legacy \verb{~/.config/framework} location.
 }
 \keyword{internal}

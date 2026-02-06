@@ -6,7 +6,16 @@
 \alias{framework-package}
 \title{framework: Structured Data Science in R}
 \description{
-Conventions and helpers for building organized, reproducible R projects. Manages packages, tracks data integrity via SHA-256 hashes, handles database connections, generates Quarto notebooks, provides intelligent caching, and simplifies publishing to S3-compatible storage. Reduces boilerplate while enforcing best practices for data science workflows.
+Project scaffolding and workflow tools for reproducible data science. Manages packages, tracks data integrity, handles database connections, generates notebooks, and publishes to S3-compatible storage.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://framework.table1.org}
+  \item \url{https://github.com/table1/framework}
+  \item Report bugs at \url{https://github.com/table1/framework/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Erik Westlund \email{erik@pequod.sh} [copyright holder]

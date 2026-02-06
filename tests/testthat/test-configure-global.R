@@ -1,16 +1,11 @@
+# Skip all global config tests on CRAN - they write to user config directory
+# and require proper isolation via FW_CONFIG_HOME
+
 test_that("configure_global reads current config when no settings provided", {
-  # Create temp config file
-  temp_config <- tempfile(fileext = ".json")
-  old_rc <- Sys.getenv("HOME")
-  temp_home <- tempdir()
+  skip_on_cran()
 
-  on.exit({
-    Sys.setenv(HOME = old_rc)
-    if (file.exists(temp_config)) unlink(temp_config)
-  })
-
-  # Mock home directory
-  Sys.setenv(HOME = temp_home)
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Call without settings - should return defaults
   result <- configure_global()
@@ -22,16 +17,10 @@ test_that("configure_global reads current config when no settings provided", {
 
 
 test_that("configure_global updates author information", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Update author
   result <- configure_global(settings = list(
@@ -47,7 +36,7 @@ test_that("configure_global updates author information", {
   expect_equal(result$author$affiliation, "Test Org")
 
   # Verify file was written
-  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  settings_path <- file.path(fw_config_dir(), "settings.yml")
   expect_true(file.exists(settings_path))
 
   # Read back and verify
@@ -57,15 +46,10 @@ test_that("configure_global updates author information", {
 
 
 test_that("configure_global updates defaults", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Update defaults
   result <- configure_global(settings = list(
@@ -87,15 +71,10 @@ test_that("configure_global updates defaults", {
 
 
 test_that("configure_global validates project_type choices", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Invalid project type should error
   expect_error(
@@ -108,15 +87,10 @@ test_that("configure_global validates project_type choices", {
 
 
 test_that("configure_global validates notebook_format choices", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Invalid format should error
   expect_error(
@@ -129,15 +103,10 @@ test_that("configure_global validates notebook_format choices", {
 
 
 test_that("configure_global validates IDE choices", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Invalid IDE should error
   expect_error(
@@ -150,15 +119,10 @@ test_that("configure_global validates IDE choices", {
 
 
 test_that("configure_global validates boolean flags", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Invalid boolean should error
   expect_error(
@@ -171,15 +135,10 @@ test_that("configure_global validates boolean flags", {
 
 
 test_that("configure_global accepts numeric or character seed", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Numeric seed
   result1 <- configure_global(settings = list(
@@ -196,15 +155,10 @@ test_that("configure_global accepts numeric or character seed", {
 
 
 test_that("configure_global performs deep merge", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    unlink(file.path(temp_home, ".frameworkrc.json"))
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Set author first
   configure_global(settings = list(
@@ -227,16 +181,10 @@ test_that("configure_global performs deep merge", {
 
 
 test_that("configure_global can skip validation", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Should not error even with invalid data when validate = FALSE
   expect_no_error(
@@ -253,22 +201,16 @@ test_that("configure_global can skip validation", {
 
 
 test_that("configure_global writes YAML format", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   configure_global(settings = list(
     author = list(name = "Test User")
   ))
 
-  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  settings_path <- file.path(fw_config_dir(), "settings.yml")
   expect_true(file.exists(settings_path))
 
   # Should be valid YAML
@@ -281,16 +223,10 @@ test_that("configure_global writes YAML format", {
 # Tests for extra_directories validation
 
 test_that("configure_global accepts valid extra_directories", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Valid extra_directories
   result <- configure_global(settings = list(
@@ -311,16 +247,10 @@ test_that("configure_global accepts valid extra_directories", {
 
 
 test_that("configure_global rejects extra_directories with missing fields", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Missing 'key' field
   expect_error(
@@ -353,16 +283,10 @@ test_that("configure_global rejects extra_directories with missing fields", {
 
 
 test_that("configure_global rejects invalid extra_directories key format", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Key with hyphen (invalid)
   expect_error(
@@ -395,16 +319,10 @@ test_that("configure_global rejects invalid extra_directories key format", {
 
 
 test_that("configure_global rejects duplicate extra_directories keys", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Duplicate keys
   expect_error(
@@ -424,16 +342,10 @@ test_that("configure_global rejects duplicate extra_directories keys", {
 
 
 test_that("configure_global rejects invalid extra_directories type", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Invalid type
   expect_error(
@@ -452,16 +364,10 @@ test_that("configure_global rejects invalid extra_directories type", {
 
 
 test_that("configure_global rejects absolute paths in extra_directories", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Absolute path
   expect_error(
@@ -480,16 +386,10 @@ test_that("configure_global rejects absolute paths in extra_directories", {
 
 
 test_that("configure_global rejects path traversal in extra_directories", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Path traversal
   expect_error(
@@ -508,16 +408,10 @@ test_that("configure_global rejects path traversal in extra_directories", {
 
 
 test_that("configure_global preserves extra_directories through modifyList", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Set initial extra_directories
   configure_global(settings = list(
@@ -558,16 +452,10 @@ test_that("configure_global preserves extra_directories through modifyList", {
 
 
 test_that("configure_global saves global.projects_root", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Set global.projects_root
   test_path <- "/Users/test/my-projects"
@@ -581,7 +469,7 @@ test_that("configure_global saves global.projects_root", {
 expect_equal(result$global$projects_root, test_path)
 
   # Verify file was written
-  settings_path <- file.path(temp_home, ".config", "framework", "settings.yml")
+  settings_path <- file.path(fw_config_dir(), "settings.yml")
   expect_true(file.exists(settings_path))
 
   # Read the raw YAML to verify it was actually saved
@@ -595,16 +483,10 @@ expect_equal(result$global$projects_root, test_path)
 
 
 test_that("configure_global persists global.projects_root through multiple saves", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # First save: set projects_root
   configure_global(settings = list(
@@ -629,16 +511,10 @@ test_that("configure_global persists global.projects_root through multiple saves
 
 
 test_that("configure_global preserves global.projects_root when saving other settings", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # First: set projects_root
   configure_global(settings = list(
@@ -666,16 +542,10 @@ test_that("configure_global preserves global.projects_root when saving other set
 # ============================================================================
 
 test_that("configure_global can set cache directory per project type", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Set cache directory for standard project type
   result <- configure_global(settings = list(
@@ -693,16 +563,10 @@ test_that("configure_global can set cache directory per project type", {
 
 
 test_that("configure_global supports different cache paths per project type", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Set different cache directories for different project types
   result <- configure_global(settings = list(
@@ -738,16 +602,10 @@ test_that("configure_global supports different cache paths per project type", {
 
 
 test_that("configure_global preserves cache directory when updating other settings", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # First: set cache directory
   configure_global(settings = list(
@@ -775,16 +633,10 @@ test_that("configure_global preserves cache directory when updating other settin
 
 
 test_that("configure_global saves and loads directories_enabled", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # Save directories_enabled for project type
   result <- configure_global(settings = list(
@@ -813,16 +665,10 @@ test_that("configure_global saves and loads directories_enabled", {
 
 
 test_that("configure_global preserves directories_enabled when updating other fields", {
-  temp_home <- tempdir()
-  old_home <- Sys.getenv("HOME")
-
-  on.exit({
-    Sys.setenv(HOME = old_home)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
-  })
-
-  Sys.setenv(HOME = temp_home)
+  skip_on_cran()
+  
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup())
 
   # First: save directories_enabled
   configure_global(settings = list(

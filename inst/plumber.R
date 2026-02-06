@@ -95,7 +95,7 @@ function(pr) {
 #* @serializer unboxedJSON
 function() {
   cat("[DEBUG] Using plumber.R at:", getwd(), "\n", file = stderr())
-  settings_path <- path.expand("~/.config/framework/settings.yml")
+  settings_path <- file.path(framework::fw_config_dir(), "settings.yml")
   first_run <- !file.exists(settings_path)
 
   settings <- framework::read_frameworkrc()
@@ -263,7 +263,7 @@ function() {
 #* @get /api/settings/get
 #* @serializer unboxedJSON
 function() {
-  settings_path <- path.expand("~/.config/framework/settings.yml")
+  settings_path <- file.path(framework::fw_config_dir(), "settings.yml")
   first_run <- !file.exists(settings_path)
 
   settings <- framework::read_frameworkrc()

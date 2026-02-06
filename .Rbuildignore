@@ -34,6 +34,7 @@
 ^api\.md$
 ^MIGRATION_PLAN\.md$
 ^LICENSE\.md$
+^cran-comments\.md$
 
 # macOS
 ^\.DS_Store$
@@ -46,9 +47,9 @@
 ^ehthumbs\.db$
 ^Thumbs\.db$
 
-# Tests
-^tests$
-^tests/$
+# Test infrastructure (keep test files, exclude docker)
+^tests/docker$
+^tests/testthat/fixtures$
 
 # Other
 ^\.cursorignore$

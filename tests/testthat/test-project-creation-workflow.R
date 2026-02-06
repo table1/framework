@@ -1,22 +1,21 @@
+# Skip project creation workflow tests on CRAN - they write to user config
+
 # Integration tests for the full project creation workflow
 # These tests verify that defaults from Framework Project Defaults (SettingsView)
 # correctly flow through to newly created projects (NewProjectView)
 
 test_that("New project inherits notebook_format default from global settings", {
-  # Setup: temp directories
-  temp_home <- tempdir()
+  skip_on_cran()
+
+  # Setup: isolated config and temp directories
+  cleanup_config <- setup_isolated_config()
   temp_projects_root <- file.path(tempdir(), "test-projects")
   temp_project_dir <- file.path(temp_projects_root, "test-notebook-format")
-  old_home <- Sys.getenv("HOME")
 
   on.exit({
-    Sys.setenv(HOME = old_home)
+    cleanup_config()
     unlink(temp_projects_root, recursive = TRUE)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
-
-  Sys.setenv(HOME = temp_home)
 
   # Step 1: User sets defaults in Framework Project Defaults (SettingsView)
   # SettingsView saves notebook_format to defaults.notebook_format (top-level)
@@ -61,19 +60,16 @@ test_that("New project inherits notebook_format default from global settings", {
 
 
 test_that("New project inherits positron setting from global settings", {
-  temp_home <- tempdir()
+  skip_on_cran()
+
+  cleanup_config <- setup_isolated_config()
   temp_projects_root <- file.path(tempdir(), "test-projects-positron")
   temp_project_dir <- file.path(temp_projects_root, "test-positron")
-  old_home <- Sys.getenv("HOME")
 
   on.exit({
-    Sys.setenv(HOME = old_home)
+    cleanup_config()
     unlink(temp_projects_root, recursive = TRUE)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
-
-  Sys.setenv(HOME = temp_home)
 
   # User enables Positron in Framework Project Defaults
   framework::configure_global(settings = list(
@@ -114,19 +110,16 @@ test_that("New project inherits positron setting from global settings", {
 
 
 test_that("New project inherits author information from global settings", {
-  temp_home <- tempdir()
+  skip_on_cran()
+
+  cleanup_config <- setup_isolated_config()
   temp_projects_root <- file.path(tempdir(), "test-projects-author")
   temp_project_dir <- file.path(temp_projects_root, "test-author")
-  old_home <- Sys.getenv("HOME")
 
   on.exit({
-    Sys.setenv(HOME = old_home)
+    cleanup_config()
     unlink(temp_projects_root, recursive = TRUE)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
-
-  Sys.setenv(HOME = temp_home)
 
   # User sets author info in Framework Project Defaults
   framework::configure_global(settings = list(
@@ -170,17 +163,16 @@ test_that("New project inherits author information from global settings", {
 
 
 test_that("New project creation fails when required settings are missing", {
-  temp_home <- tempdir()
+  skip_on_cran()
+
+  cleanup_config <- setup_isolated_config()
   temp_projects_root <- file.path(tempdir(), "test-projects-missing")
   temp_project_dir <- file.path(temp_projects_root, "test-missing")
-  old_home <- Sys.getenv("HOME")
 
   on.exit({
-    Sys.setenv(HOME = old_home)
+    cleanup_config()
     unlink(temp_projects_root, recursive = TRUE)
   })
-
-  Sys.setenv(HOME = temp_home)
 
   # Try to create project without required name parameter
   expect_error(
@@ -198,6 +190,8 @@ test_that("New project creation fails when required settings are missing", {
 
 
 test_that("Full workflow: save defaults, create project, verify settings", {
+  skip_on_cran()
+
   # This test simulates the complete user workflow:
   # 1. User opens Framework Project Defaults
   # 2. User sets notebook_format to "rmarkdown" and enables Positron
@@ -205,19 +199,14 @@ test_that("Full workflow: save defaults, create project, verify settings", {
   # 4. User creates new project
   # 5. Verify new project has correct settings
 
-  temp_home <- tempdir()
+  cleanup_config <- setup_isolated_config()
   temp_projects_root <- file.path(tempdir(), "test-projects-full-workflow")
   temp_project_dir <- file.path(temp_projects_root, "my-research-project")
-  old_home <- Sys.getenv("HOME")
 
   on.exit({
-    Sys.setenv(HOME = old_home)
+    cleanup_config()
     unlink(temp_projects_root, recursive = TRUE)
-    config_dir <- file.path(temp_home, ".config", "framework")
-    if (dir.exists(config_dir)) unlink(config_dir, recursive = TRUE)
   })
-
-  Sys.setenv(HOME = temp_home)
 
   # Step 1-3: User configures and saves Framework Project Defaults
   framework::configure_global(settings = list(
@@ -283,18 +272,17 @@ test_that("Full workflow: save defaults, create project, verify settings", {
 
 
 test_that("Defaults work when global settings file doesn't exist", {
+  skip_on_cran()
+
   # Verify graceful fallback to hardcoded defaults when no global config exists
-  temp_home <- tempdir()
+  cleanup_config <- setup_isolated_config()
   temp_projects_root <- file.path(tempdir(), "test-projects-no-global")
   temp_project_dir <- file.path(temp_projects_root, "test-no-global")
-  old_home <- Sys.getenv("HOME")
 
   on.exit({
-    Sys.setenv(HOME = old_home)
+    cleanup_config()
     unlink(temp_projects_root, recursive = TRUE)
   })
-
-  Sys.setenv(HOME = temp_home)
   # Don't create global config - simulate first-time user
 
   # Create project with explicit defaults (as NewProjectView would do)

@@ -421,8 +421,9 @@ test_that("data_save updates database with normalized name", {
 
   record <- DBI::dbGetQuery(conn, "SELECT * FROM data WHERE name = 'inputs.intermediate.my_data'")
   expect_equal(nrow(record), 1)
-  # Path may be absolute or relative depending on the platform
-  expect_true(grepl("inputs/intermediate/my_data\\.rds$", record$path))
+  # Path may be absolute or relative depending on the platform, and may use backslashes on Windows
+  path_normalized <- gsub("\\\\", "/", record$path)
+  expect_true(grepl("inputs/intermediate/my_data\\.rds$", path_normalized))
   expect_equal(record$type, "rds")
 })
 

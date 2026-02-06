@@ -1,0 +1,22 @@
+{
+  "r.bracketedPaste": false,
+  "r.plot.useHttpgd": true,
+  "r.rterm.option": ["--no-save", "--no-restore", "--quiet"],
+  "r.session.watchGlobalEnvironment": false,
+  "r.session.watch": false,
+  "r.lintr.enabled": true,
+  "r.alwaysUseActiveTerminal": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.rulers": [80, 120],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.enableBell": false,
+  "quarto.render.previewType": "internal",
+  "files.associations": {
+    "*.Rmd": "rmd",
+    "*.qmd": "quarto",
+    ".frameworkrc": "shellscript"
+  }
+}

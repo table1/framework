@@ -585,9 +585,19 @@ git_hooks_list <- function(config_file = NULL) {
   dir.exists(".git")
 }
 
+#' Check if git is available on the system
+#' @return TRUE if git is available, FALSE otherwise
+#' @keywords internal
+.git_available <- function() {
+  nzchar(Sys.which("git"))
+}
+
 #' Require git repository or stop
 #' @keywords internal
 .require_git_repo <- function() {
+  if (!.git_available()) {
+    stop("Git is not installed or not in PATH. Please install git to use this feature.")
+  }
   if (!.is_git_repo()) {
     stop("Not a git repository. Run 'git init' first.")
   }

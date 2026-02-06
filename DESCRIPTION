@@ -1,14 +1,16 @@
 Package: framework
 Type: Package
 Title: Structured Data Science in R
-Version: 1.0.0
+Version: 1.0.2
 Authors@R:
-    person("Erik", "Westlund", , "erik@pequod.sh", role = c("aut", "cre", "cph"))
-Maintainer: Erik Westlund <erik@pequod.sh>
+    person("Erik", "Westlund", , "erik@table1.org", role = c("aut", "cre", "cph"))
+Maintainer: Erik Westlund <erik@table1.org>
 Description: Project scaffolding and workflow tools for reproducible data science.
     Manages packages, tracks data integrity, handles database connections,
     generates notebooks, and publishes to S3-compatible storage.
 License: MIT + file LICENSE
+URL: https://framework.table1.org, https://github.com/table1/framework
+BugReports: https://github.com/table1/framework/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("rd", "namespace", "collate"))
 RoxygenNote: 7.3.3
@@ -40,13 +42,11 @@ Suggests:
     haven,
     htmltools,
     htmlwidgets,
-    httpgd,
     knitr,
     languageserver,
     odbc,
     pool,
     prismjs,
-    qs,
     R.utils,
     readxl,
     remotes,

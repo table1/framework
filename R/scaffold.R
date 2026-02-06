@@ -17,12 +17,11 @@
 #' 5. **Installs packages** - Any missing packages from the `packages` list
 #' 6. **Loads packages** - Attaches all configured packages
 #' 7. **Sources functions** - Loads all `.R` files from `functions/` directory
-#' 8. **Creates config object** - Makes `config` available in global environment
 #'
 #' After `scaffold()` completes, you have access to:
 #' - All packages listed in settings.yml
 #' - All functions from your `functions/` directory
-#' - The `config` object for accessing settings via `config("key")`
+#' - Settings via `settings("key")` helper function
 #' - Database connections configured in your project
 #'
 #' @section Project Discovery:
@@ -50,15 +49,15 @@
 #' scaffold()
 #'
 #' # Now you can use your configured packages and functions
-#' # Access settings via the config object:
-#' config("directories.notebooks")
-#' config("seed")
+#' # Access settings via the settings() helper:
+#' settings("directories.notebooks")
+#' settings("seed")
 #' }
 #'
 #' @seealso
 #' - [project_create()] to create a new Framework project
 #' - [standardize_wd()] for just the working directory standardization
-#' - [config()] to access configuration values after scaffolding
+#' - [settings()] to access configuration values after scaffolding
 #'
 #' @export
 scaffold <- function(config_file = NULL) {
@@ -121,19 +120,8 @@ scaffold <- function(config_file = NULL) {
 
   .load_environment(config_file, project_root)
 
-  # Remove old config if it exists and unlock if needed
-  if (exists("config", envir = .GlobalEnv)) {
-    tryCatch({
-      unlockBinding("config", .GlobalEnv)
-    }, error = function(e) {
-      # Binding doesn't exist or isn't locked
-    })
-    suppressWarnings(rm(config, envir = .GlobalEnv))
-  }
-
-  # Assign config to global environment
+  # Load configuration for internal use
   config_obj <- .load_configuration(config_file)
-  assign("config", config_obj, envir = .GlobalEnv)
 
   # Mark as scaffolded with timestamp
   .mark_scaffolded(project_root)
@@ -739,7 +727,12 @@ scaffold <- function(config_file = NULL) {
 #' Check git status and provide helpful reminder
 #' @keywords internal
 .check_git_status <- function() {
-  # Check if git is available and we're in a repo
+  # Check if git is installed
+  if (!nzchar(Sys.which("git"))) {
+    return(invisible(NULL))
+  }
+
+  # Check if we're in a git repo
   git_available <- tryCatch({
     result <- system2("git", c("rev-parse", "--git-dir"), stdout = TRUE, stderr = TRUE)
     !is.null(attr(result, "status")) && attr(result, "status") == 0 || is.null(attr(result, "status"))
@@ -773,7 +766,12 @@ scaffold <- function(config_file = NULL) {
 #' @note This function is now deprecated. Initial commits are created during project_create()
 #'   instead of scaffold(). Kept for backward compatibility with older projects.
 .commit_after_scaffold <- function() {
-  # Check if git is available and we're in a repo
+  # Check if git is installed
+  if (!nzchar(Sys.which("git"))) {
+    return(invisible(NULL))
+  }
+
+  # Check if we're in a repo
   git_available <- tryCatch({
     system("git rev-parse --git-dir > /dev/null 2>&1") == 0
   }, error = function(e) FALSE, warning = function(w) FALSE)

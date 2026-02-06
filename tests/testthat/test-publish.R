@@ -17,17 +17,18 @@ test_that(".resolve_s3_connection finds explicit connection", {
   config <- list(
     default = list(
       connections = list(
-        my_s3 = list(
-          driver = "s3",
-          bucket = "test-bucket",
-          region = "us-east-1",
-          prefix = "test-prefix"
+        storage_buckets = list(
+          my_s3 = list(
+            bucket = "test-bucket",
+            region = "us-east-1",
+            prefix = "test-prefix"
+          )
         )
       )
     )
   )
 
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Set credentials in environment
   withr::local_envvar(
@@ -61,22 +62,22 @@ test_that(".resolve_s3_connection finds default connection", {
   config <- list(
     default = list(
       connections = list(
-        s3_backup = list(
-          driver = "s3",
-          bucket = "backup-bucket",
-          region = "us-west-2"
-        ),
-        s3_primary = list(
-          driver = "s3",
-          bucket = "primary-bucket",
-          region = "us-east-1",
-          default = TRUE
+        storage_buckets = list(
+          s3_backup = list(
+            bucket = "backup-bucket",
+            region = "us-west-2"
+          ),
+          s3_primary = list(
+            bucket = "primary-bucket",
+            region = "us-east-1",
+            default = TRUE
+          )
         )
       )
     )
   )
 
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   withr::local_envvar(
     AWS_ACCESS_KEY_ID = "test-key",
@@ -112,7 +113,7 @@ test_that(".resolve_s3_connection errors when connection not found", {
     )
   )
 
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   expect_error(
     framework:::.resolve_s3_connection("nonexistent"),
@@ -177,7 +178,7 @@ test_that(".resolve_s3_connection errors for non-S3 connection", {
     )
   )
 
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   expect_error(
     framework:::.resolve_s3_connection("framework"),
@@ -201,16 +202,17 @@ test_that(".resolve_s3_connection errors when missing credentials", {
   config <- list(
     default = list(
       connections = list(
-        my_s3 = list(
-          driver = "s3",
-          bucket = "test-bucket",
-          region = "us-east-1"
+        storage_buckets = list(
+          my_s3 = list(
+            bucket = "test-bucket",
+            region = "us-east-1"
+          )
         )
       )
     )
   )
 
-  yaml::write_yaml(config, "config.yml")
+  yaml::write_yaml(config, "settings.yml")
 
   # Clear any existing credentials
   withr::local_envvar(
