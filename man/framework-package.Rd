@@ -18,7 +18,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Erik Westlund \email{erik@pequod.sh} [copyright holder]
+\strong{Maintainer}: Erik Westlund \email{erik@table1.org} [copyright holder]
 
 }
 \keyword{internal}

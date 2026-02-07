@@ -29,14 +29,13 @@ configured packages, functions, and settings.
 \item \strong{Installs packages} - Any missing packages from the \code{packages} list
 \item \strong{Loads packages} - Attaches all configured packages
 \item \strong{Sources functions} - Loads all \code{.R} files from \verb{functions/} directory
-\item \strong{Creates config object} - Makes \code{config} available in global environment
 }
 
 After \code{scaffold()} completes, you have access to:
 \itemize{
 \item All packages listed in settings.yml
 \item All functions from your \verb{functions/} directory
-\item The \code{config} object for accessing settings via \code{config("key")}
+\item Settings via \code{settings("key")} helper function
 \item Database connections configured in your project
 }
 }
@@ -70,9 +69,9 @@ library(framework)
 scaffold()
 
 # Now you can use your configured packages and functions
-# Access settings via the config object:
-config("directories.notebooks")
-config("seed")
+# Access settings via the settings() helper:
+settings("directories.notebooks")
+settings("seed")
 }
 
 }
@@ -80,6 +79,6 @@ config("seed")
 \itemize{
 \item \code{\link[=project_create]{project_create()}} to create a new Framework project
 \item \code{\link[=standardize_wd]{standardize_wd()}} for just the working directory standardization
-\item \code{\link[=config]{config()}} to access configuration values after scaffolding
+\item \code{\link[=settings]{settings()}} to access configuration values after scaffolding
 }
 }

@@ -4,20 +4,18 @@
 \alias{save_model}
 \title{Save a model to the outputs directory}
 \usage{
-save_model(model, name, format = "rds", public = FALSE, overwrite = TRUE, ...)
+save_model(model, name, public = FALSE, overwrite = TRUE, ...)
 }
 \arguments{
 \item{model}{A fitted model object (lm, glm, tidymodels workflow, etc.)}
 
 \item{name}{The name for the output file (without extension)}
 
-\item{format}{Output format: "rds" (default) or "qs" (faster, requires qs package)}
-
 \item{public}{If TRUE, saves to public outputs directory (for project_sensitive type)}
 
 \item{overwrite}{If TRUE, overwrites existing files (default: TRUE)}
 
-\item{...}{Additional arguments passed to the underlying save function}
+\item{...}{Additional arguments passed to \code{\link[=saveRDS]{saveRDS()}}}
 }
 \value{
 The path to the saved file (invisibly)
@@ -31,9 +29,6 @@ The directory is created lazily on first use.
 # Fit and save a model
 model <- lm(mpg ~ hp + wt, data = mtcars)
 save_model(model, "mpg_regression")
-
-# Save with qs for faster serialization
-save_model(model, "mpg_regression", format = "qs")
 }
 
 }
