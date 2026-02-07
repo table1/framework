@@ -98,6 +98,9 @@ init_global_config <- function(force = FALSE) {
 }
 
 #' Copy config files between directories
+#' @param from_dir Source directory
+#' @param to_dir Destination directory
+#' @param overwrite Whether to overwrite existing files (default FALSE)
 #' @keywords internal
 .copy_config_files <- function(from_dir, to_dir, overwrite = FALSE) {
   # Copy config files

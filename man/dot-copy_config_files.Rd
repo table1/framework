@@ -4,7 +4,14 @@
 \alias{.copy_config_files}
 \title{Copy config files between directories}
 \usage{
-.copy_config_files(from_dir, to_dir)
+.copy_config_files(from_dir, to_dir, overwrite = FALSE)
+}
+\arguments{
+\item{from_dir}{Source directory}
+
+\item{to_dir}{Destination directory}
+
+\item{overwrite}{Whether to overwrite existing files (default FALSE)}
 }
 \description{
 Copy config files between directories
