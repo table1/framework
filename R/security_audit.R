@@ -695,10 +695,19 @@ git_security_audit <- function(config_file = NULL,
     # Store original pattern for directory matching
     orig_pattern <- pattern
 
-    # Convert gitignore pattern to regex
-    pattern <- gsub("\\.", "\\\\.", pattern)  # Escape dots
-    pattern <- gsub("\\*\\*/", "(.*/)?", pattern)  # ** matches any subdirectory
-    pattern <- gsub("\\*", "[^/]*", pattern)  # * matches anything except /
+    # Strip leading / (anchors to root, but paths are already root-relative)
+    pattern <- sub("^/", "", pattern)
+
+    # Convert gitignore pattern to regex using placeholders to avoid
+    # substitutions interfering with each other
+    pattern <- gsub("\\.", "\\\\.", pattern)         # Escape dots
+    pattern <- gsub("\\*\\*/", "\001", pattern)      # **/ → placeholder
+    pattern <- gsub("/\\*\\*$", "\002", pattern)     # /** at end → placeholder
+    pattern <- gsub("\\*\\*", "\003", pattern)       # ** (remaining) → placeholder
+    pattern <- gsub("\\*", "[^/]*", pattern)         # * → single path segment
+    pattern <- gsub("\001", "(.*/)?", pattern)       # restore **/ → any dirs
+    pattern <- gsub("\002", "/.*", pattern)           # restore /** → everything inside
+    pattern <- gsub("\003", ".*", pattern)            # restore ** → anything
 
     # Handle trailing slash (directory pattern)
     if (grepl("/$", orig_pattern)) {
