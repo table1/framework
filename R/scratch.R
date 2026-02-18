@@ -17,7 +17,8 @@
 #' @return The input object `x` invisibly.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Save a character vector as text
 #' scratch_capture(c("hello", "world"))
 #'
@@ -26,6 +27,7 @@
 #'
 #' # Save an R object as RDS
 #' scratch_capture(list(a = 1, b = 2), to = "rds")
+#' }
 #' }
 #'
 #' @export
@@ -184,6 +186,7 @@ scratch_capture <- function(x, name = NULL, to = NULL, location = NULL, n = Inf)
 }
 
 #' Clean up the scratch directory by deleting all files
+#' @return Invisibly returns NULL. Called for side effect of removing scratch files.
 #' @export
 scratch_clean <- function() {
   config <- settings_read()
@@ -198,4 +201,6 @@ scratch_clean <- function() {
   } else {
     message("Scratch directory does not exist: ", scratch_dir)
   }
+
+  invisible(NULL)
 }

@@ -17,10 +17,4 @@ A data frame with pool information:
 \description{
 Shows all currently active connection pools with their status.
 }
-\examples{
-\dontrun{
-connection_pool_list()
-}
-
-}
 \keyword{internal}

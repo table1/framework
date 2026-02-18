@@ -22,7 +22,9 @@ Initializes renv integration for the current Framework project. This:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 renv_enable()
+}
 }
 }

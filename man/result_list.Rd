@@ -20,7 +20,8 @@ Retrieves a list of all saved results (tables, figures, models, reports,
 notebooks) that have been tracked via the save_* functions.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all results
 result_list()
 
@@ -29,6 +30,7 @@ result_list(type = "table")
 
 # List only public figures
 result_list(type = "figure", public = TRUE)
+}
 }
 
 }

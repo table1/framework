@@ -39,17 +39,4 @@ Directories control where Framework creates and looks for files.
 }
 }
 }
-\examples{
-\dontrun{
-# Interactive mode
-configure_directories()
-
-# Set specific directory
-configure_directories(
-  directory = "notebooks",
-  path = "analysis"
-)
-}
-
-}
 \keyword{internal}

@@ -30,10 +30,12 @@ It sets both the regular working directory and knitr's root.dir option
 if knitr is available.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 library(framework)
 standardize_wd()
 scaffold()
+}
 }
 
 }

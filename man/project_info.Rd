@@ -17,12 +17,14 @@ Shows configured directories and their status (created or pending lazy creation)
 Useful for understanding the project structure and discovering available paths.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Show project structure
 project_info()
 
 # Get detailed info
 project_info(verbose = TRUE)
+}
 }
 
 }

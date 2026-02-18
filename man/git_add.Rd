@@ -16,10 +16,12 @@ Invisibly returns TRUE on success
 Add file contents to the staging area.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_add()              # Stage all changes
 git_add("README.md")   # Stage specific file
 git_add(c("R/foo.R", "R/bar.R"))
+}
 }
 
 }

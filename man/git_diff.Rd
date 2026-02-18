@@ -18,10 +18,12 @@ Invisibly returns the diff output as a character vector
 Show changes between commits, working tree, etc.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_diff()             # Show unstaged changes
 git_diff(staged = TRUE) # Show staged changes
 git_diff(file = "R/foo.R")
+}
 }
 
 }

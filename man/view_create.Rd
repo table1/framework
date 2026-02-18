@@ -23,19 +23,4 @@ Opens an interactive, browser-based viewer for R objects with syntax highlightin
 tabbed interfaces, and enhanced data table support. Handles data frames, plots,
 lists, functions, and more with appropriate rendering for each type.
 }
-\examples{
-\dontrun{
-# View a data frame with interactive table
-view_create(mtcars)
-
-# View a plot
-library(ggplot2)
-p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
-view_create(p, title = "MPG vs HP")
-
-# View a list with YAML and R structure tabs
-view_create(list(a = 1, b = 2, c = list(d = 3)))
-}
-
-}
 \keyword{internal}

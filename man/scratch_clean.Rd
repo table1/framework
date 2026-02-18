@@ -6,6 +6,9 @@
 \usage{
 scratch_clean()
 }
+\value{
+Invisibly returns NULL. Called for side effect of removing scratch files.
+}
 \description{
 Clean up the scratch directory by deleting all files
 }

@@ -28,18 +28,4 @@ Interactively set author information in settings.yml (or settings.yml for legacy
 This information is
 used in notebooks, reports, and other documents.
 }
-\examples{
-\dontrun{
-# Interactive mode (prompts for all fields)
-configure_author()
-
-# Provide values directly
-configure_author(
-  name = "Jane Doe",
-  email = "jane@example.com",
-  affiliation = "University of Example"
-)
-}
-
-}
 \keyword{internal}

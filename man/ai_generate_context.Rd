@@ -28,11 +28,13 @@ Generates a complete AI context file (CLAUDE.md, AGENTS.md, etc.) from scratch
 for a new project. The content is tailored to the project type and configuration.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Generate AI context for current project
 content <- ai_generate_context()
 
 # Generate for a specific project type
 content <- ai_generate_context(project_type = "project_sensitive")
+}
 }
 }

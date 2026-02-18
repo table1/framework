@@ -12,12 +12,14 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Generate AI context for current project
 #' content <- ai_generate_context()
 #'
 #' # Generate for a specific project type
 #' content <- ai_generate_context(project_type = "project_sensitive")
+#' }
 #' }
 ai_generate_context <- function(project_path = ".",
                         project_name = NULL,
@@ -97,12 +99,14 @@ if (is.null(project_name)) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Regenerate all dynamic sections
-#' ai_regenerate_context()
+#' \donttest{
+#' if (file.exists("CLAUDE.md")) {
+#'   # Regenerate all dynamic sections
+#'   ai_regenerate_context()
 #'
-#' # Regenerate only packages section
-#' ai_regenerate_context(sections = "packages")
+#'   # Regenerate only packages section
+#'   ai_regenerate_context(sections = "packages")
+#' }
 #' }
 ai_regenerate_context <- function(project_path = ".",
                           sections = NULL,

@@ -8,7 +8,8 @@
 #' @return A database connection object (DBIConnection)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Preferred: use db_query() which auto-disconnects
 #' users <- db_query("SELECT * FROM users", "postgres")
 #'
@@ -16,6 +17,7 @@
 #' conn <- db_connect("postgres")
 #' DBI::dbListTables(conn)
 #' DBI::dbDisconnect(conn)
+#' }
 #' }
 #'
 #' @export
@@ -73,9 +75,11 @@ db_connect <- function(name) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all connections
 #' db_list()
+#' }
 #' }
 db_list <- function() {
   config <- settings_read()

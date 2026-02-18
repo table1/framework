@@ -12,18 +12,6 @@
 #' - **GitHub Copilot**: Creates `.github/copilot-instructions.md`
 #' - **AGENTS.md**: Creates `AGENTS.md` (cross-platform, industry standard)
 #'
-#' @examples
-#' \dontrun{
-#' # Enable AI support with Claude and Copilot
-#' configure_ai_agents(support = "yes", assistants = c("claude", "copilot"))
-#'
-#' # Disable AI support
-#' configure_ai_agents(support = "never")
-#'
-#' # Show current status
-#' configure_ai_agents()
-#' }
-#'
 #' @keywords internal
 configure_ai_agents <- function(support = NULL, assistants = NULL) {
   frameworkrc <- path.expand("~/.frameworkrc")

@@ -49,7 +49,8 @@ The exporter reads all .Rd files from the man/ directory and extracts:
 The SQLite output includes FTS5 full-text search for fast querying.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Export to default location (exported functions only)
 docs_export()
 
@@ -63,6 +64,7 @@ docs_export("all_docs.db", include_internal = TRUE)
 con <- DBI::dbConnect(RSQLite::SQLite(), "docs.db")
 DBI::dbGetQuery(con, "SELECT name, title FROM functions WHERE name LIKE 'data_\%'")
 DBI::dbDisconnect(con)
+}
 }
 
 }

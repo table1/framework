@@ -16,7 +16,8 @@ Data frame with columns: name, type, source (user/framework)
 Shows all available stub templates that can be used with \code{make_notebook()}.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all stubs
 stubs_list()
 
@@ -25,6 +26,7 @@ stubs_list("quarto")
 
 # List only script stubs
 stubs_list("script")
+}
 }
 
 }

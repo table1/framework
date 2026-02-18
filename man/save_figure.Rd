@@ -43,7 +43,8 @@ Saves a ggplot2 plot or base R graphics to the configured figures directory.
 The directory is created lazily on first use.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Save a ggplot
 p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
 save_figure(p, "mpg_vs_hp")
@@ -53,6 +54,7 @@ save_figure(p, "mpg_vs_hp", format = "pdf", width = 10, height = 8)
 
 # Save to public directory
 save_figure(p, "summary_plot", public = TRUE)
+}
 }
 
 }

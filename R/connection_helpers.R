@@ -10,7 +10,8 @@
 #' @return The result of evaluating `code`
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Safe - connection auto-closes
 #' users <- db_with("my_db", {
 #'   DBI::dbGetQuery(conn, "SELECT * FROM users WHERE active = TRUE")
@@ -29,6 +30,7 @@
 #'   }),
 #'   error = function(e) message(e$message)
 #' )
+#' }
 #' }
 #'
 #' @export

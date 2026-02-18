@@ -22,7 +22,8 @@ function for viewing data frames, plots, lists, and other R objects with
 enhanced formatting.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # View a data frame
 view(mtcars)
 
@@ -33,6 +34,7 @@ view(iris, title = "Iris Dataset")
 library(ggplot2)
 p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
 view(p)
+}
 }
 
 }

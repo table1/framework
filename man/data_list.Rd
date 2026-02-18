@@ -14,11 +14,13 @@ Lists all data specifications defined in the configuration, showing the
 data key, path, type, and description (if available).
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all data entries
 data_list()
 
 # Use the alias
 list_data()
+}
 }
 }

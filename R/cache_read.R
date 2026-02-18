@@ -15,12 +15,14 @@
 #'   Returns an empty data frame if no cache entries exist.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all cache entries
 #' cache_list()
 #'
 #' # Filter to see only expired caches
 #' cache_list() |> dplyr::filter(status == "expired")
+#' }
 #' }
 #'
 #' @export
@@ -340,7 +342,8 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #'   (if cache miss or refresh requested)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Cache expensive computation
 #' result <- cache_remember("my_analysis", {
 #'   expensive_computation()
@@ -350,6 +353,7 @@ cache_get <- function(name, file = NULL, expire_after = NULL) {
 #' result <- cache_remember("analysis", {
 #'   run_analysis()
 #' }, refresh = file.mtime("data.csv") > cache_time)
+#' }
 #' }
 #'
 #' @export

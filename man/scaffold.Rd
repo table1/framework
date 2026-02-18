@@ -63,7 +63,8 @@ The settings.yml file controls what \code{scaffold()} loads. Key settings includ
 }
 
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # At the top of every notebook or script:
 library(framework)
 scaffold()
@@ -72,6 +73,7 @@ scaffold()
 # Access settings via the settings() helper:
 settings("directories.notebooks")
 settings("seed")
+}
 }
 
 }

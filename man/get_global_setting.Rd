@@ -20,14 +20,4 @@ The setting value as a character string
 Retrieve a specific setting from the global configuration file (~/.frameworkrc.json).
 This is a helper function primarily for use by the CLI script.
 }
-\examples{
-\dontrun{
-# Get IDE setting
-get_global_setting("defaults.ide")
-
-# Get with default value
-get_global_setting("defaults.notebook_format", default = "quarto")
-}
-
-}
 \keyword{internal}

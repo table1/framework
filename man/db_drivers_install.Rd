@@ -20,12 +20,14 @@ Interactive helper to install one or more database drivers.
 Provides helpful instructions and handles special cases (like ODBC).
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Install specific drivers
 db_drivers_install(c("postgres", "mysql"))
 
 # Interactive mode
 db_drivers_install()
+}
 }
 
 }

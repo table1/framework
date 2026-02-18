@@ -9,12 +9,6 @@
 #'
 #' @return NULL (invisible). Throws error if package not available.
 #' @keywords internal
-#'
-#' @examples
-#' \dontrun{
-#' .require_driver("PostgreSQL", "RPostgres")
-#' .require_driver("MySQL", "RMariaDB")
-#' }
 .require_driver <- function(driver_name, package_name, install_command = NULL) {
 
   # Validate arguments
@@ -23,40 +17,21 @@
   checkmate::assert_string(install_command, null.ok = TRUE)
 
   if (!requireNamespace(package_name, quietly = TRUE)) {
-    # Check if custom install command (can't auto-install, e.g. ODBC drivers)
     if (!is.null(install_command)) {
       stop(sprintf(
-        "%s connections require the %s package.\n\nInstall with:\n%s",
+        "%s connections require the '%s' package.\nInstall with:\n%s",
         driver_name,
         package_name,
         install_command
       ), call. = FALSE)
     }
 
-    # Auto-install the package
-    message(sprintf("Installing %s package for %s connections...", package_name, driver_name))
-
-    tryCatch({
-      utils::install.packages(package_name, quiet = TRUE)
-    }, error = function(e) {
-      stop(sprintf(
-        "Failed to install %s package: %s\n\nTry manually: install.packages('%s')",
-        package_name,
-        e$message,
-        package_name
-      ), call. = FALSE)
-    })
-
-    # Verify installation succeeded
-    if (!requireNamespace(package_name, quietly = TRUE)) {
-      stop(sprintf(
-        "Failed to install %s package.\n\nTry manually: install.packages('%s')",
-        package_name,
-        package_name
-      ), call. = FALSE)
-    }
-
-    message(sprintf("\u2713 %s package installed successfully", package_name))
+    stop(sprintf(
+      "%s connections require the '%s' package.\nInstall with: install.packages('%s')",
+      driver_name,
+      package_name,
+      package_name
+    ), call. = FALSE)
   }
 
   invisible(NULL)
@@ -71,12 +46,6 @@
 #'
 #' @return Named list with `package`, `name`, and optionally `install_command`
 #' @keywords internal
-#'
-#' @examples
-#' \dontrun{
-#' .get_driver_info("postgres")
-#' .get_driver_info("mysql")
-#' }
 .get_driver_info <- function(driver) {
   checkmate::assert_string(driver, min.chars = 1)
 
@@ -135,12 +104,6 @@
 #'
 #' @return NULL (invisible). Throws error if driver package not available.
 #' @keywords internal
-#'
-#' @examples
-#' \dontrun{
-#' .validate_driver("postgres")
-#' .validate_driver("mysql")
-#' }
 .validate_driver <- function(driver) {
   checkmate::assert_string(driver, min.chars = 1)
 

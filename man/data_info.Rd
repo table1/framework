@@ -28,12 +28,14 @@ absolute paths. Auto-detects file type from extension and applies intelligent
 defaults for common formats.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Get info from dot notation
 info <- data_info("source.private.my_data")
 
 # Get info from file path
 info <- data_info("data/public/example.csv")
+}
 }
 
 }

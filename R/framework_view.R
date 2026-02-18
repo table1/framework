@@ -12,20 +12,6 @@
 #' @return Invisibly returns NULL. Function is called for its side effect of
 #'   opening a browser window with the rendered view.
 #'
-#' @examples
-#' \dontrun{
-#' # View a data frame with interactive table
-#' view_create(mtcars)
-#'
-#' # View a plot
-#' library(ggplot2)
-#' p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
-#' view_create(p, title = "MPG vs HP")
-#'
-#' # View a list with YAML and R structure tabs
-#' view_create(list(a = 1, b = 2, c = list(d = 3)))
-#' }
-#'
 #' @keywords internal
 view_create <- function(x, title = NULL, max_rows = 5000) {
   # Check if x is provided
@@ -33,18 +19,19 @@ view_create <- function(x, title = NULL, max_rows = 5000) {
     stop("No data provided to view. Please provide a data frame or other viewable object as the first argument.")
   }
 
-  # Ensure required packages are installed
-  if (!requireNamespace("DT", quietly = TRUE)) {
-    install.packages("DT", repos = "https://cloud.r-project.org")
+  # Check required packages
+  missing_pkgs <- character()
+  for (pkg in c("DT", "lubridate", "prismjs", "yaml")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      missing_pkgs <- c(missing_pkgs, pkg)
+    }
   }
-  if (!requireNamespace("lubridate", quietly = TRUE)) {
-    install.packages("lubridate", repos = "https://cloud.r-project.org")
-  }
-  if (!requireNamespace("prismjs", quietly = TRUE)) {
-    install.packages("prismjs", repos = c("https://ropensci.r-universe.dev", "https://cloud.r-project.org"))
-  }
-  if (!requireNamespace("yaml", quietly = TRUE)) {
-    install.packages("yaml", repos = "https://cloud.r-project.org")
+  if (length(missing_pkgs) > 0) {
+    stop(sprintf(
+      "view() requires the following packages: %s\nInstall with: install.packages(c(%s))",
+      paste(missing_pkgs, collapse = ", "),
+      paste(sprintf("'%s'", missing_pkgs), collapse = ", ")
+    ), call. = FALSE)
   }
 
   # Get object information
@@ -276,7 +263,10 @@ view_create <- function(x, title = NULL, max_rows = 5000) {
     any(class(x) %in% c("histogram", "density", "boxplot", "barplot", "plot", "tsplot"))) {
     # For plots, save and display as image
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      install.packages("ggplot2", repos = "https://cloud.r-project.org")
+      stop(
+        "Viewing plots requires the 'ggplot2' package.\nInstall with: install.packages('ggplot2')",
+        call. = FALSE
+      )
     }
 
     # Create temporary file for the plot
@@ -727,23 +717,6 @@ view_create <- function(x, title = NULL, max_rows = 5000) {
 #' @return Invisibly returns NULL. Function is called for its side effect of
 #'   opening a browser window with the rendered view.
 #'
-#' @examples
-#' \dontrun{
-#' # View a data frame with interactive table
-#' view_detail(mtcars)
-#'
-#' # View with custom title
-#' view_detail(iris, title = "Iris Dataset")
-#'
-#' # View a plot
-#' library(ggplot2)
-#' p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
-#' view_detail(p)
-#'
-#' # View a list
-#' view_detail(list(a = 1, b = 2, c = list(d = 3)))
-#' }
-#'
 #' @seealso \code{\link{view}}
 #' @keywords internal
 view_detail <- function(x, title = NULL, max_rows = 5000) {
@@ -784,7 +757,8 @@ framework_view <- function(x, title = NULL, max_rows = 5000) {
 #' @return Invisibly returns NULL. Opens a browser window.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # View a data frame
 #' view(mtcars)
 #'
@@ -795,6 +769,7 @@ framework_view <- function(x, title = NULL, max_rows = 5000) {
 #' library(ggplot2)
 #' p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
 #' view(p)
+#' }
 #' }
 #'
 #' @export

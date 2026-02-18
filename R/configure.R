@@ -11,19 +11,6 @@
 #'
 #' @return Invisibly returns updated config
 #'
-#' @examples
-#' \dontrun{
-#' # Interactive mode (prompts for all fields)
-#' configure_author()
-#'
-#' # Provide values directly
-#' configure_author(
-#'   name = "Jane Doe",
-#'   email = "jane@example.com",
-#'   affiliation = "University of Example"
-#' )
-#' }
-#'
 #' @keywords internal
 configure_author <- function(name = NULL, email = NULL, affiliation = NULL, interactive = TRUE) {
   # Validate arguments
@@ -99,20 +86,6 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
 #' @param interactive Logical. If TRUE, prompts for missing values. Default TRUE.
 #'
 #' @return Invisibly returns updated config
-#'
-#' @examples
-#' \dontrun{
-#' # Interactive mode
-#' configure_data()
-#'
-#' # Provide values directly
-#' configure_data(
-#'   path = "source.private.survey",
-#'   file = "inputs/raw/survey.csv",
-#'   type = "csv",
-#'   locked = TRUE
-#' )
-#' }
 #'
 #' @keywords internal
 configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE, interactive = TRUE) {
@@ -242,29 +215,6 @@ configure_data <- function(path = NULL, file = NULL, type = NULL, locked = FALSE
 #' @param interactive Logical. If TRUE, prompts for missing values. Default TRUE.
 #'
 #' @return Invisibly returns updated config
-#'
-#' @examples
-#' \dontrun{
-#' # Interactive mode
-#' configure_connection()
-#'
-#' # SQLite connection
-#' configure_connection(
-#'   name = "mydb",
-#'   driver = "sqlite",
-#'   database = "data/mydb.db"
-#' )
-#'
-#' # PostgreSQL connection
-#' configure_connection(
-#'   name = "warehouse",
-#'   driver = "postgresql",
-#'   host = "localhost",
-#'   port = 5432,
-#'   database = "analytics",
-#'   user = "analyst"
-#' )
-#' }
 #'
 #' @keywords internal
 configure_connection <- function(name = NULL, driver = NULL, host = NULL,
@@ -409,24 +359,6 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
 #' - GitHub: "tidyverse/dplyr", "user/repo@branch"
 #' - GitHub with tag: "user/repo@v1.2.3"
 #'
-#' @examples
-#' \dontrun{
-#' # Interactive mode
-#' configure_packages()
-#'
-#' # Add CRAN package with auto-attach
-#' configure_packages(
-#'   package = "dplyr",
-#'   auto_attach = TRUE
-#' )
-#'
-#' # Add GitHub package
-#' configure_packages(
-#'   package = "tidyverse/dplyr@main",
-#'   auto_attach = FALSE
-#' )
-#' }
-#'
 #' @keywords internal
 configure_packages <- function(package = NULL, auto_attach = TRUE, version = NULL, interactive = TRUE) {
   # Validate arguments
@@ -568,18 +500,6 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 #' - `outputs_docs_public` - Narrative/report outputs (public)
 #' - `cache` - Cached computation results
 #' - `scratch` - Temporary workspace
-#'
-#' @examples
-#' \dontrun{
-#' # Interactive mode
-#' configure_directories()
-#'
-#' # Set specific directory
-#' configure_directories(
-#'   directory = "notebooks",
-#'   path = "analysis"
-#' )
-#' }
 #'
 #' @keywords internal
 configure_directories <- function(directory = NULL, path = NULL, interactive = TRUE) {
@@ -966,7 +886,8 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
 #' - `active_project` - Currently active project path
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Update author information
 #' configure_global(settings = list(
 #'   author = list(
@@ -984,6 +905,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
 #'
 #' # Get current settings (read-only)
 #' current <- configure_global()
+#' }
 #' }
 #'
 #' @export
@@ -1134,15 +1056,6 @@ configure_global <- function(settings = NULL, validate = TRUE) {
 #'
 #' @return The setting value as a character string
 #'
-#' @examples
-#' \dontrun{
-#' # Get IDE setting
-#' get_global_setting("defaults.ide")
-#'
-#' # Get with default value
-#' get_global_setting("defaults.notebook_format", default = "quarto")
-#' }
-#'
 #' @keywords internal
 get_global_setting <- function(key, default = "", print = TRUE) {
   checkmate::assert_string(key)
@@ -1176,7 +1089,7 @@ get_global_setting <- function(key, default = "", print = TRUE) {
   }
 
   if (print) {
-    cat(result)
+    message(result)
   }
 
   invisible(result)

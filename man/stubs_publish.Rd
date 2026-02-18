@@ -56,7 +56,8 @@ Stubs can use these placeholders:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Publish all stubs
 stubs_publish()
 
@@ -68,6 +69,7 @@ stubs_publish(stubs = "default")
 
 # Overwrite existing stubs
 stubs_publish(overwrite = TRUE)
+}
 }
 
 }

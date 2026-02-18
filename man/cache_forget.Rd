@@ -11,6 +11,9 @@ cache_forget(name, file = NULL)
 
 \item{file}{Optional file path of the cache (default: \verb{cache/\{name\}.rds})}
 }
+\value{
+Invisibly returns NULL.
+}
 \description{
 Remove a cached value
 }

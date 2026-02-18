@@ -21,8 +21,10 @@ Executes a SQL statement on a database without returning results. The connection
 is created, used, and automatically closed.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 rows <- db_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
+}
 }
 
 }

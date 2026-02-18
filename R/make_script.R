@@ -30,7 +30,8 @@
 #' ```
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create script (extension optional)
 #' make_script("process-data")
 #' make_script("process-data.R")
@@ -40,6 +41,7 @@
 #'
 #' # Create in specific directory
 #' make_script("analysis", dir = "analysis/")
+#' }
 #' }
 #'
 #' @seealso [make_notebook()] for creating Quarto/RMarkdown notebooks

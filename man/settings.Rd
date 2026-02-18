@@ -45,7 +45,8 @@ For directory settings, the function checks multiple locations:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Get notebook directory (checks both locations)
 settings("notebooks")
 
@@ -62,6 +63,7 @@ settings()  # Returns full configuration
 
 # With default value
 settings("missing_key", default = "fallback")
+}
 }
 
 }

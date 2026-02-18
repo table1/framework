@@ -37,13 +37,6 @@
 #' @param spec Character or list describing the package
 #' @return List with normalized components (name, source, version, repo, ref, auto_attach)
 #' @keywords internal
-#' @examples
-#' \dontrun{
-#' .parse_package_spec("dplyr")
-#' .parse_package_spec("dplyr@1.1.0")
-#' .parse_package_spec("tidyverse/dplyr@main")
-#' .parse_package_spec(list(name = "DESeq2", source = "bioc", auto_attach = FALSE))
-#' }
 .parse_package_spec <- function(spec) {
   .normalize_package_spec(spec)
 }
@@ -562,9 +555,11 @@ renv_update <- function(packages = NULL) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Install all configured packages
 #' packages_install()
+#' }
 #' }
 packages_install <- function() {
   config <- settings_read()
@@ -594,12 +589,14 @@ packages_install <- function() {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Update all packages
 #' packages_update()
 #'
 #' # Update specific packages
 #' packages_update(c("dplyr", "ggplot2"))
+#' }
 #' }
 packages_update <- function(packages = NULL) {
   if (!renv_enabled()) {
@@ -633,9 +630,11 @@ packages_update <- function(packages = NULL) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all packages
 #' packages_list()
+#' }
 #' }
 packages_list <- function() {
   config <- settings_read()

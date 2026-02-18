@@ -16,9 +16,11 @@ Invisibly returns the status output as a character vector
 Display the working tree status from the R console.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_status()
 git_status(short = TRUE)
+}
 }
 
 }

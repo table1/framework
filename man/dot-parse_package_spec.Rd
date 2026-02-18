@@ -26,12 +26,4 @@ Examples:
 \item list(name = "DESeq2", source = "bioc") -> list(name = "DESeq2", source = "bioc")
 }
 }
-\examples{
-\dontrun{
-.parse_package_spec("dplyr")
-.parse_package_spec("dplyr@1.1.0")
-.parse_package_spec("tidyverse/dplyr@main")
-.parse_package_spec(list(name = "DESeq2", source = "bioc", auto_attach = FALSE))
-}
-}
 \keyword{internal}

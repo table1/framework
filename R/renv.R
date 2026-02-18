@@ -25,8 +25,10 @@ renv_enabled <- function() {
 #' @return Invisibly returns TRUE on success
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' renv_enable()
+#' }
 #' }
 renv_enable <- function(sync = TRUE) {
   if (renv_enabled()) {
@@ -117,8 +119,10 @@ renv_enable <- function(sync = TRUE) {
 #' @return Invisibly returns TRUE on success
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' renv_disable()
+#' }
 #' }
 renv_disable <- function(keep_renv = TRUE) {
   if (!renv_enabled()) {

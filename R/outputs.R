@@ -132,7 +132,8 @@ NULL
 #' @return The path to the saved file (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Save a simple table
 #' save_table(my_results, "regression_results")
 #'
@@ -141,6 +142,7 @@ NULL
 #'
 #' # Save to public directory (for sensitive projects)
 #' save_table(summary_stats, "summary", public = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -241,7 +243,8 @@ save_table <- function(data, name, format = "csv", public = FALSE, overwrite = T
 #' @return The path to the saved file (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Save a ggplot
 #' p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
 #' save_figure(p, "mpg_vs_hp")
@@ -251,6 +254,7 @@ save_table <- function(data, name, format = "csv", public = FALSE, overwrite = T
 #'
 #' # Save to public directory
 #' save_figure(p, "summary_plot", public = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -335,10 +339,12 @@ save_figure <- function(plot = NULL, name, format = "png", width = 8, height = 6
 #' @return The path to the saved file (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Fit and save a model
 #' model <- lm(mpg ~ hp + wt, data = mtcars)
 #' save_model(model, "mpg_regression")
+#' }
 #' }
 #'
 #' @export
@@ -410,12 +416,14 @@ save_model <- function(model, name, public = FALSE, overwrite = TRUE, ...) {
 #' @return The path to the saved file (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Save a rendered HTML report
 #' save_report("notebooks/analysis.html", "final_analysis")
 #'
 #' # Save to public directory
 #' save_report("notebooks/summary.pdf", "public_summary", public = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -503,7 +511,8 @@ save_report <- function(file, name = NULL, public = FALSE, overwrite = TRUE, mov
 #' @return The path to the saved file (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Render and save a notebook
 #' save_notebook("notebooks/analysis.qmd")
 #'
@@ -515,6 +524,7 @@ save_report <- function(file, name = NULL, public = FALSE, overwrite = TRUE, mov
 #'
 #' # Save to public directory (for sensitive projects)
 #' save_notebook("notebooks/analysis.qmd", public = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -648,7 +658,8 @@ save_notebook <- function(file, name = NULL, format = "html", public = FALSE,
 #'   Returns an empty data frame if no results found or database unavailable.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all results
 #' result_list()
 #'
@@ -657,6 +668,7 @@ save_notebook <- function(file, name = NULL, format = "html", public = FALSE,
 #'
 #' # List only public figures
 #' result_list(type = "figure", public = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -735,12 +747,14 @@ result_list <- function(type = NULL, public = NULL) {
 #' @return A data frame with directory information (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Show project structure
 #' project_info()
 #'
 #' # Get detailed info
 #' project_info(verbose = TRUE)
+#' }
 #' }
 #'
 #' @export

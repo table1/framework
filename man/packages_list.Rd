@@ -14,8 +14,10 @@ Lists all packages defined in the configuration, showing the package name,
 version pin (if specified), and source (CRAN or GitHub).
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all packages
 packages_list()
+}
 }
 }

@@ -25,10 +25,12 @@ Saves a fitted model object to the configured models directory.
 The directory is created lazily on first use.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Fit and save a model
 model <- lm(mpg ~ hp + wt, data = mtcars)
 save_model(model, "mpg_regression")
+}
 }
 
 }

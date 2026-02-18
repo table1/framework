@@ -23,7 +23,7 @@ Checks which database drivers are currently available on the system.
 Returns a data frame showing the status of all supported database drivers.
 }
 \examples{
-\dontrun{
+\donttest{
 # Check all drivers
 db_drivers_status()
 

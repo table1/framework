@@ -9,8 +9,10 @@
 #' @return A data frame with the query results
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' users <- db_query("SELECT * FROM users", "my_db")
+#' }
 #' }
 #'
 #' @export
@@ -42,8 +44,10 @@ db_query <- function(query, connection_name, ...) {
 #' @return Number of rows affected
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' rows <- db_execute("DELETE FROM cache WHERE expired = TRUE", "my_db")
+#' }
 #' }
 #'
 #' @export
@@ -76,13 +80,6 @@ db_execute <- function(query, connection_name, ...) {
 #'   Only applies if deleted_at column exists in the table.
 #'
 #' @return A data frame with the record, or empty data frame if not found
-#'
-#' @examples
-#' \dontrun{
-#' conn <- db_connect("postgres")
-#' user <- connection_find(conn, "users", 42)
-#' DBI::dbDisconnect(conn)
-#' }
 #'
 #' @keywords internal
 connection_find <- function(conn, table_name, id, with_trashed = FALSE) {

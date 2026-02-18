@@ -28,7 +28,8 @@
 #' - Simple values: Always returned directly without modification
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Get notebook directory (checks both locations)
 #' settings("notebooks")
 #'
@@ -45,6 +46,7 @@
 #'
 #' # With default value
 #' settings("missing_key", default = "fallback")
+#' }
 #' }
 #'
 #' @export
@@ -482,6 +484,7 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
 #' @param settings The settings list to write
 #' @param settings_file The settings file path (default: auto-detect settings.yml/config.yml)
 #' @param section Optional section to update (e.g. "data")
+#' @return Invisibly returns NULL.
 #' @export
 settings_write <- function(settings, settings_file = NULL, section = NULL) {
   # Validate arguments

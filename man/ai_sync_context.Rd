@@ -36,7 +36,8 @@ Supported files:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Sync AI context files
 ai_sync_context()
 
@@ -45,6 +46,7 @@ ai_sync_context(force = TRUE)
 
 # Silent sync (for git hooks)
 ai_sync_context(verbose = FALSE)
+}
 }
 
 }

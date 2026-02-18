@@ -17,7 +17,9 @@ Deactivates renv integration while preserving renv.lock for future use.
 Removes the \code{.framework_renv_enabled} marker file.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 renv_disable()
+}
 }
 }

@@ -41,7 +41,8 @@ is expired, or a refresh is requested, evaluates the expression and caches
 the result. This is the primary caching interface for expensive computations.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Cache expensive computation
 result <- cache_remember("my_analysis", {
   expensive_computation()
@@ -51,6 +52,7 @@ result <- cache_remember("my_analysis", {
 result <- cache_remember("analysis", {
   run_analysis()
 }, refresh = file.mtime("data.csv") > cache_time)
+}
 }
 
 }

@@ -22,7 +22,8 @@ Returns the path to the user's stubs directory, or the framework stubs directory
 if no user stubs exist.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Get active stubs directory
 stubs_path()
 
@@ -31,6 +32,7 @@ stubs_path("framework")
 
 # Get user stubs directory
 stubs_path("user")
+}
 }
 
 }

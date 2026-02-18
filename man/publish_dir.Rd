@@ -31,7 +31,8 @@ Character vector. Public URLs of uploaded files.
 Recursively uploads all files in a directory to S3.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Upload entire directory
 publish_dir("outputs/dashboard/")
 
@@ -40,5 +41,6 @@ publish_dir("outputs/dashboard/", dest = "dashboards/v2/")
 
 # Upload only HTML files
 publish_dir("outputs/", pattern = "\\\\.html$")
+}
 }
 }

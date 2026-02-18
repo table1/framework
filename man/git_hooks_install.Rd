@@ -30,12 +30,14 @@ Creates or updates \code{.git/hooks/pre-commit} to run enabled Framework hooks:
 Hook behavior is controlled by \verb{git.hooks.*} settings in settings.yml.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Install hooks based on settings.yml
 git_hooks_install()
 
 # Force reinstall (overwrites existing hook)
 git_hooks_install(force = TRUE)
+}
 }
 
 }

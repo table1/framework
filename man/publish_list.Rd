@@ -21,7 +21,8 @@ Data frame with columns: key, size, last_modified.
 Lists files in an S3 bucket/prefix.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all published files
 publish_list()
 
@@ -30,5 +31,6 @@ publish_list("reports/")
 
 # List from specific connection
 publish_list(connection = "s3_backup")
+}
 }
 }

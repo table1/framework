@@ -37,7 +37,8 @@ from external sources, copied from other projects) and use them with
 \code{data_read()} using dot notation.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Add a downloaded CSV file to the catalog
 data_add("inputs/raw/survey_results.csv", name = "inputs.raw.survey_results")
 
@@ -47,6 +48,7 @@ data_read("inputs.raw.survey_results")
 # Add with auto-generated name
 data_add("inputs/intermediate/cleaned_data.rds")
 # Name will be derived as "inputs.intermediate.cleaned_data"
+}
 }
 
 }

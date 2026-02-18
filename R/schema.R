@@ -13,10 +13,12 @@
 #' @name dot-has_column
 #' 
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' conn <- connection_get("my_db")
 #' has_deleted_at <- .has_column(conn, "users", "deleted_at")
 #' DBI::dbDisconnect(conn)
+#' }
 #' }
 .has_column <- function(conn, table_name, column_name) {
   UseMethod(".has_column")
@@ -179,10 +181,12 @@
 #' @name dot-list_tables
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' conn <- connection_get("my_db")
 #' tables <- .list_tables(conn)
 #' DBI::dbDisconnect(conn)
+#' }
 #' }
 .list_tables <- function(conn) {
   UseMethod(".list_tables")
@@ -216,10 +220,12 @@
 #' @name dot-list_columns
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' conn <- connection_get("my_db")
 #' columns <- .list_columns(conn, "users")
 #' DBI::dbDisconnect(conn)
+#' }
 #' }
 .list_columns <- function(conn, table_name) {
   UseMethod(".list_columns")

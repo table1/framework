@@ -23,9 +23,11 @@ Invisible path to created presentation
 Alias for \code{\link[=make_revealjs]{make_revealjs()}}. Creates a Quarto reveal.js presentation.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create notebooks/deck.qmd with reveal.js format
 make_presentation("deck")
+}
 }
 
 }

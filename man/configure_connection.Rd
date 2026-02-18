@@ -39,28 +39,4 @@ Invisibly returns updated config
 Interactively add a database connection to settings.yml (or settings.yml for legacy projects). Connections can be
 defined inline or in a split file (settings/connections.yml).
 }
-\examples{
-\dontrun{
-# Interactive mode
-configure_connection()
-
-# SQLite connection
-configure_connection(
-  name = "mydb",
-  driver = "sqlite",
-  database = "data/mydb.db"
-)
-
-# PostgreSQL connection
-configure_connection(
-  name = "warehouse",
-  driver = "postgresql",
-  host = "localhost",
-  port = 5432,
-  database = "analytics",
-  user = "analyst"
-)
-}
-
-}
 \keyword{internal}

@@ -32,7 +32,8 @@ Transactions are essential for maintaining data integrity when performing
 multiple related operations. If any operation fails, all changes are rolled back.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 conn <- db_connect("postgres")
 
 # Basic transaction
@@ -52,6 +53,7 @@ tryCatch({
 })
 
 DBI::dbDisconnect(conn)
+}
 }
 
 }

@@ -35,27 +35,6 @@
 #' - One-off queries (use `query_get()` instead)
 #' - Short scripts (overhead not worth it)
 #'
-#' @examples
-#' \dontrun{
-#' # Get a pool (reuses existing pool if already created)
-#' pool <- connection_pool("my_db")
-#'
-#' # Use like a regular connection
-#' users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
-#'
-#' # No need to disconnect - pool manages connections automatically
-#'
-#' # Multiple operations reuse connections
-#' result <- connection_with_pool("my_db", {
-#'   users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
-#'   posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
-#'   list(users = users, posts = posts)
-#' })
-#'
-#' # Clean up all pools when done (optional)
-#' connection_pool_close_all()
-#' }
-#'
 #' @keywords internal
 connection_pool <- function(name,
                            min_size = 1,
@@ -245,21 +224,6 @@ connection_pool <- function(name,
 #'
 #' @return The result of evaluating `code`
 #'
-#' @examples
-#' \dontrun{
-#' # Simple usage
-#' users <- connection_with_pool("my_db", {
-#'   DBI::dbGetQuery(pool, "SELECT * FROM users WHERE active = TRUE")
-#' })
-#'
-#' # Multiple operations
-#' result <- connection_with_pool("my_db", {
-#'   users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
-#'   posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
-#'   list(users = users, posts = posts)
-#' })
-#' }
-#'
 #' @keywords internal
 connection_with_pool <- function(connection_name, code, ...) {
   checkmate::assert_string(connection_name, min.chars = 1)
@@ -280,11 +244,6 @@ connection_with_pool <- function(connection_name, code, ...) {
 #' @param quiet Logical. If TRUE, suppresses messages (default: FALSE)
 #'
 #' @return Invisibly returns TRUE if pool was closed, FALSE if it didn't exist
-#'
-#' @examples
-#' \dontrun{
-#' connection_pool_close("my_db")
-#' }
 #'
 #' @keywords internal
 connection_pool_close <- function(name, quiet = FALSE) {
@@ -318,15 +277,6 @@ connection_pool_close <- function(name, quiet = FALSE) {
 #' @param quiet Logical. If TRUE, suppresses messages (default: FALSE)
 #'
 #' @return Invisibly returns the number of pools closed
-#'
-#' @examples
-#' \dontrun{
-#' # Close all pools
-#' connection_pool_close_all()
-#'
-#' # Quiet mode
-#' connection_pool_close_all(quiet = TRUE)
-#' }
 #'
 #' @keywords internal
 connection_pool_close_all <- function(quiet = FALSE) {
@@ -364,11 +314,6 @@ connection_pool_close_all <- function(quiet = FALSE) {
 #'   - name: Pool name
 #'   - valid: Whether pool is valid
 #'   - connections: Number of active connections (if available)
-#'
-#' @examples
-#' \dontrun{
-#' connection_pool_list()
-#' }
 #'
 #' @keywords internal
 connection_pool_list <- function() {

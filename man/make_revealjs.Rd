@@ -24,12 +24,14 @@ Convenient alias for creating reveal.js presentations. Always creates a Quarto
 notebook with the revealjs stub template.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create notebooks/slides.qmd with reveal.js format
 make_revealjs("slides")
 
 # Create in specific directory
 make_revealjs("presentation", dir = "presentations")
+}
 }
 
 }

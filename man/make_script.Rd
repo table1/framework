@@ -44,7 +44,8 @@ Scripts are created in the \verb{scripts/} directory by default:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create script (extension optional)
 make_script("process-data")
 make_script("process-data.R")
@@ -54,6 +55,7 @@ make_script("etl-pipeline", stub = "etl")
 
 # Create in specific directory
 make_script("analysis", dir = "analysis/")
+}
 }
 
 }

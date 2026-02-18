@@ -39,7 +39,8 @@ Renders a Quarto or R Markdown notebook and saves the output to the configured
 notebooks output directory. The directory is created lazily on first use.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Render and save a notebook
 save_notebook("notebooks/analysis.qmd")
 
@@ -51,6 +52,7 @@ save_notebook("notebooks/analysis.qmd", format = "pdf")
 
 # Save to public directory (for sensitive projects)
 save_notebook("notebooks/analysis.qmd", public = TRUE)
+}
 }
 
 }

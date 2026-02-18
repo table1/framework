@@ -16,13 +16,4 @@ Invisibly returns TRUE on success
 Generates an init.R file showing the initialization logic.
 Useful for documentation and understanding how the project was set up.
 }
-\examples{
-\dontrun{
-# Create init.R to see initialization logic
-bootstrap_project_init()
-
-# Write to a different location
-bootstrap_project_init("docs/init_reference.R")
-}
-}
 \keyword{internal}

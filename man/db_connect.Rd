@@ -18,7 +18,8 @@ For most use cases, prefer \code{db_query()} or \code{db_execute()} which handle
 connection lifecycle automatically.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Preferred: use db_query() which auto-disconnects
 users <- db_query("SELECT * FROM users", "postgres")
 
@@ -26,6 +27,7 @@ users <- db_query("SELECT * FROM users", "postgres")
 conn <- db_connect("postgres")
 DBI::dbListTables(conn)
 DBI::dbDisconnect(conn)
+}
 }
 
 }

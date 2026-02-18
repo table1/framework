@@ -45,7 +45,8 @@ used by both the CLI and GUI interfaces.
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Update author information
 configure_global(settings = list(
   author = list(
@@ -63,6 +64,7 @@ configure_global(settings = list(
 
 # Get current settings (read-only)
 current <- configure_global()
+}
 }
 
 }

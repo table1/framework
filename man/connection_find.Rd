@@ -23,12 +23,4 @@ A data frame with the record, or empty data frame if not found
 Finds a single record in a table by its ID. Supports soft-delete patterns
 where records have a deleted_at column.
 }
-\examples{
-\dontrun{
-conn <- db_connect("postgres")
-user <- connection_find(conn, "users", 42)
-DBI::dbDisconnect(conn)
-}
-
-}
 \keyword{internal}

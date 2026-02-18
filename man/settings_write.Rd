@@ -13,6 +13,9 @@ settings_write(settings, settings_file = NULL, section = NULL)
 
 \item{section}{Optional section to update (e.g. "data")}
 }
+\value{
+Invisibly returns NULL.
+}
 \description{
 Writes the project settings to settings.yml or config files
 }

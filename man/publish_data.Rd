@@ -25,7 +25,8 @@ Character. Public URL of the published data.
 Uploads a data frame or existing data file to S3.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Publish a data frame
 publish_data(my_df, "datasets/customers.csv")
 
@@ -34,5 +35,6 @@ publish_data(my_df, "datasets/customers.rds", format = "rds")
 
 # Publish existing file
 publish_data("outputs/model.rds", "models/v2/model.rds")
+}
 }
 }

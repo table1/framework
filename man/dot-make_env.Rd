@@ -20,21 +20,4 @@ Invisibly returns TRUE on success
 Creates a .env file (if it doesn't exist) and appends environment variables.
 Warns if .env is not in .gitignore to prevent accidental secret exposure.
 }
-\examples{
-\dontrun{
-# Create .env with database credentials
-.make_env(
-  DB_HOST = "localhost",
-  DB_PORT = "5432",
-  DB_PASSWORD = "secret",
-  comment = "Database connection"
-)
-
-# Add API keys
-.make_env(
-  OPENAI_API_KEY = "sk-...",
-  comment = "API credentials"
-)
-}
-}
 \keyword{internal}

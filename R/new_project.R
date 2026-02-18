@@ -35,7 +35,8 @@
 #' @seealso [setup()] for initial configuration, [project_create()] for full control
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Interactive - prompts for name and location
 #' new_project()
 #'
@@ -44,6 +45,7 @@
 #'
 #' # Create a sensitive data project
 #' new_project("medical-study", "~/projects/medical", type = "project_sensitive")
+#' }
 #' }
 #'
 #' @export
@@ -194,8 +196,10 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
 #' @seealso [new_project()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' new_project_sensitive("medical-study", "~/projects/medical")
+#' }
 #' }
 #'
 #' @export
@@ -216,8 +220,10 @@ new_project_sensitive <- function(name = NULL, location = NULL, browse = interac
 #' @seealso [new_project()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' new_presentation("quarterly-review", "~/projects/q4-review")
+#' }
 #' }
 #'
 #' @export
@@ -238,8 +244,10 @@ new_presentation <- function(name = NULL, location = NULL, browse = interactive(
 #' @seealso [new_project()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' new_course("stats-101", "~/projects/stats-101")
+#' }
 #' }
 #'
 #' @export
@@ -260,12 +268,14 @@ new_course <- function(name = NULL, location = NULL, browse = interactive(), ...
 #' @seealso [new_project()], [new_project_sensitive()], [new_presentation()], [new_course()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create different project types
 #' new("analysis", "~/projects/analysis")
 #' new("study", "~/projects/study", type = "project_sensitive")
 #' new("slides", "~/projects/slides", type = "presentation")
 #' new("course-materials", "~/projects/course", type = "course")
+#' }
 #' }
 #'
 #' @export

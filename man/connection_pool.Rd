@@ -62,26 +62,4 @@ automatically.
 \item Short scripts (overhead not worth it)
 }
 }
-\examples{
-\dontrun{
-# Get a pool (reuses existing pool if already created)
-pool <- connection_pool("my_db")
-
-# Use like a regular connection
-users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
-
-# No need to disconnect - pool manages connections automatically
-
-# Multiple operations reuse connections
-result <- connection_with_pool("my_db", {
-  users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
-  posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
-  list(users = users, posts = posts)
-})
-
-# Clean up all pools when done (optional)
-connection_pool_close_all()
-}
-
-}
 \keyword{internal}

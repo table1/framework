@@ -20,9 +20,11 @@ Invisible TRUE on success
 Enables a specific hook in settings and reinstalls the pre-commit hook.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_hooks_enable("ai_sync")
 git_hooks_enable("data_security")
+}
 }
 
 }

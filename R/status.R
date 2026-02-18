@@ -9,10 +9,13 @@
 #' - Package dependencies
 #' - Directory structure
 #'
+#' @return No return value, called for side effect of printing project status.
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' status()
+#' }
 #' }
 status <- function() {
   # Check if we're in a Framework project
@@ -20,49 +23,49 @@ status <- function() {
     stop("Not in a Framework project directory (settings.yml or config.yml not found)")
   }
 
-  cat("\n")
-  cat("\033[1;34m")  # Bold blue
-  cat("===================================================\n")
-  cat("  FRAMEWORK PROJECT STATUS\n")
-  cat("===================================================\n")
-  cat("\033[0m")  # Reset
-  cat("\n")
+  message("")
+  message("\033[1;34m")
+  message("===================================================")
+  message("  FRAMEWORK PROJECT STATUS")
+  message("===================================================")
+  message("\033[0m")
+  message("")
 
   # Framework version
-  cat("\033[1;33m")  # Bold yellow
-  cat("Framework:\n")
-  cat("\033[0m")  # Reset
+  message("\033[1;33m")
+  message("Framework:")
+  message("\033[0m")
   fw_version <- as.character(packageVersion("framework"))
-  cat(sprintf("  Version: %s\n", fw_version))
-  cat("\n")
+  message(sprintf("  Version: %s", fw_version))
+  message("")
 
   # Project info
   config <- tryCatch(settings_read(), error = function(e) NULL)
   if (!is.null(config)) {
-    cat("\033[1;33m")  # Bold yellow
-    cat("Project:\n")
-    cat("\033[0m")  # Reset
+    message("\033[1;33m")
+    message("Project:")
+    message("\033[0m")
 
     if (!is.null(config$project_type)) {
-      cat(sprintf("  Type: %s\n", config$project_type))
+      message(sprintf("  Type: %s", config$project_type))
     }
 
     if (!is.null(config$author$name)) {
-      cat(sprintf("  Author: %s\n", config$author$name))
+      message(sprintf("  Author: %s", config$author$name))
     }
 
     notebook_format <- config$default_notebook_format %||% config$options$default_notebook_format
     if (!is.null(notebook_format)) {
-      cat(sprintf("  Notebook format: %s\n", notebook_format))
+      message(sprintf("  Notebook format: %s", notebook_format))
     }
 
-    cat("\n")
+    message("")
   }
 
   # Git status
-  cat("\033[1;33m")  # Bold yellow
-  cat("Git:\n")
-  cat("\033[0m")  # Reset
+  message("\033[1;33m")
+  message("Git:")
+  message("\033[0m")
 
   # Check if git is installed
   git_installed <- nzchar(Sys.which("git"))
@@ -94,30 +97,30 @@ status <- function() {
 
       uncommitted <- length(status_result)
 
-      cat(sprintf("  Branch: %s\n", branch))
-      cat(sprintf("  Commits: %d\n", commit_count))
+      message(sprintf("  Branch: %s", branch))
+      message(sprintf("  Commits: %d", commit_count))
 
       if (uncommitted > 0) {
-        cat(sprintf("  \033[1;31mUncommitted changes: %d\033[0m\n", uncommitted))
+        message(sprintf("  \033[1;31mUncommitted changes: %d\033[0m", uncommitted))
       } else {
-        cat("  \033[0;32mWorking tree clean\033[0m\n")
+        message("  \033[0;32mWorking tree clean\033[0m")
       }
     } else {
-      cat("  \033[1;31mNo commits yet\033[0m\n")
+      message("  \033[1;31mNo commits yet\033[0m")
     }
   } else if (!git_installed) {
-    cat("  Git not installed\n")
+    message("  Git not installed")
   } else {
-    cat("  Not a git repository\n")
+    message("  Not a git repository")
   }
 
-  cat("\n")
+  message("")
 
   # AI assistants
   if (!is.null(config) && !is.null(config$ai)) {
-    cat("\033[1;33m")  # Bold yellow
-    cat("AI Assistants:\n")
-    cat("\033[0m")  # Reset
+    message("\033[1;33m")
+    message("AI Assistants:")
+    message("\033[0m")
 
     ai_files <- c()
     if (file.exists("CLAUDE.md")) ai_files <- c(ai_files, "CLAUDE.md")
@@ -127,87 +130,87 @@ status <- function() {
     }
 
     if (length(ai_files) > 0) {
-      cat(sprintf("  Files: %s\n", paste(ai_files, collapse = ", ")))
+      message(sprintf("  Files: %s", paste(ai_files, collapse = ", ")))
 
       if (!is.null(config$ai$canonical_file)) {
-        cat(sprintf("  Canonical: %s\n", config$ai$canonical_file))
+        message(sprintf("  Canonical: %s", config$ai$canonical_file))
       }
     } else {
-      cat("  No AI instruction files found\n")
+      message("  No AI instruction files found")
     }
 
-    cat("\n")
+    message("")
   }
 
   # Git hooks
   if (git_available && file.exists(".git/hooks/pre-commit")) {
-    cat("\033[1;33m")  # Bold yellow
-    cat("Git Hooks:\n")
-    cat("\033[0m")  # Reset
+    message("\033[1;33m")
+    message("Git Hooks:")
+    message("\033[0m")
 
     if (!is.null(config) && !is.null(config$git) && !is.null(config$git$hooks)) {
       hooks <- config$git$hooks
 
       if (!is.null(hooks$ai_sync)) {
         status <- if (isTRUE(hooks$ai_sync)) "\033[0;32menabled\033[0m" else "disabled"
-        cat(sprintf("  AI sync: %s\n", status))
+        message(sprintf("  AI sync: %s", status))
       }
 
       if (!is.null(hooks$data_security)) {
         status <- if (isTRUE(hooks$data_security)) "\033[0;32menabled\033[0m" else "disabled"
-        cat(sprintf("  Data security: %s\n", status))
+        message(sprintf("  Data security: %s", status))
       }
     }
 
-    cat("\n")
+    message("")
   }
 
   # renv status
-  cat("\033[1;33m")  # Bold yellow
-  cat("Package Management:\n")
-  cat("\033[0m")  # Reset
+  message("\033[1;33m")
+  message("Package Management:")
+  message("\033[0m")
 
   if (file.exists("renv.lock")) {
-    cat("  \033[0;32mrenv: enabled\033[0m\n")
+    message("  \033[0;32mrenv: enabled\033[0m")
   } else {
-    cat("  renv: disabled\n")
+    message("  renv: disabled")
   }
 
-  cat("\n")
+  message("")
 
   # Directories
   if (!is.null(config) && !is.null(config$directories)) {
-    cat("\033[1;33m")  # Bold yellow
-    cat("Directories:\n")
-    cat("\033[0m")  # Reset
+    message("\033[1;33m")
+    message("Directories:")
+    message("\033[0m")
 
     dirs <- config$directories
     for (name in names(dirs)) {
       path <- dirs[[name]]
       exists <- dir.exists(path)
       status <- if (exists) "\033[0;32mok\033[0m" else "\033[1;31mx\033[0m"
-      cat(sprintf("  %s %s -> %s\n", status, name, path))
+      message(sprintf("  %s %s -> %s", status, name, path))
     }
 
-    cat("\n")
+    message("")
   }
 
   # Packages
   if (!is.null(config) && !is.null(config$packages)) {
-    cat("\033[1;33m")  # Bold yellow
-    cat("Dependencies:\n")
-    cat("\033[0m")  # Reset
+    message("\033[1;33m")
+    message("Dependencies:")
+    message("\033[0m")
 
     packages <- .get_package_requirements(config)
     auto_attached <- sum(sapply(packages, function(p) p$load))
     total <- length(packages)
 
-    cat(sprintf("  Total: %d package%s\n", total, if (total == 1) "" else "s"))
+    message(sprintf("  Total: %d package%s", total, if (total == 1) "" else "s"))
     if (auto_attached > 0) {
-      cat(sprintf("  Auto-attached: %d\n", auto_attached))
+      message(sprintf("  Auto-attached: %d", auto_attached))
     }
 
-    cat("\n")
+    message("")
   }
 
   # Database connections
@@ -223,28 +226,28 @@ status <- function() {
     }
 
     if (length(db_conns) > 0) {
-      cat("\033[1;33m")
-      cat("Database Connections:\n")
-      cat("\033[0m")
+      message("\033[1;33m")
+      message("Database Connections:")
+      message("\033[0m")
 
       for (conn_name in names(db_conns)) {
         conn <- db_conns[[conn_name]]
         driver <- conn$driver %||% conn$type
         if (!is.null(driver)) {
-          cat(sprintf("  %s (%s)\n", conn_name, driver))
+          message(sprintf("  %s (%s)", conn_name, driver))
         } else {
-          cat(sprintf("  %s\n", conn_name))
+          message(sprintf("  %s", conn_name))
         }
       }
 
-      cat("\n")
+      message("")
     }
   }
 
-  cat("\033[1;34m")  # Bold blue
-  cat("===================================================\n")
-  cat("\033[0m")  # Reset
-  cat("\n")
+  message("\033[1;34m")
+  message("===================================================")
+  message("\033[0m")
+  message("")
 
   invisible(NULL)
 }

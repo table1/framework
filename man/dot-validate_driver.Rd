@@ -16,10 +16,4 @@ NULL (invisible). Throws error if driver package not available.
 Internal helper that combines driver info lookup and availability check.
 Used by connection functions to ensure required packages are installed.
 }
-\examples{
-\dontrun{
-.validate_driver("postgres")
-.validate_driver("mysql")
-}
-}
 \keyword{internal}

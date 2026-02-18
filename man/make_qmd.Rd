@@ -26,7 +26,8 @@ Convenient alias for \code{make_notebook(type = "quarto")}. Creates a .qmd file
 from stub templates.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create notebooks/analysis.qmd
 make_qmd("analysis")
 
@@ -35,6 +36,7 @@ make_qmd("report", stub = "minimal")
 
 # Create in specific directory
 make_qmd("explore", dir = "work")
+}
 }
 
 }

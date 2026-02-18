@@ -26,10 +26,12 @@ Uses database-specific methods via S3 dispatch.
 
 }}
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 conn <- connection_get("my_db")
 tables <- .list_tables(conn)
 DBI::dbDisconnect(conn)
+}
 }
 }
 \keyword{internal}

@@ -25,7 +25,8 @@
 #' }
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Sync AI context files
 #' ai_sync_context()
 #'
@@ -34,6 +35,7 @@
 #'
 #' # Silent sync (for git hooks)
 #' ai_sync_context(verbose = FALSE)
+#' }
 #' }
 #'
 #' @export

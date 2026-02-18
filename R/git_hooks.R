@@ -9,9 +9,11 @@
 #' @return Invisibly returns the status output as a character vector
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_status()
 #' git_status(short = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -22,7 +24,7 @@ git_status <- function(short = FALSE) {
   if (short) args <- c(args, "--short")
 
   result <- system2("git", args, stdout = TRUE, stderr = TRUE)
-  cat(result, sep = "\n")
+  message(paste(result, collapse = "\n"))
   invisible(result)
 }
 
@@ -36,10 +38,12 @@ git_status <- function(short = FALSE) {
 #' @return Invisibly returns TRUE on success
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_add()              # Stage all changes
 #' git_add("README.md")   # Stage specific file
 #' git_add(c("R/foo.R", "R/bar.R"))
+#' }
 #' }
 #'
 #' @export
@@ -68,9 +72,11 @@ git_add <- function(files = ".") {
 #' @return Invisibly returns TRUE on success
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_commit("Fix bug in data loading")
 #' git_commit("Update README", all = TRUE)  # Stage and commit
+#' }
 #' }
 #'
 #' @export
@@ -93,7 +99,7 @@ git_commit <- function(message, all = FALSE) {
   status <- attr(result, "status")
 
   if (!is.null(status) && status != 0) {
-    cat(result, sep = "\n")
+    message(paste(result, collapse = "\n"))
     stop("Commit failed")
   }
 
@@ -112,9 +118,11 @@ git_commit <- function(message, all = FALSE) {
 #' @return Invisibly returns TRUE on success
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_push()
 #' git_push(remote = "origin", branch = "main")
+#' }
 #' }
 #'
 #' @export
@@ -129,7 +137,7 @@ git_push <- function(remote = "origin", branch = NULL) {
   status <- attr(result, "status")
 
   if (!is.null(status) && status != 0) {
-    cat(result, sep = "\n")
+    message(paste(result, collapse = "\n"))
     stop("Push failed")
   }
 
@@ -148,9 +156,11 @@ git_push <- function(remote = "origin", branch = NULL) {
 #' @return Invisibly returns TRUE on success
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_pull()
 #' git_pull(remote = "origin", branch = "main")
+#' }
 #' }
 #'
 #' @export
@@ -165,11 +175,11 @@ git_pull <- function(remote = "origin", branch = NULL) {
   status <- attr(result, "status")
 
   if (!is.null(status) && status != 0) {
-    cat(result, sep = "\n")
+    message(paste(result, collapse = "\n"))
     stop("Pull failed")
   }
 
-  cat(result, sep = "\n")
+  message(paste(result, collapse = "\n"))
   invisible(TRUE)
 }
 
@@ -184,10 +194,12 @@ git_pull <- function(remote = "origin", branch = NULL) {
 #' @return Invisibly returns the diff output as a character vector
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_diff()             # Show unstaged changes
 #' git_diff(staged = TRUE) # Show staged changes
 #' git_diff(file = "R/foo.R")
+#' }
 #' }
 #'
 #' @export
@@ -203,7 +215,7 @@ git_diff <- function(staged = FALSE, file = NULL) {
   if (length(result) == 0) {
     message("No changes")
   } else {
-    cat(result, sep = "\n")
+    message(paste(result, collapse = "\n"))
   }
 
   invisible(result)
@@ -220,10 +232,12 @@ git_diff <- function(staged = FALSE, file = NULL) {
 #' @return Invisibly returns the log output as a character vector
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_log()
 #' git_log(n = 5)
 #' git_log(oneline = FALSE)  # Full format
+#' }
 #' }
 #'
 #' @export
@@ -234,7 +248,7 @@ git_log <- function(n = 10, oneline = TRUE) {
   if (oneline) args <- c(args, "--oneline")
 
   result <- system2("git", args, stdout = TRUE, stderr = TRUE)
-  cat(result, sep = "\n")
+  message(paste(result, collapse = "\n"))
   invisible(result)
 }
 
@@ -262,12 +276,14 @@ git_log <- function(n = 10, oneline = TRUE) {
 #' Hook behavior is controlled by `git.hooks.*` settings in settings.yml.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Install hooks based on settings.yml
 #' git_hooks_install()
 #'
 #' # Force reinstall (overwrites existing hook)
 #' git_hooks_install(force = TRUE)
+#' }
 #' }
 #'
 #' @export
@@ -427,9 +443,11 @@ git_hooks_uninstall <- function(verbose = TRUE) {
 #' @return Invisible TRUE on success
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' git_hooks_enable("ai_sync")
 #' git_hooks_enable("data_security")
+#' }
 #' }
 #'
 #' @export

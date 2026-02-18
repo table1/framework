@@ -43,7 +43,8 @@
 #'   loading packages, sourcing functions, and creating the `config` object.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # At the top of every notebook or script:
 #' library(framework)
 #' scaffold()
@@ -52,6 +53,7 @@
 #' # Access settings via the settings() helper:
 #' settings("directories.notebooks")
 #' settings("seed")
+#' }
 #' }
 #'
 #' @seealso
