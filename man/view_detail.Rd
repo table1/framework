@@ -34,24 +34,6 @@ Unlike R's built-in \code{View()}, this function:
 \item Respects IDE-native viewers (doesn't override them)
 }
 }
-\examples{
-\dontrun{
-# View a data frame with interactive table
-view_detail(mtcars)
-
-# View with custom title
-view_detail(iris, title = "Iris Dataset")
-
-# View a plot
-library(ggplot2)
-p <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
-view_detail(p)
-
-# View a list
-view_detail(list(a = 1, b = 2, c = list(d = 3)))
-}
-
-}
 \seealso{
 \code{\link{view}}
 }

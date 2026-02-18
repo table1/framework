@@ -15,9 +15,11 @@
 #' @return Invisibly returns the plumber server object
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # First-time setup
 #' framework::setup()
+#' }
 #' }
 #'
 #' @seealso [gui()] for launching the GUI without initialization check
@@ -46,7 +48,8 @@ setup <- function(port = 8080, browse = TRUE) {
 #' @return Invisibly returns the plumber server object
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Launch the GUI
 #' framework::gui()
 #'
@@ -58,6 +61,7 @@ setup <- function(port = 8080, browse = TRUE) {
 #'
 #' # Run as standalone server (no browser, accessible from network)
 #' framework::gui(port = 8080, host = "0.0.0.0", browse = FALSE)
+#' }
 #' }
 #'
 #' @seealso [setup()] for first-time configuration
@@ -159,16 +163,16 @@ gui <- function(port = 8080, host = "127.0.0.1", browse = TRUE, route = NULL) {
   })
 
   # Print startup message
-  cat("\n================================================================\n")
-  cat("Framework GUI\n")
-  cat("================================================================\n")
+  message("\n================================================================")
+  message("Framework GUI")
+  message("================================================================")
   display_host <- if (host == "0.0.0.0") "localhost" else host
-  cat("Running at: http://", display_host, ":", port, "\n", sep = "")
+  message("Running at: http://", display_host, ":", port)
   if (host == "0.0.0.0") {
-    cat("Listening on all interfaces (0.0.0.0)\n")
+    message("Listening on all interfaces (0.0.0.0)")
   }
-  cat("Press Ctrl+C to stop\n")
-  cat("================================================================\n\n")
+  message("Press Ctrl+C to stop")
+  message("================================================================\n")
 
   # Open browser if requested
   if (browse) {

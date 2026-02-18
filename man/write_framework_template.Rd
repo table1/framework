@@ -11,6 +11,9 @@ write_framework_template(name, contents)
 
 \item{contents}{Character string to write to the template file.}
 }
+\value{
+Invisibly returns the file path of the written template.
+}
 \description{
 Overwrite a Framework template with new contents
 }

@@ -377,12 +377,14 @@ key <- gsub("//+", "/", key)
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Test default storage connection
 #' storage_test()
 #'
 #' # Test specific connection
 #' storage_test("my_s3_backup")
+#' }
 #' }
 storage_test <- function(connection = NULL) {
   s3_config <- .resolve_s3_connection(connection)

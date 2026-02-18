@@ -54,7 +54,8 @@ Global settings from \code{tools::R_user_dir("framework", "config")} are used fo
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Interactive - prompts for name and location
 new_project()
 
@@ -63,6 +64,7 @@ new_project("my-analysis", "~/projects/my-analysis")
 
 # Create a sensitive data project
 new_project("medical-study", "~/projects/medical", type = "project_sensitive")
+}
 }
 
 }

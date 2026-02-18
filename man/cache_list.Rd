@@ -23,12 +23,14 @@ Returns a data frame of all cache entries with their names, expiration times,
 and status (expired or active).
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all cache entries
 cache_list()
 
 # Filter to see only expired caches
 cache_list() |> dplyr::filter(status == "expired")
+}
 }
 
 }

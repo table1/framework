@@ -54,6 +54,7 @@
 #' Remove a cached value
 #' @param name The cache name to remove
 #' @param file Optional file path of the cache (default: `cache/{name}.rds`)
+#' @return Invisibly returns NULL.
 #' @export
 cache_forget <- function(name, file = NULL) {
   # Validate arguments
@@ -65,6 +66,7 @@ cache_forget <- function(name, file = NULL) {
 }
 
 #' Clear all cached values
+#' @return Invisibly returns NULL.
 #' @export
 cache_flush <- function() {
   # Get config

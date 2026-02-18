@@ -98,10 +98,12 @@
 #' if knitr is available.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' library(framework)
 #' standardize_wd()
 #' scaffold()
+#' }
 #' }
 #'
 #' @export

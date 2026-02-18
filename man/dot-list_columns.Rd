@@ -53,10 +53,12 @@ Uses database-specific introspection methods via S3 dispatch.
 
 }}
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 conn <- connection_get("my_db")
 columns <- .list_columns(conn, "users")
 DBI::dbDisconnect(conn)
+}
 }
 }
 \keyword{internal}

@@ -17,11 +17,13 @@ Updates packages defined in the configuration. If renv is enabled, uses renv::up
 Otherwise, reinstalls packages using standard installation methods.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Update all packages
 packages_update()
 
 # Update specific packages
 packages_update(c("dplyr", "ggplot2"))
+}
 }
 }

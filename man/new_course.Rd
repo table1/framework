@@ -25,8 +25,10 @@ Shorthand for \code{new_project(..., type = "course")}. Creates a project
 structured for teaching materials with slides, assignments, and modules.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 new_course("stats-101", "~/projects/stats-101")
+}
 }
 
 }

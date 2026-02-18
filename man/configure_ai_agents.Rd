@@ -23,17 +23,4 @@ Supported AI assistants:
 \item \strong{AGENTS.md}: Creates \code{AGENTS.md} (cross-platform, industry standard)
 }
 }
-\examples{
-\dontrun{
-# Enable AI support with Claude and Copilot
-configure_ai_agents(support = "yes", assistants = c("claude", "copilot"))
-
-# Disable AI support
-configure_ai_agents(support = "never")
-
-# Show current status
-configure_ai_agents()
-}
-
-}
 \keyword{internal}

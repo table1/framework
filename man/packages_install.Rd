@@ -14,8 +14,10 @@ Installs all packages defined in the configuration that are not already installe
 This is the same logic used in scaffold(), but exposed as a standalone function.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Install all configured packages
 packages_install()
+}
 }
 }

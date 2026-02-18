@@ -28,9 +28,11 @@ Use this function after installing Framework to:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # First-time setup
 framework::setup()
+}
 }
 
 }

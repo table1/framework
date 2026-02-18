@@ -15,6 +15,9 @@ data_read(path, delim = NULL, keep_attributes = FALSE, ...)
 
 \item{...}{Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)}
 }
+\value{
+The loaded data, typically a data frame or tibble.
+}
 \description{
 Supports CSV, TSV, RDS, Excel (.xlsx, .xls), Stata (.dta), SPSS (.sav, .zsav, .por),
 and SAS (.sas7bdat, .xpt) file formats.

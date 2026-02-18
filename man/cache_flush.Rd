@@ -6,6 +6,9 @@
 \usage{
 cache_flush()
 }
+\value{
+Invisibly returns NULL.
+}
 \description{
 Clear all cached values
 }

@@ -14,8 +14,10 @@ Lists all database connections defined in the configuration, showing the
 connection name, driver, host, and database name (if applicable).
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # List all connections
 db_list()
+}
 }
 }

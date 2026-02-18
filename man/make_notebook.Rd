@@ -87,7 +87,8 @@ Custom stub templates can use placeholders:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create notebooks/1-init.qmd (defaults to Quarto)
 make_notebook("1-init")
 
@@ -108,6 +109,7 @@ make_qmd("analysis")       # Always creates .qmd
 make_rmd("report")         # Always creates .Rmd
 make_revealjs("slides")    # Creates reveal.js presentation
 make_presentation("deck")  # Alias for make_revealjs()
+}
 }
 
 }

@@ -25,12 +25,14 @@ Copies or moves a rendered report (HTML, PDF, etc.) to the configured reports di
 The directory is created lazily on first use.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Save a rendered HTML report
 save_report("notebooks/analysis.html", "final_analysis")
 
 # Save to public directory
 save_report("notebooks/summary.pdf", "public_summary", public = TRUE)
+}
 }
 
 }

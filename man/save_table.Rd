@@ -27,7 +27,8 @@ Saves a data frame or tibble to the configured tables directory.
 The directory is created lazily on first use.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Save a simple table
 save_table(my_results, "regression_results")
 
@@ -36,6 +37,7 @@ save_table(my_results, "regression_results", format = "xlsx")
 
 # Save to public directory (for sensitive projects)
 save_table(summary_stats, "summary", public = TRUE)
+}
 }
 
 }

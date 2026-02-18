@@ -9,6 +9,9 @@ reset_framework_template(name)
 \arguments{
 \item{name}{Template identifier (e.g., "notebook", "gitignore", "ai_claude")}
 }
+\value{
+Invisibly returns the file path of the reset template.
+}
 \description{
 Reset a Framework template back to the packaged default
 }

@@ -25,7 +25,8 @@ Opens a beautiful web-based interface for Framework with documentation,
 project management, and settings configuration.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Launch the GUI
 framework::gui()
 
@@ -37,6 +38,7 @@ framework::gui(route = "#/settings/basics")
 
 # Run as standalone server (no browser, accessible from network)
 framework::gui(port = 8080, host = "0.0.0.0", browse = FALSE)
+}
 }
 
 }

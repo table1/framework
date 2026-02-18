@@ -55,7 +55,8 @@
 #' - `{date}` - Current date (YYYY-MM-DD)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create notebooks/1-init.qmd (defaults to Quarto)
 #' make_notebook("1-init")
 #'
@@ -76,6 +77,7 @@
 #' make_rmd("report")         # Always creates .Rmd
 #' make_revealjs("slides")    # Creates reveal.js presentation
 #' make_presentation("deck")  # Alias for make_revealjs()
+#' }
 #' }
 #'
 #' @seealso [make_qmd()], [make_rmd()], [make_revealjs()], [make_presentation()]
@@ -417,7 +419,8 @@ make_notebook <- function(name,
 #' @return Data frame with columns: name, type, source (user/framework)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all stubs
 #' stubs_list()
 #'
@@ -426,6 +429,7 @@ make_notebook <- function(name,
 #'
 #' # List only script stubs
 #' stubs_list("script")
+#' }
 #' }
 #'
 #' @export
@@ -546,7 +550,8 @@ stubs_list <- function(type = NULL) {
 #' @return Invisible path to created notebook
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create notebooks/analysis.qmd
 #' make_qmd("analysis")
 #'
@@ -555,6 +560,7 @@ stubs_list <- function(type = NULL) {
 #'
 #' # Create in specific directory
 #' make_qmd("explore", dir = "work")
+#' }
 #' }
 #'
 #' @seealso [make_notebook()], [make_rmd()]
@@ -579,7 +585,8 @@ make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subd
 #' @return Invisible path to created notebook
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create notebooks/analysis.Rmd
 #' make_rmd("analysis")
 #'
@@ -588,6 +595,7 @@ make_qmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subd
 #'
 #' # Create in specific directory
 #' make_rmd("explore", dir = "work")
+#' }
 #' }
 #'
 #' @seealso [make_notebook()], [make_qmd()]
@@ -611,12 +619,14 @@ make_rmd <- function(name, dir = NULL, stub = "default", overwrite = FALSE, subd
 #' @return Invisible path to created presentation
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create notebooks/slides.qmd with reveal.js format
 #' make_revealjs("slides")
 #'
 #' # Create in specific directory
 #' make_revealjs("presentation", dir = "presentations")
+#' }
 #' }
 #'
 #' @seealso [make_notebook()], [make_qmd()], [make_presentation()]
@@ -639,9 +649,11 @@ make_revealjs <- function(name, dir = NULL, overwrite = FALSE, subdir = NULL) {
 #' @return Invisible path to created presentation
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Create notebooks/deck.qmd with reveal.js format
 #' make_presentation("deck")
+#' }
 #' }
 #'
 #' @seealso [make_notebook()], [make_revealjs()]

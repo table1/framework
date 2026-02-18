@@ -37,23 +37,4 @@ installed from CRAN, GitHub, or Bioconductor, with version pinning support.
 }
 }
 }
-\examples{
-\dontrun{
-# Interactive mode
-configure_packages()
-
-# Add CRAN package with auto-attach
-configure_packages(
-  package = "dplyr",
-  auto_attach = TRUE
-)
-
-# Add GitHub package
-configure_packages(
-  package = "tidyverse/dplyr@main",
-  auto_attach = FALSE
-)
-}
-
-}
 \keyword{internal}

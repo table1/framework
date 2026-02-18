@@ -34,12 +34,14 @@ Flexible project creation interface. Alias for \code{new_project()} that accepts
 type as a parameter.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create different project types
 new("analysis", "~/projects/analysis")
 new("study", "~/projects/study", type = "project_sensitive")
 new("slides", "~/projects/slides", type = "presentation")
 new("course-materials", "~/projects/course", type = "course")
+}
 }
 
 }

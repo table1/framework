@@ -9,22 +9,6 @@
 #'
 #' @return Invisibly returns TRUE on success
 #' @keywords internal
-#' @examples
-#' \dontrun{
-#' # Create .env with database credentials
-#' .make_env(
-#'   DB_HOST = "localhost",
-#'   DB_PORT = "5432",
-#'   DB_PASSWORD = "secret",
-#'   comment = "Database connection"
-#' )
-#'
-#' # Add API keys
-#' .make_env(
-#'   OPENAI_API_KEY = "sk-...",
-#'   comment = "API credentials"
-#' )
-#' }
 .make_env <- function(..., comment = NULL, check_gitignore = TRUE) {
   vars <- list(...)
 
@@ -224,23 +208,26 @@ env_resolve_lines <- function(env_config = NULL) {
 #' packages, and running garbage collection. Does not clear the console.
 #'
 #' @param keep Character vector of object names to keep (default: empty)
+#' @param envir The environment to clear
 #' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Clean everything
-#' env_clear()
+#' \donttest{
+#' if (FALSE) {
+#' # Clean a specific environment
+#' env_clear(envir = my_env)
 #'
 #' # Keep specific objects
-#' env_clear(keep = c("config", "data"))
+#' env_clear(keep = c("config", "data"), envir = my_env)
 #' }
-env_clear <- function(keep = character()) {
+#' }
+env_clear <- function(keep = character(), envir) {
   # Remove all objects except those specified in 'keep'
-  all_objects <- ls(all.names = TRUE, envir = .GlobalEnv)
+  all_objects <- ls(all.names = TRUE, envir = envir)
   to_remove <- setdiff(all_objects, keep)
   if (length(to_remove) > 0) {
-    rm(list = to_remove, envir = .GlobalEnv)
+    rm(list = to_remove, envir = envir)
     message(sprintf("[ok] Removed %d object%s", length(to_remove), if (length(to_remove) == 1) "" else "s"))
     if (length(keep) > 0) {
       message(sprintf("  Kept: %s", paste(keep, collapse = ", ")))
@@ -296,14 +283,17 @@ env_clear <- function(keep = character()) {
 #' Displays a summary of the current R environment including loaded packages,
 #' objects in the global environment, and memory usage.
 #'
+#' @param envir The environment to summarize
 #' @return Invisibly returns a list with environment information
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' env_summary()
+#' \donttest{
+#' if (FALSE) {
+#' env_summary(envir = my_env)
 #' }
-env_summary <- function() {
+#' }
+env_summary <- function(envir) {
   message("\n=== Environment Summary ===\n")
 
   # Session info
@@ -326,14 +316,14 @@ env_summary <- function() {
   message("")
 
   # Global environment objects
-  all_objects <- ls(all.names = FALSE, envir = .GlobalEnv)
-  hidden_objects <- setdiff(ls(all.names = TRUE, envir = .GlobalEnv), all_objects)
+  all_objects <- ls(all.names = FALSE, envir = envir)
+  hidden_objects <- setdiff(ls(all.names = TRUE, envir = envir), all_objects)
 
   message(sprintf("Objects in Global Environment: %d", length(all_objects)))
   if (length(all_objects) > 0) {
     # Group by class
     obj_info <- lapply(all_objects, function(x) {
-      obj <- get(x, envir = .GlobalEnv)
+      obj <- get(x, envir = envir)
       list(
         name = x,
         class = class(obj)[1],

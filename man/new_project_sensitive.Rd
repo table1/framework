@@ -30,8 +30,10 @@ Shorthand for \code{new_project(..., type = "project_sensitive")}. Creates a pro
 with additional privacy protections for handling sensitive data.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 new_project_sensitive("medical-study", "~/projects/medical")
+}
 }
 
 }

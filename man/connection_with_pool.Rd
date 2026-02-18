@@ -20,20 +20,4 @@ The result of evaluating \code{code}
 Convenience wrapper for working with connection pools. Gets or creates a pool
 and makes it available as \code{pool} within the code block.
 }
-\examples{
-\dontrun{
-# Simple usage
-users <- connection_with_pool("my_db", {
-  DBI::dbGetQuery(pool, "SELECT * FROM users WHERE active = TRUE")
-})
-
-# Multiple operations
-result <- connection_with_pool("my_db", {
-  users <- DBI::dbGetQuery(pool, "SELECT * FROM users")
-  posts <- DBI::dbGetQuery(pool, "SELECT * FROM posts")
-  list(users = users, posts = posts)
-})
-}
-
-}
 \keyword{internal}

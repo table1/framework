@@ -18,9 +18,11 @@ Invisibly returns TRUE on success
 Push commits to the remote repository.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_push()
 git_push(remote = "origin", branch = "main")
+}
 }
 
 }

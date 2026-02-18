@@ -31,19 +31,4 @@ Interactively add a data source to settings.yml (or settings.yml for legacy proj
 with dot-notation paths (e.g., "source.private.survey") and include metadata
 like file path, type, and whether the data is locked.
 }
-\examples{
-\dontrun{
-# Interactive mode
-configure_data()
-
-# Provide values directly
-configure_data(
-  path = "source.private.survey",
-  file = "inputs/raw/survey.csv",
-  type = "csv",
-  locked = TRUE
-)
-}
-
-}
 \keyword{internal}

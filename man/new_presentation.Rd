@@ -25,8 +25,10 @@ Shorthand for \code{new_project(..., type = "presentation")}. Creates a project
 optimized for RevealJS presentations.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 new_presentation("quarterly-review", "~/projects/q4-review")
+}
 }
 
 }

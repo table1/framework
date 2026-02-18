@@ -4,10 +4,12 @@
 \alias{env_clear}
 \title{Clear R environment}
 \usage{
-env_clear(keep = character())
+env_clear(keep = character(), envir)
 }
 \arguments{
 \item{keep}{Character vector of object names to keep (default: empty)}
+
+\item{envir}{The environment to clear}
 }
 \value{
 Invisibly returns NULL
@@ -17,11 +19,13 @@ Cleans up the R environment by removing objects, closing plots, detaching
 packages, and running garbage collection. Does not clear the console.
 }
 \examples{
-\dontrun{
-# Clean everything
-env_clear()
+\donttest{
+if (FALSE) {
+# Clean a specific environment
+env_clear(envir = my_env)
 
 # Keep specific objects
-env_clear(keep = c("config", "data"))
+env_clear(keep = c("config", "data"), envir = my_env)
+}
 }
 }

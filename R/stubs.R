@@ -35,7 +35,8 @@
 #' - `{date}` - Current date (YYYY-MM-DD)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Publish all stubs
 #' stubs_publish()
 #'
@@ -47,6 +48,7 @@
 #'
 #' # Overwrite existing stubs
 #' stubs_publish(overwrite = TRUE)
+#' }
 #' }
 #'
 #' @seealso [make_notebook()], [make_script()], [stubs_list()], [stubs_path()]
@@ -146,7 +148,8 @@ stubs_publish <- function(type = "all", overwrite = FALSE, stubs = NULL) {
 #' @return Character path to stubs directory
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Get active stubs directory
 #' stubs_path()
 #'
@@ -155,6 +158,7 @@ stubs_publish <- function(type = "all", overwrite = FALSE, stubs = NULL) {
 #'
 #' # Get user stubs directory
 #' stubs_path("user")
+#' }
 #' }
 #'
 #' @export

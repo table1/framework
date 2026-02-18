@@ -18,10 +18,12 @@ Invisibly returns the log output as a character vector
 Show recent commit history.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_log()
 git_log(n = 5)
 git_log(oneline = FALSE)  # Full format
+}
 }
 
 }

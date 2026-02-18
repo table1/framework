@@ -4,7 +4,10 @@
 \alias{env_summary}
 \title{Summarize R environment}
 \usage{
-env_summary()
+env_summary(envir)
+}
+\arguments{
+\item{envir}{The environment to summarize}
 }
 \value{
 Invisibly returns a list with environment information
@@ -14,7 +17,9 @@ Displays a summary of the current R environment including loaded packages,
 objects in the global environment, and memory usage.
 }
 \examples{
-\dontrun{
-env_summary()
+\donttest{
+if (FALSE) {
+env_summary(envir = my_env)
+}
 }
 }

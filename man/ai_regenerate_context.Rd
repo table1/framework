@@ -22,11 +22,13 @@ Updates only the sections marked with \verb{<!-- @framework:regenerate -->} in a
 existing AI context file, preserving user customizations in unmarked sections.
 }
 \examples{
-\dontrun{
-# Regenerate all dynamic sections
-ai_regenerate_context()
+\donttest{
+if (file.exists("CLAUDE.md")) {
+  # Regenerate all dynamic sections
+  ai_regenerate_context()
 
-# Regenerate only packages section
-ai_regenerate_context(sections = "packages")
+  # Regenerate only packages section
+  ai_regenerate_context(sections = "packages")
+}
 }
 }

@@ -33,6 +33,9 @@ Dot notation uses your configured directories
 
 \item{force}{If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.}
 }
+\value{
+Invisibly returns the saved data.
+}
 \description{
 Save data using dot notation or file path
 }

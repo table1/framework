@@ -16,10 +16,4 @@ Named list with \code{package}, \code{name}, and optionally \code{install_comman
 Internal helper to map database driver names to their R packages and
 human-readable names.
 }
-\examples{
-\dontrun{
-.get_driver_info("postgres")
-.get_driver_info("mysql")
-}
-}
 \keyword{internal}

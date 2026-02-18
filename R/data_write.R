@@ -12,6 +12,7 @@
 #' @param delimiter Delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param locked Whether the file should be locked after saving
 #' @param force If TRUE, creates missing directories. If FALSE (default), errors if directory doesn't exist.
+#' @return Invisibly returns the saved data.
 #' @export
 data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRUE, force = FALSE) {
   # Validate arguments
@@ -193,7 +194,8 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
 #' @return Invisibly returns the data spec that was created
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Add a downloaded CSV file to the catalog
 #' data_add("inputs/raw/survey_results.csv", name = "inputs.raw.survey_results")
 #'
@@ -203,6 +205,7 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
 #' # Add with auto-generated name
 #' data_add("inputs/intermediate/cleaned_data.rds")
 #' # Name will be derived as "inputs.intermediate.cleaned_data"
+#' }
 #' }
 #'
 #' @export

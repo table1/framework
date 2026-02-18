@@ -6,6 +6,9 @@
 \usage{
 status()
 }
+\value{
+No return value, called for side effect of printing project status.
+}
 \description{
 Displays comprehensive information about the current Framework project including:
 \itemize{
@@ -19,7 +22,9 @@ Displays comprehensive information about the current Framework project including
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 status()
+}
 }
 }

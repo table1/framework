@@ -4,9 +4,9 @@
 \name{framework-package}
 \alias{framework}
 \alias{framework-package}
-\title{framework: Structured Data Science in R}
+\title{framework: Structured Data Science Project Scaffolding}
 \description{
-Project scaffolding and workflow tools for reproducible data science. Manages packages, tracks data integrity, handles database connections, generates notebooks, and publishes to S3-compatible storage.
+Project scaffolding and workflow tools for reproducible data science. Manages packages, tracks data integrity, handles database connections, generates notebooks, and publishes to S3-compatible storage. More information at \url{https://framework.table1.org}.
 }
 \seealso{
 Useful links:

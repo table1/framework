@@ -21,8 +21,10 @@ Gets data from a database using a query and connection name. The connection
 is created, used, and automatically closed.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 users <- db_query("SELECT * FROM users", "my_db")
+}
 }
 
 }

@@ -16,14 +16,4 @@ Invisibly returns the number of pools closed
 Closes all active connection pools. Useful for cleanup when shutting down
 R sessions or resetting state.
 }
-\examples{
-\dontrun{
-# Close all pools
-connection_pool_close_all()
-
-# Quiet mode
-connection_pool_close_all(quiet = TRUE)
-}
-
-}
 \keyword{internal}

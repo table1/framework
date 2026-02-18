@@ -20,7 +20,8 @@ NULL
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Upload a single file
 #' publish("outputs/report.html")
 #' # -> https://bucket.s3.region.amazonaws.com/prefix/report.html
@@ -33,6 +34,7 @@ NULL
 #'
 #' # Use specific connection
 #' publish("data.csv", connection = "s3_backup")
+#' }
 #' }
 publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE) {
   checkmate::assert_string(source, min.chars = 1)
@@ -87,7 +89,8 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # With static_hosting: true -> returns /analysis/
 #' # With static_hosting: false -> returns /analysis.html
 #' publish_notebook("notebooks/analysis.qmd")
@@ -97,6 +100,7 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE) {
 #'
 #' # Publish non-self-contained (only with static_hosting: true)
 #' publish_notebook("notebooks/analysis.qmd", self_contained = FALSE)
+#' }
 #' }
 publish_notebook <- function(file,
                              dest = NULL,
@@ -220,7 +224,8 @@ publish_notebook <- function(file,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Publish a data frame
 #' publish_data(my_df, "datasets/customers.csv")
 #'
@@ -229,6 +234,7 @@ publish_notebook <- function(file,
 #'
 #' # Publish existing file
 #' publish_data("outputs/model.rds", "models/v2/model.rds")
+#' }
 #' }
 publish_data <- function(data,
                          dest,
@@ -305,7 +311,8 @@ publish_data <- function(data,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Upload entire directory
 #' publish_dir("outputs/dashboard/")
 #'
@@ -314,6 +321,7 @@ publish_data <- function(data,
 #'
 #' # Upload only HTML files
 #' publish_dir("outputs/", pattern = "\\.html$")
+#' }
 #' }
 publish_dir <- function(dir,
                         dest = NULL,
@@ -378,7 +386,8 @@ publish_dir <- function(dir,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all published files
 #' publish_list()
 #'
@@ -387,6 +396,7 @@ publish_dir <- function(dir,
 #'
 #' # List from specific connection
 #' publish_list(connection = "s3_backup")
+#' }
 #' }
 publish_list <- function(prefix = NULL, connection = NULL, max = 1000L) {
   checkmate::assert_string(prefix, null.ok = TRUE)

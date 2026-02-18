@@ -12,7 +12,7 @@
 #'   - version: Package version (if installed)
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Check all drivers
 #' db_drivers_status()
 #'
@@ -49,23 +49,23 @@ db_drivers_status <- function(quiet = FALSE) {
   df <- df[!duplicated(df$package), ]
 
   if (!quiet) {
-    cat("\n=== Database Driver Status ===\n\n")
-    print(df, row.names = FALSE)
-    cat("\n")
+    message("\n=== Database Driver Status ===\n")
+    message(paste(capture.output(print(df, row.names = FALSE)), collapse = "\n"))
+    message("")
 
     missing <- df[!df$installed, ]
     if (nrow(missing) > 0) {
-      cat("To install missing drivers:\n")
+      message("To install missing drivers:")
       for (i in seq_len(nrow(missing))) {
         pkg <- missing$package[i]
         if (pkg == "odbc") {
-          cat(sprintf("  install.packages('%s')\n", pkg))
-          cat("  # Also requires ODBC driver: https://learn.microsoft.com/en-us/sql/connect/odbc/\n")
+          message(sprintf("  install.packages('%s')", pkg))
+          message("  # Also requires ODBC driver: https://learn.microsoft.com/en-us/sql/connect/odbc/")
         } else {
-          cat(sprintf("  install.packages('%s')\n", pkg))
+          message(sprintf("  install.packages('%s')", pkg))
         }
       }
-      cat("\n")
+      message("")
     }
   }
 
@@ -84,12 +84,14 @@ db_drivers_status <- function(quiet = FALSE) {
 #' @return NULL (invisible). Installs packages as side effect.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Install specific drivers
 #' db_drivers_install(c("postgres", "mysql"))
 #'
 #' # Interactive mode
 #' db_drivers_install()
+#' }
 #' }
 #'
 #' @export
@@ -161,11 +163,11 @@ db_drivers_install <- function(drivers = NULL, repos = getOption("repos")) {
   }
 
   # Install packages
-  cat(sprintf("\nInstalling: %s\n", paste(to_install, collapse = ", ")))
+  message(sprintf("\nInstalling: %s", paste(to_install, collapse = ", ")))
   utils::install.packages(to_install, repos = repos)
 
   # Show updated status
-  cat("\n")
+  message("")
   db_drivers_status()
 
   invisible(NULL)
@@ -302,16 +304,16 @@ connection_check <- function(connection_name) {
 
   # Print summary if not ready
   if (!ready) {
-    cat(sprintf("\n=== Connection Check: %s ===\n\n", connection_name))
-    cat(sprintf("Driver: %s\n", if (is.na(driver)) "(not set)" else driver))
-    cat(sprintf("Package: %s\n", if (is.na(package)) "(unknown)" else package))
-    cat(sprintf("Package installed: %s\n", if (package_installed) "yes" else "no"))
-    cat(sprintf("Config valid: %s\n\n", if (config_valid) "yes" else "no"))
-    cat("Issues:\n")
+    message(sprintf("\n=== Connection Check: %s ===\n", connection_name))
+    message(sprintf("Driver: %s", if (is.na(driver)) "(not set)" else driver))
+    message(sprintf("Package: %s", if (is.na(package)) "(unknown)" else package))
+    message(sprintf("Package installed: %s", if (package_installed) "yes" else "no"))
+    message(sprintf("Config valid: %s\n", if (config_valid) "yes" else "no"))
+    message("Issues:")
     for (msg in messages) {
-      cat(sprintf("  - %s\n", msg))
+      message(sprintf("  - %s", msg))
     }
-    cat("\n")
+    message("")
   }
 
   invisible(result)

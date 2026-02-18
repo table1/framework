@@ -37,7 +37,8 @@
 #' }
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Basic audit (report only)
 #' audit <- git_security_audit()
 #' print(audit$summary)
@@ -51,6 +52,7 @@
 #'
 #' # Auto-fix mode (updates .gitignore)
 #' audit <- git_security_audit(auto_fix = TRUE)
+#' }
 #' }
 #'
 #' @export

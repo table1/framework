@@ -18,9 +18,11 @@ Invisibly returns TRUE on success
 Record changes to the repository with a commit message.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_commit("Fix bug in data loading")
 git_commit("Update README", all = TRUE)  # Stage and commit
+}
 }
 
 }

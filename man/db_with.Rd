@@ -20,7 +20,8 @@ automatically closed when the code block finishes, even if an error occurs.
 This prevents connection leaks and ensures proper resource cleanup.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Safe - connection auto-closes
 users <- db_with("my_db", {
   DBI::dbGetQuery(conn, "SELECT * FROM users WHERE active = TRUE")
@@ -39,6 +40,7 @@ tryCatch(
   }),
   error = function(e) message(e$message)
 )
+}
 }
 
 }

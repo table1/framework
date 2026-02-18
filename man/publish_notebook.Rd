@@ -43,7 +43,8 @@ The URL format depends on the S3 connection's \code{static_hosting} setting:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # With static_hosting: true -> returns /analysis/
 # With static_hosting: false -> returns /analysis.html
 publish_notebook("notebooks/analysis.qmd")
@@ -53,5 +54,6 @@ publish_notebook("notebooks/analysis.qmd", dest = "reports/2024/q4")
 
 # Publish non-self-contained (only with static_hosting: true)
 publish_notebook("notebooks/analysis.qmd", self_contained = FALSE)
+}
 }
 }

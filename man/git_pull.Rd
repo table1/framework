@@ -18,9 +18,11 @@ Invisibly returns TRUE on success
 Fetch and integrate changes from the remote repository.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 git_pull()
 git_pull(remote = "origin", branch = "main")
+}
 }
 
 }

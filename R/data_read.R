@@ -7,6 +7,7 @@
 #' @param delim Optional delimiter for CSV files ("comma", "tab", "semicolon", "space")
 #' @param keep_attributes Logical flag to preserve special attributes (e.g., haven labels). Default: FALSE (strips attributes)
 #' @param ... Additional arguments passed to read functions (readr::read_delim, readxl::read_excel, haven::read_*, etc.)
+#' @return The loaded data, typically a data frame or tibble.
 #' @export
 data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
   # Validate arguments
@@ -295,12 +296,14 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # List all data entries
 #' data_list()
 #'
 #' # Use the alias
 #' list_data()
+#' }
 #' }
 data_list <- function() {
   config <- settings_read()
@@ -479,12 +482,14 @@ data_read_or_cache <- function(path, expire_after = NULL, refresh = FALSE) {
 #'   }
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' if (FALSE) {
 #' # Get info from dot notation
 #' info <- data_info("source.private.my_data")
 #'
 #' # Get info from file path
 #' info <- data_info("data/public/example.csv")
+#' }
 #' }
 #'
 #' @export

@@ -28,7 +28,8 @@ function - use \code{publish_notebook()} for Quarto documents or \code{publish_d
 for data files.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Upload a single file
 publish("outputs/report.html")
 # -> https://bucket.s3.region.amazonaws.com/prefix/report.html
@@ -41,5 +42,6 @@ publish("outputs/charts/", dest = "reports/charts/")
 
 # Use specific connection
 publish("data.csv", connection = "s3_backup")
+}
 }
 }

@@ -18,10 +18,4 @@ Invisibly returns TRUE if pool was closed, FALSE if it didn't exist
 Closes and removes a connection pool. All connections in the pool are
 gracefully closed.
 }
-\examples{
-\dontrun{
-connection_pool_close("my_db")
-}
-
-}
 \keyword{internal}

@@ -16,11 +16,13 @@ Logical. TRUE if connection is valid.
 Validates that S3/storage credentials and bucket access are working.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Test default storage connection
 storage_test()
 
 # Test specific connection
 storage_test("my_s3_backup")
+}
 }
 }

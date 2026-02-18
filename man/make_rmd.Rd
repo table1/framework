@@ -26,7 +26,8 @@ Convenient alias for \code{make_notebook(type = "rmarkdown")}. Creates a .Rmd fi
 from stub templates.
 }
 \examples{
-\dontrun{
+\donttest{
+if (FALSE) {
 # Create notebooks/analysis.Rmd
 make_rmd("analysis")
 
@@ -35,6 +36,7 @@ make_rmd("report", stub = "minimal")
 
 # Create in specific directory
 make_rmd("explore", dir = "work")
+}
 }
 
 }

@@ -117,6 +117,7 @@ read_framework_template <- function(name) {
 #' Overwrite a Framework template with new contents
 #' @inheritParams framework_template_path
 #' @param contents Character string to write to the template file.
+#' @return Invisibly returns the file path of the written template.
 #' @export
 write_framework_template <- function(name, contents) {
   checkmate::assert_string(contents)
@@ -125,6 +126,7 @@ write_framework_template <- function(name, contents) {
 
 #' Reset a Framework template back to the packaged default
 #' @inheritParams framework_template_path
+#' @return Invisibly returns the file path of the reset template.
 #' @export
 reset_framework_template <- function(name) {
   .reset_framework_template(name)

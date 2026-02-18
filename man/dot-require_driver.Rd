@@ -20,10 +20,4 @@ NULL (invisible). Throws error if package not available.
 Internal helper to check if a required database driver package is installed.
 Throws an informative error if the package is missing.
 }
-\examples{
-\dontrun{
-.require_driver("PostgreSQL", "RPostgres")
-.require_driver("MySQL", "RMariaDB")
-}
-}
 \keyword{internal}

@@ -183,39 +183,44 @@ message("Framework dev mode active - will load from: %s")
 #' Display next steps after initialization
 #' @keywords internal
 .display_next_steps <- function(project_name = NULL, type = "project", use_renv = FALSE) {
-  cat("\n")
-  cat("\u2713 Framework project initialized successfully!\n\n")
+  message("")
+  message("\u2713 Framework project initialized successfully!")
+  message("")
 
   # Show summary of settings
-  cat("Project Configuration:\n")
+  message("Project Configuration:")
   if (!is.null(project_name)) {
-    cat(sprintf("  -Name: %s\n", project_name))
+    message(sprintf("  -Name: %s", project_name))
   }
-  cat(sprintf("  -Type: %s\n", type))
-  cat(sprintf("  -renv: %s\n", if (use_renv) "enabled" else "disabled"))
-  cat("\n")
+  message(sprintf("  -Type: %s", type))
+  message(sprintf("  -renv: %s", if (use_renv) "enabled" else "disabled"))
+  message("")
 
-  cat("Next steps:\n")
-  cat("  1. Review and edit settings.yml\n")
-  cat("  2. Start a new R session in this directory\n")
-  cat("  3. Run:\n")
-  cat("       library(framework)\n")
-  cat("       scaffold()\n")
-  cat("  4. Start analyzing!\n\n")
-  cat("Optional:\n")
-  cat("  -Add database connections: configure_connection()\n")
-  cat("  -Store secrets: Edit .env file directly\n\n")
+  message("Next steps:")
+  message("  1. Review and edit settings.yml")
+  message("  2. Start a new R session in this directory")
+  message("  3. Run:")
+  message("       library(framework)")
+  message("       scaffold()")
+  message("  4. Start analyzing!")
+  message("")
+  message("Optional:")
+  message("  -Add database connections: configure_connection()")
+  message("  -Store secrets: Edit .env file directly")
+  message("")
 
   # Additional context based on project type
   if (type == "course") {
-    cat("Course-specific features:\n")
-    cat("  -slides/ - Author lecture decks (render to slides/_rendered/{{ slug }}.html)\n")
-    cat("  -assignments/ - Organize homework and lab materials\n")
-    cat("  -data/ - Store shared datasets for demonstrations\n\n")
+    message("Course-specific features:")
+    message("  -slides/ - Author lecture decks (render to slides/_rendered/{{ slug }}.html)")
+    message("  -assignments/ - Organize homework and lab materials")
+    message("  -data/ - Store shared datasets for demonstrations")
+    message("")
   } else if (type == "presentation") {
-    cat("Presentation tips:\n")
-    cat("  -Use make_notebook() to create your presentation\n")
-    cat("  -Quarto reveal.js format recommended\n\n")
+    message("Presentation tips:")
+    message("  -Use make_notebook() to create your presentation")
+    message("  -Quarto reveal.js format recommended")
+    message("")
   }
 }
 
@@ -642,14 +647,6 @@ message("Framework dev mode active - will load from: %s")
 #' @return Invisibly returns TRUE on success
 #' @keywords internal
 #' @export
-#' @examples
-#' \dontrun{
-#' # Create init.R to see initialization logic
-#' bootstrap_project_init()
-#'
-#' # Write to a different location
-#' bootstrap_project_init("docs/init_reference.R")
-#' }
 bootstrap_project_init <- function(output_file = "init.R") {
   checkmate::assert_string(output_file, min.chars = 1)
 
