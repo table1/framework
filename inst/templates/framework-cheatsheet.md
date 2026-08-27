@@ -124,9 +124,10 @@ settings_write(config, "file")   # Write settings back
 
 ### AI Assistant Support
 ```r
-ai_sync_context()                # Sync AI context files
-ai_generate_context()            # Generate AI context
-ai_regenerate_context()          # Regenerate AI context
+ai_generate_context()            # Generate AGENTS.md (canonical AI context)
+ai_regenerate_context()          # Refresh dynamic sections of AGENTS.md
+ai_skills_update()               # Refresh .claude/skills/ after package upgrade
+ai_sync_context()                # Sync AI context files (legacy multi-file setups)
 ```
 
 ---
@@ -284,9 +285,10 @@ capture_output(expr)             # Capture console output
 
 | Function | Purpose |
 |----------|---------|
-| `ai_generate_context()` | Generate AI context files |
-| `ai_regenerate_context()` | Regenerate AI context files |
-| `ai_sync_context()` | Sync AI assistant context files |
+| `ai_generate_context()` | Generate AGENTS.md (canonical AI context) |
+| `ai_regenerate_context()` | Refresh dynamic sections of AGENTS.md |
+| `ai_skills_update()` | Refresh Framework skills in .claude/skills/ |
+| `ai_sync_context()` | Sync AI assistant context files (legacy) |
 | `cache()` | Store value in cache |
 | `cache_flush()` | Clear all cache |
 | `cache_forget()` | Delete cached item |

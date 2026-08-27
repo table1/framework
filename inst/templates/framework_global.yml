@@ -48,7 +48,7 @@ defaults:
   ai_assistants:
     - claude
     - agents
-  ai_canonical_file: "CLAUDE.md"  # CLAUDE.md, AGENTS.md, or .github/copilot-instructions.md
+  ai_canonical_file: "AGENTS.md"  # AGENTS.md (canonical), CLAUDE.md, or .github/copilot-instructions.md
 
   # Default packages to include in new projects
   # These will be added to the packages section of new projects

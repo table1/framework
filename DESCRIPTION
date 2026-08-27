@@ -1,7 +1,7 @@
 Package: framework
 Type: Package
 Title: Structured Data Science Project Scaffolding
-Version: 1.0.2
+Version: 1.1.0
 Authors@R:
     person("Erik", "Westlund", , "erik@table1.org", role = c("aut", "cre", "cph"))
 Maintainer: Erik Westlund <erik@table1.org>
@@ -14,7 +14,6 @@ URL: https://framework.table1.org, https://github.com/table1/framework
 BugReports: https://github.com/table1/framework/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("rd", "namespace", "collate"))
-RoxygenNote: 7.3.3
 Imports:
     checkmate,
     DBI,
@@ -61,3 +60,4 @@ Suggests:
     writexl
 Config/testthat/edition: 3
 Depends: R (>= 4.1.0)
+Config/roxygen2/version: 8.1.0

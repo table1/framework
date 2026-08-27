@@ -1,3 +1,15 @@
+# framework 1.1.0
+
+* Skills-based AI context: new projects get a thin canonical `AGENTS.md` plus
+  Framework skills installed in `.claude/skills/` (workflow, data, packages,
+  outputs, and sensitive-data rules as separate SKILL.md files)
+* `AGENTS.md` replaces `CLAUDE.md` as the default canonical AI context file;
+  CLAUDE.md and .github/copilot-instructions.md are now thin pointer stubs
+* New `ai_skills_update()` refreshes a project's Framework skills after
+  upgrading the package
+* `ai_regenerate_context()` falls back to `CLAUDE.md` for projects created
+  before 1.1.0
+
 # framework 1.0.0
 
 * First stable release

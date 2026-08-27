@@ -196,7 +196,7 @@ function() {
 
     defaults_flat$ai_canonical_file <- settings$defaults$ai$canonical_file %||%
                                        settings$defaults$ai_canonical_file %||%
-                                       "CLAUDE.md"
+                                       "AGENTS.md"
 
     # Git hooks - flatten
     if (!is.null(settings$defaults$git$hooks)) {
@@ -320,7 +320,7 @@ function() {
         ),
         ai = list(
           enabled = settings$defaults$ai_support %||% TRUE,
-          canonical_file = settings$defaults$ai_canonical_file %||% "CLAUDE.md",
+          canonical_file = settings$defaults$ai_canonical_file %||% "AGENTS.md",
           preferred_assistant = settings$defaults$ai_assistants %||% "claude",
           assistants = I(if (is.character(settings$defaults$ai_assistants)) {
             strsplit(settings$defaults$ai_assistants, ",\\s*")[[1]]
@@ -1257,7 +1257,7 @@ function(id, canonical_file = "") {
     }
 
     enabled <- as.logical(ai_config$enabled %||% FALSE)[1]
-    canonical <- as.character(ai_config$canonical_file %||% "CLAUDE.md")[1]
+    canonical <- as.character(ai_config$canonical_file %||% "AGENTS.md")[1]
     assistants_raw <- ai_config$assistants %||% list()
 
     assistants <- if (is.list(assistants_raw) || is.vector(assistants_raw)) {
@@ -1266,9 +1266,9 @@ function(id, canonical_file = "") {
       list()
     }
 
-    requested_file <- .sanitize_relative_path(canonical_file %||% canonical %||% "CLAUDE.md")
+    requested_file <- .sanitize_relative_path(canonical_file %||% canonical %||% "AGENTS.md")
     if (is.null(requested_file) || requested_file == "") {
-      requested_file <- "CLAUDE.md"
+      requested_file <- "AGENTS.md"
     }
 
     canonical_path <- file.path(project$path, requested_file)
@@ -1467,8 +1467,8 @@ function(id, req) {
   body <- jsonlite::fromJSON(req$postBody, simplifyDataFrame = FALSE)
 
   tryCatch({
-    canonical_relative <- body$canonical_file %||% "CLAUDE.md"
-    canonical_relative <- .sanitize_relative_path(canonical_relative) %||% "CLAUDE.md"
+    canonical_relative <- body$canonical_file %||% "AGENTS.md"
+    canonical_relative <- .sanitize_relative_path(canonical_relative) %||% "AGENTS.md"
     assistants_raw <- body$assistants %||% list()
     assistant_values <- if (is.list(assistants_raw) || is.vector(assistants_raw)) {
       as.list(unique(as.character(unlist(assistants_raw))))
@@ -1553,12 +1553,12 @@ function(id, req) {
 
     # Get AI file name from project config
     settings_file <- file.path(project$path, "settings.yml")
-    ai_file <- "CLAUDE.md"  # Default
+    ai_file <- "AGENTS.md"  # Default
 
     if (file.exists(settings_file)) {
       settings <- tryCatch(yaml::read_yaml(settings_file), error = function(e) list())
       settings <- settings$default %||% settings
-      ai_file <- settings$ai$canonical_file %||% "CLAUDE.md"
+      ai_file <- settings$ai$canonical_file %||% "AGENTS.md"
     }
 
     # Call ai_regenerate_context

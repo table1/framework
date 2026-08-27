@@ -143,7 +143,7 @@ project_create <- function(
 
   # Create AI context files
   if (ai$enabled) {
-    .create_ai_files(project_dir, ai$assistants, ai$canonical_content, type)
+    .create_ai_files(project_dir, ai$assistants, ai$canonical_content, type, name)
   }
 
   # Create scaffold.R with seed and theme setup
@@ -391,7 +391,7 @@ project_create <- function(
 
     yaml::write_yaml(list(ai = list(
       enabled = ai$enabled %||% FALSE,
-      canonical_file = ai$canonical_file %||% "CLAUDE.md",
+      canonical_file = ai$canonical_file %||% "AGENTS.md",
       assistants = ai$assistants
     )), file.path(settings_dir, "ai.yml"))
 
@@ -448,7 +448,7 @@ project_create <- function(
         # AI configuration
         ai = list(
           enabled = ai$enabled %||% FALSE,
-          canonical_file = ai$canonical_file %||% "CLAUDE.md",
+          canonical_file = ai$canonical_file %||% "AGENTS.md",
           assistants = ai$assistants
         ),
 
@@ -526,21 +526,23 @@ project_create <- function(
 }
 
 #' Create AI context files
+#'
+#' AGENTS.md is always the canonical context file, and Framework skills are
+#' installed into .claude/skills/. If the user also selected Claude Code or
+#' Copilot, those files are written as thin pointers to AGENTS.md rather than
+#' duplicated copies.
+#'
 #' @keywords internal
-.create_ai_files <- function(project_dir, assistants, canonical_content, type) {
-  # Map assistants to file paths
-  ai_files <- list(
-    claude = "CLAUDE.md",
-    agents = "AGENTS.md",
-    copilot = ".github/copilot-instructions.md"
-  )
-
+.create_ai_files <- function(project_dir, assistants, canonical_content, type,
+                             project_name = NULL) {
   if (length(assistants) == 0) {
-    assistants <- list("claude")
+    assistants <- list("agents")
   }
 
-  # Get project name from directory
-  project_name <- basename(normalizePath(project_dir))
+  # Fall back to directory name if no project name given
+  if (is.null(project_name) || !nzchar(project_name)) {
+    project_name <- basename(normalizePath(project_dir))
+  }
 
   # Try to read config for dynamic generation
   config <- tryCatch(
@@ -548,9 +550,8 @@ project_create <- function(
     error = function(e) NULL
   )
 
-  # Generate content
+  # Generate canonical AGENTS.md content
   if (!is.null(config)) {
-    # Use dynamic generation with ai_generate_context()
     content <- ai_generate_context(
       project_path = project_dir,
       project_name = project_name,
@@ -558,7 +559,6 @@ project_create <- function(
       config = config
     )
   } else {
-    # Fall back to template
     content <- .load_ai_template(type, project_name)
   }
 
@@ -567,21 +567,36 @@ project_create <- function(
     content <- canonical_content
   }
 
-  for (assistant in assistants) {
-    if (assistant %in% names(ai_files)) {
-      file_path <- file.path(project_dir, ai_files[[assistant]])
+  writeLines(content, file.path(project_dir, "AGENTS.md"))
+  message("  Created: AGENTS.md")
 
-      # Create directory if needed (for copilot)
-      file_dir <- dirname(file_path)
-      if (!dir.exists(file_dir)) {
-        dir.create(file_dir, recursive = TRUE)
-      }
+  # Install Framework skills (detailed instructions loaded on demand)
+  .ai_install_skills(project_dir, type)
 
-      # Write file
-      writeLines(content, file_path)
-      message("  Created: ", ai_files[[assistant]])
-    }
+  # Pointer stubs for assistants that look for their own file
+  if ("claude" %in% assistants) {
+    writeLines(.ai_pointer_stub(project_name), file.path(project_dir, "CLAUDE.md"))
+    message("  Created: CLAUDE.md (points to AGENTS.md)")
   }
+
+  if ("copilot" %in% assistants) {
+    dir.create(file.path(project_dir, ".github"), recursive = TRUE, showWarnings = FALSE)
+    writeLines(.ai_pointer_stub(project_name),
+               file.path(project_dir, ".github", "copilot-instructions.md"))
+    message("  Created: .github/copilot-instructions.md (points to AGENTS.md)")
+  }
+}
+
+
+#' Pointer stub content for non-canonical AI files
+#' @keywords internal
+.ai_pointer_stub <- function(project_name) {
+  sprintf("# %s
+
+Project instructions live in @AGENTS.md (the canonical AI context file) and in
+the skills under `.claude/skills/`. Read AGENTS.md before working here; do not
+duplicate its content in this file.
+", project_name)
 }
 
 #' Load template content from inst/templates

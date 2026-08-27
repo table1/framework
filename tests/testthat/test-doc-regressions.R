@@ -100,5 +100,6 @@ test_that("AI context files are created even when assistants list is empty", {
   )
 
   expect_true(result$success)
-  expect_true(file.exists(file.path(dir, "CLAUDE.md")))
+  expect_true(file.exists(file.path(dir, "AGENTS.md")))
+  expect_true(file.exists(file.path(dir, ".claude", "skills", "framework-workflow", "SKILL.md")))
 })

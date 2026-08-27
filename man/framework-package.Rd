@@ -20,5 +20,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Erik Westlund \email{erik@table1.org} [copyright holder]
 
+Authors:
+\itemize{
+  \item Erik Westlund \email{erik@table1.org} [copyright holder]
+}
+
 }
 \keyword{internal}

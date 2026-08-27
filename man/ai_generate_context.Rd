@@ -24,8 +24,10 @@ ai_generate_context(
 Character string with the complete AI context content
 }
 \description{
-Generates a complete AI context file (CLAUDE.md, AGENTS.md, etc.) from scratch
-for a new project. The content is tailored to the project type and configuration.
+Generates the canonical AI context file (AGENTS.md) for a project. The file
+is intentionally thin: it carries project-specific facts (environment,
+packages, directories) plus an index of the Framework skills installed in
+\verb{.claude/skills/}, which hold the detailed workflow instructions.
 }
 \examples{
 \donttest{

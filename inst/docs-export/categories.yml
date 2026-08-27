@@ -178,8 +178,9 @@ AI:
   display_name: AI
   description: AI assistant integration
   common:
-    - ai_sync_context
+    - ai_skills_update
   functions:
     - ai_generate_context
     - ai_regenerate_context
+    - ai_skills_update
     - ai_sync_context

@@ -1,7 +1,9 @@
 #' Generate AI Context File
 #'
-#' Generates a complete AI context file (CLAUDE.md, AGENTS.md, etc.) from scratch
-#' for a new project. The content is tailored to the project type and configuration.
+#' Generates the canonical AI context file (AGENTS.md) for a project. The file
+#' is intentionally thin: it carries project-specific facts (environment,
+#' packages, directories) plus an index of the Framework skills installed in
+#' `.claude/skills/`, which hold the detailed workflow instructions.
 #'
 #' @param project_path Path to the project directory (default: current directory)
 #' @param project_name Name of the project (for header)
@@ -50,28 +52,28 @@ if (is.null(project_name)) {
   # 1. Header (static, user-editable area)
   sections$header <- .generate_header_section(project_name)
 
-  # 2. Framework Environment (regeneratable) - add heading with marker
+  # 2. Skills index (static per type) - detailed instructions live in skills
+  sections$skills <- paste0(
+    "## Skills\n\n",
+    .generate_skills_section(project_type)
+  )
+
+  # 3. Framework Environment (regeneratable) - add heading with marker
   sections$environment <- paste0(
     "## Framework Environment <!-- @framework:regenerate -->\n\n",
     .generate_environment_section(config, project_type)
   )
 
-  # 3. Installed Packages (regeneratable) - add heading with marker
+  # 4. Installed Packages (regeneratable) - add heading with marker
   sections$packages <- paste0(
     "## Installed Packages <!-- @framework:regenerate -->\n\n",
     .generate_packages_section(config)
   )
 
-  # 4. Data Management (regeneratable) - add heading with marker
+  # 5. Data Management (regeneratable) - add heading with marker
   sections$data <- paste0(
     "## Data Management <!-- @framework:regenerate -->\n\n",
     .generate_data_section(config, project_type)
-  )
-
-  # 5. Function Reference (regeneratable) - add heading with marker
-  sections$functions <- paste0(
-    "## Function Reference <!-- @framework:regenerate -->\n\n",
-    .generate_function_reference()
   )
 
   # 6. Project-type specific content (static per type)
@@ -117,7 +119,12 @@ ai_regenerate_context <- function(project_path = ".",
       settings_read(file.path(project_path, "settings.yml")),
       error = function(e) list()
     )
-    ai_file <- config$ai$canonical_file %||% "CLAUDE.md"
+    ai_file <- config$ai$canonical_file %||% "AGENTS.md"
+    if (!file.exists(file.path(project_path, ai_file)) &&
+        file.exists(file.path(project_path, "CLAUDE.md"))) {
+      # Older projects used CLAUDE.md as the canonical file
+      ai_file <- "CLAUDE.md"
+    }
   }
 
   ai_path <- file.path(project_path, ai_file)
@@ -184,7 +191,9 @@ ai_regenerate_context <- function(project_path = ".",
   sprintf("# %s
 
 This file provides guidance to AI assistants working with this Framework project.
-Edit the sections without regeneration markers freely - they won't be overwritten.
+It is the canonical context file; detailed workflow instructions live in the
+skills listed below. Edit the sections without regeneration markers freely -
+they won't be overwritten.
 ", project_name)
 }
 
@@ -317,55 +326,11 @@ When you call `scaffold()`, it automatically:
   # Build directory table dynamically from config
   dir_table <- .build_directory_table(dirs, project_type)
 
-  # Get example paths for code snippets based on actual config
-  example_read_path <- .get_example_data_path(dirs, project_type, "read")
-  example_save_intermediate <- .get_example_data_path(dirs, project_type, "intermediate")
-  example_save_final <- .get_example_data_path(dirs, project_type, "final")
-
-  sprintf('**CRITICAL: All data operations MUST go through Framework functions.**
-This ensures integrity tracking and reproducibility.
-
-### Reading Data
-
-**ALWAYS use `data_read()`:**
-
-```r
-# From data catalog (preferred)
-survey <- data_read("inputs.raw.survey")
-
-# Direct path
-customers <- data_read("%s/customers.csv")
-```
-
-**NEVER use these functions:**
-- \u274c `read.csv()` - no tracking
-- \u274c `read_csv()` - no tracking
-- \u274c `readRDS()` - no tracking
-- \u274c `read_excel()` - no tracking
-
-If you see code using these functions, **replace it with `data_read()`**.
-
-### Saving Data
-
-**ALWAYS use `data_save()`:**
-
-```r
-# Save to intermediate (tracked, integrity-checked)
-data_save(cleaned_df, "%s/cleaned.csv")
-
-# Save to final (locked, prevents accidental overwrites)
-data_save(final_df, "%s/analysis_ready.csv", locked = TRUE)
-```
-
-**NEVER use these functions:**
-- \u274c `write.csv()` - no tracking
-- \u274c `write_csv()` - no tracking
-- \u274c `saveRDS()` - no tracking
-
-### Directory Structure
+  sprintf('**All data I/O MUST use `data_read()` and `data_save()`** - see the
+`framework-data` skill for the full rules. This project\'s data directories:
 
 %s
-', example_read_path, example_save_intermediate, example_save_final, dir_table)
+', dir_table)
 }
 
 
@@ -490,40 +455,6 @@ data_save(final_df, "%s/analysis_ready.csv", locked = TRUE)
 }
 
 
-#' Get example data path based on config
-#' @keywords internal
-.get_example_data_path <- function(dirs, project_type, path_type) {
-  if (path_type == "read") {
-    # Return appropriate raw data path
-    if (project_type == "project_sensitive") {
-      return(dirs$inputs_private_raw %||% "inputs/private/raw")
-    } else if (project_type %in% c("presentation", "course")) {
-      return(dirs$data %||% "data")
-    } else {
-      return(dirs$inputs_raw %||% "inputs/raw")
-    }
-  } else if (path_type == "intermediate") {
-    if (project_type == "project_sensitive") {
-      return(dirs$inputs_private_intermediate %||% "inputs/private/intermediate")
-    } else if (project_type %in% c("presentation", "course")) {
-      return(dirs$data %||% "data")
-    } else {
-      return(dirs$inputs_intermediate %||% "inputs/intermediate")
-    }
-  } else if (path_type == "final") {
-    if (project_type == "project_sensitive") {
-      return(dirs$inputs_public_final %||% "inputs/public/final")
-    } else if (project_type %in% c("presentation", "course")) {
-      return(dirs$data %||% "data")
-    } else {
-      return(dirs$inputs_final %||% "inputs/final")
-    }
-  }
-
-  "data"
-}
-
-
 #' Generate Function Reference section
 #' @keywords internal
 .generate_function_reference <- function() {
@@ -611,26 +542,9 @@ make_script("data-processing")        # Creates scripts/data-processing.R
   switch(project_type,
     "project_sensitive" = '## Privacy Requirements
 
-This is a privacy-sensitive project. **Critical rules:**
-
-1. **NEVER commit `inputs/private/` or `outputs/private/` directories** - they contain PII/PHI
-2. All raw data with PII goes in `private/` subdirectories
-3. Only de-identified, aggregated data goes in `public/` directories
-4. Review ALL outputs before moving to public directories
-5. Use `data_save(..., private = TRUE)` for sensitive outputs
-6. Run `framework check:sensitive` before commits to scan for data leaks
-
-### Data Flow
-
-```
-Raw PII Data -> inputs/private/raw/
-    |
-    v (clean, de-identify)
-Intermediate -> inputs/private/intermediate/
-    |
-    v (aggregate, anonymize)
-Public-safe -> inputs/public/final/
-```
+**This is a privacy-sensitive project.** Before ANY data operation, output, or
+commit, follow the `framework-sensitive-data` skill. Never commit or publish
+anything under a `private/` directory.
 ',
     "course" = '## Course Structure
 
@@ -676,28 +590,9 @@ make_notebook("backup-slides", stub = "revealjs")
     # Default: standard project
     '## Workflow Guidelines
 
-### Standard Analysis Workflow
-
-1. **Import**: Load raw data with `data_read()`
-2. **Clean**: Process and save to intermediate with `data_save()`
-3. **Analyze**: Work from final datasets
-4. **Export**: Save results with `result_save()` or `save_table()`
-
-### Caching Expensive Operations
-
-```r
-# Cache model fitting (only re-runs if cache expired)
-model <- cache_remember("fitted_model", {
-  fit_complex_model(training_data)
-}, expire_days = 7)
-```
-
-### Best Practices
-
-- Keep raw data immutable in `inputs/raw/`
-- Document data transformations in notebooks
-- Use meaningful names for cached objects
-- Commit notebooks, not rendered outputs
+Follow the standard Framework workflow (see the `framework-workflow` skill):
+import with `data_read()`, clean and save with `data_save()`, analyze from
+final datasets, export with `result_save()` or `save_table()`.
 '
   )
 }
