@@ -49,8 +49,10 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
 
 #' Create AI Assistant Instruction Files
 #'
-#' Internal function called during project_create() to create AI assistant instruction
-#' files based on user preferences.
+#' Internal function called during project_create() to create AI assistant
+#' instruction files. AGENTS.md is always written as the canonical context file
+#' and Framework skills are installed into .claude/skills/. Claude Code and
+#' Copilot selections get thin pointer files referencing AGENTS.md.
 #'
 #' @param assistants Character vector of assistants: "claude", "copilot", "agents"
 #' @param target_dir Target directory (default: current directory)
@@ -87,27 +89,24 @@ configure_ai_agents <- function(support = NULL, assistants = NULL) {
     content <- .load_ai_template(project_type, project_name)
   }
 
-  # Define file paths for each assistant
-  ai_files <- list(
-    claude = "CLAUDE.md",
-    agents = "AGENTS.md",
-    copilot = ".github/copilot-instructions.md"
-  )
+  # Canonical file + skills, regardless of which assistants were selected
+  writeLines(content, file.path(target_dir, "AGENTS.md"))
+  message("  \u2713 Created AGENTS.md")
 
-  for (assistant in assistants) {
-    if (assistant %in% names(ai_files)) {
-      target_file <- file.path(target_dir, ai_files[[assistant]])
+  .ai_install_skills(target_dir, project_type)
 
-      # Create directory if needed (for copilot)
-      file_dir <- dirname(target_file)
-      if (!dir.exists(file_dir)) {
-        dir.create(file_dir, recursive = TRUE, showWarnings = FALSE)
-      }
+  # Pointer stubs for assistants that look for their own file
+  if ("claude" %in% assistants) {
+    writeLines(.ai_pointer_stub(project_name), file.path(target_dir, "CLAUDE.md"))
+    message("  \u2713 Created CLAUDE.md (points to AGENTS.md)")
+  }
 
-      # Write content
-      writeLines(content, target_file)
-      message("  \u2713 Created ", ai_files[[assistant]])
-    }
+  if ("copilot" %in% assistants) {
+    github_dir <- file.path(target_dir, ".github")
+    dir.create(github_dir, recursive = TRUE, showWarnings = FALSE)
+    writeLines(.ai_pointer_stub(project_name),
+               file.path(github_dir, "copilot-instructions.md"))
+    message("  \u2713 Created .github/copilot-instructions.md (points to AGENTS.md)")
   }
 
   invisible(NULL)

@@ -21,7 +21,9 @@
 \item{project_type}{Project type for template selection ("project", "project_sensitive", "course", "presentation")}
 }
 \description{
-Internal function called during project_create() to create AI assistant instruction
-files based on user preferences.
+Internal function called during project_create() to create AI assistant
+instruction files. AGENTS.md is always written as the canonical context file
+and Framework skills are installed into .claude/skills/. Claude Code and
+Copilot selections get thin pointer files referencing AGENTS.md.
 }
 \keyword{internal}

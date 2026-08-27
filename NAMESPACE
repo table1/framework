@@ -19,6 +19,7 @@ export(.list_tables)
 export(add_project_to_config)
 export(ai_generate_context)
 export(ai_regenerate_context)
+export(ai_skills_update)
 export(ai_sync_context)
 export(bootstrap_project_init)
 export(cache)
@@ -120,17 +121,21 @@ export(stubs_publish)
 export(view)
 export(write_framework_template)
 export(write_frameworkrc)
-importFrom(grDevices,dev.cur)
-importFrom(grDevices,dev.list)
-importFrom(grDevices,dev.off)
-importFrom(grDevices,png)
+importFrom(grDevices,
+  dev.cur,
+  dev.list,
+  dev.off,
+  png
+)
 importFrom(stats,na.omit)
-importFrom(utils,capture.output)
-importFrom(utils,head)
-importFrom(utils,install.packages)
-importFrom(utils,modifyList)
-importFrom(utils,object.size)
-importFrom(utils,packageVersion)
-importFrom(utils,sessionInfo)
-importFrom(utils,str)
-importFrom(utils,write.table)
+importFrom(utils,
+  capture.output,
+  head,
+  install.packages,
+  modifyList,
+  object.size,
+  packageVersion,
+  sessionInfo,
+  str,
+  write.table
+)

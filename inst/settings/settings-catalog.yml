@@ -91,7 +91,7 @@ defaults:
   # AI Assistants
   ai:
     enabled: true
-    canonical_file: "CLAUDE.md"
+    canonical_file: "AGENTS.md"
     preferred_assistant: "claude"
     assistants:
       - "claude"

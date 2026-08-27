@@ -4,9 +4,18 @@
 \alias{.create_ai_files}
 \title{Create AI context files}
 \usage{
-.create_ai_files(project_dir, assistants, canonical_content, type)
+.create_ai_files(
+  project_dir,
+  assistants,
+  canonical_content,
+  type,
+  project_name = NULL
+)
 }
 \description{
-Create AI context files
+AGENTS.md is always the canonical context file, and Framework skills are
+installed into .claude/skills/. If the user also selected Claude Code or
+Copilot, those files are written as thin pointers to AGENTS.md rather than
+duplicated copies.
 }
 \keyword{internal}

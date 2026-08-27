@@ -70,18 +70,24 @@ test_that(".create_ai_instructions creates correct files", {
   unlink(file.path(test_dir, ".github"), recursive = TRUE, force = TRUE)
   unlink(file.path(test_dir, "AGENTS.md"), force = TRUE)
 
-  # Test Claude
+  # Claude selection creates the canonical AGENTS.md, skills, and a pointer stub
   .create_ai_instructions("claude", test_dir)
+  expect_true(file.exists(file.path(test_dir, "AGENTS.md")))
   expect_true(file.exists(file.path(test_dir, "CLAUDE.md")))
+  expect_true(file.exists(file.path(test_dir, ".claude", "skills", "framework-workflow", "SKILL.md")))
+  expect_true(file.exists(file.path(test_dir, ".claude", "skills", "framework-data", "SKILL.md")))
 
   # Test Copilot (creates .github directory)
   .create_ai_instructions("copilot", test_dir)
   expect_true(dir.exists(file.path(test_dir, ".github")))
   expect_true(file.exists(file.path(test_dir, ".github", "copilot-instructions.md")))
 
-  # Test AGENTS.md
-  .create_ai_instructions("agents", test_dir)
-  expect_true(file.exists(file.path(test_dir, "AGENTS.md")))
+  # Test AGENTS.md only (no pointer stubs)
+  test_dir3 <- file.path(temp_dir, "test-ai-agents-only")
+  dir.create(test_dir3, showWarnings = FALSE, recursive = TRUE)
+  .create_ai_instructions("agents", test_dir3)
+  expect_true(file.exists(file.path(test_dir3, "AGENTS.md")))
+  expect_false(file.exists(file.path(test_dir3, "CLAUDE.md")))
 
   # Test multiple assistants
   test_dir2 <- file.path(temp_dir, "test-ai-multiple")
@@ -91,6 +97,8 @@ test_that(".create_ai_instructions creates correct files", {
   expect_true(file.exists(file.path(test_dir2, "CLAUDE.md")))
   expect_true(file.exists(file.path(test_dir2, ".github", "copilot-instructions.md")))
   expect_true(file.exists(file.path(test_dir2, "AGENTS.md")))
+  expect_true(file.exists(file.path(test_dir2, ".claude", "skills", "framework-workflow", "SKILL.md")))
+  unlink(test_dir3, recursive = TRUE)
 
   # Cleanup
   unlink(test_dir, recursive = TRUE)
@@ -105,17 +113,33 @@ test_that(".create_ai_instructions file content is correct", {
   test_dir <- file.path(temp_dir, "test-ai-content")
   dir.create(test_dir, showWarnings = FALSE, recursive = TRUE)
 
-  # Create CLAUDE.md
   .create_ai_instructions("claude", test_dir)
 
-  # Read and verify content
-  claude_content <- readLines(file.path(test_dir, "CLAUDE.md"), warn = FALSE)
+  # AGENTS.md is the canonical file: thin, with a skills index
+  agents_content <- readLines(file.path(test_dir, "AGENTS.md"), warn = FALSE)
+  expect_true(any(grepl("Framework", agents_content)))
+  expect_true(any(grepl("scaffold\\(\\)", agents_content)))
+  expect_true(any(grepl("framework-workflow", agents_content)))
+  expect_true(any(grepl("\\.claude/skills/", agents_content)))
 
-  # Check for key Framework concepts
-  expect_true(any(grepl("Framework", claude_content)))
-  expect_true(any(grepl("scaffold\\(\\)", claude_content)))
-  expect_true(any(grepl("data_read", claude_content)))
-  expect_true(any(grepl("result_save", claude_content)))
+  # CLAUDE.md is a pointer stub, not a duplicate
+  claude_content <- readLines(file.path(test_dir, "CLAUDE.md"), warn = FALSE)
+  expect_true(any(grepl("AGENTS.md", claude_content)))
+  expect_false(any(grepl("data_read", claude_content)))
+
+  # Skills carry the detailed instructions
+  data_skill <- readLines(
+    file.path(test_dir, ".claude", "skills", "framework-data", "SKILL.md"),
+    warn = FALSE
+  )
+  expect_true(any(grepl("data_read", data_skill)))
+  expect_true(any(grepl("^name: framework-data", data_skill)))
+
+  workflow_skill <- readLines(
+    file.path(test_dir, ".claude", "skills", "framework-workflow", "SKILL.md"),
+    warn = FALSE
+  )
+  expect_true(any(grepl("scaffold\\(\\)", workflow_skill)))
 
   # Cleanup
   unlink(test_dir, recursive = TRUE)
