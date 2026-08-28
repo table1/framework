@@ -574,12 +574,32 @@ cloud_settings <- function() {
 
 # --- Data integrity ledger -----------------------------------------------
 
-# Push a digest to the project's cloud ledger after data_save(). Quiet by
-# design: no project token, FW_LEDGER=off, or an unreachable cloud all mean
-# "local only", never a failed save. The local framework.db stays canonical.
+# Whether per-save live streaming to the cloud ledger is enabled. OFF by
+# default: the local framework.db is the ledger of record and ledger_push()
+# imports it to the cloud on demand. Live mode ("live"/"on"/"true" via the
+# FW_LEDGER env var, or `options: cloud_ledger: live` in settings.yml) makes
+# every data_save() stream its digest immediately -- tamper-evident, since
+# the entry lands before the file could be altered -- at the cost of a
+# network call per save.
+#' @keywords internal
+.fw_ledger_live <- function() {
+  mode <- Sys.getenv("FW_LEDGER", "")
+  if (!nzchar(mode)) {
+    mode <- tryCatch(
+      as.character(settings_read()$options$cloud_ledger %||% ""),
+      error = function(e) ""
+    )
+  }
+  tolower(mode) %in% c("live", "on", "true")
+}
+
+# Push a digest to the project's cloud ledger after data_save(). Runs only
+# in live mode (see .fw_ledger_live). Quiet by design: no project token or
+# an unreachable cloud mean "local only", never a failed save. The local
+# framework.db stays canonical either way.
 #' @keywords internal
 .fw_ledger_push_quietly <- function(name, hash, size_bytes = NULL, file_path = NULL) {
-  if (identical(tolower(Sys.getenv("FW_LEDGER", "")), "off")) {
+  if (!.fw_ledger_live()) {
     return(invisible(NULL))
   }
 
@@ -711,6 +731,105 @@ data_verify <- function(name) {
   }
 
   invisible(all_match)
+}
+
+#' Import the Local Ledger into the Cloud
+#'
+#' Reads the project's local `framework.db` (the SQLite ledger of record that
+#' `data_save()` always maintains) and appends any digests the cloud ledger
+#' does not yet have. This is the default way project history reaches
+#' framework.pub: an explicit, reviewable action rather than a network call
+#' on every save.
+#'
+#' For per-save streaming instead -- tamper-evident, since each entry lands
+#' before the file could be altered -- set `FW_LEDGER=live` or
+#' `options: cloud_ledger: live` in the project's `settings.yml`.
+#'
+#' @return Invisibly, a list with `pushed` and `up_to_date` counts.
+#'
+#' @seealso [data_verify()], [ledger_list()]
+#' @export
+ledger_push <- function() {
+  token <- .fw_project_token()
+  if (is.null(token)) {
+    stop("No project token found (FW_PROJECT_TOKEN / .env). ",
+         "Create the project with framework::new() while logged in.", call. = FALSE)
+  }
+
+  con <- .get_db_connection()
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  local_rows <- DBI::dbGetQuery(
+    con,
+    "SELECT name, hash, updated_at FROM data WHERE hash IS NOT NULL AND hash != ''"
+  )
+
+  if (nrow(local_rows) == 0) {
+    message("Local ledger is empty - nothing to push.")
+    return(invisible(list(pushed = 0L, up_to_date = 0L)))
+  }
+
+  # Cloud head per dataset name (entries arrive newest first)
+  cloud_entries <- .fw_api("/api/v1/ledger", token = token)$entries
+  cloud_head <- list()
+  for (entry in cloud_entries) {
+    if (is.null(cloud_head[[entry$name]])) {
+      cloud_head[[entry$name]] <- entry$hash
+    }
+  }
+
+  pushed <- 0L
+  up_to_date <- 0L
+
+  for (i in seq_len(nrow(local_rows))) {
+    name <- local_rows$name[i]
+    hash <- paste0(as.character(local_rows$hash[i]))
+
+    if (identical(cloud_head[[name]], hash)) {
+      up_to_date <- up_to_date + 1L
+      next
+    }
+
+    # framework.db stores timestamps as Unix epochs; the API wants a date.
+    # Legacy rows may carry NA -- omit recorded_at rather than send junk.
+    recorded_at <- paste0(local_rows$updated_at[i])
+    if (grepl("^[0-9]+(\\.[0-9]+)?$", recorded_at)) {
+      recorded_at <- format(
+        as.POSIXct(as.numeric(recorded_at), origin = "1970-01-01", tz = "UTC"),
+        "%Y-%m-%dT%H:%M:%SZ"
+      )
+    } else if (!grepl("^[0-9]{4}-", recorded_at)) {
+      recorded_at <- NULL
+    }
+
+    body <- list(
+      name = name,
+      algo = "sha256",
+      hash = hash,
+      client = list(
+        device = Sys.info()[["nodename"]],
+        package_version = as.character(utils::packageVersion("framework")),
+        source = "ledger_push"
+      )
+    )
+    if (!is.null(recorded_at)) {
+      body$recorded_at <- recorded_at
+    }
+
+    result <- tryCatch(
+      { .fw_api("/api/v1/ledger", token = token, method = "POST", body = body); TRUE },
+      error = function(e) {
+        message("  [skip] ", name, ": ", conditionMessage(e))
+        FALSE
+      }
+    )
+    if (result) {
+      message("  [ok] pushed ", name)
+      pushed <- pushed + 1L
+    }
+  }
+
+  message("[ok] Ledger push complete: ", pushed, " pushed, ", up_to_date, " already current.")
+  invisible(list(pushed = pushed, up_to_date = up_to_date))
 }
 
 #' List the Project's Cloud Ledger
