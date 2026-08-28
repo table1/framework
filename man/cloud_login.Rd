@@ -7,19 +7,24 @@
 cloud_login(token, verify = TRUE)
 }
 \arguments{
-\item{token}{Your user token from framework.pub (starts with a number,
-contains \code{fw_}).}
+\item{token}{Your user token from framework.pub (Settings -> API tokens).}
 
 \item{verify}{Check the token against the cloud before saving (default TRUE).}
 }
 \value{
-Invisibly, the token file path.
+Invisibly, where the token was stored ("keyring" or the file path).
 }
 \description{
-Verifies a user token against the cloud and stores it at the fixed
-cross-platform location (\verb{~/.secrets/framework/token}) that all framework
-cloud features read. Equivalent to the \code{install.sh} one-liner.
+Verifies a user token against the cloud and stores it in the native
+credential store for your platform -- the macOS Keychain, Windows
+Credential Manager, or Linux Secret Service (via the \code{keyring} package)
+-- falling back to a permission-restricted file in the Framework config
+directory when no keyring is available. This is the whole onboarding:
+}
+\details{
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{framework::cloud_login("fw_...")
+}\if{html}{\out{</div>}}
 }
 \seealso{
-\code{\link[=cloud_status]{cloud_status()}}, \code{\link[=cloud_settings]{cloud_settings()}}
+\code{\link[=cloud_status]{cloud_status()}}, \code{\link[=cloud_logout]{cloud_logout()}}, \code{\link[=cloud_settings]{cloud_settings()}}
 }
