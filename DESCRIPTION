@@ -42,6 +42,7 @@ Suggests:
     haven,
     htmltools,
     htmlwidgets,
+    httr2,
     knitr,
     languageserver,
     odbc,

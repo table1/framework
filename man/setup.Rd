@@ -2,40 +2,46 @@
 % Please edit documentation in R/gui.R
 \name{setup}
 \alias{setup}
-\title{Setup Framework (First-Time Configuration)}
+\title{Setup Framework (First-Time Configuration or Cloud Project Setup)}
 \usage{
-setup(port = 8080, browse = TRUE)
+setup(port = 8080, browse = TRUE, location = NULL)
 }
 \arguments{
-\item{port}{Port number to use (default: 8080)}
+\item{port}{A project token string (cloud mode), or a port number for the
+legacy GUI (default: 8080)}
 
-\item{browse}{Automatically open browser (default: TRUE)}
+\item{browse}{Automatically open browser/folder (default: TRUE)}
+
+\item{location}{Cloud mode only: where to create the project (prompted
+interactively when NULL)}
 }
 \value{
-Invisibly returns the plumber server object
+Cloud mode: invisibly, the project_create() result. GUI mode:
+invisibly returns the plumber server object.
 }
 \description{
-Initializes Framework's global configuration and launches the GUI for
-first-time setup. This is the recommended entry point for new users.
+Two modes, dispatched on the first argument:
 }
 \details{
-Use this function after installing Framework to:
 \itemize{
-\item Set your author name and email
-\item Configure default packages for new projects
-\item Set IDE preferences (VS Code, RStudio)
-\item Configure other global defaults
+\item \code{setup("fw_...")} with a \strong{project token} from framework.pub pulls that
+project's cloud definition and scaffolds it locally.
+\item \code{setup()} (or with a port number) initializes Framework's global
+configuration and launches the legacy GUI for first-time setup.
 }
 }
 \examples{
 \donttest{
 if (FALSE) {
-# First-time setup
+# Set up a cloud-defined project by its token
+framework::setup("1|fw_abc123...")
+
+# First-time setup (legacy GUI)
 framework::setup()
 }
 }
 
 }
 \seealso{
-\code{\link[=gui]{gui()}} for launching the GUI without initialization check
+\code{\link[=new]{new()}}, \code{\link[=cloud_login]{cloud_login()}}, \code{\link[=gui]{gui()}}
 }

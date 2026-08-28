@@ -44,7 +44,7 @@ project_create <- function(
   # Validate inputs
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(location, min.chars = 1)
-  checkmate::assert_choice(type, c("project", "project_sensitive", "course", "presentation"))
+  checkmate::assert_choice(type, c("project", "project_sensitive", "course", "presentation", "bare"))
   checkmate::assert_list(author)
   checkmate::assert_list(packages)
   checkmate::assert_list(directories)
@@ -60,6 +60,9 @@ project_create <- function(
       checkmate::check_list(env)
     )
   }
+
+  # "bare" projects get settings.yml, an .Rproj, and (optionally) git -- nothing else
+  is_bare <- identical(type, "bare")
 
   # Backfill render directory defaults when not provided
   if (is.null(render_dirs) || length(render_dirs) == 0) {
@@ -131,10 +134,12 @@ project_create <- function(
     )
   }
 
-  .create_env_file(
-    project_dir = project_dir,
-    env_config = env
-  )
+  if (!is_bare) {
+    .create_env_file(
+      project_dir = project_dir,
+      env_config = env
+    )
+  }
 
   # Create .gitignore from template content
   if (!is.null(git$gitignore_content) && nzchar(git$gitignore_content)) {
@@ -142,12 +147,14 @@ project_create <- function(
   }
 
   # Create AI context files
-  if (ai$enabled) {
+  if (ai$enabled && !is_bare) {
     .create_ai_files(project_dir, ai$assistants, ai$canonical_content, type, name)
   }
 
   # Create scaffold.R with seed and theme setup
-  .create_scaffold_file(project_dir, scaffold)
+  if (!is_bare) {
+    .create_scaffold_file(project_dir, scaffold)
+  }
 
   # Create .Rproj file (always)
   .create_rproj_file(project_dir, name)
@@ -155,7 +162,7 @@ project_create <- function(
   # Create .code-workspace file for VSCode/Positron users
   ide <- scaffold$ide %||% ""
   positron <- scaffold$positron %||% FALSE
-  if (grepl("vscode|positron", ide, ignore.case = TRUE) || isTRUE(positron)) {
+  if (!is_bare && (grepl("vscode|positron", ide, ignore.case = TRUE) || isTRUE(positron))) {
     .create_code_workspace(project_dir, name)
   }
 
@@ -168,7 +175,7 @@ project_create <- function(
   }
 
   # Generate Quarto configuration files (before git so configs are committed)
-  if (!is.null(quarto) || !is.null(render_dirs)) {
+  if (!is_bare && (!is.null(quarto) || !is.null(render_dirs))) {
     root_output_dir <- NULL
     if (!is.null(quarto) && !is.null(quarto$render_dir)) {
       root_output_dir <- quarto$render_dir
@@ -550,8 +557,12 @@ project_create <- function(
     error = function(e) NULL
   )
 
-  # Generate canonical AGENTS.md content
-  if (!is.null(config)) {
+  # Generate canonical AGENTS.md content. An admin-customized cloud blueprint
+  # master wins outright; otherwise generate as usual.
+  cloud_master <- .fw_cloud_agents_override(type, project_name)
+  if (!is.null(cloud_master)) {
+    content <- cloud_master
+  } else if (!is.null(config)) {
     content <- ai_generate_context(
       project_path = project_dir,
       project_name = project_name,

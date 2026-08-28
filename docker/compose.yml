@@ -1,0 +1,17 @@
+services:
+  render-test:
+    build:
+      context: ./render
+    image: framework-render-test
+    volumes:
+      - ..:/opt/framework
+    working_dir: /work
+    environment:
+      # Reach the Herd-served Laravel app from inside the container if a
+      # cloud-integration test ever needs it (TLS verification off for the
+      # local self-signed certificate).
+      FW_CLOUD_URL: ${FW_CLOUD_URL:-}
+      FW_CLOUD_INSECURE: "1"
+      FW_CLOUD_TOKEN: ${FW_CLOUD_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

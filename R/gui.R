@@ -1,31 +1,41 @@
-#' Setup Framework (First-Time Configuration)
+#' Setup Framework (First-Time Configuration or Cloud Project Setup)
 #'
-#' Initializes Framework's global configuration and launches the GUI for
-#' first-time setup. This is the recommended entry point for new users.
+#' Two modes, dispatched on the first argument:
 #'
-#' Use this function after installing Framework to:
-#' - Set your author name and email
-#' - Configure default packages for new projects
-#' - Set IDE preferences (VS Code, RStudio)
-#' - Configure other global defaults
+#' - `setup("fw_...")` with a **project token** from framework.pub pulls that
+#'   project's cloud definition and scaffolds it locally.
+#' - `setup()` (or with a port number) initializes Framework's global
+#'   configuration and launches the legacy GUI for first-time setup.
 #'
-#' @param port Port number to use (default: 8080)
-#' @param browse Automatically open browser (default: TRUE)
+#' @param port A project token string (cloud mode), or a port number for the
+#'   legacy GUI (default: 8080)
+#' @param browse Automatically open browser/folder (default: TRUE)
+#' @param location Cloud mode only: where to create the project (prompted
+#'   interactively when NULL)
 #'
-#' @return Invisibly returns the plumber server object
+#' @return Cloud mode: invisibly, the project_create() result. GUI mode:
+#'   invisibly returns the plumber server object.
 #'
 #' @examples
 #' \donttest{
 #' if (FALSE) {
-#' # First-time setup
+#' # Set up a cloud-defined project by its token
+#' framework::setup("1|fw_abc123...")
+#'
+#' # First-time setup (legacy GUI)
 #' framework::setup()
 #' }
 #' }
 #'
-#' @seealso [gui()] for launching the GUI without initialization check
+#' @seealso [new()], [cloud_login()], [gui()]
 #'
 #' @export
-setup <- function(port = 8080, browse = TRUE) {
+setup <- function(port = 8080, browse = TRUE, location = NULL) {
+  # A character first argument is a framework.pub project token
+  if (is.character(port) && length(port) == 1) {
+    return(.cloud_setup(token = port, location = location, browse = browse))
+  }
+
   # Ensure global config exists
   init_global_config()
 
