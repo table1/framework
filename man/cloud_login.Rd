@@ -4,22 +4,26 @@
 \alias{cloud_login}
 \title{Log In to framework.pub}
 \usage{
-cloud_login(token, verify = TRUE)
+cloud_login(token, verify = TRUE, consent = NULL)
 }
 \arguments{
 \item{token}{Your user token from framework.pub (Settings -> API tokens).}
 
 \item{verify}{Check the token against the cloud before saving (default TRUE).}
+
+\item{consent}{Set TRUE to confirm non-interactively (scripts, CI). In an
+interactive session you are prompted instead. What connecting shares is
+printed first and documented at \url{https://framework.pub/privacy}.}
 }
 \value{
 Invisibly, where the token was stored ("keyring" or the file path).
 }
 \description{
-Verifies a user token against the cloud and stores it in the native
-credential store for your platform -- the macOS Keychain, Windows
-Credential Manager, or Linux Secret Service (via the \code{keyring} package)
--- falling back to a permission-restricted file in the Framework config
-directory when no keyring is available. This is the whole onboarding:
+Shows what connecting shares, asks for confirmation, then verifies the
+token and stores it in the native credential store for your platform --
+the macOS Keychain, Windows Credential Manager, or Linux Secret Service
+(via the \code{keyring} package) -- falling back to a permission-restricted
+file in the Framework config directory. This is the whole onboarding:
 }
 \details{
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{framework::cloud_login("fw_...")
