@@ -129,13 +129,30 @@
   token
 }
 
+# What connecting enables and transmits -- shown before consent, and the
+# text CRAN's "obtaining confirmation from the user" clause is satisfied by.
+#' @keywords internal
+.fw_consent_notice <- function() {
+  paste0(
+    "Connecting this machine to ", .fw_cloud_url(), " enables cloud features\n",
+    "that send data to that service when you use them:\n",
+    "  - settings sync: your Framework settings document (cloud_sync())\n",
+    "  - project registration: project name and type (new())\n",
+    "  - integrity ledger: file digests, sizes, and this machine's hostname\n",
+    "    (data_save(); opt out any time with FW_LEDGER=off)\n",
+    "  - publishing: documents you explicitly publish()\n",
+    "Your data files themselves are never uploaded unless you publish them.\n",
+    "Details: ", .fw_cloud_url(), "/privacy\n"
+  )
+}
+
 #' Log In to framework.pub
 #'
-#' Verifies a user token against the cloud and stores it in the native
-#' credential store for your platform -- the macOS Keychain, Windows
-#' Credential Manager, or Linux Secret Service (via the `keyring` package)
-#' -- falling back to a permission-restricted file in the Framework config
-#' directory when no keyring is available. This is the whole onboarding:
+#' Shows what connecting shares, asks for confirmation, then verifies the
+#' token and stores it in the native credential store for your platform --
+#' the macOS Keychain, Windows Credential Manager, or Linux Secret Service
+#' (via the `keyring` package) -- falling back to a permission-restricted
+#' file in the Framework config directory. This is the whole onboarding:
 #'
 #' ```r
 #' framework::cloud_login("fw_...")
@@ -143,13 +160,33 @@
 #'
 #' @param token Your user token from framework.pub (Settings -> API tokens).
 #' @param verify Check the token against the cloud before saving (default TRUE).
+#' @param consent Set TRUE to confirm non-interactively (scripts, CI). In an
+#'   interactive session you are prompted instead. What connecting shares is
+#'   printed first and documented at <https://framework.pub/privacy>.
 #'
 #' @return Invisibly, where the token was stored ("keyring" or the file path).
 #'
 #' @seealso [cloud_status()], [cloud_logout()], [cloud_settings()]
 #' @export
-cloud_login <- function(token, verify = TRUE) {
+cloud_login <- function(token, verify = TRUE, consent = NULL) {
   checkmate::assert_string(token, min.chars = 10)
+
+  if (!isTRUE(consent)) {
+    message(.fw_consent_notice())
+    if (interactive()) {
+      answer <- utils::askYesNo("Connect this machine to framework.pub?", default = FALSE)
+      if (!isTRUE(answer)) {
+        stop("Cancelled - this machine was not connected.", call. = FALSE)
+      }
+    } else {
+      stop(
+        "cloud_login() needs confirmation. In a non-interactive session, ",
+        'call cloud_login(token, consent = TRUE) after reviewing what ',
+        "connecting shares (printed above; ", .fw_cloud_url(), "/privacy).",
+        call. = FALSE
+      )
+    }
+  }
 
   if (verify) {
     me <- .fw_api("/api/v1/me", token = token)
@@ -962,6 +999,10 @@ cloud_sync <- function(direction = c("auto", "pull", "push")) {
 # settings document, so the project comes out configured their way.
 #' @keywords internal
 .cloud_setup <- function(token, location = NULL, browse = interactive()) {
+  message(
+    "Fetching this project's definition from ", .fw_cloud_url(),
+    " (what is shared: ", .fw_cloud_url(), "/privacy)"
+  )
   res <- .fw_api("/api/v1/project", token = token)
   proj <- res$project
 
