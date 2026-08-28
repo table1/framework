@@ -4,7 +4,13 @@
 \alias{publish}
 \title{Publishing Functions}
 \usage{
-publish(source, dest = NULL, connection = NULL, overwrite = TRUE)
+publish(
+  source,
+  dest = NULL,
+  connection = NULL,
+  overwrite = TRUE,
+  self_contained = TRUE
+)
 }
 \arguments{
 \item{source}{Character. Local file or directory path to upload.}

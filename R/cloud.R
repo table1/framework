@@ -10,16 +10,51 @@
   sub("/+$", "", Sys.getenv("FW_CLOUD_URL", "https://framework.pub"))
 }
 
-# The fixed, cross-platform token location. `~` expands on macOS, Linux, and
-# Windows alike, so this is the same literal path everywhere. Overridable via
-# FW_TOKEN_FILE; FW_CLOUD_TOKEN skips the file entirely (CI).
+# Token storage. Native-first: the OS credential store via the keyring
+# package (macOS Keychain, Windows Credential Manager, Linux Secret
+# Service), falling back to a 0600 file in the Framework config dir.
+# Resolution order:
+#   1. FW_CLOUD_TOKEN            (env; CI)
+#   2. FW_TOKEN_FILE             (explicit file; authoritative when set --
+#                                 tests and containers need isolation from
+#                                 the developer's real keyring)
+#   3. system keyring            (what cloud_login() writes)
+#   4. <config dir>/cloud-token  (keyring-less systems)
+#   5. ~/.secrets/framework/token (legacy installer location, read-only compat)
+
+.fw_keyring_service <- "framework.pub"
+
 #' @keywords internal
-.fw_token_path <- function() {
-  override <- Sys.getenv("FW_TOKEN_FILE", "")
-  if (nzchar(override)) {
-    return(path.expand(override))
-  }
+.fw_token_file <- function() {
+  file.path(fw_config_dir(), "cloud-token")
+}
+
+#' @keywords internal
+.fw_legacy_token_file <- function() {
   path.expand(file.path("~", ".secrets", "framework", "token"))
+}
+
+#' @keywords internal
+.fw_read_token_file <- function(path) {
+  if (!file.exists(path)) {
+    return(NULL)
+  }
+  token <- trimws(readLines(path, n = 1L, warn = FALSE)[1])
+  if (!is.na(token) && nzchar(token)) token else NULL
+}
+
+#' @keywords internal
+.fw_keyring_token <- function() {
+  if (!requireNamespace("keyring", quietly = TRUE)) {
+    return(NULL)
+  }
+  tryCatch(
+    {
+      token <- keyring::key_get(.fw_keyring_service, "token")
+      if (nzchar(token)) token else NULL
+    },
+    error = function(e) NULL
+  )
 }
 
 #' @keywords internal
@@ -29,15 +64,15 @@
     return(env_token)
   }
 
-  path <- .fw_token_path()
-  if (file.exists(path)) {
-    token <- trimws(readLines(path, n = 1L, warn = FALSE)[1])
-    if (!is.na(token) && nzchar(token)) {
-      return(token)
-    }
+  override <- Sys.getenv("FW_TOKEN_FILE", "")
+  if (nzchar(override)) {
+    # Authoritative when set: never fall through to the real keyring
+    return(.fw_read_token_file(path.expand(override)))
   }
 
-  NULL
+  .fw_keyring_token() %||%
+    .fw_read_token_file(.fw_token_file()) %||%
+    .fw_read_token_file(.fw_legacy_token_file())
 }
 
 #' @keywords internal
@@ -87,8 +122,7 @@
   if (is.null(token)) {
     stop(
       "No cloud token found. Create one at ", .fw_cloud_url(), "/tokens and run:\n",
-      '  cloud_login("fw_...")\n',
-      "or: curl -fsSL ", .fw_cloud_url(), "/install.sh | bash -s -- 'fw_...'",
+      '  framework::cloud_login("fw_...")',
       call. = FALSE
     )
   }
@@ -97,17 +131,22 @@
 
 #' Log In to framework.pub
 #'
-#' Verifies a user token against the cloud and stores it at the fixed
-#' cross-platform location (`~/.secrets/framework/token`) that all framework
-#' cloud features read. Equivalent to the `install.sh` one-liner.
+#' Verifies a user token against the cloud and stores it in the native
+#' credential store for your platform -- the macOS Keychain, Windows
+#' Credential Manager, or Linux Secret Service (via the `keyring` package)
+#' -- falling back to a permission-restricted file in the Framework config
+#' directory when no keyring is available. This is the whole onboarding:
 #'
-#' @param token Your user token from framework.pub (starts with a number,
-#'   contains `fw_`).
+#' ```r
+#' framework::cloud_login("fw_...")
+#' ```
+#'
+#' @param token Your user token from framework.pub (Settings -> API tokens).
 #' @param verify Check the token against the cloud before saving (default TRUE).
 #'
-#' @return Invisibly, the token file path.
+#' @return Invisibly, where the token was stored ("keyring" or the file path).
 #'
-#' @seealso [cloud_status()], [cloud_settings()]
+#' @seealso [cloud_status()], [cloud_logout()], [cloud_settings()]
 #' @export
 cloud_login <- function(token, verify = TRUE) {
   checkmate::assert_string(token, min.chars = 10)
@@ -117,14 +156,83 @@ cloud_login <- function(token, verify = TRUE) {
     message("[ok] Token verified: ", me$email %||% me$project %||% "authenticated")
   }
 
-  path <- .fw_token_path()
-  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  Sys.chmod(dirname(path), mode = "0700")
-  writeLines(token, path)
-  Sys.chmod(path, mode = "0600")
+  override <- Sys.getenv("FW_TOKEN_FILE", "")
+  stored <- NULL
 
-  message("[ok] Token saved to ", path)
-  invisible(path)
+  if (nzchar(override)) {
+    # Explicit file mode (tests, containers): honor it exactly
+    path <- path.expand(override)
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    writeLines(token, path)
+    Sys.chmod(path, mode = "0600")
+    stored <- path
+    message("[ok] Token saved to ", path, " (FW_TOKEN_FILE)")
+  } else if (requireNamespace("keyring", quietly = TRUE)) {
+    stored <- tryCatch(
+      {
+        keyring::key_set_with_value(.fw_keyring_service, "token", token)
+        message("[ok] Token stored in your system keyring (service: ", .fw_keyring_service, ")")
+        "keyring"
+      },
+      error = function(e) NULL
+    )
+  }
+
+  if (is.null(stored)) {
+    path <- .fw_token_file()
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    writeLines(token, path)
+    Sys.chmod(path, mode = "0600")
+    stored <- path
+    message("[ok] Token saved to ", path,
+            ' (install.packages("keyring") to use the system credential store)')
+  }
+
+  # Retire the legacy installer file so only one copy of the secret exists
+  legacy <- .fw_legacy_token_file()
+  if (!nzchar(override) && file.exists(legacy)) {
+    file.remove(legacy)
+    message("[ok] Removed legacy token file ", legacy)
+  }
+
+  invisible(stored)
+}
+
+#' Log Out of framework.pub
+#'
+#' Removes the stored token from the system keyring and any token files.
+#' Tokens can also be revoked server-side at framework.pub -> API tokens.
+#'
+#' @return Invisibly, TRUE.
+#'
+#' @export
+cloud_logout <- function() {
+  removed <- character(0)
+
+  if (requireNamespace("keyring", quietly = TRUE)) {
+    tryCatch(
+      {
+        keyring::key_delete(.fw_keyring_service, "token")
+        removed <- c(removed, "keyring")
+      },
+      error = function(e) NULL
+    )
+  }
+
+  for (path in c(.fw_token_file(), .fw_legacy_token_file())) {
+    if (file.exists(path)) {
+      file.remove(path)
+      removed <- c(removed, path)
+    }
+  }
+
+  if (length(removed) == 0) {
+    message("No stored token found.")
+  } else {
+    message("[ok] Removed: ", paste(removed, collapse = ", "))
+  }
+
+  invisible(TRUE)
 }
 
 #' Check Cloud Connection Status
