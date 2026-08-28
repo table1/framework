@@ -152,6 +152,10 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
   )
   message(sprintf("\u2713 Database updated: %s", data_name))
 
+  # Mirror the digest to the project's cloud ledger (opt-in via project
+  # token; quiet no-op otherwise -- framework.db stays canonical)
+  .fw_ledger_push_quietly(data_name, current_hash, file_path = file_path)
+
   # Register saved file in settings so data_read() works without manual catalog edits
   if (!has_slash && !has_extension && grepl("\\.", path)) {
     # Only attempt to update config for dot-notation paths

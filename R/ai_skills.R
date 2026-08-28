@@ -39,6 +39,24 @@ NULL
 #' @return Invisible character vector of installed skill names
 #' @keywords internal
 .ai_install_skills <- function(project_dir = ".", project_type = "project", verbose = TRUE) {
+  # Cloud blueprint skills (admin-managed masters) take precedence when a
+  # blueprint is stashed for this creation run
+  bp <- .fw_blueprint_get()
+  cloud_skills <- bp$skills %||% list()
+  if (length(cloud_skills) > 0) {
+    installed <- character(0)
+    for (skill in names(cloud_skills)) {
+      target_dir <- file.path(project_dir, ".claude", "skills", skill)
+      dir.create(target_dir, recursive = TRUE, showWarnings = FALSE)
+      writeLines(cloud_skills[[skill]], file.path(target_dir, "SKILL.md"))
+      installed <- c(installed, skill)
+      if (verbose) {
+        message("  Created: .claude/skills/", skill, "/SKILL.md")
+      }
+    }
+    return(invisible(installed))
+  }
+
   template_dir <- system.file("templates", "skills", package = "framework")
   if (!nzchar(template_dir) || !dir.exists(template_dir)) {
     warning("Skill templates not found in package installation")

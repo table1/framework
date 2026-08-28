@@ -71,3 +71,4 @@
 inst/\.RData$
 inst/templates/\.editorconfig$
 inst/templates/\.lintr\.default$
+^docker$

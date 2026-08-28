@@ -36,14 +36,23 @@ NULL
 #' publish("data.csv", connection = "s3_backup")
 #' }
 #' }
-publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE) {
+publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
+                    self_contained = TRUE) {
   checkmate::assert_string(source, min.chars = 1)
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(overwrite)
+  checkmate::assert_flag(self_contained)
 
   if (!file.exists(source) && !dir.exists(source)) {
     stop(sprintf("Source not found: %s", source), call. = FALSE)
+  }
+
+  # framework.pub path: no bucket configured, no explicit connection, and the
+  # project has a cloud key -> publish to the cloud. Own-bucket users are
+  # untouched: any configured storage bucket wins.
+  if (is.null(connection) && !.fw_has_storage_buckets() && !is.null(.fw_project_token())) {
+    return(.fw_cloud_publish(source, dest = dest, self_contained = self_contained))
   }
 
   # Resolve S3 connection
