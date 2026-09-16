@@ -775,7 +775,12 @@ scaffold <- function(config_file = NULL) {
 
   # Check if we're in a repo
   git_available <- tryCatch({
-    system("git rev-parse --git-dir > /dev/null 2>&1") == 0
+    system2(
+      "git",
+      c("rev-parse", "--git-dir"),
+      stdout = FALSE,
+      stderr = FALSE
+    ) == 0
   }, error = function(e) FALSE, warning = function(w) FALSE)
 
   if (!git_available) {
@@ -784,7 +789,12 @@ scaffold <- function(config_file = NULL) {
 
   # Check if there are any commits yet
   has_commits <- tryCatch({
-    system("git rev-parse HEAD > /dev/null 2>&1") == 0
+    system2(
+      "git",
+      c("rev-parse", "HEAD"),
+      stdout = FALSE,
+      stderr = FALSE
+    ) == 0
   }, error = function(e) FALSE, warning = function(w) FALSE)
 
   # Only create commit if this is first scaffold (no commits yet)
@@ -793,8 +803,13 @@ scaffold <- function(config_file = NULL) {
     # No commits yet - add and commit everything
     tryCatch({
       # Add all files (including any created after project_create, like .github/)
-      system("git add -A > /dev/null 2>&1")
-      commit_result <- system("git commit -m \"Project initialized.\" > /dev/null 2>&1")
+      system2("git", c("add", "-A"), stdout = FALSE, stderr = FALSE)
+      commit_result <- system2(
+        "git",
+        c("commit", "-m", shQuote("Project initialized.")),
+        stdout = FALSE,
+        stderr = FALSE
+      )
       if (commit_result == 0) {
         message("\u2713 Initial commit created")
       }

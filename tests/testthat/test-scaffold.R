@@ -67,6 +67,35 @@ test_that("scaffold() works when config.yml exists", {
   expect_true(inherits(history$last, "POSIXct"))
 })
 
+test_that("legacy post-scaffold commit uses portable git invocations", {
+  skip_if_not(nzchar(Sys.which("git")), "Git is not installed")
+
+  tmp_dir <- tempfile()
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE))
+
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(tmp_dir)
+
+  expect_equal(system2("git", "init", stdout = FALSE, stderr = FALSE), 0)
+  expect_equal(
+    system2(
+      "git",
+      c(
+        "-c", "user.name=Framework-Test",
+        "-c", "user.email=framework@example.com",
+        "commit", "--allow-empty", "-m", "initial"
+      ),
+      stdout = FALSE,
+      stderr = FALSE
+    ),
+    0
+  )
+
+  expect_silent(framework:::.commit_after_scaffold())
+})
+
 test_that(".mark_scaffolded() stores history in the project database", {
   tmp_dir <- tempfile()
   dir.create(tmp_dir)
