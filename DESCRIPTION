@@ -24,8 +24,7 @@ Imports:
     dotenv,
     openssl,
     lubridate,
-    jsonlite,
-    plumber
+    jsonlite
 Suggests:
     testthat (>= 3.0.0),
     arrow,
@@ -47,6 +46,7 @@ Suggests:
     knitr,
     languageserver,
     odbc,
+    plumber,
     pool,
     prismjs,
     R.utils,

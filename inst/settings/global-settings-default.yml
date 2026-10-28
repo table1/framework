@@ -162,6 +162,7 @@ project_types:
       outputs_reports: "outputs/reports"
       cache: "outputs/cache"
       scratch: "scratch"
+      logs: "logs"
 
   course:
     label: "Course/Teaching"
@@ -218,3 +219,4 @@ project_types:
       outputs_public_reports: "outputs/public/reports"
       cache: "outputs/private/cache"
       scratch: "scratch"
+      logs: "logs"

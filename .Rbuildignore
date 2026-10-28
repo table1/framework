@@ -24,6 +24,8 @@
 # Build tools and project files
 ^Makefile$
 ^package\.json$
+^package-lock\.json$
+^test$
 ^build\.sh$
 ^\.vscode$
 ^\.idea$

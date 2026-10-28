@@ -2,15 +2,18 @@
 
 An R package for structured, reproducible data analysis projects.
 
-**Status:** Active development. APIs may change before version 1.0.
+**Status:** Stable 1.x on CRAN. Version 2.0 (in development) adds Framework Cloud integration.
 
 ## Quick Start
 
 ```r
-# Install from GitHub
+# Install from CRAN
+install.packages("framework")
+
+# Or the development version from GitHub
 remotes::install_github("table1/framework")
 
-# One-time global setup (author info, preferences)
+# One-time global setup (author info, preferences) in the GUI
 framework::setup()
 
 # Create projects using your saved defaults
@@ -19,6 +22,12 @@ framework::new("my-analysis", "~/projects/my-analysis")
 framework::new_presentation("quarterly-review", "~/talks/q4")
 framework::new_course("stats-101", "~/teaching/stats")
 ```
+
+The GUI (`setup()`, `gui()`) needs the optional `plumber` package:
+`install.packages("plumber")`. plumber depends on `sodium`, which needs the
+system libsodium library and can be hard to install on shared servers and HPC
+clusters. Everything else in Framework works without it, so on a cluster you
+can skip the GUI and edit `settings.yml` directly.
 
 ### Project Types
 
@@ -43,6 +52,7 @@ project/
 │   └── public/             # Share-ready artifacts
 ├── functions/              # Custom functions
 ├── docs/                   # Documentation
+├── logs/                   # Run logs, cluster job output (gitignored)
 ├── settings.yml            # Project configuration
 ├── framework.db            # Metadata tracking database
 └── .env                    # Secrets (gitignored)

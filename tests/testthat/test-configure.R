@@ -323,9 +323,9 @@ test_that(".path_to_tilde converts home directory paths to tilde", {
   home <- path.expand("~")
 
   # Path under home directory should convert to tilde
-  test_path <- file.path(home, "code")
+  test_path <- file.path(home, "fw-tilde-test")
   result <- framework:::.path_to_tilde(test_path)
-  expect_match(result, "^~/code$")
+  expect_match(result, "^~/fw-tilde-test$")
 
  # Nested path under home - normalize separators for cross-platform
   test_path2 <- file.path(home, "Documents", "projects", "my-app")
@@ -352,7 +352,7 @@ test_that(".path_to_tilde handles paths with trailing slashes", {
   home <- path.expand("~")
 
   # Path with trailing slash
-  test_path <- paste0(file.path(home, "code"), "/")
+  test_path <- paste0(file.path(home, "fw-tilde-test"), "/")
   result <- framework:::.path_to_tilde(test_path)
-  expect_match(result, "^~/code$")
+  expect_match(result, "^~/fw-tilde-test$")
 })

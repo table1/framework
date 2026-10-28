@@ -24,6 +24,11 @@ Invisibly returns the plumber server object
 Opens a beautiful web-based interface for Framework with documentation,
 project management, and settings configuration.
 }
+\details{
+The GUI requires the optional 'plumber' package, which in turn depends on
+'sodium' (and the system libsodium library). Everything else in Framework
+works without it.
+}
 \examples{
 \donttest{
 if (FALSE) {

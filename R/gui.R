@@ -48,6 +48,10 @@ setup <- function(port = 8080, browse = TRUE, location = NULL) {
 #' Opens a beautiful web-based interface for Framework with documentation,
 #' project management, and settings configuration.
 #'
+#' The GUI requires the optional 'plumber' package, which in turn depends on
+#' 'sodium' (and the system libsodium library). Everything else in Framework
+#' works without it.
+#'
 #' @param port Port number to use (default: 8080)
 #' @param host Host address to bind to. Default "127.0.0.1" for local access only.
 #'   Use "0.0.0.0" to allow connections from other machines (requires appropriate
@@ -78,6 +82,14 @@ setup <- function(port = 8080, browse = TRUE, location = NULL) {
 #'
 #' @export
 gui <- function(port = 8080, host = "127.0.0.1", browse = TRUE, route = NULL) {
+  if (!requireNamespace("plumber", quietly = TRUE)) {
+    stop(
+      "The Framework GUI requires the 'plumber' package. ",
+      'Install it with install.packages("plumber").',
+      call. = FALSE
+    )
+  }
+
   # Check if we're in development mode (loaded via devtools::load_all)
   # Dev mode has inst/ directory; installed packages flatten inst/ contents to root
   is_dev_mode <- FALSE

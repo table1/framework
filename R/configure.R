@@ -500,6 +500,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 #' - `outputs_docs_public` - Narrative/report outputs (public)
 #' - `cache` - Cached computation results
 #' - `scratch` - Temporary workspace
+#' - `logs` - Run logs and cluster job output
 #'
 #' @keywords internal
 configure_directories <- function(directory = NULL, path = NULL, interactive = TRUE) {
@@ -523,7 +524,7 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
     "inputs_reference",
     "outputs_private", "outputs_public",
     "outputs_docs", "outputs_docs_public",
-    "cache", "scratch"
+    "cache", "scratch", "logs"
   )
 
   # Interactive prompts
