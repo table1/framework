@@ -36,6 +36,7 @@ Directories control where Framework creates and looks for files.
 \item \code{outputs_docs_public} - Narrative/report outputs (public)
 \item \code{cache} - Cached computation results
 \item \code{scratch} - Temporary workspace
+\item \code{logs} - Run logs and cluster job output
 }
 }
 }

@@ -1,5 +1,13 @@
 # framework 1.1.0
 
+* `plumber` moved from Imports to Suggests. plumber pulls in `sodium`, which
+  needs the system libsodium library and often fails to install on HPC
+  clusters. The GUI (`gui()`, `setup()`) now asks you to install plumber when
+  you launch it; nothing else needs it
+* New standard `logs` directory for run logs and cluster job output. All
+  project gitignore templates now ignore `**/logs/**` and `slurm-*.out`, and
+  `security_audit()` treats `logs` as a private directory
+* `scaffold()` git checks are now portable across platforms
 * Skills-based AI context: new projects get a thin canonical `AGENTS.md` plus
   Framework skills installed in `.claude/skills/` (workflow, data, packages,
   outputs, and sensitive-data rules as separate SKILL.md files)

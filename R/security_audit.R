@@ -276,7 +276,7 @@ git_security_audit <- function(config_file = NULL,
       next
     }
 
-    if (grepl("^(inputs|outputs)_", key) || key %in% c("cache", "scratch")) {
+    if (grepl("^(inputs|outputs)_", key) || key %in% c("cache", "scratch", "logs")) {
       dirs[[key]] <- dir_path
     }
   }
@@ -349,7 +349,7 @@ git_security_audit <- function(config_file = NULL,
     startsWith(name, "inputs_") ||
       grepl("private", name) ||
       (startsWith(name, "outputs_") && !grepl("_public", name)) ||
-      name %in% c("cache", "scratch")
+      name %in% c("cache", "scratch", "logs")
   }, logical(1))
 
   data_dirs[keep]

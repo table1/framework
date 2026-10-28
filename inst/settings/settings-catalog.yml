@@ -219,6 +219,11 @@ project_types:
         default: "scratch"
         enabled_by_default: false
         hint: "Short-lived explorations (gitignored)."
+      logs:
+        label: "Logs"
+        default: "logs"
+        enabled_by_default: false
+        hint: "Run logs and cluster job output (gitignored)."
 
     # Quarto render directories (per workspace directory)
     render_dirs:
@@ -336,6 +341,11 @@ project_types:
         label: "Scratch"
         default: "scratch"
         enabled_by_default: false
+      logs:
+        label: "Logs"
+        default: "logs"
+        enabled_by_default: false
+        hint: "Run logs and cluster job output (gitignored)."
 
     # Quarto render directories (per workspace directory)
     render_dirs:

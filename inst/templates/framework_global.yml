@@ -76,6 +76,7 @@ defaults:
     outputs_public: outputs/public
     cache: outputs/private/cache
     scratch: outputs/private/scratch
+    logs: logs
 
   # Git hooks preferences
   git_hooks:

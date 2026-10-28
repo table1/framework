@@ -354,6 +354,7 @@ When you call `scaffold()`, it automatically:
     outputs_reports = "Reports",
     cache = "Cache files",
     scratch = "Scratch/temporary",
+    logs = "Logs",
     notebooks = "Notebooks",
     scripts = "Scripts",
     functions = "Helper functions",

@@ -31,6 +31,7 @@ default:
     outputs_final_public: outputs/public/final
     cache: outputs/private/cache
     scratch: outputs/private/scratch
+    logs: logs
 
   # Data catalog
   data:
