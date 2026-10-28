@@ -284,7 +284,7 @@ cloud_status <- function() {
   token <- .fw_cloud_token()
 
   if (is.null(token)) {
-    message("Not connected. No token at ", .fw_token_path())
+    message("Not connected. Run cloud_login() to connect.")
     return(invisible(FALSE))
   }
 

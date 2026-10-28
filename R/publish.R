@@ -15,6 +15,8 @@ NULL
 #' @param connection Character or NULL. S3 connection name from config.yml.
 #'   If NULL, uses the connection marked with `default: true`.
 #' @param overwrite Logical. Whether to overwrite existing files. Default TRUE.
+#' @param self_contained Logical. When publishing to framework.pub, whether
+#'   to bundle an HTML file with its resources. Ignored for S3. Default TRUE.
 #' @return Character. The public URL(s) of uploaded file(s).
 #'
 #' @export

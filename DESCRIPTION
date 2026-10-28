@@ -32,6 +32,7 @@ Suggests:
     aws.signature,
     BiocManager,
     cli,
+    curl,
     cyclocomp,
     devtools,
     dplyr,

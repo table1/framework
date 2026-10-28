@@ -1,3 +1,10 @@
+# framework (development version)
+
+* Opt-in framework.pub cloud integration (planned for 2.0): `cloud_login()`,
+  `cloud_logout()`, `cloud_status()`, `cloud_settings()`, `cloud_sync()`,
+  `ledger_push()`, `ledger_list()`, `data_verify()`, and `setup()` with a
+  project token. Nothing contacts the cloud unless you connect explicitly
+
 # framework 1.1.0
 
 * `plumber` moved from Imports to Suggests. plumber pulls in `sodium`, which

@@ -22,6 +22,9 @@ derives from source filename.}
 If NULL, uses the connection marked with \code{default: true}.}
 
 \item{overwrite}{Logical. Whether to overwrite existing files. Default TRUE.}
+
+\item{self_contained}{Logical. When publishing to framework.pub, whether
+to bundle an HTML file with its resources. Ignored for S3. Default TRUE.}
 }
 \value{
 Character. The public URL(s) of uploaded file(s).
