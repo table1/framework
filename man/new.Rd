@@ -4,7 +4,13 @@
 \alias{new}
 \title{Create a New Project (Master Wrapper)}
 \usage{
-new(name = NULL, location = NULL, type = NULL, browse = interactive(), ...)
+new(
+  name = NULL,
+  location = NULL,
+  type = "project",
+  browse = interactive(),
+  ...
+)
 }
 \arguments{
 \item{name}{Project name. If NULL (default), prompts interactively.}

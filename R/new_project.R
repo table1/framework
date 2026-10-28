@@ -55,14 +55,15 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
   settings_path <- file.path(config_dir, "settings.yml")
 
   if (!file.exists(settings_path)) {
-    message("Global settings not found. Initializing defaults...")
-    init_global_config()
+    message("Global settings not found. Running setup() first...")
+    setup()
+    if (!file.exists(settings_path)) {
+      stop("Setup cancelled or failed. Run framework::setup() to configure global settings.")
+    }
   }
 
-  # Load global config, then overlay cloud settings when a token is present
-  # (no token or unreachable cloud -> local defaults, unchanged behavior)
+  # Load global config
   config <- get_default_global_config()
-  config <- .fw_overlay_cloud_settings(config, .fw_cloud_settings_quietly())
 
   # Prompt for name if not provided
   if (is.null(name)) {
@@ -95,34 +96,50 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
   location <- path.expand(location)
 
   # Validate type
-  valid_types <- c("project", "project_sensitive", "course", "presentation", "bare")
+  valid_types <- c("project", "project_sensitive", "course", "presentation")
   if (!type %in% valid_types) {
     stop("Invalid project type. Must be one of: ", paste(valid_types, collapse = ", "))
   }
 
   # Build arguments from global config
-  args <- .project_args_from_config(config, type)
+  author <- config$author %||% list(name = "", email = "", affiliation = "")
+  defaults <- config$defaults %||% list()
 
-  # Cloud blueprint (opinionated offering) overrides structure and AI masters
-  # when a token is present; offline this is a no-op
-  blueprint <- .fw_cloud_blueprint_quietly(type)
-  render_dirs <- NULL
-  quarto <- NULL
-  if (!is.null(blueprint)) {
-    .fw_blueprint_stash(blueprint)
-    on.exit(.fw_blueprint_clear(), add = TRUE)
+  packages_config <- list(
+    use_renv = isTRUE(defaults$use_renv),
+    default_packages = defaults$packages %||% list()
+  )
 
-    structure <- blueprint$structure %||% list()
-    if (length(structure$directories %||% list()) > 0) {
-      args$directories <- structure$directories
-    }
-    if (length(structure$render_dirs %||% list()) > 0) {
-      render_dirs <- structure$render_dirs
-    }
-    if (!is.null(structure$quarto$render_dir)) {
-      quarto <- list(render_dir = structure$quarto$render_dir)
-    }
+  # Get directories for this project type
+  project_type_config <- config$project_types[[type]] %||% config$project_types$project %||% list()
+  directories <- project_type_config$directories %||% defaults$directories %||% list()
+
+  ai_config <- list(
+    enabled = isTRUE(defaults$ai_support),
+    assistants = defaults$ai_assistants %||% list(),
+    canonical_content = ""
+  )
+  if (ai_config$enabled && length(ai_config$assistants) == 0) {
+    ai_config$assistants <- list("claude")
   }
+
+  git_config <- list(
+    use_git = isTRUE(defaults$use_git),
+    hooks = defaults$git_hooks %||% list(),
+    gitignore_content = ""
+  )
+
+  scaffold_config <- list(
+    seed_on_scaffold = isTRUE(defaults$seed_on_scaffold),
+    seed = as.character(defaults$seed %||% ""),
+    set_theme_on_scaffold = TRUE,
+    ggplot_theme = "theme_minimal",
+    ide = defaults$ide %||% "vscode"
+  )
+
+  connections <- defaults$connections
+
+  env <- defaults$env
 
   message("Creating ", type, " project: ", name)
   message("Location: ", location)
@@ -132,25 +149,17 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
     name = name,
     location = location,
     type = type,
-    author = args$author,
-    packages = args$packages,
-    directories = args$directories,
+    author = author,
+    packages = packages_config,
+    directories = directories,
     extra_directories = list(),
-    ai = args$ai,
-    git = args$git,
-    scaffold = args$scaffold,
-    connections = args$connections,
-    env = args$env,
-    render_dirs = render_dirs,
-    quarto = quarto,
+    ai = ai_config,
+    git = git_config,
+    scaffold = scaffold_config,
+    connections = connections,
+    env = env,
     ...
   )
-
-  # Register on framework.pub and store the project key (non-bare only:
-  # bare projects have no .env to hold the secret)
-  if (result$success && !identical(type, "bare")) {
-    .fw_cloud_register_project(result$path, name, type)
-  }
 
   # Open project folder if requested
   if (browse && result$success) {
@@ -270,63 +279,6 @@ new_course <- function(name = NULL, location = NULL, browse = interactive(), ...
 #' }
 #'
 #' @export
-new <- function(name = NULL, location = NULL, type = NULL, browse = interactive(), ...) {
-  if (is.null(type)) {
-    # Bare (no blueprint) is the default; the rest are opinionated offerings
-    valid_types <- c("bare", "project", "project_sensitive", "course", "presentation")
-    if (interactive()) {
-      labels <- c("bare (no blueprint - bring your own structure)",
-                  "project", "project_sensitive", "course", "presentation")
-      choice <- utils::menu(labels, title = "Project type:")
-      if (choice == 0) {
-        stop("Project creation cancelled")
-      }
-      type <- valid_types[choice]
-    } else {
-      type <- "bare"
-    }
-  }
+new <- function(name = NULL, location = NULL, type = "project", browse = interactive(), ...) {
   new_project(name = name, location = location, type = type, browse = browse, ...)
-}
-
-# Map a (possibly cloud-overlaid) global config to project_create() arguments.
-# Shared by new_project() and the cloud project setup path in R/cloud.R.
-#' @keywords internal
-.project_args_from_config <- function(config, type) {
-  defaults <- config$defaults %||% list()
-
-  project_type_config <- config$project_types[[type]] %||% config$project_types$project %||% list()
-
-  ai_config <- list(
-    enabled = isTRUE(defaults$ai_support),
-    assistants = defaults$ai_assistants %||% list(),
-    canonical_content = ""
-  )
-  if (ai_config$enabled && length(ai_config$assistants) == 0) {
-    ai_config$assistants <- list("claude")
-  }
-
-  list(
-    author = config$author %||% list(name = "", email = "", affiliation = ""),
-    packages = list(
-      use_renv = isTRUE(defaults$use_renv),
-      default_packages = defaults$packages %||% list()
-    ),
-    directories = project_type_config$directories %||% defaults$directories %||% list(),
-    ai = ai_config,
-    git = list(
-      use_git = isTRUE(defaults$use_git),
-      hooks = defaults$git_hooks %||% list(),
-      gitignore_content = ""
-    ),
-    scaffold = list(
-      seed_on_scaffold = isTRUE(defaults$seed_on_scaffold),
-      seed = as.character(defaults$seed %||% ""),
-      set_theme_on_scaffold = TRUE,
-      ggplot_theme = "theme_minimal",
-      ide = defaults$ide %||% "vscode"
-    ),
-    connections = defaults$connections,
-    env = defaults$env
-  )
 }

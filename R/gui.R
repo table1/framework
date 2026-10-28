@@ -1,41 +1,31 @@
-#' Setup Framework (First-Time Configuration or Cloud Project Setup)
+#' Setup Framework (First-Time Configuration)
 #'
-#' Two modes, dispatched on the first argument:
+#' Initializes Framework's global configuration and launches the GUI for
+#' first-time setup. This is the recommended entry point for new users.
 #'
-#' - `setup("fw_...")` with a **project token** from framework.pub pulls that
-#'   project's cloud definition and scaffolds it locally.
-#' - `setup()` (or with a port number) initializes Framework's global
-#'   configuration and launches the legacy GUI for first-time setup.
+#' Use this function after installing Framework to:
+#' - Set your author name and email
+#' - Configure default packages for new projects
+#' - Set IDE preferences (VS Code, RStudio)
+#' - Configure other global defaults
 #'
-#' @param port A project token string (cloud mode), or a port number for the
-#'   legacy GUI (default: 8080)
-#' @param browse Automatically open browser/folder (default: TRUE)
-#' @param location Cloud mode only: where to create the project (prompted
-#'   interactively when NULL)
+#' @param port Port number to use (default: 8080)
+#' @param browse Automatically open browser (default: TRUE)
 #'
-#' @return Cloud mode: invisibly, the project_create() result. GUI mode:
-#'   invisibly returns the plumber server object.
+#' @return Invisibly returns the plumber server object
 #'
 #' @examples
 #' \donttest{
 #' if (FALSE) {
-#' # Set up a cloud-defined project by its token
-#' framework::setup("1|fw_abc123...")
-#'
-#' # First-time setup (legacy GUI)
+#' # First-time setup
 #' framework::setup()
 #' }
 #' }
 #'
-#' @seealso [new()], [cloud_login()], [gui()]
+#' @seealso [gui()] for launching the GUI without initialization check
 #'
 #' @export
-setup <- function(port = 8080, browse = TRUE, location = NULL) {
-  # A character first argument is a framework.pub project token
-  if (is.character(port) && length(port) == 1) {
-    return(.cloud_setup(token = port, location = location, browse = browse))
-  }
-
+setup <- function(port = 8080, browse = TRUE) {
   # Ensure global config exists
   init_global_config()
 
