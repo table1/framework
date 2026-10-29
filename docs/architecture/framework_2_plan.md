@@ -183,6 +183,10 @@ Framework moves task-specific guidance out of AGENTS.md and into skills.
   |-----------|---------------|-----------|
   | claude | `.claude/skills/` | `CLAUDE.md` (imports AGENTS.md) |
   | codex | `.agents/skills/` | none (Codex reads AGENTS.md) |
+  | copilot | `.agents/skills/` | `.github/copilot-instructions.md` (points to AGENTS.md) |
+
+  Copilot's own folder is `.github/skills/`, but it also reads
+  `.agents/skills/`, so it shares Codex's folder.
 
   Selecting both writes both folders. When `ai.assistants` is empty or
   missing, Framework writes `.agents/skills/` only, because it is the location

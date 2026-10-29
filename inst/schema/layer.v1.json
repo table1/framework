@@ -1,0 +1,537 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://framework.pub/schema/layer/v1.json",
+  "title": "Framework project spec layer",
+  "description": "One unmerged layer of a project spec. Every field is optional, and a null map entry removes that key when spec_resolve() merges layers.",
+  "type": "object",
+  "properties": {
+    "spec_version": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "project",
+        "project_sensitive",
+        "course",
+        "presentation",
+        "bare"
+      ]
+    },
+    "author": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "affiliation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "directories": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "extra_directories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/extra_directory"
+      }
+    },
+    "render_dirs": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "packages": {
+      "type": "object",
+      "properties": {
+        "use_renv": {
+          "type": "boolean"
+        },
+        "default_packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/package"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "git": {
+      "type": "object",
+      "properties": {
+        "use_git": {
+          "type": "boolean"
+        },
+        "hooks": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        },
+        "gitignore_content": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "assistants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "codex",
+              "copilot"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "agents_md": {
+          "type": "string",
+          "enum": [
+            "stub",
+            "none"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "scaffold": {
+      "type": "object",
+      "properties": {
+        "seed_on_scaffold": {
+          "type": "boolean"
+        },
+        "seed": {
+          "type": "string"
+        },
+        "set_theme_on_scaffold": {
+          "type": "boolean"
+        },
+        "ggplot_theme": {
+          "type": "string"
+        },
+        "source_all_functions": {
+          "type": "boolean"
+        },
+        "notebook_format": {
+          "type": "string",
+          "enum": [
+            "quarto",
+            "rmarkdown"
+          ]
+        },
+        "ide": {
+          "type": "string",
+          "enum": [
+            "vscode",
+            "positron",
+            "rstudio",
+            "both",
+            "none"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "quarto": {
+      "type": "object",
+      "description": "Passed through to _quarto.yml generation"
+    },
+    "connections": {
+      "type": "object",
+      "properties": {
+        "default_database": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "default_storage_bucket": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "databases": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/connection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        },
+        "storage_buckets": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/connection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "sensitive": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "description": "Variables written to .env. Secret-looking names must be empty.",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      }
+    },
+    "data_hooks": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[^:]+\\.R::[A-Za-z.][A-Za-z0-9._]*$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "description": "Directory key -> 'path/to/file.R::function'",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/file"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "propertyNames": {
+        "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+      }
+    },
+    "skills": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/skill"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "propertyNames": {
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      }
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "enum": [
+            "cloud",
+            "cli",
+            "r"
+          ]
+        },
+        "fragments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "facet",
+                  "blueprint"
+                ]
+              },
+              "key": {
+                "type": "string"
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "blueprint": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "version": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "study_plan": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "package": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "cran",
+            "github",
+            "bioc"
+          ]
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "auto_attach": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "source",
+        "auto_attach"
+      ]
+    },
+    "extra_directory": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "label": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "path"
+      ]
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "template": {
+          "type": "boolean",
+          "description": "Replace {{project_name}}, {{author}}, {{author_email}}, {{affiliation}}, and {{date}}"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "content"
+      ]
+    },
+    "skill": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "package": {
+              "const": true
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "package"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Full SKILL.md text, including frontmatter"
+            },
+            "files": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "propertyNames": {
+                "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "content"
+          ]
+        }
+      ]
+    },
+    "connection": {
+      "type": "object",
+      "properties": {
+        "driver": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "driver"
+      ]
+    }
+  }
+}

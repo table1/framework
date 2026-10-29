@@ -57,6 +57,7 @@
 ^\.cursorignore$
 ^\.Rbuildignore\.bak$
 ^readme-parts$
+^data-raw$
 
 # GUI development (not needed in package)
 ^gui-dev$
