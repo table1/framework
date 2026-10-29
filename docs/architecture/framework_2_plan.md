@@ -322,6 +322,52 @@ data_hooks:
   inputs_private_raw: functions/fetch_raw.R::fetch_raw
 ```
 
+## AI safety with restricted data
+
+Framework supports using AI agents in projects with restricted data, including
+on the machine that holds the data. Agents commonly run on HPC compute nodes
+(for example JHPCE), so the agent and the data are often in the same place.
+Framework's guardrails are therefore the primary protection. JHPCE is one
+example of this workflow, and nothing here is specific to it.
+
+The risk is that an agent reads a restricted file, or runs R code that prints
+rows, and the values are sent to the model provider.
+
+- **Agent deny rules.** When `security.sensitive` is true, `project_create()`
+  writes each selected assistant's permission settings so the agent cannot
+  read restricted directories (for Claude Code, `permissions.deny` rules in
+  `.claude/settings.json`). The rules come from the directory keys marked
+  private. Support in Codex and Copilot needs to be checked.
+- **Value-free output for agents.** When Framework detects that an agent
+  started the R process, `data_read()` and related printing show column names,
+  types, and row counts without values.
+- **Skills** explain these rules to the agent. They are guidance, while the
+  deny rules are enforcement.
+
+## Simulated data
+
+Simulated data lets people and agents write code without access to restricted
+data. The usual pattern is to develop against simulated data, push to GitHub,
+pull on the machine with the real data, and run there.
+
+- **Data dictionary.** For each restricted dataset, Framework generates a
+  dictionary of column names, types, factor levels, missingness rates, and
+  value ranges, without row values. A person reviews it before it is
+  committed, because factor levels and ranges can identify people. Framework
+  never commits or pushes a dictionary automatically.
+- **Generation.** Simulated data is generated from the dictionary by default.
+  Generators that learn from the real rows, such as `synthpop`, are an explicit
+  opt-in with a disclosure warning.
+- **Switching.** `data_read()` returns real or simulated data depending on the
+  machine. The choice comes from a `config` environment section in
+  `settings.yml` (for example `default` for simulated data and `jhpce` for real
+  data), so analysis code does not change between machines.
+- The dictionary also gives agents the structure of the data without its
+  values.
+
+Open question: whether a dictionary needs sign-off beyond the analyst (for
+example a data steward), and whether Framework records who approved it.
+
 ## Retiring the GUI
 
 - 2.0 removes `gui()`, `inst/plumber.R`, `inst/gui/`, and `gui-dev/`, and drops
