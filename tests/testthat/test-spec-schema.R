@@ -54,7 +54,7 @@ test_that("committed schemas match data-raw/spec_schema.R", {
     })
   })
 
-  for (name in c("spec.v1.json", "layer.v1.json")) {
+  for (name in c("spec.v1.json", "layer.v1.json", "layers.v1.json")) {
     expect_identical(
       readLines(file.path(out_dir, name)),
       readLines(schema_path(name)),
@@ -111,4 +111,28 @@ test_that("the layer schema rejects unsafe paths and malformed entries", {
   expect_false(v$validate(as_json(list(packages = list(default_packages = list(list(name = "dplyr")))))))
   expect_false(v$validate(as_json(list(env = list(`BAD-NAME` = "")))))
   expect_false(v$validate(as_json(list(data_hooks = list(inputs_raw = "fetch_raw")))))
+})
+
+test_that("the layers envelope validates and checks each layer", {
+  v <- schema_validator("layers.v1.json")
+
+  envelope <- list(
+    spec_version = 1,
+    name = "My Study",
+    author = list(name = "A", email = "a@example.com", affiliation = ""),
+    layers = list(
+      list(kind = "base", key = "project", version = 3, layer = list(type = "project")),
+      list(kind = "facet", key = "restricted-data", version = 1,
+           layer = list(security = list(sensitive = TRUE), directories = list(inputs_raw = NULL)))
+    )
+  )
+  expect_true(v$validate(jsonlite::toJSON(envelope, auto_unbox = TRUE, null = "null")))
+
+  bad_layer <- envelope
+  bad_layer$layers[[2]]$layer$files <- list(`../x` = list(content = ""))
+  expect_false(v$validate(as_json(bad_layer)))
+
+  bad_kind <- envelope
+  bad_kind$layers[[1]]$kind <- "plugin"
+  expect_false(v$validate(as_json(bad_kind)))
 })

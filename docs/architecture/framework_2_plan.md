@@ -84,7 +84,11 @@ so the project records how it was made.
 
 - Maps such as `directories`, `connections.databases`, and `files` merge by
   key, and a later layer wins.
-- A key set to `null` removes it, so a later layer can drop a directory.
+- A map entry set to `null` removes it, so a later layer can drop a directory.
+  Top-level keys cannot be null. To clear a section, a layer sets it to an
+  empty object or list.
+- An empty JSON array and an empty JSON object are treated the same, because
+  PHP cannot distinguish them after reading from the database.
 - Lists of plain values such as `ai.assistants` are combined
   in order without duplicates.
 - Lists of objects that carry a `key` (`extra_directories`) or a `name`

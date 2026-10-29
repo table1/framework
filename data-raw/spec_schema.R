@@ -189,6 +189,43 @@ layer_schema$properties <- lapply(layer_schema$properties, as_layer)
 # Definitions keep their required fields: a package, file, or skill entry must
 # still be complete inside a layer. Only the top-level spec is partial.
 
+layer_body <- layer_schema[setdiff(names(layer_schema), c("$schema", "$id", "definitions"))]
+
+# Layers envelope: the body of pull v2 and of .framework/layers.json. Layers
+# are listed bottom to top; package defaults are not included because R adds
+# them from the installed package.
+layers_schema <- list(
+  `$schema` = "http://json-schema.org/draft-07/schema#",
+  `$id` = sprintf("%s/layers/v%d.json", BASE_URL, SPEC_VERSION),
+  title = "Framework project layers",
+  description = paste(
+    "Unmerged layers for one project, bottom to top, excluding package",
+    "defaults. Read by project_create_from_layers() and returned by pull v2."
+  ),
+  type = "object",
+  properties = list(
+    spec_version = list(const = SPEC_VERSION),
+    name = str(minLength = 1),
+    author = properties$author,
+    layers = arr(obj(
+      list(
+        kind = str(enum = list("settings", "base", "facet", "blueprint", "project")),
+        key = str(),
+        version = list(type = "integer"),
+        layer = ref("layer")
+      ),
+      required = c("kind", "layer")
+    )),
+    source = properties$source
+  ),
+  required = list("spec_version", "name", "layers"),
+  additionalProperties = FALSE,
+  # The layer schema is inlined so this file validates on its own. Its
+  # internal refs (#/definitions/package and so on) resolve against the
+  # definitions below, which are the same as the layer schema's.
+  definitions = c(definitions, list(layer = layer_body))
+)
+
 write_schema <- function(schema, path) {
   json <- jsonlite::toJSON(schema, auto_unbox = TRUE, pretty = 2, null = "null")
   writeLines(json, path)
@@ -199,3 +236,4 @@ out_dir <- Sys.getenv("FW_SCHEMA_OUT", "inst/schema")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 write_schema(spec_schema, file.path(out_dir, "spec.v1.json"))
 write_schema(layer_schema, file.path(out_dir, "layer.v1.json"))
+write_schema(layers_schema, file.path(out_dir, "layers.v1.json"))
