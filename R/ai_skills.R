@@ -10,6 +10,22 @@
 NULL
 
 
+#' Where each AI assistant reads skills and which stub file it gets
+#'
+#' Adding an assistant means adding a row here and to `ASSISTANTS` in
+#' data-raw/spec_schema.R. Claude Code does not read `.agents/skills/`
+#' (tested with 2.1.312), so it has its own folder. Copilot reads
+#' `.agents/skills/` as well as `.github/skills/`.
+#' @keywords internal
+.ai_assistant_table <- function() {
+  list(
+    claude = list(skills_dir = ".claude/skills", stub = "CLAUDE.md"),
+    codex = list(skills_dir = ".agents/skills", stub = NULL),
+    copilot = list(skills_dir = ".agents/skills", stub = ".github/copilot-instructions.md")
+  )
+}
+
+
 #' Skills that apply to a given project type
 #' @keywords internal
 .ai_skills_for_type <- function(project_type) {

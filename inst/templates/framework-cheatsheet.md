@@ -363,6 +363,8 @@ capture_output(expr)             # Capture console output
 | `settings_read()` | Read configuration file |
 | `settings_write()` | Write configuration file |
 | `setup()` | Configure global Framework settings |
+| `spec_check()` | List problems in a resolved project spec |
+| `spec_resolve()` | Merge project spec layers into one spec |
 | `standardize_wd()` | Normalize working directory |
 | `status()` | Show project status |
 | `storage_test()` | Test S3 connection |

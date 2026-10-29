@@ -40,18 +40,17 @@ ENV_NAME <- "^[A-Za-z_][A-Za-z0-9_]*$"
 definitions <- list(
   package = obj(
     list(
-      name = str(minLength = 1),
       source = str(enum = list("cran", "github", "bioc")),
       version = nullable(str()),
       repo = nullable(str()),
       ref = nullable(str()),
       auto_attach = bool()
     ),
-    required = c("name", "source", "auto_attach")
+    required = c("source", "auto_attach")
   ),
   extra_directory = obj(
-    list(key = str(pattern = KEY), label = str(), path = str(pattern = REL_PATH)),
-    required = c("key", "path")
+    list(label = str(), path = str(pattern = REL_PATH)),
+    required = c("path")
   ),
   file = obj(
     list(
@@ -81,10 +80,14 @@ properties <- list(
   author = obj(list(name = str(), email = str(), affiliation = str()),
                required = c("name", "email", "affiliation")),
   directories = map_of(str(pattern = REL_PATH), key_pattern = KEY),
-  extra_directories = arr(ref("extra_directory")),
+  extra_directories = map_of(ref("extra_directory"), key_pattern = KEY),
   render_dirs = map_of(str(pattern = REL_PATH), key_pattern = KEY),
   packages = obj(
-    list(use_renv = bool(), default_packages = arr(ref("package"))),
+    list(
+      use_renv = bool(),
+      default_packages = map_of(ref("package"), key_pattern = "^[A-Za-z][A-Za-z0-9.]*$",
+                                description = "Package name -> spec. JSON object key order is not kept (Postgres JSONB sorts keys).")
+    ),
     required = c("use_renv", "default_packages")
   ),
   git = obj(
@@ -98,7 +101,12 @@ properties <- list(
   ai = obj(
     list(
       enabled = bool(),
-      assistants = arr(str(enum = as.list(ASSISTANTS)), uniqueItems = TRUE),
+      assistants = list(
+        type = "object",
+        propertyNames = list(enum = as.list(ASSISTANTS)),
+        additionalProperties = bool(),
+        description = "Assistant -> true to include. In a layer, false or null removes it."
+      ),
       agents_md = str(enum = list("stub", "none"))
     ),
     required = c("enabled", "assistants", "agents_md")

@@ -89,10 +89,16 @@ so the project records how it was made.
   empty object or list.
 - An empty JSON array and an empty JSON object are treated the same, because
   PHP cannot distinguish them after reading from the database.
-- Lists of plain values such as `ai.assistants` are combined
-  in order without duplicates.
-- Lists of objects that carry a `key` (`extra_directories`) or a `name`
-  (`packages.default_packages`) merge by that field, and a later layer wins.
+- Collections that layers add to or remove from are objects keyed by name:
+  `extra_directories` (key -> {label, path}), `packages.default_packages`
+  (package name -> {source, auto_attach, ...}), and `ai.assistants`
+  (assistant -> true). A later layer can remove an entry with `null`, or an
+  assistant with `false`. Arrays were dropped for these because they could
+  only grow. Postgres JSONB does not keep key order, so package attach order
+  is not preserved.
+- Entries of `files`, `skills`, `extra_directories`, `packages.default_packages`,
+  `connections.databases`, and `connections.storage_buckets` are replaced
+  whole, never merged field by field.
 - In `files` templates (`template: true`), R replaces `{{variable}}` for a
   fixed set of variables: `project_name`, `author`, `author_email`,
   `affiliation`, and `date`. Other text in braces, such as Quarto's

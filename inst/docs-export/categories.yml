@@ -11,6 +11,8 @@ Workflow:
     - gui
   functions:
     - setup
+    - spec_resolve
+    - spec_check
     - scaffold
     - settings
     - settings_read

@@ -18,14 +18,14 @@ minimal_spec <- function() {
     type = "project",
     author = list(name = "A", email = "a@example.com", affiliation = ""),
     directories = list(notebooks = "notebooks", logs = "logs"),
-    extra_directories = list(),
+    extra_directories = setNames(list(), character()),
     render_dirs = list(notebooks = "outputs/notebooks"),
     packages = list(
       use_renv = FALSE,
-      default_packages = list(list(name = "dplyr", source = "cran", auto_attach = TRUE))
+      default_packages = list(dplyr = list(source = "cran", auto_attach = TRUE))
     ),
     git = list(use_git = TRUE, hooks = list(ai_sync = FALSE), gitignore_content = ""),
-    ai = list(enabled = TRUE, assistants = list("claude"), agents_md = "stub"),
+    ai = list(enabled = TRUE, assistants = list(claude = TRUE), agents_md = "stub"),
     scaffold = list(
       seed_on_scaffold = FALSE, seed = "", set_theme_on_scaffold = TRUE,
       ggplot_theme = "theme_minimal"
@@ -84,7 +84,7 @@ test_that("the resolved schema rejects incomplete or malformed specs", {
   expect_false(v$validate(as_json(null_dir)))
 
   bad_assistant <- minimal_spec()
-  bad_assistant$ai$assistants <- list("clippy")
+  bad_assistant$ai$assistants <- list(clippy = TRUE)
   expect_false(v$validate(as_json(bad_assistant)))
 })
 
@@ -108,7 +108,7 @@ test_that("the layer schema rejects unsafe paths and malformed entries", {
   expect_false(v$validate(as_json(list(directories = list(raw = "../outside")))))
   expect_false(v$validate(as_json(list(skills = list(`Bad Name` = list(package = TRUE))))))
   expect_false(v$validate(as_json(list(skills = list(ok = list(package = TRUE, content = "x"))))))
-  expect_false(v$validate(as_json(list(packages = list(default_packages = list(list(name = "dplyr")))))))
+  expect_false(v$validate(as_json(list(packages = list(default_packages = list(dplyr = list(auto_attach = TRUE)))))))
   expect_false(v$validate(as_json(list(env = list(`BAD-NAME` = "")))))
   expect_false(v$validate(as_json(list(data_hooks = list(inputs_raw = "fetch_raw")))))
 })

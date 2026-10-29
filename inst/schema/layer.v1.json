@@ -55,9 +55,19 @@
       }
     },
     "extra_directories": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/extra_directory"
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/extra_directory"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
       }
     },
     "render_dirs": {
@@ -84,9 +94,20 @@
           "type": "boolean"
         },
         "default_packages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/package"
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/package"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "Package name -> spec. JSON object key order is not kept (Postgres JSONB sorts keys).",
+          "propertyNames": {
+            "pattern": "^[A-Za-z][A-Za-z0-9.]*$"
           }
         }
       },
@@ -127,16 +148,25 @@
           "type": "boolean"
         },
         "assistants": {
-          "type": "array",
-          "items": {
-            "type": "string",
+          "type": "object",
+          "propertyNames": {
             "enum": [
               "claude",
               "codex",
               "copilot"
             ]
           },
-          "uniqueItems": true
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "Assistant -> true to include. In a layer, false or null removes it."
         },
         "agents_md": {
           "type": "string",
@@ -391,10 +421,6 @@
     "package": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1
-        },
         "source": {
           "type": "string",
           "enum": [
@@ -439,7 +465,6 @@
       },
       "additionalProperties": false,
       "required": [
-        "name",
         "source",
         "auto_attach"
       ]
@@ -447,10 +472,6 @@
     "extra_directory": {
       "type": "object",
       "properties": {
-        "key": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9_]*$"
-        },
         "label": {
           "type": "string"
         },
@@ -461,7 +482,6 @@
       },
       "additionalProperties": false,
       "required": [
-        "key",
         "path"
       ]
     },
