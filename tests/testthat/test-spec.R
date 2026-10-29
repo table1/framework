@@ -164,3 +164,14 @@ test_that("layers using list shapes for keyed sections are rejected", {
     "extra_directories must be an object keyed by name"
   )
 })
+
+test_that("keys set to the same value by several layers are not conflicts", {
+  spec <- spec_resolve(
+    list(
+      list(kind = "facet", key = "claude-code", layer = list(ai = list(enabled = TRUE, assistants = list(claude = TRUE)))),
+      list(kind = "facet", key = "codex", layer = list(ai = list(enabled = TRUE, assistants = list(codex = TRUE))))
+    ),
+    name = "Same value"
+  )
+  expect_identical(nrow(attr(spec, "conflicts")), 0L)
+})

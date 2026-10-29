@@ -196,8 +196,10 @@ spec_check <- function(spec) {
 .spec_normalize_layers <- function(layers) {
   lapply(seq_along(layers), function(i) {
     entry <- layers[[i]]
-    if (is.list(entry) && !is.null(entry$kind) && "layer" %in% names(entry)) {
-      label <- paste(c(entry$kind, entry$key, if (!is.null(entry$version)) paste0("v", entry$version)), collapse = " ")
+    is_envelope_entry <- is.list(entry) && "layer" %in% names(entry) &&
+      all(names(entry) %in% c("kind", "key", "version", "layer"))
+    if (is_envelope_entry) {
+      label <- paste(c(entry$kind %||% paste("layer", i), entry$key, if (!is.null(entry$version)) paste0("v", entry$version)), collapse = " ")
       list(label = label, layer = entry$layer %||% list())
     } else {
       list(label = paste("layer", i), layer = entry %||% list())
@@ -229,7 +231,7 @@ spec_check <- function(spec) {
 }
 
 # Recursively merge `layer` into `base`. Returns list(value, setters), where
-# setters records which layers set each leaf (for conflict reporting).
+# setters records which layer set each leaf and to what (for conflicts).
 .spec_merge <- function(base, layer, path, label, setters) {
   base <- base %||% list()
   for (key in names(layer)) {
@@ -239,7 +241,7 @@ spec_check <- function(spec) {
 
     if (is.null(value)) {
       base[[key]] <- NULL
-      setters[[path_str]] <- c(setters[[path_str]], label)
+      setters[[path_str]] <- c(setters[[path_str]], list(list(label = label, value = "<removed>")))
       next
     }
 
@@ -256,18 +258,27 @@ spec_check <- function(spec) {
       if (is.null(base[[key]])) base[key] <- list(list())
     } else {
       base[[key]] <- value
-      setters[[path_str]] <- c(setters[[path_str]], label)
+      setters[[path_str]] <- c(setters[[path_str]], list(list(label = label, value = value)))
     }
   }
   list(value = base, setters = setters)
 }
 
 .spec_conflicts <- function(setters) {
-  layers <- lapply(setters, function(x) unique(setdiff(x, "package defaults")))
-  multi <- layers[vapply(layers, length, integer(1)) > 1]
+  # A conflict is a key set to different values by more than one layer.
+  # Package defaults are the baseline and never count.
+  conflicting <- Filter(function(entries) {
+    entries <- Filter(function(e) !identical(e$label, "package defaults"), entries)
+    length(unique(vapply(entries, `[[`, "", "label"))) > 1 &&
+      length(unique(lapply(entries, `[[`, "value"))) > 1
+  }, setters)
+  layers <- vapply(conflicting, function(entries) {
+    labels <- vapply(entries, `[[`, "", "label")
+    paste(unique(setdiff(labels, "package defaults")), collapse = ", ")
+  }, character(1))
   data.frame(
-    path = names(multi),
-    layers = vapply(multi, paste, character(1), collapse = ", "),
+    path = names(conflicting),
+    layers = unname(layers),
     row.names = NULL,
     stringsAsFactors = FALSE
   )
@@ -276,6 +287,9 @@ spec_check <- function(spec) {
 .spec_finalize <- function(spec, gitignore_blocks) {
   spec$spec_version <- 1L
   spec$security$sensitive <- isTRUE(spec$security$sensitive)
+  if (spec$security$sensitive && !identical(spec$type, "bare") && is.null(spec$skills[["framework-sensitive-data"]])) {
+    spec$skills[["framework-sensitive-data"]] <- list(package = TRUE)
+  }
 
   # Assistants: keep only those set to TRUE
   assistants <- spec$ai$assistants %||% list()

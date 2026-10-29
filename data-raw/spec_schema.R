@@ -148,7 +148,8 @@ properties <- list(
         required = c("kind", "key")
       )),
       blueprint = obj(list(key = str(), version = list(type = "integer")), required = c("key")),
-      study_plan = obj(list(id = str(), version = list(type = "integer")), required = c("id"))
+      study_plan = obj(list(id = str(), version = list(type = "integer")), required = c("id")),
+      framework_version = str(description = "Package version that created the project; written by R")
     ),
     required = c("origin")
   )

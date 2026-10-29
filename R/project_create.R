@@ -41,6 +41,12 @@ project_create <- function(
   quarto = NULL,
   render_dirs = NULL
 ) {
+  # A resolved spec (from spec_resolve()) as the first argument
+  if (is.list(name) && !is.null(name$spec_version)) {
+    checkmate::assert_string(location, min.chars = 1)
+    return(invisible(.project_create_from_spec(name, location)))
+  }
+
   # Validate inputs
   checkmate::assert_string(name, min.chars = 1)
   checkmate::assert_string(location, min.chars = 1)
@@ -339,7 +345,9 @@ project_create <- function(
   connections = NULL,
   connections_file = NULL,
   render_dirs = NULL,
-  quarto = NULL
+  quarto = NULL,
+  security = NULL,
+  data_hooks = NULL
 ) {
   # For project and project_sensitive types, use split settings files
   # For presentation and course, use single settings.yml file
@@ -369,7 +377,9 @@ project_create <- function(
         scaffold = "settings/scaffold.yml",
         connections = connections_file,
         quarto = "settings/quarto.yml",
-        data = "settings/data.yml"
+        data = "settings/data.yml",
+        security = security,
+        data_hooks = if (length(data_hooks) > 0) data_hooks else NULL
       )
     )
 
@@ -473,7 +483,10 @@ project_create <- function(
         data = list(),
 
         # Connections (inline for course/presentation)
-        connections = connections %||% .default_connections_configuration()
+        connections = connections %||% .default_connections_configuration(),
+
+        security = security,
+        data_hooks = if (length(data_hooks) > 0) data_hooks else NULL
       )
     )
 

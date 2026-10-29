@@ -19,7 +19,9 @@
   connections = NULL,
   connections_file = NULL,
   render_dirs = NULL,
-  quarto = NULL
+  quarto = NULL,
+  security = NULL,
+  data_hooks = NULL
 )
 }
 \description{

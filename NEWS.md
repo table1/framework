@@ -1,5 +1,12 @@
 # framework (development version)
 
+* Project specs: `spec_resolve()` merges spec layers over the package
+  defaults, `spec_check()` reports problems, `project_create()` accepts a
+  resolved spec, and `project_create_from_layers()` creates a project from a
+  framework.pub layers file (headless mode for GitHub Actions). JSON Schemas
+  for specs and layers ship in `inst/schema/`
+* Sensitive projects (`security.sensitive`) get Claude Code deny rules and a
+  fail-closed sandbox that keep the agent out of restricted directories
 * Opt-in framework.pub cloud integration (planned for 2.0): `cloud_login()`,
   `cloud_logout()`, `cloud_status()`, `cloud_settings()`, `cloud_sync()`,
   `ledger_push()`, `ledger_list()`, `data_verify()`, and `setup()` with a

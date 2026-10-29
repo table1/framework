@@ -362,6 +362,7 @@ capture_output(expr)             # Capture console output
 | `settings()` | Access project settings |
 | `settings_read()` | Read configuration file |
 | `settings_write()` | Write configuration file |
+| `project_create_from_layers()` | Create a project from a framework.pub layers file |
 | `setup()` | Configure global Framework settings |
 | `spec_check()` | List problems in a resolved project spec |
 | `spec_resolve()` | Merge project spec layers into one spec |

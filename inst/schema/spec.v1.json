@@ -369,6 +369,10 @@
           "required": [
             "id"
           ]
+        },
+        "framework_version": {
+          "type": "string",
+          "description": "Package version that created the project; written by R"
         }
       },
       "additionalProperties": false,
