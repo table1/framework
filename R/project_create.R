@@ -388,11 +388,7 @@ project_create <- function(
     message("  Created: settings.yml")
 
     # Write split files
-    yaml::write_yaml(list(author = list(
-      name = author$name %||% "",
-      email = author$email %||% "",
-      affiliation = author$affiliation %||% ""
-    )), file.path(settings_dir, "author.yml"))
+    yaml::write_yaml(list(author = .author_normalize(author)), file.path(settings_dir, "author.yml"))
 
     yaml::write_yaml(list(packages = list(
       use_renv = packages$use_renv %||% FALSE,
@@ -436,11 +432,7 @@ project_create <- function(
         project_type = type,
 
         # Author information
-        author = list(
-          name = author$name %||% "",
-          email = author$email %||% "",
-          affiliation = author$affiliation %||% ""
-        ),
+        author = .author_normalize(author),
 
         # Directories (inline for discoverability)
         directories = directories,
@@ -830,18 +822,14 @@ duplicate its content in this file.
 #' Create stub files for specific project types
 #' @keywords internal
 .create_stub_files <- function(project_dir, type, name, author) {
-  author_name <- if (!is.null(author$name) && nzchar(author$name)) {
-    author$name
-  } else {
-    "Your Name"
-  }
+  author_lines <- paste(.author_front_matter(author), collapse = "\n")
 
   # Presentation projects need a presentation.qmd file
   if (type == "presentation") {
     presentation_file <- file.path(project_dir, "presentation.qmd")
     presentation_content <- sprintf('---
 title: "%s"
-author: "%s"
+%s
 date: "`r Sys.Date()`"
 format:
   revealjs:
@@ -898,7 +886,7 @@ plot(mtcars$mpg, mtcars$hp,
 ## Thank You!
 
 Questions?
-', name, author_name)
+', name, author_lines)
 
     writeLines(presentation_content, presentation_file)
     message("  Created: presentation.qmd")

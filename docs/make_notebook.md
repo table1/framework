@@ -67,6 +67,43 @@ stubs/
 Stub templates support placeholders:
 - `{filename}` - Replaced with the notebook name (without extension)
 - `{date}` - Replaced with current date (YYYY-MM-DD)
+- `{{ author }}`, `{{ email }}`, and `{{ affiliation }}` - Replaced with the author from project settings, falling back to global settings
+
+### Author Front Matter
+
+In a Quarto stub, the line `author: "{{ author }}"` is replaced with the author
+front matter. With only a name, email, and affiliation in settings, it becomes
+`author: "Ada Lovelace"`. When the settings also have `orcid`, `url`, or
+`affiliations` (framework.pub's Profile tab fills these in), it becomes a full
+Quarto author block:
+
+```yaml
+author:
+  - name: "Ada Lovelace"
+    email: "ada@example.edu"
+    orcid: "0000-0002-1825-0097"
+    url: "https://ada.example.edu"
+    affiliations:
+      - name: "Analytical Engine Lab"
+        department: "Mathematics"
+```
+
+The author settings take this shape (`affiliations` entries accept `name`,
+`department`, `city`, and `country`):
+
+```yaml
+author:
+  name: Ada Lovelace
+  email: ada@example.edu
+  affiliation: Analytical Engine Lab
+  orcid: 0000-0002-1825-0097
+  url: https://ada.example.edu
+  affiliations:
+    - name: Analytical Engine Lab
+      department: Mathematics
+```
+
+RMarkdown notebooks keep the one-line `author: "Name"`.
 
 Example custom stub (`stubs/notebook-analysis.qmd`):
 

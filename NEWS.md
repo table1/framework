@@ -7,6 +7,11 @@
   for specs and layers ship in `inst/schema/`
 * Sensitive projects (`security.sensitive`) get Claude Code deny rules and a
   fail-closed sandbox that keep the agent out of restricted directories
+* Quarto notebooks, slides, and presentation projects get a full Quarto
+  author block (`orcid`, `url`, and `affiliations` with department, city,
+  and country) when author settings have those details. With only name,
+  email, and affiliation, the one-line `author: "Name"` is unchanged. The
+  spec and layers schemas accept the new author fields
 * Opt-in framework.pub cloud integration (planned for 2.0): `cloud_login()`,
   `cloud_logout()`, `cloud_status()`, `cloud_settings()`, `cloud_sync()`,
   `ledger_push()`, `ledger_list()`, `data_verify()`, and `setup()` with a

@@ -33,6 +33,34 @@
         },
         "affiliation": {
           "type": "string"
+        },
+        "orcid": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "affiliations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "department": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

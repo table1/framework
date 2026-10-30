@@ -30,7 +30,7 @@ configure_author <- function(name = NULL, email = NULL, affiliation = NULL, inte
   # Get current values for defaults
   current_name <- config$author$name
   current_email <- config$author$email
-  current_affiliation <- config$author$affiliation
+  current_affiliation <- config$author[["affiliation"]]
 
   # Interactive prompts if values not provided
   if (interactive) {
@@ -590,8 +590,17 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
   if (!is.null(author$email) && nzchar(author$email)) {
     checkmate::assert_string(author$email, min.chars = 1)
   }
-  if (!is.null(author$affiliation) && nzchar(author$affiliation)) {
-    checkmate::assert_string(author$affiliation, min.chars = 1)
+  if (!is.null(author[["affiliation"]]) && nzchar(author[["affiliation"]])) {
+    checkmate::assert_string(author[["affiliation"]], min.chars = 1)
+  }
+  if (!is.null(author$orcid)) checkmate::assert_string(author$orcid)
+  if (!is.null(author$url)) checkmate::assert_string(author$url)
+  if (!is.null(author$affiliations)) {
+    checkmate::assert_list(author$affiliations)
+    for (aff in author$affiliations) {
+      checkmate::assert_list(aff)
+      checkmate::assert_string(aff$name, min.chars = 1)
+    }
   }
 
   invisible(TRUE)

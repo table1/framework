@@ -209,7 +209,7 @@ project_create_from_layers <- function(layers_file, path = ".", interactive = FA
     project_name = spec$name,
     author = spec$author$name %||% "",
     author_email = spec$author$email %||% "",
-    affiliation = spec$author$affiliation %||% "",
+    affiliation = spec$author[["affiliation"]] %||% "",
     date = format(Sys.Date())
   )
 }

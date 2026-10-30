@@ -26,8 +26,9 @@
 #'   layer (a named list in spec shape) or a list with `kind`, `key`,
 #'   `version`, and `layer`, as in `.framework/layers.json`.
 #' @param name Project name. Overrides any `name` in the layers.
-#' @param author Optional author list (`name`, `email`, `affiliation`).
-#'   Overrides any `author` in the layers.
+#' @param author Optional author list (`name`, `email`, `affiliation`, and
+#'   optionally `orcid`, `url`, and `affiliations`). Non-empty fields override
+#'   the layers' `author`; `affiliations` replaces the whole list.
 #' @param check If `TRUE` (default), stop when the resolved spec is invalid.
 #'
 #' @return The resolved spec as a named list. Attribute `"conflicts"` holds a
@@ -69,7 +70,7 @@ spec_resolve <- function(layers = list(), name, author = NULL, check = TRUE) {
   spec <- state$spec
   spec$type <- type
   spec$name <- name
-  if (!is.null(author)) spec$author <- utils::modifyList(spec$author %||% list(), author)
+  if (!is.null(author)) spec$author <- .author_merge(spec$author, author)
   spec <- .spec_finalize(spec, state$gitignore)
 
   if (check) {

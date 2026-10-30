@@ -77,8 +77,16 @@ properties <- list(
   spec_version = list(const = SPEC_VERSION),
   name = str(minLength = 1),
   type = str(enum = list("project", "project_sensitive", "course", "presentation", "bare")),
-  author = obj(list(name = str(), email = str(), affiliation = str()),
-               required = c("name", "email", "affiliation")),
+  # orcid, url, and affiliations follow Quarto's author schema. affiliation
+  # stays the plain-string summary (the first affiliation's name).
+  author = obj(list(
+    name = str(), email = str(), affiliation = str(),
+    orcid = str(), url = str(),
+    affiliations = arr(obj(
+      list(name = str(minLength = 1), department = str(), city = str(), country = str()),
+      required = "name"
+    ))
+  ), required = c("name", "email", "affiliation")),
   directories = map_of(str(pattern = REL_PATH), key_pattern = KEY),
   extra_directories = map_of(ref("extra_directory"), key_pattern = KEY),
   render_dirs = map_of(str(pattern = REL_PATH), key_pattern = KEY),

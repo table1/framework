@@ -1000,7 +1000,7 @@ cloud_sync <- function(direction = c("auto", "pull", "push")) {
   }
 
   if (!is.null(doc$author)) {
-    config$author <- utils::modifyList(config$author %||% list(), doc$author)
+    config$author <- .author_merge(config$author, doc$author)
   }
 
   d <- doc$defaults %||% list()

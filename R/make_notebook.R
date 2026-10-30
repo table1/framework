@@ -176,6 +176,12 @@ make_notebook <- function(name,
   author_email <- get_author_field("email", "")
   author_affiliation <- get_author_field("affiliation", "")
 
+  # Quarto takes a full author block (orcid, url, affiliations) when the
+  # settings have those details; otherwise this stays `author: "Name"`.
+  if (identical(ext, "qmd")) {
+    stub_content <- .author_fill_stub(stub_content, .author_resolve(cfg$author))
+  }
+
   # Replace all template variables ({{variable}} syntax)
   stub_content <- .replace_moustache_placeholders(
     stub_content,

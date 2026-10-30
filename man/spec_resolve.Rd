@@ -13,8 +13,9 @@ layer (a named list in spec shape) or a list with \code{kind}, \code{key},
 
 \item{name}{Project name. Overrides any \code{name} in the layers.}
 
-\item{author}{Optional author list (\code{name}, \code{email}, \code{affiliation}).
-Overrides any \code{author} in the layers.}
+\item{author}{Optional author list (\code{name}, \code{email}, \code{affiliation}, and
+optionally \code{orcid}, \code{url}, and \code{affiliations}). Non-empty fields override
+the layers' \code{author}; \code{affiliations} replaces the whole list.}
 
 \item{check}{If \code{TRUE} (default), stop when the resolved spec is invalid.}
 }
