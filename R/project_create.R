@@ -534,18 +534,34 @@ project_create <- function(
   if (nzchar(path)) paste(readLines(path, warn = FALSE), collapse = "\n") else ".env"
 }
 
-# Make sure .gitignore ignores .env before the first commit. Appends the
-# rule when no line covers it.
+# Make sure .gitignore ignores .env before the first commit. Git lets a later
+# line override an earlier one, so the last line that mentions .env decides:
+# when there is none, or it is a negation (!.env), `.env` is appended.
 #' @keywords internal
 .ensure_secrets_ignored <- function(project_dir) {
   path <- file.path(project_dir, ".gitignore")
   lines <- if (file.exists(path)) readLines(path, warn = FALSE) else character(0)
-  covered <- any(trimws(lines) %in% c(".env", "/.env", ".env*", "/.env*", "*.env"))
+  env_lines <- grep("^!?/?(\\*\\*/)?(\\.env\\*?|\\*\\.env)$", trimws(lines), value = TRUE)
+  last <- utils::tail(env_lines, 1)
+  covered <- length(last) == 1 && !startsWith(last, "!")
   if (!covered) {
     writeLines(c(lines, "", "# Secrets (added by Framework)", ".env"), path)
     message("  Added .env to .gitignore")
   }
   invisible(!covered)
+}
+
+# Ask git itself whether .env is ignored. TRUE when there is no .env.
+#' @keywords internal
+.secrets_ignored_by_git <- function(project_dir) {
+  if (!file.exists(file.path(project_dir, ".env"))) {
+    return(TRUE)
+  }
+  status <- suppressWarnings(system2(
+    "git", c("-C", shQuote(project_dir), "check-ignore", "-q", ".env"),
+    stdout = FALSE, stderr = FALSE
+  ))
+  identical(as.integer(status), 0L)
 }
 
 #' Create .gitignore file
@@ -792,6 +808,14 @@ duplicate its content in this file.
   # Stage all files
   # Never stage secrets, whatever .gitignore content the caller supplied
   .ensure_secrets_ignored(project_dir)
+  if (!.secrets_ignored_by_git(project_dir)) {
+    warning(
+      "Not making the initial commit: git does not ignore .env, which holds secrets. ",
+      "Fix .gitignore, then commit.",
+      call. = FALSE
+    )
+    return(invisible(NULL))
+  }
 
   add_result <- system2("git", c("add", "."), stdout = TRUE, stderr = TRUE)
 
