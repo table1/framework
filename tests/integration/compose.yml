@@ -101,8 +101,18 @@ services:
         if $$SQLCMD -h -1 -Q "SET NOCOUNT ON; SELECT DB_ID('framework_test')" | grep -q '[0-9]'; then
           echo "framework_test already exists; leaving it alone"
         else
-          $$SQLCMD -i /init.sql
+          $$SQLCMD -i /init.sql || exit 1
         fi
+        # Stay up and report healthy, so `up --wait` succeeds: --wait fails
+        # when any container exits, even with status 0
+        touch /tmp/seeded
+        exec sleep infinity
+    init: true
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/seeded"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
     restart: "no"
 
   # S3: MinIO no longer publishes images, so this is SeaweedFS's S3 gateway.
