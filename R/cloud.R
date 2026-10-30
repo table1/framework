@@ -606,7 +606,7 @@ cloud_settings <- function() {
   res <- tryCatch(
     .fw_api(
       "/api/v1/projects", token = token, method = "POST",
-      body = list(name = name, project_type = type), url = url
+      body = list(name = name, project_type = type, language = "r"), url = url
     ),
     error = function(e) {
       message("Cloud project registration skipped: ", conditionMessage(e))
@@ -1357,11 +1357,12 @@ cloud_sync <- function(direction = c("auto", "pull", "push")) {
   gsub("\\{ProjectName\\}", project_name, master)
 }
 
-# framework::setup("fw_...") lands here: pull a cloud-defined project spec by
-# its project token and scaffold it locally. The response carries the owner's
-# settings document, so the project comes out configured their way. The
-# server is user-scoped: setup() run inside another project must not send
-# this token to that project's server.
+# framework::setup("fw_...") and new(key = ...) land here: pull the project's
+# layers envelope (pull v2) by its project token, resolve it, and create the
+# project from the spec. The envelope carries the owner's author block and
+# every layer, so the project comes out configured their way. The server is
+# user-scoped: setup() run inside another project must not send this token to
+# that project's server.
 #' @keywords internal
 .cloud_setup <- function(token, location = NULL, browse = interactive(), url = NULL) {
   url <- .fw_cloud_url(url)
@@ -1369,13 +1370,29 @@ cloud_sync <- function(direction = c("auto", "pull", "push")) {
     "Fetching this project's definition from ", url,
     " (what is shared: ", url, "/privacy)"
   )
-  res <- .fw_api("/api/v1/project", token = token, url = url)
-  proj <- res$project
+  envelope <- .fw_api("/api/v2/projects/pull", token = token, url = url)
+  if (!is.list(envelope) || !identical(as.integer(envelope$spec_version %||% NA), 1L)) {
+    stop("The server returned a project definition this version of framework cannot read.", call. = FALSE)
+  }
+  name <- envelope$name %||% ""
+  if (!nzchar(name)) {
+    stop("The cloud project has no name.", call. = FALSE)
+  }
+  layers <- envelope$layers %||% list()
 
-  message("Setting up cloud project: ", proj$name, " (", proj$project_type, ")")
+  # spec_resolve() refuses other languages; say where to go instead
+  language <- .fw_envelope_language(layers)
+  if (!identical(language, "r")) {
+    stop(.spec_language_message(language), call. = FALSE)
+  }
+
+  spec <- spec_resolve(layers, name = name, author = envelope$author)
+  spec$source <- envelope$source %||% list(origin = "cloud")
+  message("Setting up cloud project: ", name, " (", spec$type, ")")
 
   if (is.null(location)) {
-    suggested <- file.path("~", "projects", proj$slug)
+    slug <- .fw_envelope_slug(layers) %||% .slugify(name)
+    suggested <- file.path("~", "projects", slug)
     if (interactive()) {
       answer <- readline(paste0("Location [", suggested, "]: "))
       location <- if (nzchar(trimws(answer))) trimws(answer) else suggested
@@ -1383,73 +1400,42 @@ cloud_sync <- function(direction = c("auto", "pull", "push")) {
       location <- suggested
     }
   }
-  location <- path.expand(location)
 
-  config <- get_default_global_config()
-  config <- .fw_overlay_cloud_settings(config, res$settings$document)
-  args <- .project_args_from_config(config, proj$project_type)
+  result <- .project_create_from_spec(spec, location)
 
-  # The pull response carries the blueprint; stash it so AI masters and
-  # skills flow into creation, and apply its structure
-  render_dirs <- NULL
-  quarto <- NULL
-  blueprint <- res$blueprint %||% NULL
-  if (!is.null(blueprint)) {
-    .fw_blueprint_stash(blueprint)
-    on.exit(.fw_blueprint_clear(), add = TRUE)
-
-    structure <- blueprint$structure %||% list()
-    if (length(structure$directories %||% list()) > 0) {
-      args$directories <- structure$directories
-    }
-    if (length(structure$render_dirs %||% list()) > 0) {
-      render_dirs <- structure$render_dirs
-    }
-    if (!is.null(structure$quarto$render_dir)) {
-      quarto <- list(render_dir = structure$quarto$render_dir)
-    }
-  }
-
-  # Project payload overrides beat account-level settings
-  payload <- proj$payload %||% list()
-  for (key in intersect(names(payload), names(args))) {
-    if (is.list(args[[key]]) && is.list(payload[[key]])) {
-      args[[key]] <- utils::modifyList(args[[key]], payload[[key]])
-    } else {
-      args[[key]] <- payload[[key]]
-    }
-  }
-
-  result <- project_create(
-    name = proj$name,
-    location = location,
-    type = proj$project_type,
-    author = args$author,
-    packages = args$packages,
-    directories = args$directories,
-    extra_directories = list(),
-    ai = args$ai,
-    git = args$git,
-    scaffold = args$scaffold,
-    connections = args$connections,
-    env = args$env,
-    render_dirs = render_dirs,
-    quarto = quarto
-  )
-
-  if (result$success) {
+  if (isTRUE(result$success)) {
     # The setup token IS this project's key; store it for publish() et al.
-    if (!identical(proj$project_type, "bare")) {
+    if (!identical(spec$type, "bare")) {
       .fw_write_project_token(result$path, token, url)
     }
 
     message("\nProject ready at ", result$path)
-    if (browse) {
-      if (Sys.info()["sysname"] == "Darwin") {
-        system2("open", result$path)
-      }
+    if (browse && Sys.info()[["sysname"]] == "Darwin") {
+      system2("open", result$path)
     }
   }
 
-  invisible(result)
+  invisible(c(result, list(spec = spec)))
+}
+
+# The language set by the topmost layer that sets one (r when none does)
+#' @keywords internal
+.fw_envelope_language <- function(layers) {
+  language <- "r"
+  for (entry in layers) {
+    value <- entry$layer$language
+    if (is.character(value) && length(value) == 1) language <- value
+  }
+  language
+}
+
+# The cloud's project layer carries the project's slug as its key
+#' @keywords internal
+.fw_envelope_slug <- function(layers) {
+  for (entry in rev(layers)) {
+    if (identical(entry$kind, "project") && is.character(entry$key) && nzchar(entry$key)) {
+      return(entry$key)
+    }
+  }
+  NULL
 }

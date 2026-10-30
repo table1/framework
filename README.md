@@ -11,7 +11,7 @@ An R package for structured, reproducible data analysis projects.
 install.packages("framework")
 
 # Or the development version from GitHub
-remotes::install_github("table1/framework")
+remotes::install_github("frameworktools/framework")
 
 # One-time global setup (author info, preferences) in the GUI
 framework::setup()
@@ -21,6 +21,9 @@ framework::new()
 framework::new("my-analysis", "~/projects/my-analysis")
 framework::new_presentation("quarterly-review", "~/talks/q4")
 framework::new_course("stats-101", "~/teaching/stats")
+
+# After cloning a project on another machine or a cluster
+framework::bootstrap()
 ```
 
 The GUI (`setup()`, `gui()`) needs the optional `plumber` package:

@@ -188,7 +188,7 @@ spec_check <- function(spec) {
     if (!grepl("^[A-Za-z_][A-Za-z0-9_]*$", var)) add("env: invalid variable name '%s'", var)
     # Specs travel through the cloud and into git; secrets never do
     value <- spec$env[[var]]
-    if (grepl("PASSWORD|SECRET|TOKEN|API_KEY|PRIVATE_KEY|CREDENTIAL", toupper(var)) &&
+    if (.fw_secret_name(var) &&
         length(value) > 0 && !is.na(value[1]) && nzchar(as.character(value[1]))) {
       add("env.%s: secret-looking variables must be empty in a spec; set the value in .env", var)
     }
@@ -489,4 +489,38 @@ spec_check <- function(spec) {
     env[[substr(line, 1, eq - 1)]] <- substr(line, eq + 1, nchar(line))
   }
   env
+}
+
+
+#' Whether an environment variable name looks like it holds a secret
+#'
+#' Specs and global settings may name these variables but must leave them
+#' empty. The pattern is shared with framework-py and framework-cloud.
+#' @keywords internal
+.fw_secret_name <- function(name) {
+  grepl("PASSWORD|SECRET|TOKEN|ACCESS_KEY|API_KEY|PRIVATE_KEY|CREDENTIAL", toupper(name))
+}
+
+#' Secret-looking variables with values in .env text or a named list
+#' @keywords internal
+.fw_secret_env_values <- function(raw = NULL, variables = NULL) {
+  found <- character()
+  for (name in names(variables)) {
+    value <- variables[[name]]
+    if (.fw_secret_name(name) && length(value) > 0 && !is.na(value[1]) &&
+        nzchar(as.character(value[1]))) {
+      found <- c(found, name)
+    }
+  }
+  if (!is.null(raw)) {
+    lines <- trimws(strsplit(raw, "\n")[[1]])
+    lines <- sub("^export\\s+", "", lines)
+    m <- regmatches(lines, regexec("^([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.*)$", lines))
+    for (hit in m) {
+      if (length(hit) < 3) next
+      value <- gsub("^[\"']|[\"']$", "", sub("(^|\\s+)#.*$", "", trimws(hit[3])))
+      if (.fw_secret_name(hit[2]) && nzchar(value)) found <- c(found, hit[2])
+    }
+  }
+  unique(found)
 }

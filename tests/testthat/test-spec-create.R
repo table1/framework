@@ -165,3 +165,70 @@ test_that("project_create() accepts a resolved spec", {
   expect_true(file.exists(file.path(location, ".framework", "spec.json")))
   expect_error(suppressMessages(project_create(spec, location)), "already exists")
 })
+
+test_that("setup(token) and new(key) create the project from pull v2", {
+  withr::local_envvar(FW_CONFIG_HOME = withr::local_tempdir(), FW_CLOUD_URL = NA, FW_CLOUD_TOKEN = NA)
+  envelope <- list(
+    spec_version = 1L,
+    name = "My Study",
+    author = list(name = "Ada Analyst", email = "ada@example.org", affiliation = ""),
+    layers = list(
+      list(kind = "base", key = "project", version = 1L, layer = list(type = "project")),
+      list(kind = "project", key = "my-study", layer = list(language = "r"))
+    ),
+    source = list(origin = "cloud", blueprint = list(key = "study", version = 2L))
+  )
+  calls <- list()
+  testthat::local_mocked_bindings(.fw_api = function(path, token, method = "GET", body = NULL, url = NULL) {
+    calls[[length(calls) + 1]] <<- list(path = path, token = token, url = url)
+    envelope
+  })
+
+  root <- withr::local_tempdir()
+  location <- file.path(root, "study")
+  result <- suppressMessages(setup("1|fw_pull", location = location, browse = FALSE,
+                                   url = "https://cloud.example.edu"))
+  expect_true(result$success)
+  expect_identical(calls[[1]]$path, "/api/v2/projects/pull")
+  expect_identical(calls[[1]]$token, "1|fw_pull")
+  expect_identical(calls[[1]]$url, "https://cloud.example.edu")
+
+  record <- jsonlite::read_json(file.path(location, ".framework", "spec.json"))
+  expect_identical(record$language, "r")
+  expect_identical(record$type, "project")
+  expect_identical(record$source$blueprint$key, "study")
+  env <- readLines(file.path(location, ".env"))
+  expect_true("FW_PROJECT_TOKEN=1|fw_pull" %in% env)
+  expect_true("FW_CLOUD_URL=https://cloud.example.edu" %in% env)
+
+  # new(key) takes the same path
+  location2 <- file.path(root, "study2")
+  result2 <- suppressMessages(new(key = "1|fw_pull", location = location2, browse = FALSE,
+                                  url = "https://cloud.example.edu"))
+  expect_true(result2$success)
+  expect_error(new("other", key = "1|fw_pull"), "come from the cloud project")
+
+  # A Python project points elsewhere and creates nothing
+  envelope$layers[[2]]$layer$language <- "python"
+  location3 <- file.path(root, "py")
+  expect_error(suppressMessages(setup("1|fw_pull", location = location3, browse = FALSE,
+                                      url = "https://cloud.example.edu")), "Python project")
+  expect_false(dir.exists(location3))
+})
+
+test_that("registering a new project tells the cloud it is an R project", {
+  sent <- NULL
+  testthat::local_mocked_bindings(
+    .fw_cloud_url = function(url = NULL, scope = "user") "https://cloud.example.edu",
+    .fw_cloud_token = function(url = NULL) "user-token",
+    .fw_api = function(path, token, method = "GET", body = NULL, url = NULL) {
+      sent <<- list(path = path, method = method, body = body)
+      list(project = list(slug = "study"), pull_token = "1|fw_new")
+    },
+    .fw_write_project_token = function(project_dir, token, url) invisible(TRUE)
+  )
+  suppressMessages(.fw_cloud_register_project(tempdir(), "Study", "project"))
+  expect_identical(sent$path, "/api/v1/projects")
+  expect_identical(sent$method, "POST")
+  expect_identical(sent$body$language, "r")
+})

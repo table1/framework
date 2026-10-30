@@ -253,6 +253,13 @@ new_course <- function(name = NULL, location = NULL, browse = interactive(), ...
 #' type as a parameter.
 #'
 #' @inheritParams new_project
+#' @param key A Framework Cloud project token. When given, the project's
+#'   definition is fetched from the cloud (as with `setup("fw_...")`) and
+#'   `name` and `type` come from it. The token is saved in the new project's
+#'   `.env` for [publish()] and the ledger.
+#' @param url With `key`: the Framework Cloud server that issued the token.
+#'   Defaults to `FW_CLOUD_URL`, then the server you last logged in to with
+#'   [cloud_login()], then <https://framework.pub>.
 #'
 #' @return Invisibly returns the result from `project_create()`
 #'
@@ -266,11 +273,23 @@ new_course <- function(name = NULL, location = NULL, browse = interactive(), ...
 #' new("study", "~/projects/study", type = "project_sensitive")
 #' new("slides", "~/projects/slides", type = "presentation")
 #' new("course-materials", "~/projects/course", type = "course")
+#'
+#' # A project defined on Framework Cloud
+#' new(key = "1|fw_abc123...", location = "~/projects/study")
 #' }
 #' }
 #'
 #' @export
-new <- function(name = NULL, location = NULL, type = NULL, browse = interactive(), ...) {
+new <- function(name = NULL, location = NULL, type = NULL, browse = interactive(),
+                key = NULL, url = NULL, ...) {
+  if (!is.null(key)) {
+    checkmate::assert_string(key, min.chars = 1)
+    checkmate::assert_string(url, min.chars = 1, null.ok = TRUE)
+    if (!is.null(name) || !is.null(type)) {
+      stop("With `key`, the name and type come from the cloud project; leave `name` and `type` out.", call. = FALSE)
+    }
+    return(.cloud_setup(token = key, location = location, browse = browse, url = url))
+  }
   if (is.null(type)) {
     # Bare (no blueprint) is the default; the rest are opinionated offerings
     valid_types <- c("bare", "project", "project_sensitive", "course", "presentation")

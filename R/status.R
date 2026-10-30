@@ -143,7 +143,8 @@ status <- function() {
   }
 
   # Git hooks
-  if (git_available && file.exists(".git/hooks/pre-commit")) {
+  hook_path <- if (git_available) .hook_path() else NULL
+  if (!is.null(hook_path) && file.exists(hook_path)) {
     message("\033[1;33m")
     message("Git Hooks:")
     message("\033[0m")

@@ -21,7 +21,9 @@ The Python package and the \code{fw} command-line tool keep their settings in
 \code{\link[=fw_config_dir]{fw_config_dir()}}. \code{config_sync()} brings R in line with them: files that
 are missing from R's folder, or newer in theirs, are copied into R's
 folder. This covers user settings, the saved Framework Cloud server, and
-token files. R only reads their folder and never writes to it.
+token files. The cloud settings mirror and its sync state stay separate,
+because each tool keeps its own. R only reads their folder and never
+writes to it.
 }
 \details{
 Logins stored in the system keyring are already shared and need no sync.

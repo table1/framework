@@ -40,7 +40,9 @@ fw_config_dir <- function() {
 #' [fw_config_dir()]. `config_sync()` brings R in line with them: files that
 #' are missing from R's folder, or newer in theirs, are copied into R's
 #' folder. This covers user settings, the saved Framework Cloud server, and
-#' token files. R only reads their folder and never writes to it.
+#' token files. The cloud settings mirror and its sync state stay separate,
+#' because each tool keeps its own. R only reads their folder and never
+#' writes to it.
 #'
 #' Logins stored in the system keyring are already shared and need no sync.
 #'
@@ -77,6 +79,9 @@ config_sync <- function(from = NULL, dry_run = FALSE) {
 
   files <- list.files(from, all.files = TRUE, no.. = TRUE, recursive = TRUE)
   files <- files[!startsWith(basename(files), ".")]
+  # Each tool keeps its own cloud settings mirror and sync state (the hashes
+  # differ between languages), so those never cross over
+  files <- setdiff(files, basename(unlist(.fw_sync_paths())))
   newer <- vapply(files, function(f) {
     dest <- file.path(to, f)
     !file.exists(dest) || file.mtime(file.path(from, f)) > file.mtime(dest)

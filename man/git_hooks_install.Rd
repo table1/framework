@@ -20,7 +20,12 @@ Invisible TRUE on success, FALSE on failure
 Creates a pre-commit hook that runs Framework checks based on settings.yml settings.
 }
 \details{
-Creates or updates \code{.git/hooks/pre-commit} to run enabled Framework hooks:
+Installs Framework's pre-commit script where git looks for it (worktrees
+and \code{core.hooksPath} included). The script is shared with the Python
+package and \code{fw}: it finds an R or Python runtime and runs the hooks
+enabled in settings.yml, so enabling or disabling a hook later needs no
+reinstall. A pre-commit hook Framework wrote earlier is replaced; any other
+hook is kept unless \code{force = TRUE}. The enabled hooks:
 \itemize{
 \item \strong{ai_sync}: Sync AI assistant context files before commit
 \item \strong{data_security}: Run security audit to catch data leaks

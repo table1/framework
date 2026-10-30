@@ -687,6 +687,15 @@ configure_directories <- function(directory = NULL, path = NULL, interactive = T
     } else {
       checkmate::assert_string(defaults$env, min.chars = 0)
     }
+    # Global settings sync to the cloud and seed every new project's .env
+    env <- if (is.list(defaults$env)) defaults$env else list(raw = defaults$env)
+    secrets <- .fw_secret_env_values(env$raw, env$variables)
+    if (length(secrets) > 0) {
+      stop(sprintf(
+        "defaults.env: secret-looking variables must be empty in global settings (%s). Set the values in each project's .env.",
+        paste(secrets, collapse = ", ")
+      ))
+    }
   }
 
   if (!is.null(defaults$connections)) {

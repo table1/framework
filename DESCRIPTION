@@ -3,15 +3,15 @@ Type: Package
 Title: Structured Data Science Project Scaffolding
 Version: 1.9.0.9000
 Authors@R:
-    person("Erik", "Westlund", , "erik@table1.org", role = c("aut", "cre", "cph"))
-Maintainer: Erik Westlund <erik@table1.org>
+    person("Erik", "Westlund", , "erik@framework.pub", role = c("aut", "cre", "cph"))
+Maintainer: Erik Westlund <erik@framework.pub>
 Description: Project scaffolding and workflow tools for reproducible data science.
     Manages packages, tracks data integrity, handles database connections,
     generates notebooks, and publishes to S3-compatible storage.
     More information at <https://framework.table1.org>.
 License: MIT + file LICENSE
-URL: https://framework.table1.org, https://github.com/table1/framework
-BugReports: https://github.com/table1/framework/issues
+URL: https://framework.table1.org, https://github.com/frameworktools/framework
+BugReports: https://github.com/frameworktools/framework/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("rd", "namespace", "collate"))
 Imports:
@@ -45,6 +45,7 @@ Suggests:
     httr2,
     keyring,
     jsonvalidate,
+    askpass,
     knitr,
     languageserver,
     odbc,

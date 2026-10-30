@@ -198,3 +198,27 @@ test_that("spec_check() rejects values for secret-looking env names", {
   expect_match(problems, "env.DB_PASSWORD", all = FALSE)
   expect_false(any(grepl("API_KEY", problems)))
 })
+
+test_that(".fw_secret_env_values finds secret-looking variables with values", {
+  raw <- paste(
+    "# comment", "POSTGRES_PASSWORD=", "POSTGRES_HOST=db",
+    "export API_KEY=\"abc\" # note", "DB_TOKEN= # empty", "S3_ACCESS_KEY=''",
+    sep = "\n"
+  )
+  expect_equal(
+    .fw_secret_env_values(raw, list(GH_TOKEN = "", S3_SECRET = "z", HOST = "h")),
+    c("S3_SECRET", "API_KEY")
+  )
+})
+
+test_that("global settings refuse secret values in defaults.env", {
+  expect_error(
+    .validate_defaults(list(env = list(raw = "POSTGRES_PASSWORD=hunter2"))),
+    "POSTGRES_PASSWORD"
+  )
+  expect_error(
+    .validate_defaults(list(env = list(variables = list(API_TOKEN = "x")))),
+    "API_TOKEN"
+  )
+  expect_silent(.validate_defaults(list(env = list(raw = "POSTGRES_PASSWORD=\nPOSTGRES_HOST=db"))))
+})

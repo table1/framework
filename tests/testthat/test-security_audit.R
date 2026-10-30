@@ -208,6 +208,41 @@ test_that("git_security_audit detects git-tracked private data", {
 })
 
 
+test_that("git_security_audit flags tracked data under private-named folders", {
+  test_dir <- tempfile()
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(test_dir, recursive = TRUE)
+  })
+  setwd(test_dir)
+
+  # inputs/private is not a configured directory here
+  yaml::write_yaml(list(default = list(
+    project_type = "project_sensitive",
+    directories = list(inputs_raw = "inputs/raw", inputs_raw_public = "inputs/raw_public")
+  )), "settings.yml")
+  dir.create("inputs/private", recursive = TRUE)
+  dir.create("inputs/raw_public", recursive = TRUE)
+  write.csv(data.frame(id = 1:3), "inputs/private/ids.csv", row.names = FALSE)
+  write.csv(data.frame(x = 1), "inputs/raw_public/ok.csv", row.names = FALSE)
+  writeLines("inputs/private/", ".gitignore")
+
+  system2("git", c("init"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("add", "-f", "inputs/private/ids.csv", "inputs/raw_public/ok.csv"),
+          stdout = FALSE, stderr = FALSE)
+
+  audit <- git_security_audit(check_git_history = FALSE, verbose = FALSE)
+
+  expect_equal(audit$findings$private_data_exposure$file, "inputs/private/ids.csv")
+  expect_equal(
+    audit$summary$status[audit$summary$check == "private_data_exposure"],
+    "fail"
+  )
+})
+
+
 test_that("git_security_audit skips git checks when git not available", {
   test_dir <- tempfile()
   dir.create(test_dir)

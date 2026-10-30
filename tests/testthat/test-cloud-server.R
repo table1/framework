@@ -210,6 +210,8 @@ test_that("R keeps its own config folder and config_sync() only pulls", {
   writeLines("author: {name: Old}", file.path(r_dir, "settings.yml"))
   writeLines("author: {name: Ada}", file.path(shared, "settings.yml"))
   Sys.setFileTime(file.path(r_dir, "settings.yml"), Sys.time() - 3600)
+  writeLines("revision: 9", file.path(shared, "sync-state.yml"))
+  writeLines("defaults: {}", file.path(shared, "cloud-settings.yml"))
   before <- list.files(shared, all.files = TRUE, no.. = TRUE)
 
   expect_message(planned <- config_sync(dry_run = TRUE), "Would copy")
@@ -220,6 +222,8 @@ test_that("R keeps its own config folder and config_sync() only pulls", {
   expect_identical(readLines(file.path(r_dir, "settings.yml")), "author: {name: Ada}")
   expect_identical(readLines(file.path(r_dir, "cloud-token-localhost_8080")), "fw_secret")
   expect_false(file.exists(file.path(r_dir, ".framework-home")))
+  expect_false(file.exists(file.path(r_dir, "sync-state.yml")))
+  expect_false(file.exists(file.path(r_dir, "cloud-settings.yml")))
   expect_identical(list.files(shared, all.files = TRUE, no.. = TRUE), before)   # never written
 
   expect_message(config_sync(), "already in line")

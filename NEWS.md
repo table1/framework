@@ -1,5 +1,32 @@
 # framework (development version)
 
+* `bootstrap()` prepares a cloned project: it makes sure `.gitignore`
+  ignores `.env`, creates `.env` from `.env.example` and lists empty
+  variables (or asks for them when interactive), creates the project folders,
+  creates or upgrades `framework.db`, restores packages (renv.lock or
+  settings.yml), and installs the enabled git hooks. It never contacts the
+  cloud. From a shell: `Rscript -e 'framework::bootstrap(interactive = FALSE)'`
+* The pre-commit hook is now a short POSIX `sh` script shared with the
+  Python package and `fw` (`inst/hooks/pre-commit`). It finds an R or Python
+  runtime and runs the checks enabled in settings.yml, so enabling or
+  disabling a hook no longer needs a reinstall. `git_hooks_install()` writes
+  it where git looks (worktrees and `core.hooksPath` included), replaces
+  hooks Framework wrote earlier without `force`, and keeps any other hook
+  unless `force = TRUE`
+* `setup("fw_...")` and the new `new(key = ...)` create cloud projects from
+  the project's layers (pull v2), resolved with `spec_resolve()`, so cloud
+  projects get the same `.framework/spec.json` record as local ones. A
+  Python or Stata cloud project stops with a pointer to the right tool
+* Registering a new project with Framework Cloud now sends its language (`r`)
+* `git_security_audit()` now fails `private_data_exposure` for any tracked
+  data file under a folder whose name contains private, confidential, or
+  sensitive, even when that folder is not a configured directory (for
+  example `inputs/private` added with `git add -f`). Configured folders now
+  match on whole path segments, so `inputs/raw` no longer covers
+  `inputs/raw_public`. The orphan scan skips `node_modules`
+* Global settings refuse values for secret-looking variables in
+  `defaults.env` (names containing PASSWORD, SECRET, TOKEN, ACCESS_KEY,
+  API_KEY, PRIVATE_KEY, or CREDENTIAL), as specs already do
 * Project specs: `spec_resolve()` merges spec layers over the package
   defaults, `spec_check()` reports problems, `project_create()` accepts a
   resolved spec, and `project_create_from_layers()` creates a project from a
@@ -53,7 +80,7 @@
   `.env` decides, and creation asks git (`git check-ignore`) before the
   first commit and skips the commit if `.env` is still not ignored
 * `spec_check()` rejects values for secret-looking environment variables
-  (names containing PASSWORD, SECRET, TOKEN, API_KEY, PRIVATE_KEY, or
+  (names containing PASSWORD, SECRET, TOKEN, ACCESS_KEY, API_KEY, PRIVATE_KEY, or
   CREDENTIAL). Specs pass through the cloud and into git, so those values
   belong in `.env`
 * Fixed: `scaffold()` never set the random seed for new projects, which

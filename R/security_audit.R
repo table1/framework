@@ -159,7 +159,7 @@ git_security_audit <- function(config_file = NULL,
 
   # Check 2: Private data exposure (git tracking)
   if (verbose) message("Checking for exposed private data...")
-  exposure_findings <- .check_private_data_exposure(data_dirs, git_available, verbose)
+  exposure_findings <- .check_private_data_exposure(data_dirs, git_available, verbose, extensions)
   findings$private_data_exposure <- exposure_findings$issues
   if (nrow(exposure_findings$issues) > 0) {
     recommendations <- c(recommendations, exposure_findings$recommendations)
@@ -448,7 +448,7 @@ git_security_audit <- function(config_file = NULL,
 
 #' Check if private data is tracked by git
 #' @keywords internal
-.check_private_data_exposure <- function(data_dirs, git_available, verbose) {
+.check_private_data_exposure <- function(data_dirs, git_available, verbose, extensions = character()) {
   issues <- data.frame(
     file = character(),
     directory = character(),
@@ -483,12 +483,33 @@ git_security_audit <- function(config_file = NULL,
     }
 
     # Check if any tracked files are in this private directory
-    exposed_files <- tracked_files[startsWith(tracked_files, dir_path)]
+    dir_prefix <- paste0(sub("/+$", "", sub("^\\./", "", dir_path)), "/")
+    exposed_files <- tracked_files[startsWith(tracked_files, dir_prefix)]
 
     for (file in exposed_files) {
       issues <- rbind(issues, data.frame(
         file = file,
         directory = dir_name,
+        git_status = "tracked",
+        stringsAsFactors = FALSE
+      ))
+    }
+  }
+
+  # Data files under any folder named like private, confidential, or sensitive
+  # count too, even when that folder is not a configured directory (for
+  # example inputs/private in a sensitive project, added with git add -f)
+  if (length(extensions) > 0) {
+    ext_pattern <- paste0("\\.(", paste(extensions, collapse = "|"), ")$")
+    folders <- dirname(tracked_files)
+    named_private <- grepl("(^|/)[^/]*(private|confidential|sensitive)[^/]*(/|$)",
+                           folders, ignore.case = TRUE) &
+      grepl(ext_pattern, tracked_files, ignore.case = TRUE) &
+      !tracked_files %in% issues$file
+    for (file in tracked_files[named_private]) {
+      issues <- rbind(issues, data.frame(
+        file = file,
+        directory = dirname(file),
         git_status = "tracked",
         stringsAsFactors = FALSE
       ))
@@ -662,7 +683,7 @@ git_security_audit <- function(config_file = NULL,
   # Directories to exclude from scan
   exclude_dirs <- c(
     ".git", ".Rproj.user", "renv", "packrat",
-    ".framework_cache", ".quarto", "_cache", "_files"
+    ".framework_cache", ".quarto", "_cache", "_files", "node_modules"
   )
 
   # Framework internal files to exclude (these are managed by Framework)

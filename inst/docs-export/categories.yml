@@ -104,6 +104,7 @@ Project Management:
     - new_project_sensitive
     - new_presentation
     - new_course
+    - bootstrap
   functions:
     - new
     - new_project
@@ -114,6 +115,7 @@ Project Management:
     - project_info
     - status
     - config_sync
+    - bootstrap
 
 Publishing:
   description: Publishing outputs and reports

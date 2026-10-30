@@ -4,7 +4,15 @@
 \alias{new}
 \title{Create a New Project (Master Wrapper)}
 \usage{
-new(name = NULL, location = NULL, type = NULL, browse = interactive(), ...)
+new(
+  name = NULL,
+  location = NULL,
+  type = NULL,
+  browse = interactive(),
+  key = NULL,
+  url = NULL,
+  ...
+)
 }
 \arguments{
 \item{name}{Project name. If NULL (default), prompts interactively.}
@@ -17,6 +25,15 @@ prompts interactively.}
 
 \item{browse}{Whether to open the project folder after creation (default: TRUE in
 interactive sessions)}
+
+\item{key}{A Framework Cloud project token. When given, the project's
+definition is fetched from the cloud (as with \code{setup("fw_...")}) and
+\code{name} and \code{type} come from it. The token is saved in the new project's
+\code{.env} for \code{\link[=publish]{publish()}} and the ledger.}
+
+\item{url}{With \code{key}: the Framework Cloud server that issued the token.
+Defaults to \code{FW_CLOUD_URL}, then the server you last logged in to with
+\code{\link[=cloud_login]{cloud_login()}}, then \url{https://framework.pub}.}
 
 \item{...}{Additional arguments passed to `project_}
 }
@@ -35,6 +52,9 @@ new("analysis", "~/projects/analysis")
 new("study", "~/projects/study", type = "project_sensitive")
 new("slides", "~/projects/slides", type = "presentation")
 new("course-materials", "~/projects/course", type = "course")
+
+# A project defined on Framework Cloud
+new(key = "1|fw_abc123...", location = "~/projects/study")
 }
 }
 

@@ -4,7 +4,12 @@
 \alias{.check_private_data_exposure}
 \title{Check if private data is tracked by git}
 \usage{
-.check_private_data_exposure(data_dirs, git_available, verbose)
+.check_private_data_exposure(
+  data_dirs,
+  git_available,
+  verbose,
+  extensions = character()
+)
 }
 \description{
 Check if private data is tracked by git

@@ -266,7 +266,12 @@ git_log <- function(n = 10, oneline = TRUE) {
 #' @return Invisible TRUE on success, FALSE on failure
 #'
 #' @details
-#' Creates or updates `.git/hooks/pre-commit` to run enabled Framework hooks:
+#' Installs Framework's pre-commit script where git looks for it (worktrees
+#' and `core.hooksPath` included). The script is shared with the Python
+#' package and `fw`: it finds an R or Python runtime and runs the hooks
+#' enabled in settings.yml, so enabling or disabling a hook later needs no
+#' reinstall. A pre-commit hook Framework wrote earlier is replaced; any other
+#' hook is kept unless `force = TRUE`. The enabled hooks:
 #' \itemize{
 #'   \item **ai_sync**: Sync AI assistant context files before commit
 #'   \item **data_security**: Run security audit to catch data leaks
@@ -337,30 +342,35 @@ git_hooks_install <- function(config_file = NULL,
     return(invisible(FALSE))
   }
 
-  # Create .git/hooks directory if needed
-  hooks_dir <- ".git/hooks"
-  if (!dir.exists(hooks_dir)) {
-    dir.create(hooks_dir, recursive = TRUE)
-  }
-
-  hook_path <- file.path(hooks_dir, "pre-commit")
-
-  # Check if hook already exists
-  if (file.exists(hook_path) && !force) {
+  hook_path <- .hook_path()
+  if (is.null(hook_path)) {
     if (verbose) {
-      message("\u2717 Pre-commit hook already exists")
-      message("  Use force=TRUE to overwrite or edit .git/hooks/pre-commit manually")
+      message("\u2717 Not a git repository")
+    }
+    return(invisible(FALSE))
+  }
+  dir.create(dirname(hook_path), recursive = TRUE, showWarnings = FALSE)
+
+  # A hook Framework wrote earlier (R, Python, or fw) is replaced; any other
+  # hook is kept unless force = TRUE
+  if (file.exists(hook_path) && !force && !.is_framework_hook(hook_path)) {
+    if (verbose) {
+      message("\u2717 A pre-commit hook that Framework did not write already exists")
+      message("  Use force=TRUE to replace it, or edit ", hook_path, " yourself")
     }
     return(invisible(FALSE))
   }
 
-  # Generate hook script
-  hook_script <- .generate_hook_script(ai_sync_enabled, data_security_enabled, check_sensitive_dirs_enabled)
+  # The shared script only finds a runtime; the checks run in .hook_run()
+  hook_script <- readLines(system.file("hooks", "pre-commit", package = "framework"), warn = FALSE)
 
   # Write hook
   tryCatch({
-    writeLines(hook_script, hook_path)
-    Sys.chmod(hook_path, mode = "0755")  # Make executable
+    # LF line endings on every platform: the script runs under sh
+    con <- file(hook_path, open = "wb")
+    writeLines(hook_script, con, sep = "\n")
+    close(con)
+    Sys.chmod(hook_path, mode = "0755")
 
     if (verbose) {
       message("\u2713 Installed pre-commit hook")
@@ -395,9 +405,9 @@ git_hooks_install <- function(config_file = NULL,
 #'
 #' @export
 git_hooks_uninstall <- function(verbose = TRUE) {
-  hook_path <- ".git/hooks/pre-commit"
+  hook_path <- .hook_path()
 
-  if (!file.exists(hook_path)) {
+  if (is.null(hook_path) || !file.exists(hook_path)) {
     if (verbose) {
       message("\u2139 No pre-commit hook found")
     }
@@ -405,13 +415,9 @@ git_hooks_uninstall <- function(verbose = TRUE) {
   }
 
   # Check if it's a Framework-managed hook
-  hook_content <- readLines(hook_path, warn = FALSE)
-  is_framework_hook <- any(grepl("Framework Git Hooks", hook_content))
-
-  if (!is_framework_hook) {
+  if (!.is_framework_hook(hook_path)) {
     if (verbose) {
-      message("\u26a0 Pre-commit hook exists but not managed by Framework")
-      message("  Delete .git/hooks/pre-commit manually if needed")
+      message("\u26a0 The pre-commit hook was not written by Framework, so it was kept")
     }
     return(invisible(FALSE))
   }
@@ -474,7 +480,7 @@ git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   }
 
   # Reinstall hooks
-  git_hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
+  git_hooks_install(config_file = config_file, verbose = verbose)
 }
 
 
@@ -524,7 +530,7 @@ git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
     git_hooks_uninstall(verbose = verbose)
   } else {
-    git_hooks_install(config_file = config_file, force = TRUE, verbose = verbose)
+    git_hooks_install(config_file = config_file, verbose = verbose)
   }
 }
 
@@ -600,7 +606,8 @@ git_hooks_list <- function(config_file = NULL) {
 #' Check if current directory is a git repository
 #' @keywords internal
 .is_git_repo <- function() {
-  dir.exists(".git")
+  # .git is a file in worktrees and submodules
+  file.exists(".git")
 }
 
 #' Check if git is available on the system
@@ -632,95 +639,175 @@ git_hooks_list <- function(config_file = NULL) {
 }
 
 
-#' Generate pre-commit hook script
+# Where git looks for the pre-commit hook (worktrees and core.hooksPath
+# included), or NULL outside a repository
 #' @keywords internal
-.generate_hook_script <- function(ai_sync_enabled, data_security_enabled, check_sensitive_dirs_enabled) {
-  c(
-    "#!/usr/bin/env bash",
-    "# Framework Git Hooks",
-    "# Managed by Framework - do not edit manually",
-    "# Use git_hooks_*() functions to configure",
-    "",
-    "set -e",
-    "",
-    "# Get project root",
-    "PROJECT_ROOT=\"$(git rev-parse --show-toplevel)\"",
-    "cd \"$PROJECT_ROOT\"",
-    "",
-    if (check_sensitive_dirs_enabled) c(
-      "# Check for unignored sensitive directories",
-      "SENSITIVE_PATTERNS=('*private*' '*confidential*' '*sensitive*' '*cache*' '*scratch*')",
-      "UNIGNORED_DIRS=()",
-      "",
-      "# Helper: check if a path or any ancestor is gitignored",
-      "is_path_ignored() {",
-      "  local p=\"$1\"",
-      "  while [ \"$p\" != \".\" ] && [ \"$p\" != \"/\" ]; do",
-      "    if git check-ignore -q --no-index \"$p\" 2>/dev/null; then",
-      "      return 0",
-      "    fi",
-      "    p=\"$(dirname \"$p\")\"",
-      "  done",
-      "  return 1",
-      "}",
-      "",
-      "for pattern in \"${SENSITIVE_PATTERNS[@]}\"; do",
-      "  while IFS= read -r -d '' dir; do",
-      "    # Skip .git internals",
-      "    [[ \"$dir\" == \"./.git\"* ]] && continue",
-      "    ",
-      "    # Check if directory or any ancestor is gitignored",
-      "    if ! is_path_ignored \"$dir\"; then",
-      "      UNIGNORED_DIRS+=(\"$dir\")",
-      "    fi",
-      "  done < <(find . -type d -iname \"$pattern\" -print0 2>/dev/null)",
-      "done",
-      "",
-      "if [ ${#UNIGNORED_DIRS[@]} -gt 0 ]; then",
-      "  echo \"\u26a0 Warning: Found sensitive directories that are NOT gitignored:\"",
-      "  for dir in \"${UNIGNORED_DIRS[@]}\"; do",
-      "    echo \"  - $dir\"",
-      "  done",
-      "  echo \"\"",
-      "  echo \"These directories may contain sensitive data and should be added to .gitignore.\"",
-      "  echo \"Pattern-based .gitignore entries like '**/private/**' will automatically catch them.\"",
-      "  echo \"\"",
-      "  # Prompt user if running interactively, otherwise just warn",
-      "  if [ -t 0 ] || exec < /dev/tty 2>/dev/null; then",
-      "    read -p \"Continue with commit anyway? (y/N) \" -n 1 -r",
-      "    echo",
-      "    if [[ ! $REPLY =~ ^[Yy]$ ]]; then",
-      "      echo \"Commit aborted. Add directories to .gitignore and try again.\"",
-      "      exit 1",
-      "    fi",
-      "  else",
-      "    echo \"(Non-interactive mode: continuing with warning)\"",
-      "  fi",
-      "fi",
-      ""
-    ) else NULL,
-    if (ai_sync_enabled) c(
-      "# AI context sync",
-      "if ! Rscript -e \"library(framework); ai_sync_context(verbose=FALSE)\"; then",
-      "  echo \"\u2717 AI context sync failed\"",
-      "  exit 1",
-      "fi",
-      "",
-      "# Add any files modified by AI sync",
-      "git add CLAUDE.md AGENTS.md .github/copilot-instructions.md 2>/dev/null || true",
-      ""
-    ) else NULL,
-    if (data_security_enabled) c(
-      "# Data security check",
-      "if ! Rscript -e \"library(framework); result <- git_security_audit(verbose=FALSE); if (any(result\\$summary\\$status == 'fail')) quit(status=1)\"; then",
-      "  echo \"\u2717 Data security check failed\"",
-      "  echo \"Run 'framework security:audit' for details\"",
-      "  exit 1",
-      "fi",
-      ""
-    ) else NULL,
-    "exit 0"
-  )
+.hook_path <- function(root = ".") {
+  if (!.git_available()) {
+    return(NULL)
+  }
+  path <- suppressWarnings(system2(
+    "git", c("-C", shQuote(root), "rev-parse", "--git-path", "hooks/pre-commit"),
+    stdout = TRUE, stderr = FALSE
+  ))
+  if (!is.null(attr(path, "status")) || length(path) == 0 || !nzchar(path[1])) {
+    return(NULL)
+  }
+  path <- path[1]
+  if (!grepl("^(/|[A-Za-z]:)", path)) {
+    path <- file.path(root, path)
+  }
+  path
+}
+
+# Markers of a hook Framework wrote: the shared script, and R 1.x's own
+#' @keywords internal
+.is_framework_hook <- function(path) {
+  head <- tryCatch(readLines(path, n = 10, warn = FALSE), error = function(e) character())
+  any(grepl("Framework pre-commit hook|Framework Git Hooks", head))
+}
+
+#' Run the checks for a git hook
+#'
+#' Called by the shared pre-commit script (`inst/hooks/pre-commit`) as
+#' `framework:::.hook_run("pre-commit")`, from the repository root. Runs the
+#' checks enabled under `git: hooks:` in the settings. A folder without a
+#' settings file passes, so the hook never blocks commits outside a Framework
+#' project.
+#'
+#' @param name The hook. Only "pre-commit" exists.
+#' @return The exit status for git: 0 to allow the commit, 1 to block it.
+#' @keywords internal
+.hook_run <- function(name = "pre-commit") {
+  if (!identical(name, "pre-commit")) {
+    message("Framework hook: unknown hook '", name, "'")
+    return(1L)
+  }
+  candidates <- c("settings.yml", "settings.yaml", "config.yml")
+  config_file <- candidates[file.exists(candidates)][1]
+  if (is.na(config_file)) {
+    return(0L)
+  }
+
+  setting <- function(key, alias = NULL) {
+    isTRUE(tryCatch(
+      .get_hook_setting(key, alias = alias, config_file = config_file, default = FALSE),
+      error = function(e) FALSE
+    ))
+  }
+
+  if (setting("git.hooks.check_sensitive_dirs", "git.hooks.warn_unignored_sensitive") &&
+      !.hook_check_sensitive_dirs()) {
+    return(1L)
+  }
+
+  if (setting("git.hooks.ai_sync")) {
+    ok <- tryCatch({
+      ai_sync_context(config_file = config_file, verbose = FALSE)
+      TRUE
+    }, error = function(e) {
+      message("\u2717 AI context sync failed: ", conditionMessage(e))
+      FALSE
+    })
+    if (!ok) {
+      return(1L)
+    }
+    files <- c("CLAUDE.md", "AGENTS.md", ".github/copilot-instructions.md")
+    files <- files[file.exists(files)]
+    if (length(files) > 0) {
+      system2("git", c("add", "--", shQuote(files)), stdout = FALSE, stderr = FALSE)
+    }
+  }
+
+  if (setting("git.hooks.data_security")) {
+    result <- tryCatch(
+      git_security_audit(config_file = config_file, verbose = FALSE),
+      error = function(e) {
+        message("\u2717 Data security check could not run: ", conditionMessage(e))
+        NULL
+      }
+    )
+    if (is.null(result) || any(result$summary$status == "fail")) {
+      if (!is.null(result)) {
+        failed <- result$summary[result$summary$status == "fail", , drop = FALSE]
+        for (i in seq_len(nrow(failed))) {
+          message(sprintf("  %s: %d issue(s)", failed$check[i], failed$count[i]))
+        }
+      }
+      message("\u2717 Data security check failed")
+      message("Run framework::git_security_audit() for details")
+      return(1L)
+    }
+  }
+
+  0L
+}
+
+# Folders named like private, confidential, sensitive, cache, or scratch
+# that git does not ignore (the folder or an ancestor)
+#' @keywords internal
+.hook_unignored_sensitive_dirs <- function(root = ".") {
+  dirs <- list.dirs(root, full.names = FALSE, recursive = TRUE)
+  dirs <- dirs[nzchar(dirs)]
+  dirs <- dirs[!grepl("(^|/)(\\.git|\\.venv|node_modules|renv)(/|$)", dirs)]
+  found <- dirs[grepl("private|confidential|sensitive|cache|scratch", basename(dirs), ignore.case = TRUE)]
+  if (length(found) == 0) {
+    return(character())
+  }
+
+  ancestors <- function(path) {
+    out <- path
+    while (dirname(path) != ".") {
+      path <- dirname(path)
+      out <- c(out, path)
+    }
+    out
+  }
+  candidates <- unique(unlist(lapply(found, ancestors)))
+  input <- tempfile("fw_check_ignore_")
+  on.exit(unlink(input), add = TRUE)
+  writeLines(candidates, input)
+  ignored <- suppressWarnings(system2(
+    "git", c("-C", shQuote(root), "check-ignore", "--no-index", "--stdin"),
+    stdin = input, stdout = TRUE, stderr = FALSE
+  ))
+  found[!vapply(found, function(f) any(ancestors(f) %in% ignored), logical(1))]
+}
+
+# Ask on the terminal, even inside a git hook. NA when there is no terminal.
+#' @keywords internal
+.hook_confirm <- function(question) {
+  device <- if (.Platform$OS.type == "windows") "CON" else "/dev/tty"
+  tryCatch({
+    con <- file(device, open = "r+")
+    on.exit(close(con), add = TRUE)
+    cat(question, file = con)
+    answer <- readLines(con, n = 1, warn = FALSE)
+    tolower(trimws(answer[1] %||% "")) %in% c("y", "yes")
+  }, error = function(e) NA, warning = function(w) NA)
+}
+
+#' @keywords internal
+.hook_check_sensitive_dirs <- function(root = ".") {
+  folders <- .hook_unignored_sensitive_dirs(root)
+  if (length(folders) == 0) {
+    return(TRUE)
+  }
+  message("\u26a0 Warning: Found sensitive directories that are NOT gitignored:")
+  for (folder in folders) message("  - ", folder)
+  message("")
+  message("These directories may contain sensitive data and should be added to .gitignore.")
+  message("Pattern-based .gitignore entries like '**/private/**' will automatically catch them.")
+  message("")
+  answer <- .hook_confirm("Continue with commit anyway? (y/N) ")
+  if (is.na(answer)) {
+    message("(Non-interactive mode: continuing with warning)")
+    return(TRUE)
+  }
+  if (!answer) {
+    message("Commit aborted. Add directories to .gitignore and try again.")
+  }
+  answer
 }
 
 
