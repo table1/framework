@@ -318,10 +318,10 @@ Framework includes comprehensive multi-database tests:
 make db-up
 
 # Run comprehensive tests (all 5 databases)
-./tests/docker/scripts/manual-test.R
+NOT_CRAN=true Rscript -e 'devtools::test(filter = "integration")'
 
 # Test driver helpers
-./tests/docker/scripts/test-driver-helpers.R
+# see tests/integration/README.md
 
 # Stop databases
 make db-down

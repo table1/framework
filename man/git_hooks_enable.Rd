@@ -7,7 +7,7 @@
 git_hooks_enable(hook_name, config_file = NULL, verbose = TRUE)
 }
 \arguments{
-\item{hook_name}{Name of hook: "ai_sync", "data_security", or "check_sensitive_dirs"}
+\item{hook_name}{Name of hook: "data_security" or "check_sensitive_dirs"}
 
 \item{config_file}{Path to configuration file (default: auto-discover settings.yml or settings.yml)}
 
@@ -22,7 +22,7 @@ Enables a specific hook in settings and reinstalls the pre-commit hook.
 \examples{
 \donttest{
 if (FALSE) {
-git_hooks_enable("ai_sync")
+git_hooks_enable("check_sensitive_dirs")
 git_hooks_enable("data_security")
 }
 }

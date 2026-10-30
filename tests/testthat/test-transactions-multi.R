@@ -160,11 +160,11 @@ test_that("Transactions work on PostgreSQL if available", {
 
   config <- list(
     driver = "postgres",
-    host = Sys.getenv("TEST_POSTGRES_HOST", "localhost"),
-    port = 5432,
+    host = fw_test_server("postgres")$host,
+    port = fw_test_server("postgres")$port,
     database = "framework_test",
     user = "framework",
-    password = "framework_test_pass"
+    password = fw_test_server("postgres")$password
   )
 
   conn <- tryCatch(.connect_postgres(config), error = function(e) NULL)

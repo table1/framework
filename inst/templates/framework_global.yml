@@ -80,7 +80,6 @@ defaults:
 
   # Git hooks preferences
   git_hooks:
-    ai_sync: false
     data_security: false
 
 # -----------------------------------------------------------------------------

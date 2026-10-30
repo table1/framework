@@ -1,4 +1,4 @@
-.PHONY: build install check clean test help db-up db-down db-test db-init-sqlserver
+.PHONY: build install check clean test help db-up db-down db-test
 
 # Default target
 help:
@@ -10,10 +10,8 @@ help:
 	@echo "  clean              - Clean build artifacts"
 	@echo "  docs               - Generate documentation"
 	@echo "  db-up              - Start all test databases (Docker)"
-	@echo "  db-down            - Stop all test databases"
-	@echo "  db-clean           - Stop databases and remove volumes"
-	@echo "  db-test            - Test all database connections"
-	@echo "  db-init-sqlserver  - Initialize SQL Server database"
+	@echo "  db-down            - Stop test databases and delete their data"
+	@echo "  db-test            - Run the integration tests"
 	@echo "  help               - Show this help"
 
 # Build package tarball
@@ -49,26 +47,14 @@ docs:
 release: clean docs test check
 	@echo "Package ready for release!"
 
-# Database management targets
+# Integration test servers (tests/integration/compose.yml)
+COMPOSE = docker compose -f tests/integration/compose.yml
+
 db-up:
-	@echo "Starting all test databases..."
-	docker-compose -f docker-compose.test.yml up -d
-	@echo "Waiting for databases to be healthy..."
-	@sleep 10
-	docker-compose -f docker-compose.test.yml ps
+	$(COMPOSE) up -d --wait
 
 db-down:
-	@echo "Stopping all test databases..."
-	docker-compose -f docker-compose.test.yml down
-
-db-clean:
-	@echo "Stopping databases and removing volumes..."
-	docker-compose -f docker-compose.test.yml down -v
+	$(COMPOSE) down -v
 
 db-test:
-	@echo "Testing database connections..."
-	./tests/docker/scripts/test-connections.R
-
-db-init-sqlserver:
-	@echo "Initializing SQL Server database..."
-	./tests/docker/scripts/init-sqlserver.sh
+	NOT_CRAN=true Rscript -e 'devtools::test(filter = "integration|multi")'

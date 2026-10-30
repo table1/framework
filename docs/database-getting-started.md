@@ -459,7 +459,7 @@ DBI::dbDisconnect(conn)
 ## Next Steps
 
 - **[Full API Reference](multi-database-support.md)** - Complete documentation of all functions
-- **[Testing Guide](../tests/docker/README.md)** - How to test with Docker databases
+- **[Testing Guide](../tests/integration/README.md)** - How to test with Docker databases
 - **Examples** - See `inst/templates/test-notebook.fr.qmd` for working examples
 
 ## Getting Help

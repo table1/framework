@@ -1,6 +1,80 @@
 # Database test helpers
 # Shared utilities for multi-database testing
 
+# The throwaway servers in tests/integration/compose.yml, shared with
+# framework-py and fw. FW_TEST_* variables override the compose defaults.
+# Every credential is a test-only value for a local container.
+fw_test_server <- function(name) {
+  env <- function(var, default) {
+    value <- Sys.getenv(var, "")
+    if (nzchar(value)) value else default
+  }
+  switch(name,
+    postgres = list(
+      driver = "postgres", host = env("FW_TEST_PG_HOST", "127.0.0.1"),
+      port = as.integer(env("FW_TEST_PG_PORT", "55432")),
+      database = "framework_test", user = "framework", password = "framework-test"
+    ),
+    mysql = list(
+      driver = "mysql", host = env("FW_TEST_MYSQL_HOST", "127.0.0.1"),
+      port = as.integer(env("FW_TEST_MYSQL_PORT", "53306")),
+      database = "framework_test", user = "framework", password = "framework-test"
+    ),
+    mariadb = list(
+      driver = "mariadb", host = env("FW_TEST_MARIADB_HOST", "127.0.0.1"),
+      port = as.integer(env("FW_TEST_MARIADB_PORT", "53307")),
+      database = "framework_test", user = "framework", password = "framework-test"
+    ),
+    sqlserver = list(
+      driver = "sqlserver", host = env("FW_TEST_MSSQL_HOST", "127.0.0.1"),
+      port = as.integer(env("FW_TEST_MSSQL_PORT", "51433")),
+      database = "framework_test", user = "sa", password = "Framework-test-1"
+    ),
+    s3 = list(
+      endpoint = env("FW_TEST_S3_ENDPOINT", "http://127.0.0.1:58333"),
+      access_key = env("FW_TEST_S3_ACCESS_KEY", "framework"),
+      secret_key = env("FW_TEST_S3_SECRET_KEY", "framework-test")
+    ),
+    stop("Unknown test server: ", name)
+  )
+}
+
+# Whether something is listening on host:port (no driver needed)
+fw_test_port_open <- function(host, port) {
+  con <- tryCatch(
+    suppressWarnings(socketConnection(host, port, open = "r+b", blocking = TRUE, timeout = 2)),
+    error = function(e) NULL
+  )
+  if (is.null(con)) return(FALSE)
+  close(con)
+  TRUE
+}
+
+# Skip unless the named compose server is reachable. Never runs on CRAN.
+skip_if_no_test_server <- function(name) {
+  testthat::skip_on_cran()
+  server <- fw_test_server(name)
+  if (name == "s3") {
+    hostport <- sub("^https?://", "", server$endpoint)
+    host <- sub(":.*$", "", hostport)
+    port <- as.integer(sub("^.*:", "", hostport))
+  } else {
+    host <- server$host
+    port <- server$port
+  }
+  if (!fw_test_port_open(host, port)) {
+    # CI sets FW_TEST_REQUIRE_SERVERS=1 so a broken setup fails instead of
+    # passing by skipping
+    fail_or_skip <- if (nzchar(Sys.getenv("FW_TEST_REQUIRE_SERVERS", ""))) testthat::fail else testthat::skip
+    fail_or_skip(sprintf(
+      "%s test server not running on %s:%d (docker compose -f tests/integration/compose.yml up -d --wait)",
+      name, host, port
+    ))
+    testthat::skip("test server not running")
+  }
+  invisible(server)
+}
+
 #' Skip test if database driver not installed
 skip_if_no_driver <- function(package_name, driver_name) {
   if (!requireNamespace(package_name, quietly = TRUE)) {
@@ -25,11 +99,11 @@ get_test_connections <- function() {
     connections$postgres <- list(
       name = "test_postgres",
       driver = "postgres",
-      host = Sys.getenv("TEST_POSTGRES_HOST", "localhost"),
-      port = 5432,
+      host = fw_test_server("postgres")$host,
+      port = fw_test_server("postgres")$port,
       database = "framework_test",
       user = "framework",
-      password = "framework_test_pass"
+      password = fw_test_server("postgres")$password
     )
   }
 
@@ -38,11 +112,11 @@ get_test_connections <- function() {
     connections$mysql <- list(
       name = "test_mysql",
       driver = "mysql",
-      host = Sys.getenv("TEST_MYSQL_HOST", "localhost"),
-      port = 3306,
+      host = fw_test_server("mysql")$host,
+      port = fw_test_server("mysql")$port,
       database = "framework_test",
       user = "framework",
-      password = "framework_test_pass"
+      password = fw_test_server("postgres")$password
     )
   }
 
@@ -51,11 +125,11 @@ get_test_connections <- function() {
     connections$mariadb <- list(
       name = "test_mariadb",
       driver = "mariadb",
-      host = Sys.getenv("TEST_MARIADB_HOST", "localhost"),
-      port = 3307,
+      host = fw_test_server("mariadb")$host,
+      port = fw_test_server("mariadb")$port,
       database = "framework_test",
       user = "framework",
-      password = "framework_test_pass"
+      password = fw_test_server("postgres")$password
     )
   }
 

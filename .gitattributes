@@ -1,0 +1,7 @@
+# Shared with framework-py, fw, and framework-cloud, which copy these files
+# and check them by SHA-256. Keep their bytes the same on every platform.
+inst/hooks/pre-commit -text
+inst/schema/*.json -text
+inst/templates/init.sql -text
+inst/conformance/** -text
+tests/integration/** -text

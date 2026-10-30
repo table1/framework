@@ -273,12 +273,13 @@ git_log <- function(n = 10, oneline = TRUE) {
 #' reinstall. A pre-commit hook Framework wrote earlier is replaced; any other
 #' hook is kept unless `force = TRUE`. The enabled hooks:
 #' \itemize{
-#'   \item **ai_sync**: Sync AI assistant context files before commit
 #'   \item **data_security**: Run security audit to catch data leaks
 #'   \item **check_sensitive_dirs**: Warn about unignored sensitive directories
 #' }
 #'
-#' Hook behavior is controlled by `git.hooks.*` settings in settings.yml.
+#' Hook behavior is controlled by `git.hooks.*` settings in settings.yml. The
+#' `ai_sync` hook was removed in 2.0: skills and AGENTS.md replace it, and an
+#' `ai_sync` setting left in settings.yml is ignored.
 #'
 #' @examples
 #' \donttest{
@@ -325,7 +326,6 @@ git_hooks_install <- function(config_file = NULL,
   }
 
   # Read hook configuration
-  ai_sync_enabled <- .get_hook_setting("git.hooks.ai_sync", config_file = config_file, default = FALSE)
   data_security_enabled <- .get_hook_setting("git.hooks.data_security", config_file = config_file, default = FALSE)
   check_sensitive_dirs_enabled <- .get_hook_setting(
     "git.hooks.check_sensitive_dirs",
@@ -334,10 +334,10 @@ git_hooks_install <- function(config_file = NULL,
     default = FALSE
   )
 
-  if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
+  if (!data_security_enabled && !check_sensitive_dirs_enabled) {
     if (verbose) {
       message("\u2139 No hooks enabled in settings.yml/config.yml")
-      message("  Enable with: config$git$hooks$ai_sync = TRUE")
+      message("  Enable one with: git_hooks_enable(\"data_security\")")
     }
     return(invisible(FALSE))
   }
@@ -374,9 +374,6 @@ git_hooks_install <- function(config_file = NULL,
 
     if (verbose) {
       message("\u2713 Installed pre-commit hook")
-      if (ai_sync_enabled) {
-        message("  \u2022 AI context sync enabled")
-      }
       if (data_security_enabled) {
         message("  \u2022 Data security check enabled")
       }
@@ -442,7 +439,7 @@ git_hooks_uninstall <- function(verbose = TRUE) {
 #'
 #' Enables a specific hook in settings and reinstalls the pre-commit hook.
 #'
-#' @param hook_name Name of hook: "ai_sync", "data_security", or "check_sensitive_dirs"
+#' @param hook_name Name of hook: "data_security" or "check_sensitive_dirs"
 #' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
@@ -451,14 +448,15 @@ git_hooks_uninstall <- function(verbose = TRUE) {
 #' @examples
 #' \donttest{
 #' if (FALSE) {
-#' git_hooks_enable("ai_sync")
+#' git_hooks_enable("check_sensitive_dirs")
 #' git_hooks_enable("data_security")
 #' }
 #' }
 #'
 #' @export
 git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
-  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs", "warn_unignored_sensitive")
+  .hook_assert_not_ai_sync(hook_name)
+  valid_hooks <- c("data_security", "check_sensitive_dirs", "warn_unignored_sensitive")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
@@ -488,7 +486,7 @@ git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #'
 #' Disables a specific hook in settings and reinstalls the pre-commit hook.
 #'
-#' @param hook_name Name of hook: "ai_sync", "data_security", or "check_sensitive_dirs"
+#' @param hook_name Name of hook: "data_security" or "check_sensitive_dirs"
 #' @param config_file Path to configuration file (default: auto-discover settings.yml or settings.yml)
 #' @param verbose Logical; if TRUE (default), show messages
 #'
@@ -496,7 +494,13 @@ git_hooks_enable <- function(hook_name, config_file = NULL, verbose = TRUE) {
 #'
 #' @export
 git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
-  valid_hooks <- c("ai_sync", "data_security", "check_sensitive_dirs", "warn_unignored_sensitive")
+  # Turning off the removed ai_sync hook just clears the old setting
+  if (identical(hook_name, "ai_sync")) {
+    if (is.null(config_file)) config_file <- .get_settings_file()
+    if (!is.null(config_file)) .update_hook_config("ai_sync", FALSE, config_file)
+    return(invisible(TRUE))
+  }
+  valid_hooks <- c("data_security", "check_sensitive_dirs", "warn_unignored_sensitive")
 
   if (!hook_name %in% valid_hooks) {
     stop("Invalid hook name. Must be one of: ", paste(valid_hooks, collapse = ", "))
@@ -518,7 +522,6 @@ git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
   }
 
   # Reinstall hooks (or uninstall if all disabled)
-  ai_sync_enabled <- .get_hook_setting("git.hooks.ai_sync", config_file = config_file, default = FALSE)
   data_security_enabled <- .get_hook_setting("git.hooks.data_security", config_file = config_file, default = FALSE)
   check_sensitive_dirs_enabled <- .get_hook_setting(
     "git.hooks.check_sensitive_dirs",
@@ -527,7 +530,7 @@ git_hooks_disable <- function(hook_name, config_file = NULL, verbose = TRUE) {
     default = FALSE
   )
 
-  if (!ai_sync_enabled && !data_security_enabled && !check_sensitive_dirs_enabled) {
+  if (!data_security_enabled && !check_sensitive_dirs_enabled) {
     git_hooks_uninstall(verbose = verbose)
   } else {
     git_hooks_install(config_file = config_file, verbose = verbose)
@@ -560,7 +563,6 @@ git_hooks_list <- function(config_file = NULL) {
     return(invisible(NULL))
   }
 
-  ai_sync <- .get_hook_setting("git.hooks.ai_sync", config_file = config_file, default = FALSE)
   data_security <- .get_hook_setting("git.hooks.data_security", config_file = config_file, default = FALSE)
   check_sensitive_dirs <- .get_hook_setting(
     "git.hooks.check_sensitive_dirs",
@@ -569,14 +571,14 @@ git_hooks_list <- function(config_file = NULL) {
     default = FALSE
   )
 
-  hook_installed <- file.exists(".git/hooks/pre-commit")
+  hook_path <- .hook_path()
+  hook_installed <- !is.null(hook_path) && file.exists(hook_path)
 
   df <- data.frame(
-    hook = c("ai_sync", "data_security", "check_sensitive_dirs"),
-    enabled = c(ai_sync, data_security, check_sensitive_dirs),
+    hook = c("data_security", "check_sensitive_dirs"),
+    enabled = c(isTRUE(data_security), isTRUE(check_sensitive_dirs)),
     description = c(
-      "Sync AI assistant context files",
-      "Check for secrets/credentials",
+      "Block commits that track private data or secrets",
       "Warn about unignored sensitive directories"
     ),
     stringsAsFactors = FALSE
@@ -592,8 +594,8 @@ git_hooks_list <- function(config_file = NULL) {
   }
 
   message("\nCommands:")
-  message("  git_hooks_enable(\"ai_sync\")")
-  message("  git_hooks_disable(\"ai_sync\")")
+  message("  git_hooks_enable(\"data_security\")")
+  message("  git_hooks_disable(\"data_security\")")
   message("  git_hooks_install()")
   message("  git_hooks_uninstall()")
 
@@ -660,6 +662,14 @@ git_hooks_list <- function(config_file = NULL) {
   path
 }
 
+#' @keywords internal
+.hook_assert_not_ai_sync <- function(hook_name) {
+  if (identical(hook_name, "ai_sync")) {
+    stop("The ai_sync hook was removed in framework 2.0. Skills and AGENTS.md ",
+         "replace it, so there is nothing to sync.", call. = FALSE)
+  }
+}
+
 # Markers of a hook Framework wrote: the shared script, and R 1.x's own
 #' @keywords internal
 .is_framework_hook <- function(path) {
@@ -699,24 +709,6 @@ git_hooks_list <- function(config_file = NULL) {
   if (setting("git.hooks.check_sensitive_dirs", "git.hooks.warn_unignored_sensitive") &&
       !.hook_check_sensitive_dirs()) {
     return(1L)
-  }
-
-  if (setting("git.hooks.ai_sync")) {
-    ok <- tryCatch({
-      ai_sync_context(config_file = config_file, verbose = FALSE)
-      TRUE
-    }, error = function(e) {
-      message("\u2717 AI context sync failed: ", conditionMessage(e))
-      FALSE
-    })
-    if (!ok) {
-      return(1L)
-    }
-    files <- c("CLAUDE.md", "AGENTS.md", ".github/copilot-instructions.md")
-    files <- files[file.exists(files)]
-    if (length(files) > 0) {
-      system2("git", c("add", "--", shQuote(files)), stdout = FALSE, stderr = FALSE)
-    }
   }
 
   if (setting("git.hooks.data_security")) {

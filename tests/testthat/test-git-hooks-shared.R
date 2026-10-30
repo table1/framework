@@ -73,3 +73,21 @@ test_that("check_sensitive_dirs warns and continues without a terminal", {
   expect_message(status <- .hook_run("pre-commit"), "Commit aborted")
   expect_identical(status, 1L)
 })
+
+test_that("the ai_sync hook is removed", {
+  local_git_project(hooks = list(ai_sync = TRUE))
+  # An old ai_sync: true alone installs nothing
+  expect_false(git_hooks_install(verbose = FALSE))
+  expect_false(file.exists(".git/hooks/pre-commit"))
+  expect_identical(.hook_run("pre-commit"), 0L)
+  expect_error(git_hooks_enable("ai_sync", verbose = FALSE), "removed in framework 2.0")
+  expect_true(git_hooks_disable("ai_sync", verbose = FALSE))
+  expect_false(yaml::read_yaml("settings.yml")$default$git$hooks$ai_sync)
+  expect_false("ai_sync" %in% suppressMessages(git_hooks_list())$hook)
+})
+
+test_that("ai_sync_context() is deprecated", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  expect_warning(try(ai_sync_context(verbose = FALSE), silent = TRUE), "deprecated")
+})

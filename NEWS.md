@@ -1,5 +1,15 @@
 # framework (development version)
 
+* SQL Server connections use the newest installed Microsoft ODBC driver
+  (Driver 18 or 17) unless `odbc_driver` is set, instead of assuming 17
+* Tests now run against real PostgreSQL, MySQL, MariaDB, SQL Server, and S3
+  servers from `tests/integration/compose.yml` (shared with framework-py and
+  fw) when they are running, and in CI on every push
+* The `ai_sync` git hook is removed. Projects keep one `AGENTS.md`, which
+  `CLAUDE.md` points to, plus skills, so there is nothing to sync.
+  `git_hooks_enable("ai_sync")` is an error, an `ai_sync: true` left in
+  settings.yml is ignored, and new settings no longer include it.
+  `ai_sync_context()` is deprecated
 * `bootstrap()` prepares a cloned project: it makes sure `.gitignore`
   ignores `.env`, creates `.env` from `.env.example` and lists empty
   variables (or asks for them when interactive), creates the project folders,

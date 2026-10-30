@@ -1,4 +1,7 @@
-#' Sync AI Assistant Context Files
+#' Sync AI Assistant Context Files (Deprecated)
+#'
+#' Deprecated in framework 2.0. Projects now keep one `AGENTS.md`, which
+#' `CLAUDE.md` points to, plus skills, so there is nothing to sync.
 #'
 #' Copies content from the canonical AI assistant file to all other AI files,
 #' adding a warning header to non-canonical files.
@@ -42,6 +45,11 @@
 ai_sync_context <- function(config_file = NULL,
                             force = FALSE,
                             verbose = TRUE) {
+
+  .Deprecated(msg = paste(
+    "ai_sync_context() is deprecated and will be removed in a future release.",
+    "Projects now share one AGENTS.md (CLAUDE.md points to it) and skills, so there is nothing to sync."
+  ))
 
   # Validate arguments
   checkmate::assert_string(config_file, min.chars = 1, null.ok = TRUE)

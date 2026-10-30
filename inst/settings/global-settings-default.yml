@@ -122,7 +122,6 @@ defaults:
     initialize: true                     # Initialize git repository
     gitignore_template: "gitignore-project"  # Default .gitignore template
     hooks:
-      ai_sync: false                     # Sync AI context on commit
       data_security: false               # Scan for secrets in commits
 
 # Stubs & Templates

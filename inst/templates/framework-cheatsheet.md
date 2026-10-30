@@ -128,7 +128,6 @@ settings_write(config, "file")   # Write settings back
 ai_generate_context()            # Generate AGENTS.md (canonical AI context)
 ai_regenerate_context()          # Refresh dynamic sections of AGENTS.md
 ai_skills_update()               # Refresh .claude/skills/ after package upgrade
-ai_sync_context()                # Sync AI context files (legacy multi-file setups)
 ```
 
 ---
@@ -279,7 +278,7 @@ capture_output(expr)             # Capture console output
 | `ai_generate_context()` | Generate AGENTS.md (canonical AI context) |
 | `ai_regenerate_context()` | Refresh dynamic sections of AGENTS.md |
 | `ai_skills_update()` | Refresh Framework skills in .claude/skills/ |
-| `ai_sync_context()` | Sync AI assistant context files (legacy) |
+| `ai_sync_context()` | Deprecated: sync legacy AI context files |
 | `bootstrap()` | Prepare a cloned project |
 | `cache()` | Store value in cache |
 | `cache_flush()` | Clear all cache |

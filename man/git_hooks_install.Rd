@@ -27,12 +27,13 @@ enabled in settings.yml, so enabling or disabling a hook later needs no
 reinstall. A pre-commit hook Framework wrote earlier is replaced; any other
 hook is kept unless \code{force = TRUE}. The enabled hooks:
 \itemize{
-\item \strong{ai_sync}: Sync AI assistant context files before commit
 \item \strong{data_security}: Run security audit to catch data leaks
 \item \strong{check_sensitive_dirs}: Warn about unignored sensitive directories
 }
 
-Hook behavior is controlled by \verb{git.hooks.*} settings in settings.yml.
+Hook behavior is controlled by \verb{git.hooks.*} settings in settings.yml. The
+\code{ai_sync} hook was removed in 2.0: skills and AGENTS.md replace it, and an
+\code{ai_sync} setting left in settings.yml is ignored.
 }
 \examples{
 \donttest{

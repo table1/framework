@@ -81,7 +81,6 @@ default:
   # --------------------------------------------------------------------------
   git:
     hooks:
-      ai_sync: false          # Sync AI assistant files before commit
       data_security: false    # Check for secrets/credentials before commit
 
   # --------------------------------------------------------------------------

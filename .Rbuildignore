@@ -50,7 +50,6 @@
 ^Thumbs\.db$
 
 # Test infrastructure (keep test files, exclude docker)
-^tests/docker$
 ^tests/testthat/fixtures$
 
 # Other
@@ -75,3 +74,5 @@ inst/\.RData$
 inst/templates/\.editorconfig$
 inst/templates/\.lintr\.default$
 ^docker$
+^\.gitattributes$
+^tests/integration$

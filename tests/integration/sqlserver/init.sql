@@ -1,8 +1,8 @@
 -- SQL Server test database initialization
 -- Creates test tables with various data types and patterns
 
--- Note: SQL Server initialization requires running via sqlcmd after startup
--- This script will be run by the helper script
+-- SQL Server has no init folder; the sqlserver-init service in compose.yml runs
+-- this with sqlcmd once the server is healthy, unless framework_test exists.
 
 CREATE DATABASE framework_test;
 GO

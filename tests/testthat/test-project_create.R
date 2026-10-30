@@ -112,7 +112,8 @@ test_that("project_create persists provided connections (db + storage) with defa
   expect_true(file.exists(connections_path))
   connections_yaml <- yaml::read_yaml(connections_path)
 
-  # New schema should persist untouched (databases + storage + defaults)
+  # The split file nests everything under connections: (as spec projects do)
+  connections_yaml <- connections_yaml$connections
   expect_equal(connections_yaml$default_database, "warehouse")
   expect_equal(connections_yaml$default_storage_bucket, "s3_bucket")
   expect_true("warehouse" %in% names(connections_yaml$databases))

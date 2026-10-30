@@ -839,13 +839,11 @@ bootstrap_project_init <- function(output_file = "init.R") {
 .configure_git_hooks <- function(target_dir = ".") {
   # Read hook configuration from environment variables (set by new-project.sh)
   hooks_enabled <- Sys.getenv("FW_HOOKS_ENABLED", "FALSE")
-  ai_sync_enabled <- Sys.getenv("FW_HOOK_AI_SYNC", "FALSE")
   data_security_enabled <- Sys.getenv("FW_HOOK_DATA_SECURITY", "FALSE")
   ai_canonical <- Sys.getenv("FW_AI_CANONICAL", "")
 
   # Convert string booleans to logical
   hooks_enabled <- toupper(hooks_enabled) == "TRUE"
-  ai_sync_enabled <- toupper(ai_sync_enabled) == "TRUE"
   data_security_enabled <- toupper(data_security_enabled) == "TRUE"
 
   if (!hooks_enabled) {
@@ -877,7 +875,6 @@ bootstrap_project_init <- function(output_file = "init.R") {
         if (is.null(git_yaml$git$hooks) || !is.list(git_yaml$git$hooks)) {
           git_yaml$git$hooks <- list()
         }
-        git_yaml$git$hooks$ai_sync <- ai_sync_enabled
         git_yaml$git$hooks$data_security <- data_security_enabled
         yaml::write_yaml(git_yaml, git_path)
         TRUE
@@ -914,11 +911,6 @@ bootstrap_project_init <- function(output_file = "init.R") {
       }
       if (!git_updated) {
         config_content <- gsub(
-          "^(\\s*ai_sync:\\s*)false(\\s*.*)?$",
-          sprintf("\\1%s\\2", tolower(ai_sync_enabled)),
-          config_content
-        )
-        config_content <- gsub(
           "^(\\s*data_security:\\s*)false(\\s*.*)?$",
           sprintf("\\1%s\\2", tolower(data_security_enabled)),
           config_content
@@ -953,7 +945,7 @@ bootstrap_project_init <- function(output_file = "init.R") {
   }
 
   # Install hooks if any are enabled
-  if (ai_sync_enabled || data_security_enabled) {
+  if (data_security_enabled) {
     tryCatch({
       # Change to target directory for hooks_install
       old_wd <- getwd()
@@ -968,7 +960,6 @@ bootstrap_project_init <- function(output_file = "init.R") {
 
       # Show message about what was installed
       hooks_msg <- character()
-      if (ai_sync_enabled) hooks_msg <- c(hooks_msg, "AI context sync")
       if (data_security_enabled) hooks_msg <- c(hooks_msg, "data security check")
 
       message(sprintf("[ok] Installed git hooks: %s", paste(hooks_msg, collapse = ", ")))

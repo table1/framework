@@ -130,6 +130,13 @@ NULL
   default_bucket_name <- config$default_storage_bucket %||%
     config$connections$default_storage_bucket
 
+  # Legacy top-level `s3:` block: named bucket entries plus default_connection
+  legacy <- config$s3
+  if (length(storage_buckets) == 0 && is.list(legacy)) {
+    storage_buckets <- Filter(function(entry) is.list(entry) && !is.null(entry$bucket), legacy)
+    default_bucket_name <- default_bucket_name %||% legacy$default_connection
+  }
+
   list(
     connections = storage_buckets,
     default_bucket = default_bucket_name
@@ -209,7 +216,7 @@ NULL
   }
 
   # Build full key with prefix
-  key <- if (nchar(s3_config$prefix) > 0) {
+  key <- if (nzchar(s3_config$prefix %||% "")) {
     paste0(s3_config$prefix, "/", dest)
   } else {
     dest

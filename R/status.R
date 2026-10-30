@@ -152,11 +152,6 @@ status <- function() {
     if (!is.null(config) && !is.null(config$git) && !is.null(config$git$hooks)) {
       hooks <- config$git$hooks
 
-      if (!is.null(hooks$ai_sync)) {
-        status <- if (isTRUE(hooks$ai_sync)) "\033[0;32menabled\033[0m" else "disabled"
-        message(sprintf("  AI sync: %s", status))
-      }
-
       if (!is.null(hooks$data_security)) {
         status <- if (isTRUE(hooks$data_security)) "\033[0;32menabled\033[0m" else "disabled"
         message(sprintf("  Data security: %s", status))

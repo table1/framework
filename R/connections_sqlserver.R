@@ -8,7 +8,7 @@
   .require_driver(
     "SQL Server",
     "odbc",
-    "install.packages('odbc')\n# Also requires ODBC Driver 17 for SQL Server: https://learn.microsoft.com/en-us/sql/connect/odbc/"
+    "install.packages('odbc')\n# Also requires Microsoft's ODBC Driver 18 (or 17) for SQL Server: https://learn.microsoft.com/en-us/sql/connect/odbc/"
   )
 
   required_fields <- c("host", "database", "user", "password")
@@ -47,11 +47,7 @@
   }
 
   # Determine ODBC driver
-  driver <- if (!is.null(config$odbc_driver)) {
-    config$odbc_driver
-  } else {
-    "ODBC Driver 17 for SQL Server"
-  }
+  driver <- config$odbc_driver %||% .sqlserver_odbc_driver()
 
   tryCatch(
     {
@@ -72,7 +68,7 @@
 
       if (grepl("IM002|Data source name not found", error_msg, ignore.case = TRUE)) {
         stop(sprintf(
-          "ODBC driver '%s' not found.\n\nInstall SQL Server ODBC driver:\n  - macOS: brew install microsoft/mssql-release/msodbcsql17\n  - Ubuntu: https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server\n  - Windows: https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server",
+          "ODBC driver '%s' not found.\n\nInstall SQL Server ODBC driver:\n  - macOS: brew tap microsoft/mssql-release && brew install msodbcsql18\n  - Ubuntu: https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server\n  - Windows: https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server",
           driver
         ), call. = FALSE)
       }
@@ -143,4 +139,19 @@
         error = \(e) stop(sprintf("Failed to create SQL Server database: %s", e$message))
       )
     })()
+}
+
+
+# The newest Microsoft ODBC driver for SQL Server that is installed, or
+# Driver 18 (the current one) when none can be found. Set odbc_driver in the
+# connection to choose another.
+#' @keywords internal
+.sqlserver_odbc_driver <- function() {
+  installed <- tryCatch(unique(odbc::odbcListDrivers()$name), error = function(e) character())
+  matches <- grep("^ODBC Driver [0-9]+ for SQL Server$", installed, value = TRUE)
+  if (length(matches) == 0) {
+    return("ODBC Driver 18 for SQL Server")
+  }
+  versions <- as.integer(sub("^ODBC Driver ([0-9]+) .*$", "\\1", matches))
+  matches[which.max(versions)]
 }

@@ -54,7 +54,6 @@ default:
   # --------------------------------------------------------------------------
   git:
     hooks:
-      ai_sync: false
       data_security: false
 
   # renv integration - show reproducibility message on first scaffold()

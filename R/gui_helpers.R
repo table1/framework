@@ -254,7 +254,7 @@ get_default_global_config <- function() {
   defaults$ai_assistants <- as.list(defaults$ai_assistants %||% list())
   defaults$ai_canonical_file <- defaults$ai_canonical_file %||% "CLAUDE.md"
   defaults$git_hooks <- defaults$git_hooks %||% list()
-  defaults$git_hooks$ai_sync <- if (is.null(defaults$git_hooks$ai_sync)) FALSE else isTRUE(defaults$git_hooks$ai_sync)
+  defaults$git_hooks$ai_sync <- NULL
   defaults$git_hooks$data_security <- if (is.null(defaults$git_hooks$data_security)) FALSE else isTRUE(defaults$git_hooks$data_security)
 
   defaults$packages <- if (!is.null(defaults$packages) && is.list(defaults$packages)) {

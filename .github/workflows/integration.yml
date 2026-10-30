@@ -1,0 +1,50 @@
+# The R test suite against real servers: PostgreSQL, MySQL, MariaDB, SQL
+# Server, and S3 (SeaweedFS), from tests/integration/compose.yml. The same
+# file is shared with framework-py and fw. FW_TEST_REQUIRE_SERVERS turns a
+# missing server into a failure, so a broken setup cannot pass by skipping.
+
+name: integration
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    env:
+      NOT_CRAN: "true"
+      FW_TEST_REQUIRE_SERVERS: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start test servers
+        run: docker compose -f tests/integration/compose.yml up -d --wait
+
+      - name: Install database client libraries
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev libmariadb-dev libpq-dev
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::devtools
+            any::RPostgres
+            any::RMariaDB
+            any::odbc
+            any::aws.s3
+
+      - name: Run tests
+        run: Rscript -e 'devtools::test(stop_on_failure = TRUE)'
+
+      - name: Server logs
+        if: failure()
+        run: docker compose -f tests/integration/compose.yml logs --tail 100

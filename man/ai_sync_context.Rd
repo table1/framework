@@ -2,7 +2,7 @@
 % Please edit documentation in R/ai_sync.R
 \name{ai_sync_context}
 \alias{ai_sync_context}
-\title{Sync AI Assistant Context Files}
+\title{Sync AI Assistant Context Files (Deprecated)}
 \usage{
 ai_sync_context(config_file = NULL, force = FALSE, verbose = TRUE)
 }
@@ -17,10 +17,13 @@ ai_sync_context(config_file = NULL, force = FALSE, verbose = TRUE)
 Invisible list with sync results
 }
 \description{
-Copies content from the canonical AI assistant file to all other AI files,
-adding a warning header to non-canonical files.
+Deprecated in framework 2.0. Projects now keep one \code{AGENTS.md}, which
+\code{CLAUDE.md} points to, plus skills, so there is nothing to sync.
 }
 \details{
+Copies content from the canonical AI assistant file to all other AI files,
+adding a warning header to non-canonical files.
+
 This function reads the \code{ai.canonical_file} setting from settings.yml and
 copies its content to all other AI assistant instruction files that exist
 in the project.

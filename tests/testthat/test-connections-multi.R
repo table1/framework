@@ -30,11 +30,11 @@ test_that("PostgreSQL connections work if available", {
 
   config <- list(
     driver = "postgres",
-    host = Sys.getenv("TEST_POSTGRES_HOST", "localhost"),
-    port = 5432,
+    host = fw_test_server("postgres")$host,
+    port = fw_test_server("postgres")$port,
     database = "framework_test",
     user = "framework",
-    password = "framework_test_pass"
+    password = fw_test_server("postgres")$password
   )
 
   conn <- tryCatch(
@@ -64,11 +64,11 @@ test_that("MySQL connections work if available", {
 
   config <- list(
     driver = "mysql",
-    host = Sys.getenv("TEST_MYSQL_HOST", "localhost"),
-    port = 3306,
+    host = fw_test_server("mysql")$host,
+    port = fw_test_server("mysql")$port,
     database = "framework_test",
     user = "framework",
-    password = "framework_test_pass"
+    password = fw_test_server("postgres")$password
   )
 
   conn <- tryCatch(
