@@ -1,5 +1,10 @@
 # CRAN Comments
 
+## Resubmission
+
+The GitHub repository moved from table1/framework to frameworktools/framework.
+The URL and BugReports fields in DESCRIPTION now point to the new location.
+
 ## Update to 1.1.1
 
 This is a patch release for a security bug in 1.1.0. Projects created with

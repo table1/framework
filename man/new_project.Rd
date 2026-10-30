@@ -38,7 +38,7 @@ missing required values (name and location).
 \details{
 This function is designed for the streamlined workflow:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{remotes::install_github("table1/framework")
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{remotes::install_github("frameworktools/framework")
 framework::setup()        # One-time global configuration
 framework::new_project()  # Create projects using saved defaults
 }\if{html}{\out{</div>}}

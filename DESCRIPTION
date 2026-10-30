@@ -10,8 +10,8 @@ Description: Project scaffolding and workflow tools for reproducible data scienc
     generates notebooks, and publishes to S3-compatible storage.
     More information at <https://framework.table1.org>.
 License: MIT + file LICENSE
-URL: https://framework.table1.org, https://github.com/table1/framework
-BugReports: https://github.com/table1/framework/issues
+URL: https://framework.table1.org, https://github.com/frameworktools/framework
+BugReports: https://github.com/frameworktools/framework/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("rd", "namespace", "collate"))
 Imports:

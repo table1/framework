@@ -1,4 +1,4 @@
-# devtools::install_github("table1/framework", force = TRUE)
+# devtools::install_github("frameworktools/framework", force = TRUE)
 #
 # if ("framework" %in% loadedNamespaces()) {
 #   detach("package:framework", unload = TRUE)

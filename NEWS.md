@@ -4,7 +4,8 @@
   other `new_*()` helpers got no `.gitignore`, so the initial commit
   included `.env`, which holds database passwords and other secrets. Every
   project now gets the `.gitignore` for its type, and project creation
-  checks that `.env` is ignored before the first commit. If you created a
+  asks git whether `.env` is ignored before the first commit (a later
+  `!.env` line in `.gitignore` no longer slips through). If you created a
   project with 1.1.0 and put real passwords in its `.env`, untrack it
   (`git rm --cached .env`), add `.env` to `.gitignore`, and change those
   passwords, because they remain in the git history
@@ -18,6 +19,7 @@
 * Fixed: `data_add()` recorded absolute paths in the data catalog, which
   broke once a project was moved or cloned. Paths inside the project are now
   stored relative to the project root
+* The package's GitHub repository moved to `frameworktools/framework`
 * `git_security_audit()` has a new `secrets_exposure` check that fails when
   git tracks a `.env` file
 

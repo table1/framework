@@ -69,8 +69,8 @@ renv_enable <- function(sync = TRUE) {
     .create_renvignore()
 
     # Always ensure framework is in renv.lock
-    # Framework is on GitHub at table1/framework
-    renv::install("table1/framework", rebuild = FALSE)
+    # Framework is on GitHub at frameworktools/framework
+    renv::install("frameworktools/framework", rebuild = FALSE)
 
     # Always install rmarkdown when notebooks exist
     # Quarto uses rmarkdown's knitr engine for R code chunks

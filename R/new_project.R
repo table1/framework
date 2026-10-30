@@ -19,7 +19,7 @@
 #' @details
 #' This function is designed for the streamlined workflow:
 #' ```r
-#' remotes::install_github("table1/framework")
+#' remotes::install_github("frameworktools/framework")
 #' framework::setup()        # One-time global configuration
 #' framework::new_project()  # Create projects using saved defaults
 #' ```

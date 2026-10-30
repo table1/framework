@@ -12,8 +12,8 @@ Project scaffolding and workflow tools for reproducible data science. Manages pa
 Useful links:
 \itemize{
   \item \url{https://framework.table1.org}
-  \item \url{https://github.com/table1/framework}
-  \item Report bugs at \url{https://github.com/table1/framework/issues}
+  \item \url{https://github.com/frameworktools/framework}
+  \item Report bugs at \url{https://github.com/frameworktools/framework/issues}
 }
 
 }

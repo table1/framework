@@ -11,7 +11,7 @@ An R package for structured, reproducible data analysis projects.
 install.packages("framework")
 
 # Or the development version from GitHub
-remotes::install_github("table1/framework")
+remotes::install_github("frameworktools/framework")
 
 # One-time global setup (author info, preferences) in the GUI
 framework::setup()
