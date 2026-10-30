@@ -49,6 +49,10 @@
     }
   )
 
+  # The cache file, relative to the project root (the Python package reads
+  # this to tell R's entries from its own)
+  stored_path <- .fw_project_relative_path(cache_file)
+
   # Calculate expiration time
   now <- lubridate::now()
   expire_after <- .normalize_expire_after(expire_after, default_expire)
@@ -74,6 +78,14 @@
   on.exit(DBI::dbDisconnect(con))
 
   if (DBI::dbExistsTable(con, "cache")) {
+    # Databases created before file_path existed get the column added
+    if (!"file_path" %in% DBI::dbListFields(con, "cache")) {
+      tryCatch(
+        DBI::dbExecute(con, "ALTER TABLE cache ADD COLUMN file_path TEXT"),
+        error = function(e) stop(sprintf("Failed to add cache.file_path: %s", e$message))
+      )
+    }
+
     # Check if entry exists
     entry_exists <- tryCatch(
       DBI::dbGetQuery(con, "SELECT 1 FROM cache WHERE name = ?", list(name)),
@@ -87,8 +99,8 @@
       tryCatch(
         DBI::dbExecute(
           con,
-          "UPDATE cache SET hash = ?, expire_at = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
-          list(as.character(hash), expire_at, now, now, name)
+          "UPDATE cache SET file_path = ?, hash = ?, expire_at = ?, last_read_at = ?, updated_at = ? WHERE name = ?",
+          list(stored_path, as.character(hash), expire_at, now, now, name)
         ),
         error = function(e) {
           stop(sprintf("Failed to update cache record: %s", e$message))
@@ -99,8 +111,8 @@
       tryCatch(
         DBI::dbExecute(
           con,
-          "INSERT INTO cache (name, hash, expire_at, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-          list(name, as.character(hash), expire_at, now, now, now)
+          "INSERT INTO cache (name, file_path, hash, expire_at, last_read_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          list(name, stored_path, as.character(hash), expire_at, now, now, now)
         ),
         error = function(e) {
           stop(sprintf("Failed to insert cache record: %s", e$message))

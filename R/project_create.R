@@ -147,10 +147,13 @@ project_create <- function(
     )
   }
 
-  # Create .gitignore from template content
-  if (!is.null(git$gitignore_content) && nzchar(git$gitignore_content)) {
-    .create_gitignore(project_dir, git$gitignore_content)
+  # Create .gitignore: the given content, else the template for the project
+  # type. Every project gets one, because .env holds secrets.
+  gitignore <- git$gitignore_content %||% ""
+  if (!nzchar(paste(gitignore, collapse = ""))) {
+    gitignore <- .spec_gitignore(type, identical(type, "project_sensitive"), list())
   }
+  .create_gitignore(project_dir, gitignore)
 
   # Create AI context files
   if (ai$enabled && !is_bare) {
@@ -507,6 +510,9 @@ project_create <- function(
 
   if (is.null(config) || length(config) == 0) {
     config <- .default_connections_configuration()
+  } else if (any(c("databases", "storage_buckets", "default_database", "default_storage_bucket") %in% names(config))) {
+    # The spec's shape: wrap it, so settings_read() finds it under `connections`
+    config <- list(connections = config)
   } else {
     config$options <- config$options %||% list()
     config$connections <- config$connections %||% list()
@@ -527,6 +533,36 @@ project_create <- function(
   env_path <- file.path(project_dir, ".env")
   writeLines(env_lines, env_path)
   message("  Created: .env")
+}
+
+# Make sure .gitignore ignores .env before the first commit. Git lets a later
+# line override an earlier one, so the last line that mentions .env decides:
+# when there is none, or it is a negation (!.env), `.env` is appended.
+#' @keywords internal
+.ensure_secrets_ignored <- function(project_dir) {
+  path <- file.path(project_dir, ".gitignore")
+  lines <- if (file.exists(path)) readLines(path, warn = FALSE) else character(0)
+  env_lines <- grep("^!?/?(\\*\\*/)?(\\.env\\*?|\\*\\.env)$", trimws(lines), value = TRUE)
+  last <- utils::tail(env_lines, 1)
+  covered <- length(last) == 1 && !startsWith(last, "!")
+  if (!covered) {
+    writeLines(c(lines, "", "# Secrets (added by Framework)", ".env"), path)
+    message("  Added .env to .gitignore")
+  }
+  invisible(!covered)
+}
+
+# Ask git itself whether .env is ignored. TRUE when there is no .env.
+#' @keywords internal
+.secrets_ignored_by_git <- function(project_dir) {
+  if (!file.exists(file.path(project_dir, ".env"))) {
+    return(TRUE)
+  }
+  status <- suppressWarnings(system2(
+    "git", c("-C", shQuote(project_dir), "check-ignore", "-q", ".env"),
+    stdout = FALSE, stderr = FALSE
+  ))
+  identical(as.integer(status), 0L)
 }
 
 #' Create .gitignore file
@@ -772,6 +808,17 @@ duplicate its content in this file.
     }, error = function(e) {
       warning("Failed to install git hooks: ", e$message)
     })
+  }
+
+  # Never stage secrets, whatever .gitignore content the caller supplied
+  .ensure_secrets_ignored(project_dir)
+  if (!.secrets_ignored_by_git(project_dir)) {
+    warning(
+      "Not making the initial commit: git does not ignore .env, which holds secrets. ",
+      "Fix .gitignore, then commit.",
+      call. = FALSE
+    )
+    return(invisible(NULL))
   }
 
   # Stage all files

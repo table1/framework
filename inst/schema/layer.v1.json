@@ -22,6 +22,15 @@
         "bare"
       ]
     },
+    "language": {
+      "type": "string",
+      "enum": [
+        "r",
+        "python",
+        "stata"
+      ],
+      "description": "Primary language. The R package builds r, the Python package builds python, and fw builds stata (scaffolding only). A layers file with no language means r."
+    },
     "author": {
       "type": "object",
       "properties": {
@@ -135,7 +144,7 @@
           },
           "description": "Package name -> spec. JSON object key order is not kept (Postgres JSONB sorts keys).",
           "propertyNames": {
-            "pattern": "^[A-Za-z][A-Za-z0-9.]*$"
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
           }
         }
       },
@@ -228,7 +237,8 @@
           "type": "string",
           "enum": [
             "quarto",
-            "rmarkdown"
+            "rmarkdown",
+            "jupyter"
           ]
         },
         "ide": {
@@ -338,7 +348,7 @@
         "anyOf": [
           {
             "type": "string",
-            "pattern": "^[^:]+\\.R::[A-Za-z.][A-Za-z0-9._]*$"
+            "pattern": "^[^:]+\\.(R|py)::[A-Za-z_.][A-Za-z0-9._]*$"
           },
           {
             "type": "null"
@@ -390,7 +400,8 @@
           "enum": [
             "cloud",
             "cli",
-            "r"
+            "r",
+            "python"
           ]
         },
         "fragments": {
@@ -442,7 +453,11 @@
         },
         "framework_version": {
           "type": "string",
-          "description": "Package version that created the project; written by R"
+          "description": "Version of the R or Python package that created the project"
+        },
+        "fw_version": {
+          "type": "string",
+          "description": "Version of fw that created the project (Stata scaffolding)"
         }
       },
       "additionalProperties": false
@@ -458,7 +473,8 @@
           "enum": [
             "cran",
             "github",
-            "bioc"
+            "bioc",
+            "pypi"
           ]
         },
         "version": {

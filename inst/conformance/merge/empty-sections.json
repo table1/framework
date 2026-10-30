@@ -1,0 +1,35 @@
+{
+  "description": "An empty object and an empty array are the same, and setting a section to either changes nothing (it only makes sure the section exists). Implementations must compare {} and [] as equal.",
+  "layers": [
+    {
+      "kind": "base",
+      "key": "project",
+      "layer": {
+        "directories": {
+          "notebooks": "notebooks"
+        },
+        "env": {}
+      }
+    },
+    {
+      "kind": "project",
+      "layer": {
+        "directories": {},
+        "extra_directories": [],
+        "data_hooks": {}
+      }
+    }
+  ],
+  "expected": {
+    "spec": {
+      "directories": {
+        "notebooks": "notebooks"
+      },
+      "env": [],
+      "extra_directories": [],
+      "data_hooks": []
+    },
+    "gitignore_blocks": [],
+    "conflicts": []
+  }
+}

@@ -325,3 +325,32 @@ test_that("dotenv_location errors when file not found", {
     "Dotenv file not found at"
   )
 })
+
+test_that(".set_random_seed reads the scaffold section new projects write", {
+  withr::local_envvar(FW_SEED = NA)
+  withr::local_seed(42)
+  config <- list(scaffold = list(seed_on_scaffold = TRUE, seed = "123"))
+  expect_message(framework:::.set_random_seed(config), "Random seed set to 123.", fixed = TRUE)
+
+  # The project's seed wins over FW_SEED, and an explicit false skips it
+  withr::local_envvar(FW_SEED = "555")
+  expect_message(framework:::.set_random_seed(config), "Random seed set to 123.", fixed = TRUE)
+  config$scaffold$seed_on_scaffold <- FALSE
+  expect_silent(framework:::.set_random_seed(config))
+
+  # No project setting: FW_SEED turns seeding on
+  expect_message(framework:::.set_random_seed(list()), "Random seed set to 555.", fixed = TRUE)
+})
+
+test_that("a new project's scaffold() seeds from its settings", {
+  cleanup <- setup_isolated_config()
+  on.exit(cleanup(), add = TRUE)
+  withr::local_envvar(FW_SEED = NA)
+  parent <- withr::local_tempdir()
+  spec <- spec_resolve(list(list(type = "project", git = list(use_git = FALSE),
+                                 scaffold = list(seed_on_scaffold = TRUE, seed = "2024"))), name = "Seeded")
+  location <- file.path(parent, "seeded")
+  suppressMessages(project_create(spec, location))
+  config <- settings_read(file.path(location, "settings.yml"))
+  expect_message(framework:::.set_random_seed(config), "Random seed set to 2024.", fixed = TRUE)
+})

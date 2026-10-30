@@ -2,18 +2,22 @@
 % Please edit documentation in R/cloud.R
 \name{cloud_login}
 \alias{cloud_login}
-\title{Log In to framework.pub}
+\title{Log In to Framework Cloud}
 \usage{
-cloud_login(token, verify = TRUE, consent = NULL)
+cloud_login(token, url = NULL, verify = TRUE, consent = NULL)
 }
 \arguments{
-\item{token}{Your user token from framework.pub (Settings -> API tokens).}
+\item{token}{Your user token from Framework Cloud (Settings -> API tokens).}
 
-\item{verify}{Check the token against the cloud before saving (default TRUE).}
+\item{url}{The Framework Cloud server. Defaults to \code{FW_CLOUD_URL}, then the
+server you last logged in to, then \url{https://framework.pub}. Plain \code{http}
+is accepted only for \code{localhost} and \verb{127.0.0.1}.}
+
+\item{verify}{Check the token against the server before saving (default TRUE).}
 
 \item{consent}{Set TRUE to confirm non-interactively (scripts, CI). In an
 interactive session you are prompted instead. What connecting shares is
-printed first and documented at \url{https://framework.pub/privacy}.}
+printed first and documented at the server's \verb{/privacy} page.}
 }
 \value{
 Invisibly, where the token was stored ("keyring" or the file path).
@@ -27,7 +31,15 @@ file in the Framework config directory. This is the whole onboarding:
 }
 \details{
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{framework::cloud_login("fw_...")
+
+# A self-hosted server, or single-user mode on this machine
+framework::cloud_login("fw_...", url = "https://framework.example.edu")
+framework::cloud_login("fw_...", url = "http://localhost:8080")
 }\if{html}{\out{</div>}}
+
+Tokens are stored per server, and the server you log in to becomes this
+machine's default for \code{\link[=cloud_status]{cloud_status()}}, \code{\link[=cloud_sync]{cloud_sync()}}, and \code{\link[=new]{new()}}. The
+\code{FW_CLOUD_URL} environment variable overrides that default.
 }
 \seealso{
 \code{\link[=cloud_status]{cloud_status()}}, \code{\link[=cloud_logout]{cloud_logout()}}, \code{\link[=cloud_settings]{cloud_settings()}}

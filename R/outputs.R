@@ -61,7 +61,12 @@ NULL
 
   on.exit(DBI::dbDisconnect(con), add = TRUE)
 
-  now <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  # Epoch seconds (REAL), like the data, cache, and meta tables
+  now <- lubridate::now()
+  # DBI parameters must have length 1: NULL comments failed every insert.
+  # openssl hashes carry a class DBI won't bind.
+  comment <- comment %||% NA_character_
+  hash <- paste0(as.character(hash))
 
   # Check if entry already exists
  existing <- tryCatch(
@@ -89,6 +94,19 @@ NULL
   })
 
   invisible(NULL)
+}
+
+# Parse framework.db timestamps read as text: epoch seconds (the current
+# format) or local "%Y-%m-%d %H:%M:%S" strings (results rows before 2.0).
+#' @keywords internal
+.fw_db_time <- function(x) {
+  x <- as.character(x)
+  out <- rep(as.POSIXct(NA), length(x))
+  epoch <- !is.na(x) & grepl("^-?[0-9]+(\\.[0-9]+)?$", x)
+  out[epoch] <- as.POSIXct(as.numeric(x[epoch]), origin = "1970-01-01")
+  text <- !is.na(x) & !epoch
+  out[text] <- as.POSIXct(x[text], format = "%Y-%m-%d %H:%M:%S")
+  out
 }
 
 #' Get the cache directory, respecting FW_CACHE_DIR environment variable
@@ -697,7 +715,13 @@ result_list <- function(type = NULL, public = NULL) {
   on.exit(DBI::dbDisconnect(con), add = TRUE)
 
   # Build query
-  query <- "SELECT name, type, public, comment, hash, created_at, updated_at FROM results WHERE deleted_at IS NULL"
+  # Timestamps are epoch seconds; rows written before 2.0 hold local
+  # "%Y-%m-%d %H:%M:%S" text. Read both as text so RSQLite doesn't coerce.
+  query <- paste(
+    "SELECT name, type, public, comment, hash,",
+    "CAST(created_at AS TEXT) AS created_at, CAST(updated_at AS TEXT) AS updated_at",
+    "FROM results WHERE deleted_at IS NULL"
+  )
   params <- list()
 
   if (!is.null(type)) {
@@ -710,13 +734,21 @@ result_list <- function(type = NULL, public = NULL) {
     params <- c(params, as.integer(public))
   }
 
-  query <- paste(query, "ORDER BY updated_at DESC")
-
   tryCatch({
-    results <- DBI::dbGetQuery(con, query, params)
-    # Convert public column to logical
-    if (nrow(results) > 0 && "public" %in% names(results)) {
+    # DBI rejects an empty parameter list for a query without placeholders
+    results <- if (length(params) > 0) {
+      DBI::dbGetQuery(con, query, params = params)
+    } else {
+      DBI::dbGetQuery(con, query)
+    }
+    if (nrow(results) > 0) {
       results$public <- as.logical(results$public)
+      created <- .fw_db_time(results$created_at)
+      updated <- .fw_db_time(results$updated_at)
+      results$created_at <- format(created, "%Y-%m-%d %H:%M:%S")
+      results$updated_at <- format(updated, "%Y-%m-%d %H:%M:%S")
+      results <- results[order(updated, decreasing = TRUE), , drop = FALSE]
+      rownames(results) <- NULL
     }
     results
   }, error = function(e) {

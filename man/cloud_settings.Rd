@@ -10,6 +10,6 @@ cloud_settings()
 A list with \code{revision}, \code{schema_version}, and \code{document}.
 }
 \description{
-Retrieves your settings document from framework.pub. These settings are
+Retrieves your settings document from Framework Cloud. These settings are
 overlaid on local defaults when creating projects with \code{\link[=new]{new()}}.
 }

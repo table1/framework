@@ -32,7 +32,7 @@
 #' - Any production code
 #'
 #' **When NOT to use:**
-#' - One-off queries (use `query_get()` instead)
+#' - One-off queries (use `db_query()` instead)
 #' - Short scripts (overhead not worth it)
 #'
 #' @keywords internal

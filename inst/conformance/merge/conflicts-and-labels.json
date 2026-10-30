@@ -1,0 +1,47 @@
+{
+  "description": "A conflict is a key set to different values by more than one layer. Layers without a kind are labeled 'layer N' (1-based). Setting the same value twice is not a conflict.",
+  "layers": [
+    {
+      "kind": "facet",
+      "key": "slides",
+      "layer": {
+        "type": "presentation",
+        "scaffold": {
+          "seed": "1"
+        }
+      }
+    },
+    {
+      "kind": "facet",
+      "key": "targets",
+      "version": 4,
+      "layer": {
+        "type": "project",
+        "scaffold": {
+          "seed": "1"
+        }
+      }
+    },
+    {
+      "layer": {
+        "language": "stata"
+      }
+    }
+  ],
+  "expected": {
+    "spec": {
+      "type": "project",
+      "scaffold": {
+        "seed": "1"
+      },
+      "language": "stata"
+    },
+    "gitignore_blocks": [],
+    "conflicts": [
+      {
+        "path": "type",
+        "layers": "facet slides, facet targets v4"
+      }
+    ]
+  }
+}

@@ -1,14 +1,16 @@
 #' Get Framework config directory path
 #'
-#' Returns the path to Framework's global configuration directory.
+#' Returns the path to Framework's global configuration directory, which holds
+#' user settings, the saved Framework Cloud server, and token files.
 #' Uses `tools::R_user_dir("framework", "config")` by default (CRAN compliant).
 #' Can be overridden with the `FW_CONFIG_HOME` environment variable.
+#'
+#' The Python package and the `fw` command-line tool keep their own folder
+#' (`~/.config/framework`). [config_sync()] brings their settings into R's.
 #'
 #' @return Character string with the config directory path
 #' @export
 fw_config_dir <- function() {
-  # Allow override via environment variable
-
   custom_dir <- Sys.getenv("FW_CONFIG_HOME", "")
   if (nzchar(custom_dir)) {
     return(path.expand(custom_dir))
@@ -16,6 +18,92 @@ fw_config_dir <- function() {
 
   # CRAN-compliant default: tools::R_user_dir
   tools::R_user_dir("framework", "config")
+}
+
+# The config folder of the Python package and fw. R reads it (config_sync())
+# and never writes to it. Home is the user profile on Windows (R's "~" there
+# is usually Documents).
+#' @keywords internal
+.fw_shared_config_dir <- function() {
+  xdg <- Sys.getenv("XDG_CONFIG_HOME", "")
+  if (nzchar(xdg)) {
+    return(file.path(xdg, "framework"))
+  }
+  home <- if (.Platform$OS.type == "windows") Sys.getenv("USERPROFILE", path.expand("~")) else path.expand("~")
+  file.path(home, ".config", "framework")
+}
+
+#' Sync Settings from the Python Package and fw
+#'
+#' The Python package and the `fw` command-line tool keep their settings in
+#' `~/.config/framework`, and the R package keeps its own in
+#' [fw_config_dir()]. `config_sync()` brings R in line with them: files that
+#' are missing from R's folder, or newer in theirs, are copied into R's
+#' folder. This covers user settings, the saved Framework Cloud server, and
+#' token files. R only reads their folder and never writes to it.
+#'
+#' Logins stored in the system keyring are already shared and need no sync.
+#'
+#' @param from The folder to sync from. Defaults to `$XDG_CONFIG_HOME/framework`,
+#'   or `~/.config/framework` when `XDG_CONFIG_HOME` is unset.
+#' @param dry_run Logical. List what would be copied without copying it.
+#'
+#' @return Invisibly, the relative paths copied (or that would be copied).
+#'
+#' @examples
+#' \donttest{
+#' if (FALSE) {
+#' config_sync(dry_run = TRUE)
+#' config_sync()
+#' }
+#' }
+#'
+#' @seealso [fw_config_dir()], [cloud_login()]
+#' @export
+config_sync <- function(from = NULL, dry_run = FALSE) {
+  checkmate::assert_string(from, min.chars = 1, null.ok = TRUE)
+  checkmate::assert_flag(dry_run)
+
+  from <- from %||% .fw_shared_config_dir()
+  to <- fw_config_dir()
+  if (!dir.exists(from)) {
+    message("Nothing to sync: ", from, " does not exist.")
+    return(invisible(character(0)))
+  }
+  if (identical(normalizePath(from, mustWork = FALSE), normalizePath(to, mustWork = FALSE))) {
+    message("Nothing to sync: R already uses ", to, ".")
+    return(invisible(character(0)))
+  }
+
+  files <- list.files(from, all.files = TRUE, no.. = TRUE, recursive = TRUE)
+  files <- files[!startsWith(basename(files), ".")]
+  newer <- vapply(files, function(f) {
+    dest <- file.path(to, f)
+    !file.exists(dest) || file.mtime(file.path(from, f)) > file.mtime(dest)
+  }, logical(1))
+  files <- files[newer]
+
+  if (length(files) == 0) {
+    message("[ok] R is already in line with ", from)
+    return(invisible(character(0)))
+  }
+  if (dry_run) {
+    message("Would copy into ", to, ":\n", paste0("  ", files, collapse = "\n"))
+    return(invisible(files))
+  }
+
+  for (f in files) {
+    dest <- file.path(to, f)
+    dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
+    ok <- tryCatch(
+      file.copy(file.path(from, f), dest, overwrite = TRUE, copy.date = TRUE),
+      error = function(e) stop(sprintf("Failed to copy '%s': %s", f, conditionMessage(e)), call. = FALSE)
+    )
+    if (!isTRUE(ok)) stop(sprintf("Failed to copy '%s' into %s", f, to), call. = FALSE)
+    if (startsWith(basename(f), "cloud-token")) Sys.chmod(dest, mode = "0600")
+  }
+  message("[ok] Copied into ", to, ":\n", paste0("  ", files, collapse = "\n"))
+  invisible(files)
 }
 
 #' Initialize global Framework settings

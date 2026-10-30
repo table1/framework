@@ -22,6 +22,15 @@
         "bare"
       ]
     },
+    "language": {
+      "type": "string",
+      "enum": [
+        "r",
+        "python",
+        "stata"
+      ],
+      "description": "Primary language. The R package builds r, the Python package builds python, and fw builds stata (scaffolding only). A layers file with no language means r."
+    },
     "author": {
       "type": "object",
       "properties": {
@@ -115,13 +124,12 @@
           },
           "description": "Package name -> spec. JSON object key order is not kept (Postgres JSONB sorts keys).",
           "propertyNames": {
-            "pattern": "^[A-Za-z][A-Za-z0-9.]*$"
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
           }
         }
       },
       "additionalProperties": false,
       "required": [
-        "use_renv",
         "default_packages"
       ]
     },
@@ -208,7 +216,8 @@
           "type": "string",
           "enum": [
             "quarto",
-            "rmarkdown"
+            "rmarkdown",
+            "jupyter"
           ]
         },
         "ide": {
@@ -225,9 +234,7 @@
       "additionalProperties": false,
       "required": [
         "seed_on_scaffold",
-        "seed",
-        "set_theme_on_scaffold",
-        "ggplot_theme"
+        "seed"
       ]
     },
     "quarto": {
@@ -308,7 +315,7 @@
       "type": "object",
       "additionalProperties": {
         "type": "string",
-        "pattern": "^[^:]+\\.R::[A-Za-z.][A-Za-z0-9._]*$"
+        "pattern": "^[^:]+\\.(R|py)::[A-Za-z_.][A-Za-z0-9._]*$"
       },
       "description": "Directory key -> 'path/to/file.R::function'",
       "propertyNames": {
@@ -341,7 +348,8 @@
           "enum": [
             "cloud",
             "cli",
-            "r"
+            "r",
+            "python"
           ]
         },
         "fragments": {
@@ -403,7 +411,11 @@
         },
         "framework_version": {
           "type": "string",
-          "description": "Package version that created the project; written by R"
+          "description": "Version of the R or Python package that created the project"
+        },
+        "fw_version": {
+          "type": "string",
+          "description": "Version of fw that created the project (Stata scaffolding)"
         }
       },
       "additionalProperties": false,
@@ -417,20 +429,39 @@
     "spec_version",
     "name",
     "type",
+    "language",
     "author",
     "directories",
     "extra_directories",
-    "render_dirs",
-    "packages",
     "git",
     "ai",
-    "scaffold",
-    "connections",
     "security",
     "env",
     "data_hooks",
     "files",
     "skills"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "language": {
+            "enum": [
+              "r",
+              "python"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "render_dirs",
+          "packages",
+          "scaffold",
+          "connections"
+        ]
+      }
+    }
   ],
   "definitions": {
     "package": {
@@ -441,7 +472,8 @@
           "enum": [
             "cran",
             "github",
-            "bioc"
+            "bioc",
+            "pypi"
           ]
         },
         "version": {

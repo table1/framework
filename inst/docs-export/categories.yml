@@ -48,9 +48,11 @@ Data:
 Packages:
   description: Package management and renv integration
   common:
+    - package_add
     - packages_install
     - packages_restore
   functions:
+    - package_add
     - packages_install
     - packages_list
     - packages_restore
@@ -111,6 +113,7 @@ Project Management:
     - project_list
     - project_info
     - status
+    - config_sync
 
 Publishing:
   description: Publishing outputs and reports

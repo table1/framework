@@ -1,0 +1,72 @@
+{
+  "description": "git.gitignore_content is not merged. Each layer's text becomes a block labeled with the layer (kind, key, and vN), in layer order. Assistants merge as a map; false is kept by the merge and dropped later, when each engine finalizes the spec.",
+  "layers": [
+    {
+      "kind": "base",
+      "key": "project",
+      "layer": {
+        "ai": {
+          "enabled": true,
+          "assistants": {
+            "claude": true,
+            "codex": true
+          }
+        },
+        "git": {
+          "use_git": true,
+          "gitignore_content": "*.csv"
+        }
+      }
+    },
+    {
+      "kind": "facet",
+      "key": "restricted-data",
+      "version": 1,
+      "layer": {
+        "git": {
+          "gitignore_content": "inputs/private/\noutputs/private/"
+        }
+      }
+    },
+    {
+      "kind": "project",
+      "layer": {
+        "ai": {
+          "assistants": {
+            "codex": false
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "spec": {
+      "ai": {
+        "enabled": true,
+        "assistants": {
+          "claude": true,
+          "codex": false
+        }
+      },
+      "git": {
+        "use_git": true
+      }
+    },
+    "gitignore_blocks": [
+      {
+        "label": "base project",
+        "text": "*.csv"
+      },
+      {
+        "label": "facet restricted-data v1",
+        "text": "inputs/private/\noutputs/private/"
+      }
+    ],
+    "conflicts": [
+      {
+        "path": "ai/assistants/codex",
+        "layers": "base project, project"
+      }
+    ]
+  }
+}

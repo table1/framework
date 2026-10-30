@@ -1,22 +1,119 @@
 #' @title Publishing Functions
-#' @description Functions for publishing notebooks, data, and files to S3 storage.
+#' @description Functions for publishing notebooks, data, and files to S3
+#'   storage or Framework Cloud.
 #' @name publish
 NULL
 
-#' Publish files to S3
+# Refuse to publish from a folder named `private` inside the project.
+# Folders above the project root don't count (macOS temp paths start with
+# /private). Outside a project, nothing is refused.
+#' @keywords internal
+.fw_assert_not_private <- function(source, allow_private = FALSE) {
+  if (isTRUE(allow_private)) {
+    return(invisible(TRUE))
+  }
+  root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+  if (is.null(root)) {
+    return(invisible(TRUE))
+  }
+  relative <- .fw_project_relative_path(normalizePath(source, winslash = "/", mustWork = FALSE))
+  if (grepl("^(/|[A-Za-z]:)", relative)) {
+    return(invisible(TRUE))
+  }
+  if ("private" %in% strsplit(relative, "/", fixed = TRUE)[[1]]) {
+    stop(
+      "Refusing to publish '", relative, "': it is inside a private folder, which holds ",
+      "restricted data. Pass allow_private = TRUE if you really mean to publish it.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+# `slug` is a non-empty string, a flag, or NULL.
+#' @keywords internal
+.fw_assert_slug <- function(slug) {
+  checkmate::assert(
+    checkmate::check_null(slug),
+    checkmate::check_flag(slug),
+    checkmate::check_string(slug, min.chars = 1),
+    .var.name = "slug"
+  )
+}
+
+#' @keywords internal
+.fw_warn_slug_ignored <- function(slug) {
+  if (!is.null(slug)) {
+    warning("`slug` applies to Framework Cloud only; ignored for storage buckets.", call. = FALSE)
+  }
+}
+
+# Where publish() and publish_notebook() send output. A named connection or
+# any configured storage bucket wins; otherwise a project set up from
+# Framework Cloud publishes there.
+#' @keywords internal
+.fw_publish_target <- function(connection = NULL) {
+  if (!is.null(connection) || .fw_has_storage_buckets()) {
+    return("s3")
+  }
+  if (!is.null(.fw_project_token())) {
+    return("cloud")
+  }
+  stop(
+    "Nowhere to publish. Add a storage bucket in settings.yml, or set up this ",
+    'project from Framework Cloud with setup("<project token>").
+
+',
+    "A storage bucket looks like this:
+
+",
+    "connections:
+",
+    "  storage_buckets:
+",
+    "    my_s3:
+",
+    "      bucket: my-bucket
+",
+    "      region: us-east-1
+",
+    "  default_storage_bucket: my_s3",
+    call. = FALSE
+  )
+}
+
+#' Publish files to S3 or Framework Cloud
 #'
 #' Upload files or directories to an S3 bucket. This is the generic publishing
 #' function - use `publish_notebook()` for Quarto documents or `publish_data()`
 #' for data files.
 #'
+#' With no `connection` and no storage bucket in settings.yml, a project set
+#' up from Framework Cloud publishes to its server instead (the
+#' `FW_CLOUD_URL` and `FW_PROJECT_TOKEN` in the project's `.env`). Each
+#' publish to Framework Cloud adds a new version of the document. Documents
+#' start private, shared by a private link; `slug` turns on a readable URL
+#' (`/@handle/project/slug`).
+#'
 #' @param source Character. Local file or directory path to upload.
 #' @param dest Character or NULL. Destination path in S3 bucket. If NULL,
-#'   derives from source filename.
+#'   derives from source filename. On Framework Cloud, use `slug` instead;
+#'   `dest` still names the document there when `slug` isn't a string, for
+#'   older scripts.
 #' @param connection Character or NULL. S3 connection name from config.yml.
 #'   If NULL, uses the connection marked with `default: true`.
 #' @param overwrite Logical. Whether to overwrite existing files. Default TRUE.
-#' @param self_contained Logical. When publishing to framework.pub, whether
+#' @param self_contained Logical. When publishing to Framework Cloud, whether
 #'   to bundle an HTML file with its resources. Ignored for S3. Default TRUE.
+#' @param allow_private Logical. Publish even when the source is inside a
+#'   folder named `private` in the project. Default FALSE: private folders
+#'   hold restricted data and are refused.
+#' @param slug Framework Cloud only. A string names the document and turns on
+#'   its readable URL, for example `slug = "main-results"`. `TRUE` turns the
+#'   readable URL on with the name derived from `dest` or the file name, and
+#'   `FALSE` turns it off. `NULL` (the default) publishes under the derived
+#'   name and leaves the document's setting as it is (new documents start
+#'   private). Ignored, with a warning, for S3.
 #' @return Character. The public URL(s) of uploaded file(s).
 #'
 #' @export
@@ -36,26 +133,30 @@ NULL
 #'
 #' # Use specific connection
 #' publish("data.csv", connection = "s3_backup")
+#'
+#' # Framework Cloud: a new version with a readable URL
+#' publish("outputs/report.html", slug = "main-results")
 #' }
 #' }
 publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
-                    self_contained = TRUE) {
+                    self_contained = TRUE, slug = NULL, allow_private = FALSE) {
   checkmate::assert_string(source, min.chars = 1)
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(overwrite)
   checkmate::assert_flag(self_contained)
+  .fw_assert_slug(slug)
+  checkmate::assert_flag(allow_private)
 
   if (!file.exists(source) && !dir.exists(source)) {
     stop(sprintf("Source not found: %s", source), call. = FALSE)
   }
+  .fw_assert_not_private(source, allow_private)
 
-  # framework.pub path: no bucket configured, no explicit connection, and the
-  # project has a cloud key -> publish to the cloud. Own-bucket users are
-  # untouched: any configured storage bucket wins.
-  if (is.null(connection) && !.fw_has_storage_buckets() && !is.null(.fw_project_token())) {
-    return(.fw_cloud_publish(source, dest = dest, self_contained = self_contained))
+  if (identical(.fw_publish_target(connection), "cloud")) {
+    return(.fw_cloud_publish(source, dest = dest, self_contained = self_contained, slug = slug))
   }
+  .fw_warn_slug_ignored(slug)
 
   # Resolve S3 connection
   s3_config <- .resolve_s3_connection(connection)
@@ -78,10 +179,15 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
 }
 
 
-#' Publish a Quarto notebook to S3
+#' Publish a Quarto notebook to S3 or Framework Cloud
 #'
 #' Renders a Quarto document and uploads it to S3. The notebook is rendered
 #' to a temporary directory, uploaded, then cleaned up.
+#'
+#' Publishing follows [publish()]: a named `connection` or a configured
+#' storage bucket comes first, then Framework Cloud when the project was set
+#' up from it. Framework Cloud takes HTML output only, adds a new version on
+#' each publish, and uses `slug` as [publish()] does.
 #'
 #' The URL format depends on the S3 connection's `static_hosting` setting:
 #' - `static_hosting: true` -> uploads to `dest/index.html`, returns `dest/`
@@ -89,11 +195,17 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
 #'
 #' @param file Character. Path to .qmd file.
 #' @param dest Character or NULL. Destination path in S3 (without extension).
-#'   If NULL, derives from filename (e.g., "analysis.qmd" -> "analysis").
+#'   If NULL, derives from filename (e.g., "analysis.qmd" -> "analysis"). On
+#'   Framework Cloud, use `slug` instead.
 #' @param connection Character or NULL. S3 connection name, or NULL for default.
 #' @param self_contained Logical. Whether to embed all resources. Default TRUE.
 #'   Ignored if `static_hosting: false` (always renders self-contained).
 #' @param format Character. Output format. Default "html".
+#' @param allow_private Logical. Publish even when the source is inside a
+#'   folder named `private` in the project. Default FALSE: private folders
+#'   hold restricted data and are refused.
+#' @param slug Framework Cloud only: name the document and turn on its
+#'   readable URL. See [publish()].
 #' @param ... Additional arguments passed to quarto render.
 #' @return Character. Public URL of the published notebook.
 #'
@@ -118,18 +230,31 @@ publish_notebook <- function(file,
                              connection = NULL,
                              self_contained = TRUE,
                              format = "html",
+                             slug = NULL,
+                             allow_private = FALSE,
                              ...) {
   checkmate::assert_file_exists(file, extension = c("qmd", "Qmd", "QMD"))
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(self_contained)
   checkmate::assert_string(format, min.chars = 1)
+  .fw_assert_slug(slug)
+  checkmate::assert_flag(allow_private)
+  .fw_assert_not_private(file, allow_private)
 
   # Check quarto is available
   quarto_path <- Sys.which("quarto")
   if (nchar(quarto_path) == 0) {
     stop("Quarto not found. Install from https://quarto.org/docs/get-started/", call. = FALSE)
   }
+
+  if (identical(.fw_publish_target(connection), "cloud")) {
+    if (!identical(format, "html")) {
+      stop("Framework Cloud publishes HTML only (got format = \"", format, "\").", call. = FALSE)
+    }
+    return(.fw_cloud_publish(file, dest = dest, self_contained = self_contained, slug = slug))
+  }
+  .fw_warn_slug_ignored(slug)
 
   # Resolve S3 connection early to fail fast
   s3_config <- .resolve_s3_connection(connection)
@@ -230,6 +355,9 @@ publish_notebook <- function(file,
 #'   "csv", "rds", "parquet", or "json". Default "csv".
 #' @param connection Character or NULL. S3 connection name, or NULL for default.
 #' @param compress Logical. Whether to gzip compress. Default FALSE.
+#' @param allow_private Logical. Publish even when the source is inside a
+#'   folder named `private` in the project. Default FALSE: private folders
+#'   hold restricted data and are refused.
 #' @return Character. Public URL of the published data.
 #'
 #' @export
@@ -251,11 +379,14 @@ publish_data <- function(data,
                          dest,
                          format = "csv",
                          connection = NULL,
-                         compress = FALSE) {
+                         compress = FALSE,
+                         allow_private = FALSE) {
   checkmate::assert_string(dest, min.chars = 1)
   checkmate::assert_choice(format, c("csv", "rds", "parquet", "json"))
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(compress)
+  checkmate::assert_flag(allow_private)
+  if (is.character(data)) .fw_assert_not_private(data, allow_private)
 
   # Resolve S3 connection
   s3_config <- .resolve_s3_connection(connection)
@@ -317,6 +448,9 @@ publish_data <- function(data,
 #' @param connection Character or NULL. S3 connection name, or NULL for default.
 #' @param pattern Character or NULL. Optional regex pattern to filter files.
 #' @param recursive Logical. Whether to include subdirectories. Default TRUE.
+#' @param allow_private Logical. Publish even when the source is inside a
+#'   folder named `private` in the project. Default FALSE: private folders
+#'   hold restricted data and are refused.
 #' @return Character vector. Public URLs of uploaded files.
 #'
 #' @export
@@ -338,8 +472,11 @@ publish_dir <- function(dir,
                         dest = NULL,
                         connection = NULL,
                         pattern = NULL,
-                        recursive = TRUE) {
+                        recursive = TRUE,
+                        allow_private = FALSE) {
   checkmate::assert_directory_exists(dir)
+  checkmate::assert_flag(allow_private)
+  .fw_assert_not_private(dir, allow_private)
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(pattern, null.ok = TRUE)

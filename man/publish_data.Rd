@@ -4,7 +4,14 @@
 \alias{publish_data}
 \title{Publish data to S3}
 \usage{
-publish_data(data, dest, format = "csv", connection = NULL, compress = FALSE)
+publish_data(
+  data,
+  dest,
+  format = "csv",
+  connection = NULL,
+  compress = FALSE,
+  allow_private = FALSE
+)
 }
 \arguments{
 \item{data}{Data frame or character path to existing file.}
@@ -17,6 +24,10 @@ publish_data(data, dest, format = "csv", connection = NULL, compress = FALSE)
 \item{connection}{Character or NULL. S3 connection name, or NULL for default.}
 
 \item{compress}{Logical. Whether to gzip compress. Default FALSE.}
+
+\item{allow_private}{Logical. Publish even when the source is inside a
+folder named \code{private} in the project. Default FALSE: private folders
+hold restricted data and are refused.}
 }
 \value{
 Character. Public URL of the published data.

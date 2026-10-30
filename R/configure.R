@@ -333,7 +333,7 @@ configure_connection <- function(name = NULL, driver = NULL, host = NULL,
     message(sprintf("  Database: %s", database))
     if (!is.null(user)) message(sprintf("  User: %s", user))
   }
-  message(sprintf("\nUse with: query_get(\"SELECT * FROM table\", \"%s\")", name))
+  message(sprintf("\nUse with: db_query(\"SELECT * FROM table\", \"%s\")", name))
 
   invisible(config)
 }

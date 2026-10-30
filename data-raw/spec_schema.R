@@ -40,7 +40,8 @@ ENV_NAME <- "^[A-Za-z_][A-Za-z0-9_]*$"
 definitions <- list(
   package = obj(
     list(
-      source = str(enum = list("cran", "github", "bioc")),
+      # Each engine accepts its own sources: R cran/github/bioc, Python pypi/github
+      source = str(enum = list("cran", "github", "bioc", "pypi")),
       version = nullable(str()),
       repo = nullable(str()),
       ref = nullable(str()),
@@ -77,6 +78,10 @@ properties <- list(
   spec_version = list(const = SPEC_VERSION),
   name = str(minLength = 1),
   type = str(enum = list("project", "project_sensitive", "course", "presentation", "bare")),
+  language = str(
+    enum = list("r", "python", "stata"),
+    description = "Primary language. The R package builds r, the Python package builds python, and fw builds stata (scaffolding only). A layers file with no language means r."
+  ),
   # orcid, url, and affiliations follow Quarto's author schema. affiliation
   # stays the plain-string summary (the first affiliation's name).
   author = obj(list(
@@ -93,10 +98,10 @@ properties <- list(
   packages = obj(
     list(
       use_renv = bool(),
-      default_packages = map_of(ref("package"), key_pattern = "^[A-Za-z][A-Za-z0-9.]*$",
+      default_packages = map_of(ref("package"), key_pattern = "^[A-Za-z0-9][A-Za-z0-9._-]*$",
                                 description = "Package name -> spec. JSON object key order is not kept (Postgres JSONB sorts keys).")
     ),
-    required = c("use_renv", "default_packages")
+    required = c("default_packages")
   ),
   git = obj(
     list(
@@ -126,10 +131,10 @@ properties <- list(
       set_theme_on_scaffold = bool(),
       ggplot_theme = str(),
       source_all_functions = bool(),
-      notebook_format = str(enum = list("quarto", "rmarkdown")),
+      notebook_format = str(enum = list("quarto", "rmarkdown", "jupyter")),
       ide = str(enum = list("vscode", "positron", "rstudio", "both", "none"))
     ),
-    required = c("seed_on_scaffold", "seed", "set_theme_on_scaffold", "ggplot_theme")
+    required = c("seed_on_scaffold", "seed")
   ),
   quarto = list(type = "object", description = "Passed through to _quarto.yml generation"),
   connections = obj(
@@ -144,30 +149,34 @@ properties <- list(
   security = obj(list(sensitive = bool()), required = c("sensitive")),
   env = map_of(str(), key_pattern = ENV_NAME,
                description = "Variables written to .env. Secret-looking names must be empty."),
-  data_hooks = map_of(str(pattern = "^[^:]+\\.R::[A-Za-z.][A-Za-z0-9._]*$"), key_pattern = KEY,
+  data_hooks = map_of(str(pattern = "^[^:]+\\.(R|py)::[A-Za-z_.][A-Za-z0-9._]*$"), key_pattern = KEY,
                       description = "Directory key -> 'path/to/file.R::function'"),
   files = map_of(ref("file"), key_pattern = REL_PATH),
   skills = map_of(ref("skill"), key_pattern = SKILL_NAME),
   source = obj(
     list(
-      origin = str(enum = list("cloud", "cli", "r")),
+      origin = str(enum = list("cloud", "cli", "r", "python")),
       fragments = arr(obj(
         list(kind = str(enum = list("base", "facet", "blueprint")), key = str(), version = list(type = "integer")),
         required = c("kind", "key")
       )),
       blueprint = obj(list(key = str(), version = list(type = "integer")), required = c("key")),
       study_plan = obj(list(id = str(), version = list(type = "integer")), required = c("id")),
-      framework_version = str(description = "Package version that created the project; written by R")
+      framework_version = str(description = "Version of the R or Python package that created the project"),
+      fw_version = str(description = "Version of fw that created the project (Stata scaffolding)")
     ),
     required = c("origin")
   )
 )
 
 resolved_required <- c(
-  "spec_version", "name", "type", "author", "directories", "extra_directories",
-  "render_dirs", "packages", "git", "ai", "scaffold", "connections", "security",
-  "env", "data_hooks", "files", "skills"
+  "spec_version", "name", "type", "language", "author", "directories", "extra_directories",
+  "git", "ai", "security", "env", "data_hooks", "files", "skills"
 )
+
+# Sections only the R and Python engines use. A Stata spec (fw scaffolding)
+# may leave them out.
+runtime_required <- c("render_dirs", "packages", "scaffold", "connections")
 
 spec_schema <- c(
   list(
@@ -177,7 +186,13 @@ spec_schema <- c(
     description = "A complete project spec, produced by spec_resolve() and accepted by project_create()."
   ),
   obj(properties, required = resolved_required),
-  list(definitions = definitions)
+  list(
+    allOf = list(list(
+      `if` = list(properties = list(language = list(enum = list("r", "python")))),
+      then = list(required = as.list(runtime_required))
+    )),
+    definitions = definitions
+  )
 )
 
 # Layer schema: same shape, nothing required, and map entries may be null.
@@ -202,6 +217,7 @@ layer_schema$description <- paste(
   "map entry removes that key when spec_resolve() merges layers."
 )
 layer_schema$required <- NULL
+layer_schema$allOf <- NULL
 layer_schema$properties <- lapply(layer_schema$properties, as_layer)
 # Definitions keep their required fields: a package, file, or skill entry must
 # still be complete inside a layer. Only the top-level spec is partial.
@@ -226,12 +242,15 @@ layers_schema <- list(
     author = properties$author,
     layers = arr(obj(
       list(
-        kind = str(enum = list("settings", "base", "facet", "blueprint", "project")),
+        kind = str(
+          enum = list("settings", "base", "facet", "blueprint", "project"),
+          description = "Labels the layer in conflicts and gitignore blocks. Without it the label is 'layer N' (1-based)."
+        ),
         key = str(),
         version = list(type = "integer"),
         layer = ref("layer")
       ),
-      required = c("kind", "layer")
+      required = c("layer")
     )),
     source = properties$source
   ),

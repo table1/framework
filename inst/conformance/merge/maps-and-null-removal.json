@@ -1,0 +1,104 @@
+{
+  "description": "Maps merge by key and a later layer wins. A null entry removes the key. Scalars and arrays (author.affiliations) are replaced whole.",
+  "layers": [
+    {
+      "kind": "base",
+      "key": "project",
+      "layer": {
+        "type": "project",
+        "author": {
+          "name": "Ada",
+          "email": "ada@example.edu",
+          "affiliations": [
+            {
+              "name": "Lab A"
+            },
+            {
+              "name": "Lab B"
+            }
+          ]
+        },
+        "directories": {
+          "notebooks": "notebooks",
+          "scripts": "scripts",
+          "scratch": "outputs/scratch"
+        },
+        "security": {
+          "sensitive": false
+        }
+      }
+    },
+    {
+      "kind": "facet",
+      "key": "restricted-data",
+      "version": 2,
+      "layer": {
+        "directories": {
+          "scratch": null,
+          "inputs_private": "inputs/private"
+        },
+        "security": {
+          "sensitive": true
+        }
+      }
+    },
+    {
+      "kind": "project",
+      "layer": {
+        "author": {
+          "affiliations": [
+            {
+              "name": "Lab C",
+              "department": "Biostatistics"
+            }
+          ]
+        },
+        "directories": {
+          "notebooks": "analysis"
+        }
+      }
+    }
+  ],
+  "expected": {
+    "spec": {
+      "type": "project",
+      "author": {
+        "name": "Ada",
+        "email": "ada@example.edu",
+        "affiliations": [
+          {
+            "name": "Lab C",
+            "department": "Biostatistics"
+          }
+        ]
+      },
+      "directories": {
+        "notebooks": "analysis",
+        "scripts": "scripts",
+        "inputs_private": "inputs/private"
+      },
+      "security": {
+        "sensitive": true
+      }
+    },
+    "gitignore_blocks": [],
+    "conflicts": [
+      {
+        "path": "author/affiliations",
+        "layers": "base project, project"
+      },
+      {
+        "path": "directories/notebooks",
+        "layers": "base project, project"
+      },
+      {
+        "path": "directories/scratch",
+        "layers": "base project, facet restricted-data v2"
+      },
+      {
+        "path": "security/sensitive",
+        "layers": "base project, facet restricted-data v2"
+      }
+    ]
+  }
+}

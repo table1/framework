@@ -10,7 +10,12 @@ fw_config_dir()
 Character string with the config directory path
 }
 \description{
-Returns the path to Framework's global configuration directory.
+Returns the path to Framework's global configuration directory, which holds
+user settings, the saved Framework Cloud server, and token files.
 Uses \code{tools::R_user_dir("framework", "config")} by default (CRAN compliant).
 Can be overridden with the \code{FW_CONFIG_HOME} environment variable.
+}
+\details{
+The Python package and the \code{fw} command-line tool keep their own folder
+(\verb{~/.config/framework}). \code{\link[=config_sync]{config_sync()}} brings their settings into R's.
 }

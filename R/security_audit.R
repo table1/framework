@@ -27,6 +27,8 @@
 #'   \item **git_history**: Scans git history for accidentally committed data files
 #'   \item **orphaned_files**: Finds data files outside configured directories
 #'   \item **private_data_exposure**: Checks if private data is tracked by git
+#'   \item **secrets_exposure**: Checks if `.env` files (which hold passwords and
+#'     tokens) are tracked by git
 #' }
 #'
 #' Status levels:
@@ -107,6 +109,11 @@ git_security_audit <- function(config_file = NULL,
       directory = character(),
       git_status = character(),
       stringsAsFactors = FALSE
+    ),
+    secrets_exposure = data.frame(
+      file = character(),
+      git_status = character(),
+      stringsAsFactors = FALSE
     )
   )
 
@@ -168,6 +175,14 @@ git_security_audit <- function(config_file = NULL,
     }
   }
 
+  # Check 3b: Secrets files (.env) tracked by git
+  if (verbose) message("Checking for tracked secrets files...")
+  secrets_findings <- .check_secrets_exposure(git_available)
+  findings$secrets_exposure <- secrets_findings$issues
+  if (nrow(secrets_findings$issues) > 0) {
+    recommendations <- c(recommendations, secrets_findings$recommendations)
+  }
+
   # Check 4: Orphaned data files
   if (verbose) message("Scanning for orphaned data files...")
   orphan_findings <- .scan_for_orphaned_files(data_dirs, extensions, verbose)
@@ -178,18 +193,20 @@ git_security_audit <- function(config_file = NULL,
 
   # Build summary
   summary <- data.frame(
-    check = c("gitignore_coverage", "private_data_exposure", "git_history", "orphaned_files"),
+    check = c("gitignore_coverage", "private_data_exposure", "git_history", "orphaned_files", "secrets_exposure"),
     status = c(
       if (nrow(findings$gitignore_issues) == 0) "pass" else if (any(findings$gitignore_issues$severity == "critical")) "fail" else "warning",
       if (nrow(findings$private_data_exposure) == 0) "pass" else "fail",
       if (!check_git_history || !git_available) "skipped" else if (nrow(findings$git_history_issues) == 0) "pass" else "fail",
-      if (nrow(findings$orphaned_files) == 0) "pass" else "warning"
+      if (nrow(findings$orphaned_files) == 0) "pass" else "warning",
+      if (!git_available) "skipped" else if (nrow(findings$secrets_exposure) == 0) "pass" else "fail"
     ),
     count = c(
       nrow(findings$gitignore_issues),
       nrow(findings$private_data_exposure),
       nrow(findings$git_history_issues),
-      nrow(findings$orphaned_files)
+      nrow(findings$orphaned_files),
+      nrow(findings$secrets_exposure)
     ),
     stringsAsFactors = FALSE
   )
@@ -490,6 +507,40 @@ git_security_audit <- function(config_file = NULL,
   list(issues = issues, recommendations = recommendations)
 }
 
+
+#' Check for secrets files tracked by git
+#'
+#' Flags `.env` files (and variants such as `.env.local`) that git tracks.
+#' Example files (`.env.example`, `.env.template`, `.env.sample`) are allowed.
+#' @keywords internal
+.check_secrets_exposure <- function(git_available) {
+  issues <- data.frame(file = character(), git_status = character(), stringsAsFactors = FALSE)
+  if (!git_available) {
+    return(list(issues = issues, recommendations = character()))
+  }
+
+  tracked <- tryCatch(
+    system2("git", c("ls-files"), stdout = TRUE, stderr = FALSE),
+    error = function(e) character()
+  )
+  base <- basename(tracked)
+  secret <- grepl("^\\.env(\\..+)?$", base) & !grepl("\\.(example|template|sample)$", base)
+  files <- tracked[secret]
+  if (length(files) == 0) {
+    return(list(issues = issues, recommendations = character()))
+  }
+
+  issues <- data.frame(file = files, git_status = "tracked", stringsAsFactors = FALSE)
+  list(
+    issues = issues,
+    recommendations = c(
+      "CRITICAL: Secrets files are tracked by git!",
+      sprintf("Run: git rm --cached %s, then commit", paste(files, collapse = " ")),
+      "Add .env to .gitignore",
+      "Rotate any passwords or tokens in those files (including FW_PROJECT_TOKEN): they stay in git history"
+    )
+  )
+}
 
 #' Check git history for leaked data files
 #' @keywords internal

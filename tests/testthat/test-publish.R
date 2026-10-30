@@ -415,3 +415,37 @@ test_that("S3 integration tests", {
   urls <- publish_dir("test_dir")
   expect_length(urls, 2)
 })
+
+test_that("uploads retry without the ACL when the bucket has ACLs disabled", {
+  skip_if_not_installed("aws.s3")
+  file <- withr::local_tempfile(fileext = ".html")
+  writeLines("<p>hi</p>", file)
+  calls <- list()
+  testthat::local_mocked_bindings(
+    put_object = function(file, object, bucket, headers, ...) {
+      calls[[length(calls) + 1]] <<- headers
+      if (!is.null(headers$`x-amz-acl`)) stop("AccessControlListNotSupported: The bucket does not allow ACLs")
+      TRUE
+    },
+    .package = "aws.s3"
+  )
+  config <- list(bucket = "b", region = "us-east-1", access_key = "k", secret_key = "s")
+  suppressMessages(framework:::.s3_upload_file(file, "report.html", config))
+  expect_length(calls, 2)
+  expect_null(calls[[2]]$`x-amz-acl`)
+})
+
+test_that("publishing refuses sources inside a private folder unless allowed", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  yaml::write_yaml(list(default = list(project_type = "project")), "settings.yml")
+  dir.create("outputs/private", recursive = TRUE)
+  dir.create("outputs/public", recursive = TRUE)
+  writeLines("<p>secret</p>", "outputs/private/report.html")
+  writeLines("<p>ok</p>", "outputs/public/report.html")
+
+  expect_error(publish("outputs/private/report.html"), "private folder")
+  expect_error(publish_dir("outputs/private"), "private folder")
+  expect_silent(framework:::.fw_assert_not_private("outputs/public/report.html"))
+  expect_silent(framework:::.fw_assert_not_private("outputs/private/report.html", allow_private = TRUE))
+})

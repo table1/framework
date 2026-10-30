@@ -13,7 +13,7 @@ Invisibly, a list with \code{pushed} and \code{up_to_date} counts.
 Reads the project's local \code{framework.db} (the SQLite ledger of record that
 \code{data_save()} always maintains) and appends any digests the cloud ledger
 does not yet have. This is the default way project history reaches
-framework.pub: an explicit, reviewable action rather than a network call
+Framework Cloud: an explicit, reviewable action rather than a network call
 on every save.
 }
 \details{

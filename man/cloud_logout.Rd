@@ -2,14 +2,19 @@
 % Please edit documentation in R/cloud.R
 \name{cloud_logout}
 \alias{cloud_logout}
-\title{Log Out of framework.pub}
+\title{Log Out of Framework Cloud}
 \usage{
-cloud_logout()
+cloud_logout(url = NULL)
+}
+\arguments{
+\item{url}{The server to log out of. Defaults to the server
+\code{\link[=cloud_login]{cloud_login()}} would use.}
 }
 \value{
 Invisibly, TRUE.
 }
 \description{
-Removes the stored token from the system keyring and any token files.
-Tokens can also be revoked server-side at framework.pub -> API tokens.
+Removes this machine's stored token for a server from the system keyring
+and any token files. Tokens can also be revoked on the server under API
+tokens.
 }

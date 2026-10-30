@@ -6,20 +6,28 @@ Status: draft, 2026-10-28. Branch: `v2`.
 
 Framework 2.0 replaces the local GUI with two front ends: framework.pub (a
 self-hostable web app) and a command-line tool, `fw`. The R package stays the
-core of the system. It must work fully without the cloud.
+core of the system. It must work fully without the cloud and without `fw`.
 
-## Principle: one contract, one implementation
+Framework also gains a native Python package (framework-py, full feature
+parity) and Stata scaffolding in `fw` (decided 2026-10-30). See "Languages".
 
-A project is described by a **project spec**, a versioned JSON document. The R
-package is the only code that turns a spec into files on disk. The cloud (PHP)
-and the CLI (TypeScript) produce specs and validate them against a shared JSON
-Schema. They never create project files themselves.
+## Principle: one contract, one engine per language
+
+A project is described by a **project spec**, a versioned JSON document. Each
+language has exactly one engine that turns a spec into files on disk: the R
+package for R projects, the Python package for Python projects, and `fw` for
+Stata projects. The cloud (PHP) produces layers and validates them against the
+shared JSON Schemas. It never creates project files itself.
 
 ```
-framework.pub ────┐
-fw new (wizard) ──┼──► spec ──► framework::project_create(spec) ──► project
-framework::new() ─┘
+framework.pub ────┐                 ┌─► framework::project_create(spec)   (R)
+fw new ───────────┼──► layers ──────┼─► framework (Python package)        (Python)
+framework::new() ─┘                 └─► fw, embedded templates            (Stata)
 ```
+
+Parallel language support is not a second implementation of one contract.
+Each engine writes only its own language's files. What must be identical
+across engines is pinned by shared conformance fixtures (`inst/conformance/`).
 
 This removes the current split, where `.cloud_setup()` in `R/cloud.R` merges
 three cloud payloads (project, settings document, and blueprint) with its own
@@ -41,9 +49,11 @@ settings document and the local user settings file (`settings.yml` in
 3. Blueprint fragments, in order (see "Blueprints and facets").
 4. Per-project overrides (wizard answers, or the cloud project's payload).
 
-Resolution happens only in R. The cloud sends unresolved layers and R merges
-them. A function such as `framework::spec_resolve()` exposes the merge so the
-CLI can preview the result by calling R.
+The cloud sends unresolved layers, and the engine for the project's language
+merges them. Layer 1 (package defaults) belongs to each engine; the merge
+rules below are shared. `inst/conformance/merge/` holds fixtures (layers in,
+merged result out) that R, Python, and `fw` all test against, so the three
+merges cannot drift.
 
 ### Draft schema
 
@@ -53,6 +63,7 @@ The fields follow the current `project_create()` arguments.
 spec_version: 1
 name: "Vaccine uptake study"
 type: project_sensitive        # project | project_sensitive | course | presentation | bare
+language: r                    # r | python | stata; a layers file without it means r
 author: { name: "", email: "", affiliation: "" }
 directories: { notebooks: notebooks, logs: logs, ... }
 extra_directories: []
@@ -139,10 +150,10 @@ There are two schemas.
 
 The canonical copies live in this repository under `inst/schema/`
 (`layer.v1.json` and `spec.v1.json`). They change in the same commits as
-`spec_resolve()` and `project_create()`. framework-cloud and the CLI each keep
-a copy pinned to a framework release tag, with a CI check that the copy matches
-the file at that tag. Each repository states which `spec_version` it accepts.
-The cloud validates with opis/json-schema and the CLI with ajv. Each published
+`spec_resolve()` and `project_create()`. framework-cloud, framework-py, and the CLI each
+keep a copy pinned to a framework release tag, with a CI check that the copy
+matches the file at that tag. Each repository states which `spec_version` it
+accepts. The cloud validates with opis/json-schema. Each published
 version is served at a stable URL, such as
 `https://framework.pub/schema/spec/v1.json`, which is also the schema's `$id`.
 
@@ -252,17 +263,47 @@ Framework moves task-specific guidance out of AGENTS.md and into skills.
 
 ### fw CLI
 
-`fw` handles interactive questions and project lifecycle, similar to `gh`.
+`fw` is an optional helper, similar to `gh`. The R and Python packages never
+need it. It is written in Go with cobra and ships as one static binary per
+platform (repository frameworktools/framework-cli; its plan is
+`docs/plan.md` there).
 
-- `fw login`, `fw logout`, and `fw status`
-- `fw new` runs a wizard, writes a spec, and calls
-  `Rscript -e 'framework::project_create(...)'`
-- `fw new <key>` uses a spec from the cloud
-- `fw bootstrap <repo>` clones a repository and runs `framework::bootstrap()`
-- `fw projects` lists registered projects
+- `fw login`, `fw logout`, and `fw status` talk to the server directly, using
+  the same server resolution, keyring entries, and token files as R.
+- `fw new` does not build R or Python projects. It calls that language's
+  engine (`Rscript -e 'framework::project_create_from_layers(...)'`, or the
+  Python package), or prints the command when the runtime is missing.
+- Inside a project, `fw` detects renv or a Python environment and runs
+  commands through it, so the project's pinned versions apply.
+- `fw` builds Stata projects itself, from templates embedded in the binary.
 
-The CLI is written in TypeScript and compiled to a single binary with
-`bun build --compile`, because many HPC nodes do not have Node installed.
+### Languages
+
+- **R and Python** have full engines, and one project can use both: they
+  share `settings.yml`, the data catalog, `framework.db`, and the `.env` keys.
+  The spec records one primary `language`. Each engine writes only its own
+  language's files, and adding the other language to an existing project is
+  a small step in that language's package (decided 2026-10-30).
+- **Stata** is scaffolding only: a master do-file, generated path globals,
+  do-file templates, logs, `.gitignore` rules for `.dta` files, and the AI
+  guardrails. Stata users are otherwise on their own for now.
+
+### Global config folders
+
+Keeping R CRAN-safe is non-negotiable, and few people will use R and Python
+together, so each side keeps its own config folder (saved server, token
+files, user settings) and a sync function brings one in line with the other
+(decided 2026-10-30).
+
+- **R:** `FW_CONFIG_HOME`, else `tools::R_user_dir("framework", "config")`.
+  R never writes outside it. `config_sync()` copies settings, the saved
+  server, and token files from the Python and `fw` folder into R's when
+  theirs are missing or newer. It only reads their folder.
+- **Python and `fw`:** `FW_CONFIG_HOME`, else `$XDG_CONFIG_HOME/framework`,
+  else `~/.config/framework`. Each has its own sync that pulls from R's
+  folder, and each reads R's folder as a fallback for logins.
+- Logins in the system keyring are shared already (service
+  `framework-cloud:<host>`, account `token`).
 
 ### framework.pub
 
@@ -391,10 +432,11 @@ example a data steward), and whether Framework records who approved it.
 3. **Cloud emits layers in spec format.** Add the v2 pull endpoint in
    `framework-cloud` and keep v1. Add blueprint versions, study plans, and a
    self-host env template.
-4. **fw CLI.** `login`, `new`, `bootstrap`, and `projects`.
+4. **fw CLI.** `login`, `new`, `bootstrap`, and `projects`, plus Stata
+   scaffolding.
 5. **Remove the GUI and plumber.**
 
 ## Open questions
 
-- Does `fw new` without a key need the R package installed first, or should
-  `fw` install it?
+- Resolved: `fw new` needs the language's package installed. When it is
+  missing, `fw` prints the install command and the command it would run.

@@ -151,8 +151,9 @@ data_save(final_df, "final.analysis_ready", type = "csv")
 **Save analysis outputs:**
 
 ```r
-result_save("regression_model", model, type = "model")
-result_save("report", file = "report.html", type = "notebook", blind = TRUE)
+save_table(summary_df, "summary")       # → outputs/tables/summary.csv
+save_figure(plot, "trend")              # → outputs/figures/trend.png
+save_model(model, "regression_model")   # → outputs/models/regression_model.rds
 ```
 
 ### 6. Query Databases
@@ -169,17 +170,17 @@ connections:
 ```
 
 ```r
-df <- query_get("SELECT * FROM users WHERE active = true", "db")
+df <- db_query("SELECT * FROM users WHERE active = true", "db")
 ```
 
 ## Enhanced Data Viewing
 
-`view_detail()` provides rich, browser-based data exploration:
+`view()` provides rich, browser-based data exploration:
 
 ```r
-view_detail(mtcars)                    # Interactive table with search/filter/export
-view_detail(config)                    # Tabbed YAML + R structure for lists
-view_detail(ggplot(mtcars, aes(mpg, hp)) + geom_point())  # Interactive plots
+view(mtcars)                    # Interactive table with search/filter/export
+view(config)                    # Tabbed YAML + R structure for lists
+view(ggplot(mtcars, aes(mpg, hp)) + geom_point())  # Interactive plots
 ```
 
 ## Configuration
@@ -231,14 +232,14 @@ Supported: Claude Code (CLAUDE.md), GitHub Copilot, AGENTS.md
 | Function | Purpose |
 |----------|---------|
 | `scaffold()` | Initialize session (load packages, functions, config) |
-| `data_load()` | Load data from path or config |
+| `data_read()` | Read data from path or catalog |
 | `data_save()` | Save data with integrity tracking |
-| `view_detail()` | Browser-based data viewer with search/export |
-| `query_get()` | Execute SQL query, return data |
-| `query_execute()` | Execute SQL command |
-| `get_or_cache()` | Lazy evaluation with caching |
-| `result_save()` | Save analysis output |
-| `result_get()` | Retrieve saved result |
+| `db_query()` | Execute SQL query, return data |
+| `db_execute()` | Execute SQL command |
+| `cache_remember()` | Lazy evaluation with caching |
+| `save_table()`, `save_figure()`, `save_model()` | Save analysis outputs |
+| `result_list()` | List saved outputs |
+| `package_add()` | Record a package in settings and install it |
 | `scratch_capture()` | Quick debug/temp file save |
 | `renv_enable()` | Enable renv for reproducibility |
 | `packages_snapshot()` | Save package versions to renv.lock |

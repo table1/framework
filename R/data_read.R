@@ -328,7 +328,16 @@ data_list <- function() {
       item <- obj[[name]]
       full_name <- if (nzchar(prefix)) paste(prefix, name, sep = ".") else name
 
-      if (is.list(item) && !is.null(item$path)) {
+      if (is.character(item) && length(item) == 1) {
+        # Shorthand entry: name: path/to/file.csv
+        entries[[full_name]] <- list(
+          name = full_name,
+          path = item,
+          type = NA_character_,
+          locked = FALSE,
+          description = NA_character_
+        )
+      } else if (is.list(item) && !is.null(item$path)) {
         # This is a data entry
         entries[[full_name]] <- list(
           name = full_name,
@@ -378,7 +387,16 @@ data_list <- function() {
     message("")  # Blank line between entries
   }
 
-  invisible(NULL)
+  invisible(do.call(rbind, lapply(entries_list, function(e) {
+    data.frame(
+      name = e$name,
+      path = e$path,
+      type = as.character(e$type),
+      locked = isTRUE(e$locked),
+      description = as.character(e$description),
+      stringsAsFactors = FALSE
+    )
+  })))
 }
 
 # Backward compatibility alias (not exported - use data_list instead)
@@ -711,8 +729,8 @@ data_spec_get <- function(path) {
       item <- obj[[name]]
       full_name <- if (nzchar(prefix)) paste(prefix, name, sep = ".") else name
 
-      if (is.list(item) && !is.null(item$path)) {
-        # This is a data entry
+      if ((is.character(item) && length(item) == 1) || (is.list(item) && !is.null(item$path))) {
+        # A data entry (or the name: path shorthand)
         paths <- c(paths, full_name)
       } else if (is.list(item) && is.null(item$path)) {
         # This is a nested structure, recurse

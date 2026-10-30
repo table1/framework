@@ -9,32 +9,56 @@ publish(
   dest = NULL,
   connection = NULL,
   overwrite = TRUE,
-  self_contained = TRUE
+  self_contained = TRUE,
+  slug = NULL,
+  allow_private = FALSE
 )
 }
 \arguments{
 \item{source}{Character. Local file or directory path to upload.}
 
 \item{dest}{Character or NULL. Destination path in S3 bucket. If NULL,
-derives from source filename.}
+derives from source filename. On Framework Cloud, use \code{slug} instead;
+\code{dest} still names the document there when \code{slug} isn't a string, for
+older scripts.}
 
 \item{connection}{Character or NULL. S3 connection name from config.yml.
 If NULL, uses the connection marked with \code{default: true}.}
 
 \item{overwrite}{Logical. Whether to overwrite existing files. Default TRUE.}
 
-\item{self_contained}{Logical. When publishing to framework.pub, whether
+\item{self_contained}{Logical. When publishing to Framework Cloud, whether
 to bundle an HTML file with its resources. Ignored for S3. Default TRUE.}
+
+\item{slug}{Framework Cloud only. A string names the document and turns on
+its readable URL, for example \code{slug = "main-results"}. \code{TRUE} turns the
+readable URL on with the name derived from \code{dest} or the file name, and
+\code{FALSE} turns it off. \code{NULL} (the default) publishes under the derived
+name and leaves the document's setting as it is (new documents start
+private). Ignored, with a warning, for S3.}
+
+\item{allow_private}{Logical. Publish even when the source is inside a
+folder named \code{private} in the project. Default FALSE: private folders
+hold restricted data and are refused.}
 }
 \value{
 Character. The public URL(s) of uploaded file(s).
 }
 \description{
-Functions for publishing notebooks, data, and files to S3 storage.
+Functions for publishing notebooks, data, and files to S3
+storage or Framework Cloud.
 
 Upload files or directories to an S3 bucket. This is the generic publishing
 function - use \code{publish_notebook()} for Quarto documents or \code{publish_data()}
 for data files.
+}
+\details{
+With no \code{connection} and no storage bucket in settings.yml, a project set
+up from Framework Cloud publishes to its server instead (the
+\code{FW_CLOUD_URL} and \code{FW_PROJECT_TOKEN} in the project's \code{.env}). Each
+publish to Framework Cloud adds a new version of the document. Documents
+start private, shared by a private link; \code{slug} turns on a readable URL
+(\verb{/@handle/project/slug}).
 }
 \examples{
 \donttest{
@@ -51,6 +75,9 @@ publish("outputs/charts/", dest = "reports/charts/")
 
 # Use specific connection
 publish("data.csv", connection = "s3_backup")
+
+# Framework Cloud: a new version with a readable URL
+publish("outputs/report.html", slug = "main-results")
 }
 }
 }

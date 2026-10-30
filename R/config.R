@@ -171,7 +171,7 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
     # Merge active environment if different
     if (active_env != "default") {
       if (active_env %in% names(raw_config)) {
-        config <- modifyList(config, raw_config[[active_env]])
+        config <- .fw_merge_env(config, raw_config[[active_env]])
       } else {
         warning(sprintf("Environment '%s' not found in config, using 'default'", active_env))
       }
@@ -206,6 +206,7 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
 
   # Resolve split file references recursively (this evaluates env() in split files)
   config <- .resolve_split_files(config, active_env, settings_file, character())
+  config <- .fw_lift_connections(config)
 
   # Initialize standard sections AFTER split file resolution (if still missing)
   for (section in c("data", "connections", "git", "security", "packages", "directories")) {
@@ -225,6 +226,28 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
   config
 }
 
+
+# Projects created by 2.0 development builds wrote settings/connections.yml
+# without a `connections:` wrapper, so its keys landed at the top level.
+# Move them back under `connections` where every reader looks.
+#' @keywords internal
+.fw_lift_connections <- function(config) {
+  keys <- c("databases", "storage_buckets", "default_database", "default_storage_bucket")
+  stray <- intersect(keys, names(config))
+  if (length(stray) == 0) {
+    return(config)
+  }
+  connections <- config$connections
+  if (!is.list(connections)) connections <- list()
+  for (key in stray) {
+    if (is.null(connections[[key]]) || length(connections[[key]]) == 0) {
+      connections[key] <- list(config[[key]])
+    }
+    config[[key]] <- NULL
+  }
+  config$connections <- connections
+  config
+}
 
 # Helper: Check if config has environment sections
 .has_environment_sections <- function(config) {
@@ -305,7 +328,7 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
         # Merge environments (same logic as main config)
         split_config <- raw_split$default
         if (environment != "default" && environment %in% names(raw_split)) {
-          split_config <- modifyList(split_config, raw_split[[environment]])
+          split_config <- .fw_merge_env(split_config, raw_split[[environment]])
         }
       }
 
@@ -478,6 +501,29 @@ settings_read <- function(settings_file = NULL, environment = NULL) {
   )
 }
 
+# Overlay an environment section (for example production) on default.
+# Named maps merge recursively; everything else, sequences included, is
+# replaced whole. modifyList() would leave a sequence of mappings unchanged
+# and replace a sequence of scalars, depending on how yaml typed it. A null
+# value removes the key, as with modifyList().
+#' @keywords internal
+.fw_merge_env <- function(base, override) {
+  if (!is.list(base) || is.null(names(base)) || !is.list(override) || is.null(names(override))) {
+    return(override)
+  }
+  for (key in names(override)) {
+    value <- override[[key]]
+    if (is.null(value)) {
+      base[[key]] <- NULL
+    } else if (is.list(value) && !is.null(names(value)) && is.list(base[[key]]) && !is.null(names(base[[key]]))) {
+      base[[key]] <- .fw_merge_env(base[[key]], value)
+    } else {
+      base[key] <- list(value)
+    }
+  }
+  base
+}
+
 #' Write project settings
 #'
 #' Writes the project settings to settings.yml or config files
@@ -521,8 +567,9 @@ settings_write <- function(settings, settings_file = NULL, section = NULL) {
 
     # Check if this section uses a split file
     if (is.character(current[[env]][[section]]) && grepl("^settings/", current[[env]][[section]])) {
-      # This is a split file, update that instead
-      split_file <- current[[env]][[section]]
+      # This is a split file, update that instead. Its path is relative to
+      # the settings file's folder, not the working directory.
+      split_file <- file.path(dirname(settings_file), current[[env]][[section]])
       if (file.exists(split_file)) {
         # Read current split file
         split_settings <- tryCatch(

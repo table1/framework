@@ -146,7 +146,7 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
     ...
   )
 
-  # Register on framework.pub and store the project key (non-bare only:
+  # Register on Framework Cloud and store the project key (non-bare only:
   # bare projects have no .env to hold the secret)
   if (result$success && !identical(type, "bare")) {
     .fw_cloud_register_project(result$path, name, type)

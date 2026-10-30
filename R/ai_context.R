@@ -499,29 +499,25 @@ df <- cache_get("processed_data")          # Read (NULL if missing)
 
 ### Output Functions
 
-#### result_save(name, value, type)
-Save analysis results with metadata.
-
-```r
-result_save("regression_model", model, type = "model")
-result_save("summary_stats", stats_df, type = "table")
-```
-
-#### save_table(data, name, format = "csv")
-Quick export to outputs/tables/.
+#### save_table(data, name, format = "csv") / save_figure(plot, name) / save_model(model, name)
+Save outputs to outputs/tables/, outputs/figures/, and outputs/models/.
 
 ```r
 save_table(summary_df, "quarterly_summary")
 save_table(report_df, "annual_report", format = "xlsx")
+save_figure(plot, "enrollment_trend")
+save_model(model, "regression_model")
+result_list()    # Everything saved so far
 ```
 
 ### Query Functions
 
-#### query_get(sql, connection)
-Execute SQL and return results.
+#### db_query(sql, connection) / db_execute(sql, connection)
+Run SQL on a connection from settings.
 
 ```r
-users <- query_get("SELECT * FROM users WHERE active = 1", "main_db")
+users <- db_query("SELECT * FROM users WHERE active = 1", "main_db")
+db_execute("UPDATE runs SET done = 1 WHERE id = 42", "main_db")
 ```
 
 ### Notebook/Script Creation
@@ -593,7 +589,7 @@ make_notebook("backup-slides", stub = "revealjs")
 
 Follow the standard Framework workflow (see the `framework-workflow` skill):
 import with `data_read()`, clean and save with `data_save()`, analyze from
-final datasets, export with `result_save()` or `save_table()`.
+final datasets, export with `save_table()`, `save_figure()`, or `save_model()`.
 '
   )
 }

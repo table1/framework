@@ -194,3 +194,19 @@ test_that("cache with custom file path", {
   retrieved <- suppressMessages(cache_get("custom_file", file = "custom_cache/my_cache.rds"))
   expect_equal(retrieved, "test value")
 })
+
+test_that("cache() records the cache file path relative to the project", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+  setwd(test_dir)
+  suppressMessages(cache("pathed", 1:3))
+  con <- DBI::dbConnect(RSQLite::SQLite(), "framework.db")
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  row <- DBI::dbGetQuery(con, "SELECT file_path FROM cache WHERE name = 'pathed'")
+  expect_false(startsWith(row$file_path, "/"))
+  expect_match(row$file_path, "pathed\\.rds$")
+})

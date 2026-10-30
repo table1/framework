@@ -2,7 +2,7 @@
 % Please edit documentation in R/publish.R
 \name{publish_notebook}
 \alias{publish_notebook}
-\title{Publish a Quarto notebook to S3}
+\title{Publish a Quarto notebook to S3 or Framework Cloud}
 \usage{
 publish_notebook(
   file,
@@ -10,6 +10,8 @@ publish_notebook(
   connection = NULL,
   self_contained = TRUE,
   format = "html",
+  slug = NULL,
+  allow_private = FALSE,
   ...
 )
 }
@@ -17,7 +19,8 @@ publish_notebook(
 \item{file}{Character. Path to .qmd file.}
 
 \item{dest}{Character or NULL. Destination path in S3 (without extension).
-If NULL, derives from filename (e.g., "analysis.qmd" -> "analysis").}
+If NULL, derives from filename (e.g., "analysis.qmd" -> "analysis"). On
+Framework Cloud, use \code{slug} instead.}
 
 \item{connection}{Character or NULL. S3 connection name, or NULL for default.}
 
@@ -25,6 +28,13 @@ If NULL, derives from filename (e.g., "analysis.qmd" -> "analysis").}
 Ignored if \code{static_hosting: false} (always renders self-contained).}
 
 \item{format}{Character. Output format. Default "html".}
+
+\item{slug}{Framework Cloud only: name the document and turn on its
+readable URL. See \code{\link[=publish]{publish()}}.}
+
+\item{allow_private}{Logical. Publish even when the source is inside a
+folder named \code{private} in the project. Default FALSE: private folders
+hold restricted data and are refused.}
 
 \item{...}{Additional arguments passed to quarto render.}
 }
@@ -36,6 +46,11 @@ Renders a Quarto document and uploads it to S3. The notebook is rendered
 to a temporary directory, uploaded, then cleaned up.
 }
 \details{
+Publishing follows \code{\link[=publish]{publish()}}: a named \code{connection} or a configured
+storage bucket comes first, then Framework Cloud when the project was set
+up from it. Framework Cloud takes HTML output only, adds a new version on
+each publish, and uses \code{slug} as \code{\link[=publish]{publish()}} does.
+
 The URL format depends on the S3 connection's \code{static_hosting} setting:
 \itemize{
 \item \code{static_hosting: true} -> uploads to \code{dest/index.html}, returns \verb{dest/}

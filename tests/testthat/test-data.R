@@ -583,3 +583,20 @@ test_that("data_add can skip config update", {
   spec <- tryCatch(data_spec_get("raw.no_config"), error = function(e) NULL)
   expect_null(spec)
 })
+
+test_that("data_add records project-relative paths, even from a subfolder", {
+  test_dir <- create_test_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    cleanup_test_dir(test_dir)
+  })
+  setwd(test_dir)
+  dir.create("inputs/raw", recursive = TRUE, showWarnings = FALSE)
+  write.csv(data.frame(x = 1), "inputs/raw/moved.csv", row.names = FALSE)
+  dir.create("notebooks", showWarnings = FALSE)
+  setwd("notebooks")
+
+  spec <- suppressMessages(data_add(file.path(test_dir, "inputs/raw/moved.csv"), name = "raw.moved"))
+  expect_identical(spec$path, "inputs/raw/moved.csv")
+})

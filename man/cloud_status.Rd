@@ -4,12 +4,17 @@
 \alias{cloud_status}
 \title{Check Cloud Connection Status}
 \usage{
-cloud_status()
+cloud_status(url = NULL)
+}
+\arguments{
+\item{url}{Check this server instead of the default.}
 }
 \value{
 Invisibly, TRUE if connected, FALSE otherwise.
 }
 \description{
-Reports whether a cloud token is configured and, if so, who it
-authenticates as.
+Reports which Framework Cloud server is in use and where that setting came
+from, whether a token is stored for it, and who the token authenticates
+as. Inside a project set up from a different server, the project's server
+is reported too.
 }

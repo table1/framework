@@ -4,7 +4,7 @@
 \alias{setup}
 \title{Setup Framework (First-Time Configuration or Cloud Project Setup)}
 \usage{
-setup(port = 8080, browse = TRUE, location = NULL)
+setup(port = 8080, browse = TRUE, location = NULL, url = NULL)
 }
 \arguments{
 \item{port}{A project token string (cloud mode), or a port number for the
@@ -14,6 +14,10 @@ legacy GUI (default: 8080)}
 
 \item{location}{Cloud mode only: where to create the project (prompted
 interactively when NULL)}
+
+\item{url}{Cloud mode only: the Framework Cloud server that issued the
+token. Defaults to \code{FW_CLOUD_URL}, then the server you last logged in to
+with \code{\link[=cloud_login]{cloud_login()}}, then \url{https://framework.pub}.}
 }
 \value{
 Cloud mode: invisibly, the project_create() result. GUI mode:
@@ -24,8 +28,10 @@ Two modes, dispatched on the first argument:
 }
 \details{
 \itemize{
-\item \code{setup("fw_...")} with a \strong{project token} from framework.pub pulls that
-project's cloud definition and scaffolds it locally.
+\item \code{setup("fw_...")} with a \strong{project token} from Framework Cloud pulls
+that project's cloud definition and scaffolds it locally. The project's
+\code{.env} records the token and its server (\code{FW_CLOUD_URL}), so \code{\link[=publish]{publish()}}
+and the ledger go back to the server the project came from.
 \item \code{setup()} (or with a port number) initializes Framework's global
 configuration and launches the legacy GUI for first-time setup.
 }
@@ -35,6 +41,9 @@ configuration and launches the legacy GUI for first-time setup.
 if (FALSE) {
 # Set up a cloud-defined project by its token
 framework::setup("1|fw_abc123...")
+
+# From a self-hosted server
+framework::setup("1|fw_abc123...", url = "https://framework.example.edu")
 
 # First-time setup (legacy GUI)
 framework::setup()

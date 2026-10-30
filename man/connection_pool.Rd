@@ -58,7 +58,7 @@ automatically.
 
 \strong{When NOT to use:}
 \itemize{
-\item One-off queries (use \code{query_get()} instead)
+\item One-off queries (use \code{db_query()} instead)
 \item Short scripts (overhead not worth it)
 }
 }

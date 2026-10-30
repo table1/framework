@@ -242,23 +242,33 @@ key <- gsub("//+", "/", key)
   region <- if (!is.null(base_url)) "" else s3_config$region
   use_https <- s3_config$use_https %||% TRUE
 
-  # Upload file with public-read ACL so published assets are accessible
-  result <- tryCatch({
+  put <- function(headers) {
     aws.s3::put_object(
       file = file,
       object = key,
       bucket = s3_config$bucket,
-      headers = list(
-        `Content-Type` = content_type,
-        `x-amz-acl` = "public-read"
-      ),
+      headers = headers,
       base_url = base_url,
       region = region,
       use_https = use_https
     )
-  }, error = function(e) {
-    stop(sprintf("Failed to upload to S3: %s", e$message), call. = FALSE)
-  })
+  }
+
+  # Upload with a public-read ACL so published assets are accessible. Buckets
+  # with ACLs disabled (the AWS default since 2023, "bucket owner enforced")
+  # reject that header; retry without it and leave access to the bucket policy.
+  result <- tryCatch(
+    put(list(`Content-Type` = content_type, `x-amz-acl` = "public-read")),
+    error = function(e) {
+      if (!grepl("AccessControlListNotSupported", conditionMessage(e), fixed = TRUE)) {
+        stop(sprintf("Failed to upload to S3: %s", conditionMessage(e)), call. = FALSE)
+      }
+      tryCatch(
+        put(list(`Content-Type` = content_type)),
+        error = function(e2) stop(sprintf("Failed to upload to S3: %s", conditionMessage(e2)), call. = FALSE)
+      )
+    }
+  )
 
   # Return the public URL
   .s3_public_url(key, s3_config)

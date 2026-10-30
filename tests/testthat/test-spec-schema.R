@@ -16,6 +16,7 @@ minimal_spec <- function() {
     spec_version = 1,
     name = "Test project",
     type = "project",
+    language = "r",
     author = list(name = "A", email = "a@example.com", affiliation = ""),
     directories = list(notebooks = "notebooks", logs = "logs"),
     extra_directories = setNames(list(), character()),
@@ -135,4 +136,48 @@ test_that("the layers envelope validates and checks each layer", {
   bad_kind <- envelope
   bad_kind$layers[[1]]$kind <- "plugin"
   expect_false(v$validate(as_json(bad_kind)))
+})
+
+test_that("the schemas accept Python package names, hooks, and notebook formats", {
+  skip_if_not_installed("jsonvalidate")
+  v <- jsonvalidate::json_schema$new(schema_path("layer.v1.json"), engine = "ajv")
+  layer <- list(
+    language = "python",
+    packages = list(default_packages = list(
+      `scikit-learn` = list(source = "pypi", auto_attach = FALSE),
+      python_dateutil = list(source = "pypi", auto_attach = FALSE)
+    )),
+    data_hooks = list(restricted = "hooks/fetch.py::fetch_data"),
+    scaffold = list(notebook_format = "jupyter"),
+    source = list(origin = "python")
+  )
+  expect_true(v$validate(jsonlite::toJSON(layer, auto_unbox = TRUE)))
+
+  # R's own check still refuses what R cannot build
+  spec <- spec_resolve(list(list(type = "project")), name = "P")
+  spec$packages$default_packages$numpy <- list(source = "pypi", auto_attach = FALSE)
+  spec$data_hooks$x <- "hooks/fetch.py::fetch"
+  spec$scaffold$notebook_format <- "jupyter"
+  problems <- spec_check(spec)
+  expect_match(problems, "source must be cran", all = FALSE)
+  expect_match(problems, "file.R::function", all = FALSE)
+  expect_match(problems, "notebook_format", all = FALSE)
+})
+
+test_that("Stata specs need no R or Python sections, and layers may omit kind", {
+  skip_if_not_installed("jsonvalidate")
+  v <- jsonvalidate::json_schema$new(schema_path("spec.v1.json"), engine = "ajv")
+  stata <- minimal_spec()
+  stata$language <- "stata"
+  stata[c("render_dirs", "packages", "scaffold", "connections")] <- NULL
+  expect_true(v$validate(as_json(stata)))
+
+  python <- stata
+  python$language <- "python"
+  expect_false(v$validate(as_json(python)))
+  expect_true(v$validate(as_json(minimal_spec())))
+
+  layers <- jsonvalidate::json_schema$new(schema_path("layers.v1.json"), engine = "ajv")
+  envelope <- list(spec_version = 1, name = "P", layers = list(list(layer = list(language = "stata"))))
+  expect_true(layers$validate(jsonlite::toJSON(envelope, auto_unbox = TRUE)))
 })

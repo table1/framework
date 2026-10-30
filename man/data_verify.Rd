@@ -15,7 +15,7 @@ Invisibly, TRUE when every available record matches.
 }
 \description{
 Hashes the file behind a catalog name and compares it against the local
-framework.db record and the project's cloud ledger on framework.pub.
+framework.db record and the project's cloud ledger on Framework Cloud.
 Proves "the data I have is bit-identical to what was recorded" without the
 data ever leaving the machine.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/cloud.R
 \name{cloud_sync}
 \alias{cloud_sync}
-\title{Sync Your Settings with framework.pub}
+\title{Sync Your Settings with Framework Cloud}
 \usage{
 cloud_sync(direction = c("auto", "pull", "push"))
 }

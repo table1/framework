@@ -652,26 +652,27 @@ scaffold <- function(config_file = NULL) {
 #' 2. Global ~/.frameworkrc (FW_SEED)
 #' 3. Skip seeding if both are NULL or empty
 .set_random_seed <- function(config) {
-  seed_on <- config$options$seed_on_scaffold %||% config$seed_on_scaffold %||% FALSE
-  seed_value <- NULL
+  # New projects write these under scaffold: (settings/scaffold.yml); older
+  # ones under options: or the top level
+  seed_on <- config$scaffold$seed_on_scaffold %||% config$options$seed_on_scaffold %||%
+    config$seed_on_scaffold
+  project_seed <- config$scaffold$seed %||% config$seed %||% config$options$seed
+  project_seed <- suppressWarnings(as.integer(project_seed))
+  if (length(project_seed) == 0 || is.na(project_seed)) project_seed <- NULL
+  global_seed <- suppressWarnings(as.integer(Sys.getenv("FW_SEED", "")))
+  if (is.na(global_seed)) global_seed <- NULL
 
-  global_seed <- Sys.getenv("FW_SEED", "")
-  if (nzchar(global_seed)) {
-    seed_on <- TRUE
-    seed_value <- suppressWarnings(as.integer(global_seed))
+  # The project decides: an explicit seed_on_scaffold: false skips seeding
+  # even when FW_SEED is set. Without a project setting, FW_SEED turns it on.
+  if (isFALSE(seed_on)) {
+    return(invisible(NULL))
   }
-
-  if (!isTRUE(seed_on)) {
+  if (is.null(seed_on) && is.null(global_seed)) {
     return(invisible(NULL))
   }
 
-  if (is.null(seed_value) || is.na(seed_value)) {
-    seed_value <- config$seed %||% config$options$seed
-  }
-
-  if (is.null(seed_value) || is.na(seed_value)) {
-    seed_value <- 123L
-  }
+  # The project's seed wins over the user-wide FW_SEED
+  seed_value <- project_seed %||% global_seed %||% 123L
 
   set.seed(seed_value)
   message(sprintf("Random seed set to %s.", seed_value))

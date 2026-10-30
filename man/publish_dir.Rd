@@ -9,7 +9,8 @@ publish_dir(
   dest = NULL,
   connection = NULL,
   pattern = NULL,
-  recursive = TRUE
+  recursive = TRUE,
+  allow_private = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,10 @@ the directory name.}
 \item{pattern}{Character or NULL. Optional regex pattern to filter files.}
 
 \item{recursive}{Logical. Whether to include subdirectories. Default TRUE.}
+
+\item{allow_private}{Logical. Publish even when the source is inside a
+folder named \code{private} in the project. Default FALSE: private folders
+hold restricted data and are refused.}
 }
 \value{
 Character vector. Public URLs of uploaded files.

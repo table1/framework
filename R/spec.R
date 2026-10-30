@@ -52,23 +52,27 @@ spec_resolve <- function(layers = list(), name, author = NULL, check = TRUE) {
   entries <- .spec_normalize_layers(layers)
 
   type <- "project"
+  language <- "r"
   for (entry in entries) {
     if (!is.null(entry$layer$type)) type <- entry$layer$type
+    if (!is.null(entry$layer$language)) language <- entry$layer$language
   }
   checkmate::assert_choice(type, .spec_types())
-
-  state <- list(
-    spec = list(),
-    gitignore = list(),
-    setters = list()
-  )
-  all_entries <- c(list(list(label = "package defaults", layer = .spec_package_defaults(type))), entries)
-  for (entry in all_entries) {
-    state <- .spec_apply_layer(state, entry$layer, entry$label)
+  checkmate::assert_choice(language, .spec_languages())
+  if (!identical(language, "r")) {
+    stop(.spec_language_message(language), call. = FALSE)
   }
+
+  # The package defaults are layer 0; the merge itself is language-neutral
+  # and shared with the Python package and fw (see inst/conformance/).
+  state <- .spec_merge_layers(c(
+    list(list(label = "package defaults", layer = .spec_package_defaults(type))),
+    entries
+  ))
 
   spec <- state$spec
   spec$type <- type
+  spec$language <- language
   spec$name <- name
   if (!is.null(author)) spec$author <- .author_merge(spec$author, author)
   spec <- .spec_finalize(spec, state$gitignore)
@@ -106,7 +110,7 @@ spec_check <- function(spec) {
   add <- function(...) problems <<- c(problems, sprintf(...))
 
   required <- c(
-    "spec_version", "name", "type", "author", "directories", "extra_directories",
+    "spec_version", "name", "type", "language", "author", "directories", "extra_directories",
     "render_dirs", "packages", "git", "ai", "scaffold", "connections",
     "security", "env", "data_hooks", "files", "skills"
   )
@@ -119,6 +123,10 @@ spec_check <- function(spec) {
   }
   if (!is.null(spec$type) && !spec$type %in% .spec_types()) {
     add("unknown project type '%s'", spec$type)
+  }
+  if (!is.null(spec$language) && !identical(spec$language, "r")) {
+    add(if (spec$language %in% .spec_languages()) .spec_language_message(spec$language)
+        else sprintf("unknown language '%s'", spec$language))
   }
 
   for (path in .spec_map_paths) {
@@ -149,6 +157,11 @@ spec_check <- function(spec) {
     }
   }
 
+  notebook_format <- spec$scaffold$notebook_format
+  if (!is.null(notebook_format) && !notebook_format %in% c("quarto", "rmarkdown")) {
+    add("scaffold.notebook_format must be quarto or rmarkdown for R projects, got '%s'", notebook_format)
+  }
+
   unknown_assistants <- setdiff(names(spec$ai$assistants), names(.ai_assistant_table()))
   for (a in unknown_assistants) add("ai.assistants: unknown assistant '%s'", a)
   if (!isTRUE(spec$ai$agents_md %in% c("stub", "none"))) add("ai.agents_md must be 'stub' or 'none'")
@@ -173,6 +186,12 @@ spec_check <- function(spec) {
 
   for (var in names(spec$env)) {
     if (!grepl("^[A-Za-z_][A-Za-z0-9_]*$", var)) add("env: invalid variable name '%s'", var)
+    # Specs travel through the cloud and into git; secrets never do
+    value <- spec$env[[var]]
+    if (grepl("PASSWORD|SECRET|TOKEN|API_KEY|PRIVATE_KEY|CREDENTIAL", toupper(var)) &&
+        length(value) > 0 && !is.na(value[1]) && nzchar(as.character(value[1]))) {
+      add("env.%s: secret-looking variables must be empty in a spec; set the value in .env", var)
+    }
   }
   for (key in names(spec$data_hooks)) {
     if (!grepl("^[^:]+\\.R::[A-Za-z.][A-Za-z0-9._]*$", spec$data_hooks[[key]])) {
@@ -187,6 +206,44 @@ spec_check <- function(spec) {
 # Internals -------------------------------------------------------------------
 
 .spec_types <- function() c("project", "project_sensitive", "course", "presentation", "bare")
+
+# Project languages. R builds R projects, the Python package builds Python
+# projects, and fw builds Stata projects (scaffolding only).
+.spec_languages <- function() c("r", "python", "stata")
+
+.spec_language_message <- function(language) {
+  switch(language,
+    python = "This is a Python project. Create it with the framework Python package or `fw new`.",
+    stata = "This is a Stata project. Create it with `fw new` (the fw command-line tool).",
+    sprintf("This framework package creates R projects only (got language '%s').", language)
+  )
+}
+
+# The merge result in the conformance fixture format (inst/conformance/merge):
+# the merged spec, the gitignore blocks in layer order, and the conflicts.
+#' @keywords internal
+.conformance_merge <- function(layers) {
+  state <- .spec_merge_layers(.spec_normalize_layers(layers))
+  conflicts <- .spec_conflicts(state$setters)
+  list(
+    spec = state$spec,
+    gitignore_blocks = lapply(state$gitignore, function(b) list(label = b$label, text = b$text)),
+    conflicts = lapply(seq_len(nrow(conflicts)), function(i) {
+      list(path = conflicts$path[i], layers = conflicts$layers[i])
+    })
+  )
+}
+
+# Apply normalized layers in order: the merge rules shared by every engine.
+# Returns the merged spec, the gitignore blocks (label + text, in layer
+# order), and the setters used to report conflicts.
+.spec_merge_layers <- function(entries) {
+  state <- list(spec = list(), gitignore = list(), setters = list())
+  for (entry in entries) {
+    state <- .spec_apply_layer(state, entry$layer, entry$label)
+  }
+  state
+}
 
 # Entries whose values are replaced whole when a later layer sets them.
 .spec_atomic_maps <- c(
@@ -301,7 +358,7 @@ spec_check <- function(spec) {
   spec <- .spec_mark_maps(spec)
 
   order <- c(
-    "spec_version", "name", "type", "author", "directories", "extra_directories",
+    "spec_version", "name", "type", "language", "author", "directories", "extra_directories",
     "render_dirs", "packages", "git", "ai", "scaffold", "quarto", "connections",
     "security", "env", "data_hooks", "files", "skills", "source"
   )

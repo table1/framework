@@ -1,0 +1,82 @@
+{
+  "description": "Entries of files, skills, extra_directories, and packages.default_packages are replaced whole, never merged field by field. Null removes an entry.",
+  "layers": [
+    {
+      "kind": "blueprint",
+      "key": "r01-analysis",
+      "version": 3,
+      "layer": {
+        "files": {
+          "README.md": {
+            "content": "# {{project_name}}",
+            "template": true
+          },
+          "notes.md": {
+            "content": "Notes"
+          }
+        },
+        "extra_directories": {
+          "codebooks": {
+            "label": "Codebooks",
+            "path": "docs/codebooks"
+          }
+        },
+        "skills": {
+          "framework-data": {
+            "package": true
+          }
+        }
+      }
+    },
+    {
+      "kind": "project",
+      "layer": {
+        "files": {
+          "README.md": {
+            "content": "Plain readme"
+          },
+          "notes.md": null
+        },
+        "extra_directories": {
+          "codebooks": {
+            "path": "codebooks"
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "spec": {
+      "files": {
+        "README.md": {
+          "content": "Plain readme"
+        }
+      },
+      "extra_directories": {
+        "codebooks": {
+          "path": "codebooks"
+        }
+      },
+      "skills": {
+        "framework-data": {
+          "package": true
+        }
+      }
+    },
+    "gitignore_blocks": [],
+    "conflicts": [
+      {
+        "path": "files/README.md",
+        "layers": "blueprint r01-analysis v3, project"
+      },
+      {
+        "path": "files/notes.md",
+        "layers": "blueprint r01-analysis v3, project"
+      },
+      {
+        "path": "extra_directories/codebooks",
+        "layers": "blueprint r01-analysis v3, project"
+      }
+    ]
+  }
+}

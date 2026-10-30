@@ -175,3 +175,26 @@ test_that("keys set to the same value by several layers are not conflicts", {
   )
   expect_identical(nrow(attr(spec, "conflicts")), 0L)
 })
+
+test_that("specs record their language, and R builds R projects only", {
+  spec <- spec_resolve(list(list(type = "project")), name = "P")
+  expect_identical(spec$language, "r")
+  expect_identical(names(spec)[1:4], c("spec_version", "name", "type", "language"))
+
+  expect_error(spec_resolve(list(list(language = "stata")), name = "P"), "fw new")
+  expect_error(spec_resolve(list(list(language = "python")), name = "P"), "Python package")
+  expect_error(spec_resolve(list(list(language = "julia")), name = "P"), "language")
+
+  spec$language <- "stata"
+  expect_match(spec_check(spec), "Stata project", all = FALSE)
+})
+
+test_that("spec_check() rejects values for secret-looking env names", {
+  spec <- spec_resolve(list(list(type = "project")), name = "P")
+  expect_length(spec_check(spec), 0)
+  spec$env$DB_PASSWORD <- "hunter2"
+  spec$env$API_KEY <- ""
+  problems <- spec_check(spec)
+  expect_match(problems, "env.DB_PASSWORD", all = FALSE)
+  expect_false(any(grepl("API_KEY", problems)))
+})

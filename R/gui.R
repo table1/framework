@@ -2,8 +2,10 @@
 #'
 #' Two modes, dispatched on the first argument:
 #'
-#' - `setup("fw_...")` with a **project token** from framework.pub pulls that
-#'   project's cloud definition and scaffolds it locally.
+#' - `setup("fw_...")` with a **project token** from Framework Cloud pulls
+#'   that project's cloud definition and scaffolds it locally. The project's
+#'   `.env` records the token and its server (`FW_CLOUD_URL`), so [publish()]
+#'   and the ledger go back to the server the project came from.
 #' - `setup()` (or with a port number) initializes Framework's global
 #'   configuration and launches the legacy GUI for first-time setup.
 #'
@@ -12,6 +14,9 @@
 #' @param browse Automatically open browser/folder (default: TRUE)
 #' @param location Cloud mode only: where to create the project (prompted
 #'   interactively when NULL)
+#' @param url Cloud mode only: the Framework Cloud server that issued the
+#'   token. Defaults to `FW_CLOUD_URL`, then the server you last logged in to
+#'   with [cloud_login()], then <https://framework.pub>.
 #'
 #' @return Cloud mode: invisibly, the project_create() result. GUI mode:
 #'   invisibly returns the plumber server object.
@@ -22,6 +27,9 @@
 #' # Set up a cloud-defined project by its token
 #' framework::setup("1|fw_abc123...")
 #'
+#' # From a self-hosted server
+#' framework::setup("1|fw_abc123...", url = "https://framework.example.edu")
+#'
 #' # First-time setup (legacy GUI)
 #' framework::setup()
 #' }
@@ -30,10 +38,11 @@
 #' @seealso [new()], [cloud_login()], [gui()]
 #'
 #' @export
-setup <- function(port = 8080, browse = TRUE, location = NULL) {
-  # A character first argument is a framework.pub project token
+setup <- function(port = 8080, browse = TRUE, location = NULL, url = NULL) {
+  # A character first argument is a Framework Cloud project token
   if (is.character(port) && length(port) == 1) {
-    return(.cloud_setup(token = port, location = location, browse = browse))
+    checkmate::assert_string(url, min.chars = 1, null.ok = TRUE)
+    return(.cloud_setup(token = port, location = location, browse = browse, url = url))
   }
 
   # Ensure global config exists
