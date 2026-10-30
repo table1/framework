@@ -5,6 +5,9 @@
 The GitHub repository moved from table1/framework to frameworktools/framework.
 The URL and BugReports fields in DESCRIPTION now point to the new location.
 
+The maintainer email changes from erik@table1.org to erik@framework.pub.
+I will confirm the change from the old address.
+
 ## Update to 1.1.1
 
 This is a patch release for a security bug in 1.1.0. Projects created with
