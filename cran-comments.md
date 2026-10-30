@@ -1,14 +1,17 @@
 # CRAN Comments
 
-## Update to 1.1.0
+## Update to 1.1.1
 
-This is an update from 1.0.2. Main changes:
-
-* `plumber` moved from Imports to Suggests. It is only needed for the optional
-  local GUI, and its `sodium` dependency (system libsodium) blocked installation
-  on some HPC systems. `gui()` checks for plumber with `requireNamespace()`.
-* New standard `logs` directory, ignored by the project gitignore templates.
-* Skills-based AI context files for new projects.
+This is a patch release for a security bug in 1.1.0. Projects created with
+`new_project()` and related helpers got no `.gitignore`, so the initial git
+commit included the project's `.env` file, which holds database passwords.
+Every project now gets a `.gitignore`, project creation checks that `.env` is
+ignored before the first commit, and `git_security_audit()` gains a check for
+tracked `.env` files. It also stops `new_project()` from opening the
+optional GUI (which needs the suggested plumber package) when no user
+settings exist; it now creates default settings instead. Two smaller fixes:
+`scaffold()` now applies the project's random seed, and `data_add()` stores
+project-relative paths.
 
 ## R CMD check results
 

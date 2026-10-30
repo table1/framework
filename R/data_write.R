@@ -290,11 +290,15 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
   # Determine delimiter value for storage
   delimiter_value <- if (type == "csv") delimiter else NA
 
+  # Record the path relative to the project root, so the catalog keeps
+  # working when the project is moved or cloned to another machine
+  stored_path <- .fw_project_relative_path(file_path)
+
   # Register in the database
   tryCatch(
     .set_data(
       name = name,
-      path = file_path,
+      path = stored_path,
       type = type,
       delimiter = delimiter_value,
       locked = locked,
@@ -309,7 +313,7 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
 
   # Build spec for config
   spec <- list(
-    path = file_path,
+    path = stored_path,
     type = type
   )
   if (!is.na(delimiter_value)) {
@@ -335,6 +339,20 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
   invisible(spec)
 }
 
+
+# An absolute path inside the project, made relative to the project root.
+# Paths outside the project stay absolute.
+#' @keywords internal
+.fw_project_relative_path <- function(path) {
+  root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
+  if (is.null(root)) {
+    return(path)
+  }
+  root <- normalizePath(root, winslash = "/", mustWork = FALSE)
+  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+  prefix <- paste0(sub("/+$", "", root), "/")
+  if (startsWith(path, prefix)) substring(path, nchar(prefix) + 1) else path
+}
 
 #' Set a data value
 #' @param name The data name

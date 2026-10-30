@@ -55,11 +55,10 @@ new_project <- function(name = NULL, location = NULL, type = "project", browse =
   settings_path <- file.path(config_dir, "settings.yml")
 
   if (!file.exists(settings_path)) {
-    message("Global settings not found. Running setup() first...")
-    setup()
-    if (!file.exists(settings_path)) {
-      stop("Setup cancelled or failed. Run framework::setup() to configure global settings.")
-    }
+    # Create the default settings rather than opening the setup GUI, which
+    # needs plumber and blocks in a script
+    message("Global settings not found. Initializing defaults...")
+    init_global_config()
   }
 
   # Load global config

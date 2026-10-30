@@ -137,9 +137,13 @@ project_create <- function(
   )
 
   # Create .gitignore from template content
-  if (!is.null(git$gitignore_content) && nzchar(git$gitignore_content)) {
-    .create_gitignore(project_dir, git$gitignore_content)
+  # Every project gets a .gitignore (falling back to the type's template),
+  # because .env holds secrets.
+  gitignore <- git$gitignore_content %||% ""
+  if (!nzchar(paste(gitignore, collapse = ""))) {
+    gitignore <- .default_gitignore(type)
   }
+  .create_gitignore(project_dir, gitignore)
 
   # Create AI context files
   if (ai$enabled) {
@@ -517,6 +521,33 @@ project_create <- function(
   message("  Created: .env")
 }
 
+# The packaged .gitignore template for a project type.
+#' @keywords internal
+.default_gitignore <- function(type) {
+  template <- switch(type,
+    project_sensitive = "gitignore-sensitive",
+    course = "gitignore-course",
+    presentation = "gitignore-presentation",
+    "gitignore-project"
+  )
+  path <- system.file("templates", template, package = "framework")
+  if (nzchar(path)) paste(readLines(path, warn = FALSE), collapse = "\n") else ".env"
+}
+
+# Make sure .gitignore ignores .env before the first commit. Appends the
+# rule when no line covers it.
+#' @keywords internal
+.ensure_secrets_ignored <- function(project_dir) {
+  path <- file.path(project_dir, ".gitignore")
+  lines <- if (file.exists(path)) readLines(path, warn = FALSE) else character(0)
+  covered <- any(trimws(lines) %in% c(".env", "/.env", ".env*", "/.env*", "*.env"))
+  if (!covered) {
+    writeLines(c(lines, "", "# Secrets (added by Framework)", ".env"), path)
+    message("  Added .env to .gitignore")
+  }
+  invisible(!covered)
+}
+
 #' Create .gitignore file
 #' @keywords internal
 .create_gitignore <- function(project_dir, content) {
@@ -759,6 +790,9 @@ duplicate its content in this file.
   }
 
   # Stage all files
+  # Never stage secrets, whatever .gitignore content the caller supplied
+  .ensure_secrets_ignored(project_dir)
+
   add_result <- system2("git", c("add", "."), stdout = TRUE, stderr = TRUE)
 
   # Create initial commit with proper message formatting

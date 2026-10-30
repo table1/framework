@@ -50,6 +50,8 @@ The security audit performs the following checks:
 \item \strong{git_history}: Scans git history for accidentally committed data files
 \item \strong{orphaned_files}: Finds data files outside configured directories
 \item \strong{private_data_exposure}: Checks if private data is tracked by git
+\item \strong{secrets_exposure}: Checks if \code{.env} files (which hold passwords and
+tokens) are tracked by git
 }
 
 Status levels:

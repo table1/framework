@@ -325,3 +325,20 @@ test_that("dotenv_location errors when file not found", {
     "Dotenv file not found at"
   )
 })
+
+test_that(".set_random_seed reads the scaffold section new projects write", {
+  withr::local_envvar(FW_SEED = NA)
+  withr::local_seed(42)
+  config <- list(scaffold = list(seed_on_scaffold = TRUE, seed = "123"))
+  expect_message(framework:::.set_random_seed(config), "Random seed set to 123.", fixed = TRUE)
+
+  # The project's seed wins over FW_SEED, and an explicit false skips it
+  withr::local_envvar(FW_SEED = "555")
+  expect_message(framework:::.set_random_seed(config), "Random seed set to 123.", fixed = TRUE)
+  config$scaffold$seed_on_scaffold <- FALSE
+  expect_silent(framework:::.set_random_seed(config))
+
+  # No project setting: FW_SEED turns seeding on
+  expect_message(framework:::.set_random_seed(list()), "Random seed set to 555.", fixed = TRUE)
+})
+
