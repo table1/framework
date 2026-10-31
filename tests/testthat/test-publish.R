@@ -462,6 +462,16 @@ test_that("publishing warns about private paths and stops in scripts", {
   expect_warning(expect_error(confirm("/private/var/folders/proj/Private/out.html")), "private")
   expect_warning(expect_error(confirm("~/proj/Private/out.html")), "private")
 
+  # Every file in a folder is checked, and the warning lists at most five
+  dir.create("outputs/public/site", recursive = TRUE)
+  writeLines("ok", "outputs/public/site/index.html")
+  expect_silent(confirm("outputs/public/site"))
+  for (i in 1:7) writeLines("x", sprintf("outputs/public/site/private_%d.html", i))
+  expect_error(
+    expect_warning(confirm("outputs/public/site"), "private_5.html.*and 2 more"),
+    "non-interactive"
+  )
+
   # Interactive sessions ask, and only an explicit yes publishes
   withr::local_options(rlang_interactive = TRUE)
   answer <- NA

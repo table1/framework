@@ -1,6 +1,8 @@
 ---
 name: framework-outputs
 description: Use when saving analysis outputs, caching expensive computations, running database queries, or publishing files in this Framework project - covers save_table(), save_figure(), save_model(), cache_remember(), db_query(), and publish().
+metadata:
+  title: Saving outputs and publishing
 ---
 
 # Framework Outputs, Caching, Queries, and Publishing
@@ -68,7 +70,11 @@ from it:
 publish("outputs/report.html")                       # Upload a file, returns public URL
 publish_notebook("notebooks/analysis.qmd")           # Render Quarto doc and upload
 publish("outputs/charts/", dest = "reports/charts/") # Upload a directory
+publish("outputs/report.html", to = "github")        # GitHub Pages: commits published/report/ and pushes
 ```
+
+`to = "github"` makes a public website, even from a private repository.
+Publish there only when the user asks for it.
 
 Never publish files from private/sensitive directories. The publish functions
 warn about any source with "private" in its path and ask the user to confirm.

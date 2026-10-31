@@ -5,34 +5,63 @@
 NULL
 
 # Uploads are the user's choice, so private paths warn rather than refuse.
-# Any source whose absolute path contains "private", in any case, counts.
-# A leading /private/ is skipped: macOS resolves /tmp, /var, and /etc there,
-# so tempdir() would always match. Interactive sessions ask, defaulting to
-# No, and scripts stop unless include_private = TRUE. framework-py and fw
-# apply the same rule.
+# Every file that would be uploaded is checked: one whose absolute path
+# contains "private", in any case, counts. A leading /private/ is skipped
+# because macOS resolves /tmp, /var, and /etc there, so tempdir() would
+# always match. Interactive sessions ask, defaulting to No, and scripts stop
+# unless include_private = TRUE. framework-py and fw apply the same rule.
 #' @keywords internal
 .fw_confirm_private <- function(source, include_private = FALSE) {
-  path <- normalizePath(source, winslash = "/", mustWork = FALSE)
-  checked <- sub("^/private/", "/", path)
-  if (isTRUE(include_private) || !grepl("private", checked, ignore.case = TRUE)) {
+  if (isTRUE(include_private)) {
     return(invisible(TRUE))
   }
+  paths <- source
+  if (dir.exists(source)) {
+    paths <- c(source, list.files(source, recursive = TRUE, full.names = TRUE))
+  }
+  paths <- normalizePath(paths, winslash = "/", mustWork = FALSE)
+  flagged <- paths[grepl("private", sub("^/private/", "/", paths), ignore.case = TRUE)]
+  if (length(flagged) == 0) {
+    return(invisible(TRUE))
+  }
+  shown <- utils::head(flagged, 5)
+  if (length(flagged) > 5) {
+    shown <- c(shown, sprintf("... and %d more", length(flagged) - 5))
+  }
   warning(
-    "'", path, "' has \"private\" in its path, so it may hold restricted data.",
+    "These paths have \"private\" in them, so they may hold restricted data:\n",
+    paste0("  ", shown, collapse = "\n"),
     call. = FALSE, immediate. = TRUE
   )
   if (rlang::is_interactive()) {
-    answer <- utils::askYesNo("Publish it anyway?", default = FALSE)
+    answer <- utils::askYesNo("Upload them anyway?", default = FALSE)
     if (isTRUE(answer)) {
       return(invisible(TRUE))
     }
     stop("Cancelled: nothing was published.", call. = FALSE)
   }
   stop(
-    "Not publishing '", path, "' from a non-interactive session. ",
-    "Pass include_private = TRUE to publish it.",
+    "Not publishing from a non-interactive session. ",
+    "Pass include_private = TRUE to publish these paths.",
     call. = FALSE
   )
+}
+
+# Arguments that mean something only for buckets or Framework Cloud
+#' @keywords internal
+.fw_pages_reject <- function(dest = NULL, connection = NULL, slug = NULL) {
+  given <- c(
+    dest = !is.null(dest),
+    connection = !is.null(connection),
+    "slug = TRUE/FALSE" = is.logical(slug)
+  )
+  if (any(given)) {
+    stop(
+      "Not used with to = \"github\": ", paste(names(given)[given], collapse = ", "),
+      ". Name the published folder with slug = \"...\".",
+      call. = FALSE
+    )
+  }
 }
 
 # `slug` is a non-empty string, a flag, or NULL.
@@ -111,15 +140,29 @@ NULL
 #' @param self_contained Logical. When publishing to Framework Cloud, whether
 #'   to bundle an HTML file with its resources. Ignored for S3. Default TRUE.
 #' @param include_private Logical. Skip the private-path check. When the
-#'   source's absolute path contains "private" in any case, Framework warns
-#'   and, in an interactive session, asks before publishing (default No).
+#'   absolute path of any file to upload contains "private" in any case
+#'   (apart from the `/private/` macOS adds to `/tmp` and `/var`), Framework
+#'   warns and, in an interactive session, asks before publishing (default No).
 #'   In a non-interactive session it stops unless `include_private = TRUE`.
+#' @param to Character or NULL. `"github"` publishes to the project's GitHub
+#'   Pages site instead of a storage bucket or Framework Cloud: the document
+#'   is copied to `published/<slug>/index.html` (with its `<name>_files/`
+#'   folder), only that folder is committed, and the commit is pushed. The
+#'   site deploys from the default branch once "Publish with GitHub Pages" is
+#'   on for the project in Framework Cloud, and it is public even when the
+#'   repository is private, so an interactive session asks first. `slug`
+#'   names the folder: lowercase letters, digits, `.`, `_`, and `-`. The
+#'   default is the file name lowercased, with other characters as `-`
+#'   ("Final Report (v2).html" becomes `final-report-v2`). A folder needs an
+#'   `index.html` at its top. `dest`, `connection`, and a `TRUE`/`FALSE`
+#'   `slug` are errors here.
 #' @param slug Framework Cloud only. A string names the document and turns on
 #'   its readable URL, for example `slug = "main-results"`. `TRUE` turns the
 #'   readable URL on with the name derived from `dest` or the file name, and
 #'   `FALSE` turns it off. `NULL` (the default) publishes under the derived
 #'   name and leaves the document's setting as it is (new documents start
-#'   private). Ignored, with a warning, for S3.
+#'   private). Ignored, with a warning, for S3. With `to = "github"`, a
+#'   string names the folder under `published/`.
 #' @return Character. The public URL(s) of uploaded file(s).
 #'
 #' @export
@@ -142,10 +185,14 @@ NULL
 #'
 #' # Framework Cloud: a new version with a readable URL
 #' publish("outputs/report.html", slug = "main-results")
+#'
+#' # GitHub Pages: commits published/main-results/ and pushes it
+#' publish("outputs/report.html", to = "github", slug = "main-results")
 #' }
 #' }
 publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
-                    self_contained = TRUE, slug = NULL, include_private = FALSE) {
+                    self_contained = TRUE, slug = NULL, include_private = FALSE,
+                    to = NULL) {
   checkmate::assert_string(source, min.chars = 1)
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
@@ -157,8 +204,13 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
   if (!file.exists(source) && !dir.exists(source)) {
     stop(sprintf("Source not found: %s", source), call. = FALSE)
   }
+  checkmate::assert_choice(to, "github", null.ok = TRUE)
   .fw_confirm_private(source, include_private)
 
+  if (identical(to, "github")) {
+    .fw_pages_reject(dest = dest, connection = connection, slug = slug)
+    return(.fw_github_publish(source, slug = slug, self_contained = self_contained))
+  }
   if (identical(.fw_publish_target(connection), "cloud")) {
     return(.fw_cloud_publish(source, dest = dest, self_contained = self_contained, slug = slug))
   }
@@ -208,11 +260,15 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
 #'   Ignored if `static_hosting: false` (always renders self-contained).
 #' @param format Character. Output format. Default "html".
 #' @param include_private Logical. Skip the private-path check. When the
-#'   source's absolute path contains "private" in any case, Framework warns
-#'   and, in an interactive session, asks before publishing (default No).
+#'   absolute path of any file to upload contains "private" in any case
+#'   (apart from the `/private/` macOS adds to `/tmp` and `/var`), Framework
+#'   warns and, in an interactive session, asks before publishing (default No).
 #'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @param slug Framework Cloud only: name the document and turn on its
-#'   readable URL. See [publish()].
+#'   readable URL. See [publish()]. With `to = "github"`, names the folder
+#'   under `published/`.
+#' @param to Character or NULL. `"github"` publishes the rendered HTML to the
+#'   project's GitHub Pages site. See [publish()].
 #' @param ... Additional arguments passed to quarto render.
 #' @return Character. Public URL of the published notebook.
 #'
@@ -239,6 +295,7 @@ publish_notebook <- function(file,
                              format = "html",
                              slug = NULL,
                              include_private = FALSE,
+                             to = NULL,
                              ...) {
   checkmate::assert_file_exists(file, extension = c("qmd", "Qmd", "QMD"))
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
@@ -247,7 +304,16 @@ publish_notebook <- function(file,
   checkmate::assert_string(format, min.chars = 1)
   .fw_assert_slug(slug)
   checkmate::assert_flag(include_private)
+  checkmate::assert_choice(to, "github", null.ok = TRUE)
   .fw_confirm_private(file, include_private)
+
+  if (identical(to, "github")) {
+    if (!identical(format, "html")) {
+      stop("GitHub Pages publishes HTML only (got format = \"", format, "\").", call. = FALSE)
+    }
+    .fw_pages_reject(dest = dest, connection = connection, slug = slug)
+    return(.fw_github_publish(file, slug = slug, self_contained = self_contained))
+  }
 
   # Check quarto is available
   quarto_path <- Sys.which("quarto")
@@ -363,8 +429,9 @@ publish_notebook <- function(file,
 #' @param connection Character or NULL. S3 connection name, or NULL for default.
 #' @param compress Logical. Whether to gzip compress. Default FALSE.
 #' @param include_private Logical. Skip the private-path check. When the
-#'   source's absolute path contains "private" in any case, Framework warns
-#'   and, in an interactive session, asks before publishing (default No).
+#'   absolute path of any file to upload contains "private" in any case
+#'   (apart from the `/private/` macOS adds to `/tmp` and `/var`), Framework
+#'   warns and, in an interactive session, asks before publishing (default No).
 #'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @return Character. Public URL of the published data.
 #'
@@ -457,8 +524,9 @@ publish_data <- function(data,
 #' @param pattern Character or NULL. Optional regex pattern to filter files.
 #' @param recursive Logical. Whether to include subdirectories. Default TRUE.
 #' @param include_private Logical. Skip the private-path check. When the
-#'   source's absolute path contains "private" in any case, Framework warns
-#'   and, in an interactive session, asks before publishing (default No).
+#'   absolute path of any file to upload contains "private" in any case
+#'   (apart from the `/private/` macOS adds to `/tmp` and `/var`), Framework
+#'   warns and, in an interactive session, asks before publishing (default No).
 #'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @return Character vector. Public URLs of uploaded files.
 #'

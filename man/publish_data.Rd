@@ -26,8 +26,9 @@ publish_data(
 \item{compress}{Logical. Whether to gzip compress. Default FALSE.}
 
 \item{include_private}{Logical. Skip the private-path check. When the
-source's absolute path contains "private" in any case, Framework warns
-and, in an interactive session, asks before publishing (default No).
+absolute path of any file to upload contains "private" in any case
+(apart from the \verb{/private/} macOS adds to \verb{/tmp} and \verb{/var}), Framework
+warns and, in an interactive session, asks before publishing (default No).
 In a non-interactive session it stops unless \code{include_private = TRUE}.}
 }
 \value{

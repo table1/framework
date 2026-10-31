@@ -96,7 +96,9 @@ test_that("skills, AI context, and the cheatsheet only call exported functions",
       any(vapply(c("utils", "stats", "graphics", "grDevices", "methods", "tools"), function(p) exists(f, envir = asNamespace(p)), logical(1))) ||
       any(vapply(other, function(p) requireNamespace(p, quietly = TRUE) && exists(f, envir = asNamespace(p)), logical(1)))
   }
-  placeholders <- c("fit_complex_model", "train_expensive_model", "expensive_computation", "run_analysis")
+  # Examples of functions the user writes in functions/
+  placeholders <- c("fit_complex_model", "train_expensive_model", "expensive_computation", "run_analysis",
+                    "theme_project")
   unknown <- setdiff(unique(code[!vapply(code, known, logical(1))]), placeholders)
   expect_identical(unknown, character(0))
 })

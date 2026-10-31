@@ -11,7 +11,8 @@ publish(
   overwrite = TRUE,
   self_contained = TRUE,
   slug = NULL,
-  include_private = FALSE
+  include_private = FALSE,
+  to = NULL
 )
 }
 \arguments{
@@ -35,12 +36,27 @@ its readable URL, for example \code{slug = "main-results"}. \code{TRUE} turns th
 readable URL on with the name derived from \code{dest} or the file name, and
 \code{FALSE} turns it off. \code{NULL} (the default) publishes under the derived
 name and leaves the document's setting as it is (new documents start
-private). Ignored, with a warning, for S3.}
+private). Ignored, with a warning, for S3. With \code{to = "github"}, a
+string names the folder under \verb{published/}.}
 
 \item{include_private}{Logical. Skip the private-path check. When the
-source's absolute path contains "private" in any case, Framework warns
-and, in an interactive session, asks before publishing (default No).
+absolute path of any file to upload contains "private" in any case
+(apart from the \verb{/private/} macOS adds to \verb{/tmp} and \verb{/var}), Framework
+warns and, in an interactive session, asks before publishing (default No).
 In a non-interactive session it stops unless \code{include_private = TRUE}.}
+
+\item{to}{Character or NULL. \code{"github"} publishes to the project's GitHub
+Pages site instead of a storage bucket or Framework Cloud: the document
+is copied to \verb{published/<slug>/index.html} (with its \verb{<name>_files/}
+folder), only that folder is committed, and the commit is pushed. The
+site deploys from the default branch once "Publish with GitHub Pages" is
+on for the project in Framework Cloud, and it is public even when the
+repository is private, so an interactive session asks first. \code{slug}
+names the folder: lowercase letters, digits, \code{.}, \verb{_}, and \code{-}. The
+default is the file name lowercased, with other characters as \code{-}
+("Final Report (v2).html" becomes \code{final-report-v2}). A folder needs an
+\code{index.html} at its top. \code{dest}, \code{connection}, and a \code{TRUE}/\code{FALSE}
+\code{slug} are errors here.}
 }
 \value{
 Character. The public URL(s) of uploaded file(s).
@@ -79,6 +95,9 @@ publish("data.csv", connection = "s3_backup")
 
 # Framework Cloud: a new version with a readable URL
 publish("outputs/report.html", slug = "main-results")
+
+# GitHub Pages: commits published/main-results/ and pushes it
+publish("outputs/report.html", to = "github", slug = "main-results")
 }
 }
 }

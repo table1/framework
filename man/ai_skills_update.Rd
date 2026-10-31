@@ -13,13 +13,14 @@ ai_skills_update(project_path = ".")
 Invisible character vector of updated skill names
 }
 \description{
-Re-copies the Framework skill files (\verb{.claude/skills/framework-*/SKILL.md})
-from the installed package version into the project. Run this after
-upgrading the framework package to pick up improved skill instructions.
+Re-copies the skill files Framework ships for the project's type (the
+\verb{framework-*} skills and the ggplot2 skills) from the installed package
+version into \verb{.claude/skills/}. Run this after upgrading the framework
+package to pick up improved skill instructions.
 }
 \details{
-Only Framework-owned skills (prefixed \verb{framework-}) are touched; any custom
-skills you add alongside them are left alone.
+Only skills Framework ships are touched; any custom skills you add
+alongside them are left alone.
 }
 \examples{
 \donttest{

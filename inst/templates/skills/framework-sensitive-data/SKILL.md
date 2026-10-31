@@ -1,6 +1,8 @@
 ---
 name: framework-sensitive-data
 description: Use before ANY data operation, commit, output, or publish step in this privacy-sensitive Framework project - enforces private/public directory separation and PII/PHI handling rules.
+metadata:
+  title: Handling sensitive data
 ---
 
 # Sensitive Data Rules

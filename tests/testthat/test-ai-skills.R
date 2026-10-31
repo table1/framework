@@ -1,13 +1,26 @@
 test_that(".ai_skills_for_type returns correct skills per project type", {
   base <- c("framework-workflow", "framework-data", "framework-packages", "framework-outputs")
+  figures <- c("ggplot2-exploring", "ggplot2-publishing")
 
-  expect_equal(.ai_skills_for_type("project"), base)
-  expect_equal(.ai_skills_for_type("course"), base)
-  expect_equal(.ai_skills_for_type("presentation"), base)
+  expect_equal(.ai_skills_for_type("project"), c(base, figures))
+  expect_equal(.ai_skills_for_type("course"), c(base, figures))
+  expect_equal(.ai_skills_for_type("presentation"), c(base, figures))
   expect_equal(
     .ai_skills_for_type("project_sensitive"),
-    c(base, "framework-sensitive-data")
+    c(base, "framework-sensitive-data", figures)
   )
+})
+
+test_that("shipped skills declare their name and a readable title", {
+  dir <- system.file("templates", "skills", package = "framework")
+  for (skill in list.files(dir)) {
+    lines <- readLines(file.path(dir, skill, "SKILL.md"), warn = FALSE)
+    ends <- which(lines == "---")
+    meta <- yaml::yaml.load(paste(lines[(ends[1] + 1):(ends[2] - 1)], collapse = "\n"))
+    expect_identical(meta$name, skill)
+    expect_true(is.character(meta$description) && nzchar(meta$description), info = skill)
+    expect_true(is.character(meta$metadata$title) && nzchar(meta$metadata$title), info = skill)
+  }
 })
 
 

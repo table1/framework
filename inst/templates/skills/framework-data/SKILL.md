@@ -1,6 +1,8 @@
 ---
 name: framework-data
 description: Use whenever reading or writing data files (CSV, RDS, Excel, Stata, SPSS, SAS) in this Framework project - data_read() and data_save() are mandatory; base R and readr I/O functions are forbidden.
+metadata:
+  title: Reading and saving data
 ---
 
 # Framework Data Management

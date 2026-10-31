@@ -40,6 +40,11 @@ NULL
     base_skills <- c(base_skills, "framework-sensitive-data")
   }
 
+  # Every R project type makes figures
+  if (project_type %in% c("project", "project_sensitive", "course", "presentation")) {
+    base_skills <- c(base_skills, "ggplot2-exploring", "ggplot2-publishing")
+  }
+
   base_skills
 }
 
@@ -104,12 +109,13 @@ NULL
 
 #' Update Framework Skills in a Project
 #'
-#' Re-copies the Framework skill files (`.claude/skills/framework-*/SKILL.md`)
-#' from the installed package version into the project. Run this after
-#' upgrading the framework package to pick up improved skill instructions.
+#' Re-copies the skill files Framework ships for the project's type (the
+#' `framework-*` skills and the ggplot2 skills) from the installed package
+#' version into `.claude/skills/`. Run this after upgrading the framework
+#' package to pick up improved skill instructions.
 #'
-#' Only Framework-owned skills (prefixed `framework-`) are touched; any custom
-#' skills you add alongside them are left alone.
+#' Only skills Framework ships are touched; any custom skills you add
+#' alongside them are left alone.
 #'
 #' @param project_path Path to the project directory (default: current directory)
 #' @return Invisible character vector of updated skill names
@@ -157,7 +163,9 @@ ai_skills_update <- function(project_path = ".") {
     "framework-data" = "reading and saving data (data_read/data_save are mandatory)",
     "framework-packages" = "adding and managing R packages (package_add, never install.packages)",
     "framework-outputs" = "results, caching, database queries, publishing",
-    "framework-sensitive-data" = "PII/PHI handling and private/public directory rules"
+    "framework-sensitive-data" = "PII/PHI handling and private/public directory rules",
+    "ggplot2-exploring" = "quick, accurate ggplot2 figures for understanding data",
+    "ggplot2-publishing" = "polished ggplot2 figures for papers, reports, and slides"
   )
 
   rows <- vapply(skills, function(skill) {

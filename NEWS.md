@@ -1,5 +1,23 @@
 # framework (development version)
 
+* New projects get two ggplot2 skills, `ggplot2-exploring` (quick,
+  accurate figures for understanding data) and `ggplot2-publishing`
+  (figures for papers, reports, and slides), listed in AGENTS.md. Each
+  shipped skill now has a readable title in its frontmatter
+  (`metadata: title:`), as in the Agent Skills format; `name` stays the id
+  agents use. `ai_skills_update()` refreshes the ggplot2 skills too
+* `publish(to = "github")` and `publish_notebook(to = "github")` publish to
+  the project's GitHub Pages site. The rendered HTML and its `<name>_files/`
+  folder are copied to `published/<slug>/` at the top of the repository
+  (replacing what was there), only that folder is committed as
+  "Publish <slug>", and the commit is pushed to the branch's upstream,
+  origin, or another GitHub remote. Interactive sessions confirm first. The
+  default slug is the file name in lowercase with other characters as `-`.
+  The URL comes from Framework Cloud when the project has its token,
+  otherwise from the GitHub remote. Framework Cloud's "Publish with GitHub Pages" turns on
+  the site and adds the workflow that deploys `published/` from the default
+  branch. Publishing from another branch warns. Pages sites are public, even
+  from a private repository
 * `docs_export(reference_path = )` also writes the reference for the
   r.framework.pub docs site, in the format shared with framework-py and fw
   (`inst/schema/docs-reference.v1.json`, described in
@@ -148,9 +166,10 @@
   and `scaffold.ggplot_theme` are optional. R's `spec_check()` still accepts
   only what R can build
 * `publish()`, `publish_notebook()`, `publish_dir()`, and `publish_data()`
-  warn when the source's absolute path contains "private" in any letter
-  case, apart from the `/private/` that macOS puts in front of `/tmp`,
-  `/var`, and `/etc`. An interactive session asks before publishing, with No as the
+  warn when the absolute path of any file they would upload contains
+  "private" in any letter case, apart from the `/private/` that macOS puts
+  in front of `/tmp`, `/var`, and `/etc`. The warning lists up to five
+  paths. An interactive session asks before publishing, with No as the
   default. A non-interactive session stops unless `include_private = TRUE`.
   Publishing is always an explicit call, and nothing is uploaded
   automatically

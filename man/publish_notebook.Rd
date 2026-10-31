@@ -12,6 +12,7 @@ publish_notebook(
   format = "html",
   slug = NULL,
   include_private = FALSE,
+  to = NULL,
   ...
 )
 }
@@ -30,12 +31,17 @@ Ignored if \code{static_hosting: false} (always renders self-contained).}
 \item{format}{Character. Output format. Default "html".}
 
 \item{slug}{Framework Cloud only: name the document and turn on its
-readable URL. See \code{\link[=publish]{publish()}}.}
+readable URL. See \code{\link[=publish]{publish()}}. With \code{to = "github"}, names the folder
+under \verb{published/}.}
 
 \item{include_private}{Logical. Skip the private-path check. When the
-source's absolute path contains "private" in any case, Framework warns
-and, in an interactive session, asks before publishing (default No).
+absolute path of any file to upload contains "private" in any case
+(apart from the \verb{/private/} macOS adds to \verb{/tmp} and \verb{/var}), Framework
+warns and, in an interactive session, asks before publishing (default No).
 In a non-interactive session it stops unless \code{include_private = TRUE}.}
+
+\item{to}{Character or NULL. \code{"github"} publishes the rendered HTML to the
+project's GitHub Pages site. See \code{\link[=publish]{publish()}}.}
 
 \item{...}{Additional arguments passed to quarto render.}
 }

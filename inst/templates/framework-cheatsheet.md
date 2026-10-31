@@ -245,6 +245,14 @@ publish_notebook("report.qmd", dest = "reports/2024/q4")  # Custom path
 publish_notebook("report.qmd", self_contained = FALSE)    # With assets
 ```
 
+### Publishing to GitHub Pages
+```r
+publish("outputs/report.html", to = "github")             # published/report/, commit, push
+publish_notebook("report.qmd", to = "github", slug = "q4") # -> https://<owner>.github.io/<repo>/q4/
+```
+Turn on "Publish with GitHub Pages" for the project in Framework Cloud first.
+The site is public, even from a private repository.
+
 ### Publishing Data
 ```r
 publish_data(my_df, "datasets/results.csv")       # Publish data frame
@@ -332,11 +340,11 @@ capture_output(expr)             # Capture console output
 | `packages_update()` | Update packages (renv) |
 | `project_info()` | Display project information |
 | `project_list()` | List registered projects |
-| `publish()` | Upload file or directory to S3 or Framework Cloud |
+| `publish()` | Upload file or directory to S3, Framework Cloud, or GitHub Pages |
 | `publish_data()` | Publish data frame or file to S3 |
 | `publish_dir()` | Upload directory to S3 |
 | `publish_list()` | List published files in S3 |
-| `publish_notebook()` | Render and publish Quarto notebook to S3 or Framework Cloud |
+| `publish_notebook()` | Render and publish Quarto notebook to S3, Framework Cloud, or GitHub Pages |
 | `quarto_generate_all()` | Generate all _quarto.yml files |
 | `quarto_regenerate()` | Regenerate _quarto.yml with backup |
 | `renv_disable()` | Disable renv integration |
