@@ -77,7 +77,17 @@ ref <- function(name) list(`$ref` = paste0("#/definitions/", name))
 properties <- list(
   spec_version = list(const = SPEC_VERSION),
   name = str(minLength = 1),
-  type = str(enum = list("project", "project_sensitive", "course", "presentation", "bare")),
+  type = str(
+    pattern = KEY,
+    description = "A label for the blueprint the project came from. Framework's own are project, project_sensitive, course, presentation, and bare. Behavior follows settings, tools, and core_files, not this label."
+  ),
+  core_files = bool(description = "Whether the structure writes Framework's core files (starter scripts and .env). false for bare structures. Missing means true."),
+  settings_layout = str(
+    enum = list("split", "flat"),
+    description = "split: connections, packages, and data in settings/*.yml. flat: everything in settings.yml. Missing means split for Framework's project and project_sensitive structures and flat for the rest."
+  ),
+  tools = map_of(bool(), key_pattern = KEY,
+                 description = "Tool id -> on. Missing means off. Framework's tools are defined in inst/features/<id>.json. In a layer, later layers override earlier ones key by key."),
   language = str(
     enum = list("r", "python", "stata"),
     description = "Primary language. The R package builds r, the Python package builds python, and fw builds stata (scaffolding only). A layers file with no language means r."

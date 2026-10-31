@@ -1,0 +1,68 @@
+{
+  "description": "tools merges key by key and a later layer wins; a null entry removes a tool. core_files and type are scalars, replaced whole.",
+  "layers": [
+    {
+      "kind": "base",
+      "key": "bare",
+      "layer": {
+        "type": "bare",
+        "core_files": false,
+        "tools": {
+          "quarto": true,
+          "renv": false
+        }
+      }
+    },
+    {
+      "kind": "facet",
+      "key": "framework/tool-targets",
+      "layer": {
+        "tools": {
+          "targets": true,
+          "renv": true
+        }
+      }
+    },
+    {
+      "kind": "blueprint",
+      "key": "ada/lab",
+      "version": 3,
+      "layer": {
+        "type": "lab_pipeline",
+        "core_files": true,
+        "tools": {
+          "quarto": null
+        }
+      }
+    }
+  ],
+  "expected": {
+    "spec": {
+      "type": "lab_pipeline",
+      "core_files": true,
+      "tools": {
+        "renv": true,
+        "targets": true
+      }
+    },
+    "gitignore_blocks": [],
+    "conflicts": [
+      {
+        "path": "type",
+        "layers": "base bare, blueprint ada/lab v3"
+      },
+      {
+        "path": "core_files",
+        "layers": "base bare, blueprint ada/lab v3"
+      },
+      {
+        "path": "tools/quarto",
+        "layers": "base bare, blueprint ada/lab v3"
+      },
+      {
+        "path": "tools/renv",
+        "layers": "base bare, facet framework/tool-targets"
+      }
+    ]
+  }
+}

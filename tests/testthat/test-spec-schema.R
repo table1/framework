@@ -181,3 +181,28 @@ test_that("Stata specs need no R or Python sections, and layers may omit kind", 
   envelope <- list(spec_version = 1, name = "P", layers = list(list(layer = list(language = "stata"))))
   expect_true(layers$validate(jsonlite::toJSON(envelope, auto_unbox = TRUE)))
 })
+
+test_that("type is a free label, and tools and core_files are optional", {
+  v <- schema_validator("spec.v1.json")
+  spec <- minimal_spec()
+  spec$type <- "lab_pipeline"
+  spec$core_files <- FALSE
+  spec$settings_layout <- "flat"
+  spec$tools <- list(quarto = TRUE, quarto_slides = FALSE, renv = TRUE)
+  expect_true(v$validate(as_json(spec)))
+
+  for (bad in list(list(type = "Lab Pipeline"), list(tools = list(quarto = "yes")),
+                   list(tools = list(`Quarto` = TRUE)), list(core_files = "no"),
+                   list(settings_layout = "nested"))) {
+    expect_false(v$validate(as_json(utils::modifyList(minimal_spec(), bad))), info = names(bad))
+  }
+
+  layer <- schema_validator("layer.v1.json")
+  expect_true(layer$validate(as_json(list(tools = list(quarto = NULL, targets = TRUE)))))
+
+  checked <- spec_check(utils::modifyList(minimal_spec(), list(type = "lab_pipeline", tools = list(renv = TRUE))))
+  expect_false(any(grepl("type|tools|unknown section", checked)))
+  expect_match(spec_check(utils::modifyList(minimal_spec(), list(type = "Lab"))), "lowercase id", all = FALSE)
+  expect_match(spec_check(utils::modifyList(minimal_spec(), list(tools = list(renv = "on")))),
+               "tools.renv must be true or false", all = FALSE)
+})

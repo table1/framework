@@ -115,14 +115,27 @@ spec_check <- function(spec) {
     "security", "env", "data_hooks", "files", "skills"
   )
   for (key in setdiff(required, names(spec))) add("missing section '%s'", key)
-  unknown <- setdiff(names(spec), c(required, "quarto", "source"))
+  unknown <- setdiff(names(spec), c(required, "quarto", "source", "tools", "core_files", "settings_layout"))
   for (key in unknown) add("unknown section '%s'", key)
 
   if (!identical(as.integer(spec$spec_version), 1L)) {
     add("spec_version must be 1, got %s", format(spec$spec_version))
   }
-  if (!is.null(spec$type) && !spec$type %in% .spec_types()) {
-    add("unknown project type '%s'", spec$type)
+  # type is a label; behavior follows settings, tools, and core_files
+  if (!is.null(spec$type) && !(is.character(spec$type) && length(spec$type) == 1 &&
+                               grepl("^[a-z][a-z0-9_]*$", spec$type))) {
+    add("type must be a lowercase id such as 'project', got '%s'", format(spec$type))
+  }
+  if (!is.null(spec$core_files) && !isTRUE(spec$core_files) && !isFALSE(spec$core_files)) {
+    add("core_files must be true or false")
+  }
+  if (!is.null(spec$settings_layout) && !identical(spec$settings_layout, "split") &&
+      !identical(spec$settings_layout, "flat")) {
+    add("settings_layout must be 'split' or 'flat'")
+  }
+  for (tool in names(spec$tools)) {
+    if (!grepl("^[a-z][a-z0-9_]*$", tool)) add("tools: invalid tool id '%s'", tool)
+    if (!isTRUE(spec$tools[[tool]]) && !isFALSE(spec$tools[[tool]])) add("tools.%s must be true or false", tool)
   }
   if (!is.null(spec$language) && !identical(spec$language, "r")) {
     add(if (spec$language %in% .spec_languages()) .spec_language_message(spec$language)
@@ -358,7 +371,7 @@ spec_check <- function(spec) {
   spec <- .spec_mark_maps(spec)
 
   order <- c(
-    "spec_version", "name", "type", "language", "author", "directories", "extra_directories",
+    "spec_version", "name", "type", "language", "core_files", "settings_layout", "tools", "author", "directories", "extra_directories",
     "render_dirs", "packages", "git", "ai", "scaffold", "quarto", "connections",
     "security", "env", "data_hooks", "files", "skills", "source"
   )
@@ -368,7 +381,7 @@ spec_check <- function(spec) {
 # Paths whose values are JSON objects. R cannot tell an empty object from an
 # empty array, so empty maps are given names to serialize as {}.
 .spec_map_paths <- list(
-  "directories", "extra_directories", "render_dirs", "env", "data_hooks",
+  "tools", "directories", "extra_directories", "render_dirs", "env", "data_hooks",
   "files", "skills", c("packages", "default_packages"), c("git", "hooks"),
   c("ai", "assistants"), c("connections", "databases"),
   c("connections", "storage_buckets")

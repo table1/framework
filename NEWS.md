@@ -1,5 +1,12 @@
 # framework (development version)
 
+* The project spec and layer schemas (`inst/schema/`) accept any lowercase
+  id as `type`, which is now a label for the blueprint a project came from.
+  Two optional fields are new: `tools`, a map of tool id to true or false
+  (`quarto`, `renv`, `targets`, and so on), and `core_files`, false for
+  bare structures that write no starter files or `.env`, and
+  `settings_layout` (`split` or `flat`). `spec_check()`
+  follows the schemas. A conformance fixture covers how `tools` merges
 * New projects get two ggplot2 skills, `ggplot2-exploring` (quick,
   accurate figures for understanding data) and `ggplot2-publishing`
   (figures for papers, reports, and slides), listed in AGENTS.md. Each

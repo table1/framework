@@ -14,13 +14,30 @@
     },
     "type": {
       "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "A label for the blueprint the project came from. Framework's own are project, project_sensitive, course, presentation, and bare. Behavior follows settings, tools, and core_files, not this label."
+    },
+    "core_files": {
+      "type": "boolean",
+      "description": "Whether the structure writes Framework's core files (starter scripts and .env). false for bare structures. Missing means true."
+    },
+    "settings_layout": {
+      "type": "string",
       "enum": [
-        "project",
-        "project_sensitive",
-        "course",
-        "presentation",
-        "bare"
-      ]
+        "split",
+        "flat"
+      ],
+      "description": "split: connections, packages, and data in settings/*.yml. flat: everything in settings.yml. Missing means split for Framework's project and project_sensitive structures and flat for the rest."
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "description": "Tool id -> on. Missing means off. Framework's tools are defined in inst/features/<id>.json. In a layer, later layers override earlier ones key by key.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
     },
     "language": {
       "type": "string",
