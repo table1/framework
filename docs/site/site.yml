@@ -1,0 +1,18 @@
+# The r.framework.pub docs site. The format is inst/schema/docs-site.md,
+# shared with framework-py and fw. reference.json is generated at release by
+# docs_export(reference_path = "docs/site/reference.json") and not committed.
+product: r
+title: Framework for R
+tagline: Structured data science projects in R
+repository: https://github.com/frameworktools/framework
+install: install.packages("framework")
+sections:
+  - id: getting_started
+    title: Getting Started
+  - id: project_types
+    title: Project Types
+  - id: features
+    title: Features
+  - id: reference
+    title: Reference
+    reference: true

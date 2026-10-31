@@ -1,0 +1,69 @@
+name: Docs site
+
+# Builds docs-site.tar.gz for r.framework.pub and attaches it to the GitHub
+# release; framework-cloud imports the newest one. The format is shared with
+# framework-py and fw: inst/schema/docs-site.md.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          extra-packages: any::pkgload, any::jsonvalidate
+
+      - name: Generate the reference
+        run: |
+          pkgload::load_all(quiet = TRUE)
+          docs_export(file.path(tempdir(), "docs.db"), verbose = FALSE,
+                      reference_path = "docs/site/reference.json")
+          v <- jsonvalidate::json_schema$new("inst/schema/docs-reference.v1.json", engine = "ajv")
+          json <- paste(readLines("docs/site/reference.json"), collapse = "\n")
+          if (!isTRUE(v$validate(json, verbose = TRUE))) stop("reference.json does not match the schema")
+        shell: Rscript {0}
+
+      - name: Build the archive
+        run: |
+          mkdir -p dist/docs-site
+          cp -R docs/site/. dist/docs-site/
+          rm -f dist/docs-site/.gitignore
+          tar -czf dist/docs-site.tar.gz -C dist docs-site
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: docs-site
+          path: dist/docs-site.tar.gz
+
+  attach:
+    name: Attach to the release
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" docs-site.tar.gz --clobber --repo "$GITHUB_REPOSITORY"

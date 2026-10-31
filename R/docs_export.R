@@ -10,6 +10,9 @@
 #' @param package_version Package version for metadata. Default: NULL (auto-detect)
 #' @param include_internal Include internal/non-exported functions. Default: FALSE
 #' @param verbose Print progress messages. Default: TRUE
+#' @param reference_path If set, also write the reference for the docs site
+#'   (`docs/site/reference.json`) to this path, in the format of
+#'   `inst/schema/docs-reference.v1.json`. Default: NULL
 #'
 #' @return Invisibly returns the database connection path
 #'
@@ -50,7 +53,8 @@ docs_export <- function(output_path = "docs.db",
                         package_name = "framework",
                         package_version = NULL,
                         include_internal = FALSE,
-                        verbose = TRUE) {
+                        verbose = TRUE,
+                        reference_path = NULL) {
 
   if (!dir.exists(man_dir)) {
     stop("man directory not found: ", man_dir)
@@ -140,6 +144,11 @@ docs_export <- function(output_path = "docs.db",
   if (verbose) {
     func_count <- DBI::dbGetQuery(con, "SELECT COUNT(*) as n FROM functions")$n
     message("Exported ", func_count, " functions to ", output_path)
+  }
+
+  if (!is.null(reference_path)) {
+    .docs_write_reference(output_path, reference_path, package_version)
+    if (verbose) message("Wrote the docs site reference to ", reference_path)
   }
 
   invisible(output_path)

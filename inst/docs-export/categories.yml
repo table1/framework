@@ -181,6 +181,7 @@ Database:
     - db_transaction
     - db_drivers_install
     - db_drivers_status
+    - connections_list
 
 AI:
   display_name: AI
@@ -192,3 +193,34 @@ AI:
     - ai_regenerate_context
     - ai_skills_update
     - ai_sync_context
+
+Cloud:
+  description: Optional Framework Cloud accounts, settings, and the integrity ledger
+  common:
+    - cloud_login
+    - cloud_status
+  functions:
+    - cloud_login
+    - cloud_logout
+    - cloud_status
+    - cloud_settings
+    - cloud_sync
+    - ledger_push
+    - ledger_list
+    - data_verify
+
+Configuration:
+  description: User-wide settings, the project registry, and templates
+  common:
+    - fw_config_dir
+  functions:
+    - fw_config_dir
+    - read_frameworkrc
+    - write_frameworkrc
+    - add_project_to_config
+    - remove_project_from_config
+    - load_settings_catalog
+    - read_framework_template
+    - write_framework_template
+    - reset_framework_template
+    - docs_export

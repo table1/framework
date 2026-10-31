@@ -10,7 +10,8 @@ docs_export(
   package_name = "framework",
   package_version = NULL,
   include_internal = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  reference_path = NULL
 )
 }
 \arguments{
@@ -25,6 +26,10 @@ docs_export(
 \item{include_internal}{Include internal/non-exported functions. Default: FALSE}
 
 \item{verbose}{Print progress messages. Default: TRUE}
+
+\item{reference_path}{If set, also write the reference for the docs site
+(\code{docs/site/reference.json}) to this path, in the format of
+\code{inst/schema/docs-reference.v1.json}. Default: NULL}
 }
 \value{
 Invisibly returns the database connection path
