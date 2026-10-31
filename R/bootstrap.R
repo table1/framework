@@ -188,6 +188,7 @@ bootstrap <- function(path = ".", interactive = base::interactive(), packages = 
     # Shared drives and other places outside the project are not ours to make
     if (grepl("^(/|~|[A-Za-z]:[/\\\\]|\\\\\\\\)", folder)) next
     if (grepl("(^|/)\\.\\.(/|$)", folder)) next
+    if (.fw_is_file_entry(folder)) next
     path <- file.path(root, folder)
     if (!dir.exists(path)) {
       dir.create(path, recursive = TRUE, showWarnings = FALSE)

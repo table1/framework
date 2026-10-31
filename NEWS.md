@@ -1,5 +1,42 @@
 # framework (development version)
 
+* `docs_export(reference_path = )` also writes the reference for the
+  r.framework.pub docs site, in the format shared with framework-py and fw
+  (`inst/schema/docs-reference.v1.json`, described in
+  `inst/schema/docs-site.md`). The guides now live in `docs/site/`, and each
+  release attaches `docs-site.tar.gz`. Cloud functions and the user-wide
+  configuration helpers have reference categories
+* `git_security_audit()` and the data_security hook count a folder as
+  private when its settings key contains `private`, its path has a
+  `private`, `confidential`, or `sensitive` folder, or it is `cache`,
+  `scratch`, or `logs`. Standard projects can commit files in `inputs/raw`
+  and the other input folders, as their `.gitignore` allows; restricted
+  data goes under a private folder. Before, every `inputs_*` and
+  `outputs_*` folder counted as private, so the hook blocked any commit
+  that included a data file in a standard project's inputs
+* The pre-commit hook checks that framework (R) or framework-py (Python)
+  is installed before running, and says so when neither is
+* Fixed: `data_read()` and `data_info()` find catalog entries with dotted
+  keys (`raw.survey:` under `inputs:`, or `inputs.raw.survey:` under
+  `data:`), as `data_list()` shows them, and `data_add()` updates such an
+  entry where it is
+* Fixed: `data_save()` picks the folder from the longest leading part of the
+  name that names a configured directory, so `inputs.private.raw.ids` goes
+  to `inputs_private_raw`
+* Fixed: `data_info()` marks a file private when any folder between the
+  project root and the file is named `private`, not only its own folder
+* Fixed: `data_add()` records `.por` files as `spss_por` and `.xpt` files as
+  `sas_xpt`, and `data_read()` reads entries recorded the old way correctly
+* Fixed: `scaffold()` reads `source_all_functions` from `scaffold:`, where
+  new projects write it (then `options:`)
+* Fixed: `settings_write(section = )` into a split file merges the values
+  under the section key, with or without that wrapper in the values
+* Fixed: `bootstrap()` no longer creates folders for directory entries that
+  name a file, such as `presentation.qmd`
+* Fixed: `settings_write(section = )` on a flat settings.yml (no `default:`
+  section) added a `default:` block holding only that section, after which
+  settings_read() ignored the file's other settings. It now writes the
+  section at the top level
 * SQL Server connections use the newest installed Microsoft ODBC driver
   (Driver 18 or 17) unless `odbc_driver` is set, instead of assuming 17
 * Tests now run against real PostgreSQL, MySQL, MariaDB, SQL Server, and S3

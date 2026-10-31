@@ -358,14 +358,18 @@ git_security_audit <- function(config_file = NULL,
     return(data_dirs)
   }
 
+  # Private means what the gitignore templates ignore: folders whose key or
+  # path names them private (or confidential or sensitive), plus cache,
+  # scratch, and logs. inputs/raw in a standard project is not private;
+  # sensitive projects put their inputs under private folders.
   keep <- vapply(names(data_dirs), function(name) {
     if (grepl("_public", name)) {
       return(FALSE)
     }
-
-    startsWith(name, "inputs_") ||
-      grepl("private", name) ||
-      (startsWith(name, "outputs_") && !grepl("_public", name)) ||
+    path <- data_dirs[[name]]
+    segments <- if (is.character(path)) strsplit(path[1], "[/\\\\]+")[[1]] else character()
+    grepl("private", name) ||
+      any(grepl("private|confidential|sensitive", segments, ignore.case = TRUE)) ||
       name %in% c("cache", "scratch", "logs")
   }, logical(1))
 

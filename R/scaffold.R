@@ -356,8 +356,12 @@ scaffold <- function(config_file = NULL) {
 
   config <- settings_read(config_file)
 
-  # Check if user opted out of sourcing all functions (default: TRUE)
-  source_all <- config$options$source_all_functions
+  # Check if user opted out of sourcing all functions (default: TRUE).
+  # New projects keep it under scaffold:; older ones under options: or at
+  # the top level
+  source_all <- config$scaffold$source_all_functions %||%
+    config$options$source_all_functions %||%
+    config$source_all_functions
   if (is.null(source_all)) {
     source_all <- TRUE  # Default to including all functions
   }

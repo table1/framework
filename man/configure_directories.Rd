@@ -26,7 +26,7 @@ Directories control where Framework creates and looks for files.
 \item \code{notebooks} - Where make_notebook() creates files
 \item \code{scripts} - Where make_script() creates files
 \item \code{functions} - Where scaffold() looks for custom functions
-\item \code{inputs_raw} - Source data (gitignored)
+\item \code{inputs_raw} - Source data, as received
 \item \code{inputs_intermediate} - Cleaned-but-input datasets
 \item \code{inputs_final} - Curated analytic datasets
 \item \code{inputs_reference} - External documentation/codebooks

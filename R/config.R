@@ -565,11 +565,16 @@ settings_write <- function(settings, settings_file = NULL, section = NULL) {
     # Get current environment from R_CONFIG_ACTIVE or default
     env <- Sys.getenv("R_CONFIG_ACTIVE", Sys.getenv("R_CONFIG_NAME", "default"))
 
+    # A flat file (no default: or other environment sections) keeps its
+    # sections at the top level, as settings_read() reads them
+    scoped <- .has_environment_sections(current)
+    value <- if (scoped) current[[env]][[section]] else current[[section]]
+
     # Check if this section uses a split file
-    if (is.character(current[[env]][[section]]) && grepl("^settings/", current[[env]][[section]])) {
+    if (is.character(value) && grepl("^settings/", value)) {
       # This is a split file, update that instead. Its path is relative to
       # the settings file's folder, not the working directory.
-      split_file <- file.path(dirname(settings_file), current[[env]][[section]])
+      split_file <- file.path(dirname(settings_file), value)
       if (file.exists(split_file)) {
         # Read current split file
         split_settings <- tryCatch(
@@ -578,8 +583,15 @@ settings_write <- function(settings, settings_file = NULL, section = NULL) {
             stop(sprintf("Failed to read split file '%s': %s", split_file, e$message))
           }
         )
-        # Update with new values
-        split_settings <- modifyList(split_settings, settings)
+        # Split files keep their values under the section key
+        # (connections: in settings/connections.yml). Accept values with or
+        # without that wrapper, and wrap an older file that lacks it.
+        values <- if (identical(names(settings), section)) settings[[section]] else settings
+        if (is.null(split_settings)) split_settings <- list()
+        if (length(split_settings) > 0 && is.null(split_settings[[section]])) {
+          split_settings <- stats::setNames(list(split_settings), section)
+        }
+        split_settings[[section]] <- modifyList(split_settings[[section]] %||% list(), values)
         # Write back to split file
         tryCatch(
           yaml::write_yaml(split_settings, split_file),
@@ -592,7 +604,12 @@ settings_write <- function(settings, settings_file = NULL, section = NULL) {
       }
     } else {
       # This is a direct section in settings.yml
-      current[[env]][[section]] <- settings
+      if (scoped) {
+        current[[env]][[section]] <- settings
+      } else {
+        if (is.null(current)) current <- list()
+        current[[section]] <- settings
+      }
       tryCatch(
         yaml::write_yaml(current, settings_file),
         error = function(e) {

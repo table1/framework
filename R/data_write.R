@@ -57,32 +57,29 @@ data_save <- function(data, path, type = NULL, delimiter = "comma", locked = TRU
     # Example: "outputs.private.results" → outputs/private/results.rds
     parts <- strsplit(path, ".", fixed = TRUE)[[1]]
 
-    if (length(parts) < 3) {
-      stop("Dot notation requires at least three parts (e.g., 'inputs.raw.filename')")
+    # The directory key is the longest leading run of parts that names a
+    # configured directory: inputs.private.raw.x -> inputs_private_raw
+    all_dirs <- tryCatch(config("directories"), error = function(e) list())
+    available_keys <- if (is.list(all_dirs)) names(all_dirs) else character(0)
+    n_dir <- 0
+    for (k in rev(seq_len(length(parts) - 1))) {
+      key <- paste(parts[seq_len(k)], collapse = "_")
+      if (key %in% available_keys && is.character(all_dirs[[key]]) && length(all_dirs[[key]]) == 1) {
+        n_dir <- k
+        break
+      }
     }
 
-    # First two parts form the directory key (joined with underscore)
-    # e.g., "inputs.raw" -> "inputs_raw"
-    dir_key <- paste(parts[1:2], collapse = "_")
-    config_key <- sprintf("directories.%s", dir_key)
-    resolved_dir <- tryCatch(config(config_key), error = function(e) NULL)
-
-    if (is.null(resolved_dir)) {
-      # Get available directory keys for helpful error message
-      all_dirs <- tryCatch(config("directories"), error = function(e) list())
-      available_keys <- if (is.list(all_dirs)) names(all_dirs) else character(0)
-      # Convert keys to dot notation for display
-      display_keys <- gsub("_", ".", available_keys)
-
+    if (n_dir == 0) {
       stop(sprintf(
-        "Unknown directory '%s.%s'. Use a configured directory.\n\nAvailable directories:\n  %s\n\nExamples:\n  data_save(df, 'inputs.raw.mydata')\n  data_save(df, 'outputs.private.results')",
-        parts[1], parts[2],
-        paste(display_keys, collapse = ", ")
+        "Unknown directory in '%s'. Start the name with a configured directory.\n\nAvailable directories:\n  %s\n\nExamples:\n  data_save(df, 'inputs.raw.mydata')\n  data_save(df, 'outputs.private.results')",
+        path,
+        paste(gsub("_", ".", available_keys), collapse = ", ")
       ))
     }
 
-    dir_path <- resolved_dir
-    file_base <- paste(parts[-(1:2)], collapse = "_")
+    dir_path <- all_dirs[[paste(parts[seq_len(n_dir)], collapse = "_")]]
+    file_base <- paste(parts[-seq_len(n_dir)], collapse = "_")
 
     # Default type to rds if not specified
     if (is.null(type)) type <- "rds"
@@ -218,7 +215,7 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
   # Validate arguments
   checkmate::assert_string(file_path, min.chars = 1)
   checkmate::assert_string(name, min.chars = 1, null.ok = TRUE)
-  checkmate::assert_choice(type, c("csv", "rds", "tsv", "excel", "stata", "spss", "sas", "parquet"), null.ok = TRUE)
+  checkmate::assert_choice(type, c("csv", "rds", "tsv", "excel", "stata", "spss", "spss_por", "sas", "sas_xpt", "parquet"), null.ok = TRUE)
   checkmate::assert_choice(delimiter, c("comma", "tab", "semicolon", "space"))
   checkmate::assert_flag(locked)
   checkmate::assert_flag(update_config)
@@ -246,9 +243,9 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
       dta = "stata",
       sav = "spss",
       zsav = "spss",
-      por = "spss",
+      por = "spss_por",
       sas7bdat = "sas",
-      xpt = "sas",
+      xpt = "sas_xpt",
       parquet = "parquet",
       stop(sprintf("Cannot auto-detect type for extension: %s. Please specify 'type' parameter.", file_ext))
     )
@@ -519,26 +516,15 @@ data_add <- function(file_path, name = NULL, type = NULL, delimiter = "comma",
     current <- if (is.null(data_source)) list() else data_source
   }
 
-  # Build nested path and insert the spec
-  # We need to use a recursive approach since R lists are not reference types
-  if (length(parts) == 1) {
-    current[[parts[1]]] <- spec
-  } else {
-    # Build the nested structure by evaluating from the deepest level up
-    path_str <- paste0("current", paste0("[[\"", parts, "\"]]", collapse = ""))
-    assign_str <- paste0(path_str, " <- spec")
-
-    # Ensure intermediate paths exist
-    for (i in seq_along(parts)[-length(parts)]) {
-      intermediate_path <- paste0("current", paste0("[[\"", parts[1:i], "\"]]", collapse = ""))
-      eval_str <- paste0("if (is.null(", intermediate_path, ") || !is.list(", intermediate_path, ")) { ",
-                        intermediate_path, " <- list() }")
-      eval(parse(text = eval_str))
-    }
-
-    # Assign the spec
-    eval(parse(text = assign_str))
+  # Update an existing entry where it is (nested, mixed, or flat keys);
+  # otherwise nest a new one
+  keys <- .data_catalog_find(current, parts) %||% parts
+  set_in <- function(node, keys, value) {
+    if (!is.list(node)) node <- list()
+    node[[keys[1]]] <- if (length(keys) == 1) value else set_in(node[[keys[1]]], keys[-1], value)
+    node
   }
+  current <- set_in(current, keys, spec)
 
   # Write back to the correct location
   tryCatch({

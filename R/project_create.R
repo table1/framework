@@ -222,11 +222,16 @@ project_create <- function(
   )
 }
 
+# Directory entries that name a file (presentation: presentation.qmd), which
+# project creation and bootstrap() must not make into folders
+#' @keywords internal
+.fw_is_file_entry <- function(path) {
+  grepl("\\.(qmd|Rmd|R|md)$", path)
+}
+
 #' Create project subdirectories
 #' @keywords internal
 .create_project_directories <- function(project_dir, directories, extra_directories, render_dirs = NULL) {
-  # Files that should NOT be created as directories
-  file_patterns <- c("\\.qmd$", "\\.Rmd$", "\\.R$", "\\.md$")
 
   # Create standard directories
   for (dir_name in directories) {
@@ -236,8 +241,7 @@ project_create <- function(
         next
       }
       # Skip if this looks like a file (has a file extension)
-      is_file <- any(sapply(file_patterns, function(pattern) grepl(pattern, dir_name)))
-      if (is_file) {
+      if (.fw_is_file_entry(dir_name)) {
         next
       }
 
@@ -268,8 +272,7 @@ project_create <- function(
       # Only pre-create notebook render outputs to reduce clutter
       if (!is.null(dir_key) && !grepl("notebook", dir_key, ignore.case = TRUE)) next
 
-      is_file <- any(sapply(file_patterns, function(pattern) grepl(pattern, dir_name)))
-      if (is_file) next
+      if (.fw_is_file_entry(dir_name)) next
       dir_path <- file.path(project_dir, dir_name)
       dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
       message("  Created render output: ", dir_name)

@@ -33,15 +33,15 @@ test_that("git_security_audit detects unignored private data directories", {
     default = list(
       project_type = "project",
       directories = list(
-        inputs_raw = "inputs/raw"
+        inputs_raw = "inputs/private/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
-  dir.create("inputs/raw", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
+  dir.create("inputs/private/raw", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/private/raw/secrets.csv", row.names = FALSE)
 
   # Create empty .gitignore (no private data protection)
   writeLines("", ".gitignore")
@@ -173,26 +173,26 @@ test_that("git_security_audit detects git-tracked private data", {
     default = list(
       project_type = "project",
       directories = list(
-        inputs_raw = "inputs/raw"
+        inputs_raw = "inputs/private/raw"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data directory and file
-  dir.create("inputs/raw", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
+  dir.create("inputs/private/raw", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/private/raw/secrets.csv", row.names = FALSE)
 
   # Initialize git and accidentally commit private data
   system2("git", c("init"), stdout = FALSE, stderr = FALSE)
   system2("git", c("config", "user.email", "test@example.com"), stdout = FALSE, stderr = FALSE)
   system2("git", c("config", "user.name", "Test User"), stdout = FALSE, stderr = FALSE)
-  system2("git", c("add", "inputs/raw/secrets.csv"), stdout = FALSE, stderr = FALSE)
+  system2("git", c("add", "inputs/private/raw/secrets.csv"), stdout = FALSE, stderr = FALSE)
 
   # Create .gitignore AFTER accidentally tracking file
   writeLines(c(
-    "inputs/raw/",
-    "inputs/raw/**"
+    "inputs/private/raw/",
+    "inputs/private/raw/**"
   ), ".gitignore")
 
   # Run audit
@@ -340,18 +340,18 @@ test_that("git_security_audit auto_fix adds normalized entries to .gitignore", {
     default = list(
       project_type = "project",
       directories = list(
-        inputs_raw = "inputs/raw",
-        inputs_intermediate = "inputs/intermediate"
+        inputs_raw = "inputs/private/raw",
+        inputs_intermediate = "inputs/private/intermediate"
       )
     )
   )
   yaml::write_yaml(config, "settings.yml")
 
   # Create private data
-  dir.create("inputs/raw", recursive = TRUE)
-  dir.create("inputs/intermediate", recursive = TRUE)
-  write.csv(data.frame(secret = 1:5), "inputs/raw/secrets.csv", row.names = FALSE)
-  write.csv(data.frame(secret = 1:5), "inputs/intermediate/tmp.csv", row.names = FALSE)
+  dir.create("inputs/private/raw", recursive = TRUE)
+  dir.create("inputs/private/intermediate", recursive = TRUE)
+  write.csv(data.frame(secret = 1:5), "inputs/private/raw/secrets.csv", row.names = FALSE)
+  write.csv(data.frame(secret = 1:5), "inputs/private/intermediate/tmp.csv", row.names = FALSE)
 
   # Create empty .gitignore
   writeLines("", ".gitignore")
@@ -367,17 +367,17 @@ test_that("git_security_audit auto_fix adds normalized entries to .gitignore", {
   # Check that .gitignore was updated
   gitignore_content <- readLines(".gitignore", warn = FALSE)
   expect_true(any(grepl("^# Framework Security Audit", gitignore_content)))
-  expect_true(any(grepl("inputs/raw/$", gitignore_content)))
-  expect_true(any(grepl("inputs/raw/\\*\\*$", gitignore_content)))
+  expect_true(any(grepl("inputs/private/raw/$", gitignore_content)))
+  expect_true(any(grepl("inputs/private/raw/\\*\\*$", gitignore_content)))
 
   # Run audit again after removing file to ensure idempotent header handling
-  file.remove("inputs/intermediate/tmp.csv")
-  write.csv(data.frame(secret = 1:5), "inputs/intermediate/tmp.csv", row.names = FALSE)
+  file.remove("inputs/private/intermediate/tmp.csv")
+  write.csv(data.frame(secret = 1:5), "inputs/private/intermediate/tmp.csv", row.names = FALSE)
   audit <- git_security_audit(check_git_history = FALSE, auto_fix = TRUE, verbose = FALSE)
 
   gitignore_content <- readLines(".gitignore", warn = FALSE)
-  expect_true(any(grepl("inputs/intermediate/$", gitignore_content)))
-  expect_true(any(grepl("inputs/intermediate/\\*\\*$", gitignore_content)))
+  expect_true(any(grepl("inputs/private/intermediate/$", gitignore_content)))
+  expect_true(any(grepl("inputs/private/intermediate/\\*\\*$", gitignore_content)))
   expect_equal(sum(grepl("^# Framework Security Audit", gitignore_content)), 1)
   expect_true(
     audit$summary$status[audit$summary$check == "gitignore_coverage"] %in% c("pass", "warning")
@@ -612,4 +612,22 @@ test_that("git_security_audit handles sensitive filename patterns", {
   if (nrow(audit$findings$git_history_issues) > 0) {
     expect_true(any(grepl("password", audit$findings$git_history_issues$file, ignore.case = TRUE)))
   }
+})
+
+test_that("private folders are the ones the gitignore templates ignore", {
+  dirs <- list(
+    inputs_raw = "inputs/raw",
+    inputs_final = "inputs/final",
+    inputs_private_raw = "inputs/private/raw",
+    outputs_private = "outputs/private",
+    outputs_public = "outputs/public",
+    exports = "shared/confidential/exports",
+    inputs_public_raw = "inputs/public/raw",
+    cache = "outputs/private/cache",
+    logs = "logs"
+  )
+  expect_setequal(
+    names(framework:::.identify_private_dirs(dirs)),
+    c("inputs_private_raw", "outputs_private", "exports", "cache", "logs")
+  )
 })

@@ -680,3 +680,41 @@ test_that("settings() works with deep nesting", {
   expect_type(level2, "list")
   expect_true("level3" %in% names(level2))
 })
+
+test_that("settings_write(section =) keeps a flat file flat", {
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "settings.yml")
+  yaml::write_yaml(list(project_type = "project", directories = list(notebooks = "notebooks")), path)
+
+  settings_write(list(notebooks = "nb", scripts = "scripts"), settings_file = path, section = "directories")
+  raw <- yaml::read_yaml(path)
+  expect_null(raw$default)
+  expect_identical(raw$project_type, "project")
+  expect_identical(raw$directories, list(notebooks = "nb", scripts = "scripts"))
+  expect_identical(settings_read(path)$directories$notebooks, "nb")
+
+  # Files with environments still write into the active one
+  yaml::write_yaml(list(default = list(directories = list(notebooks = "notebooks"))), path)
+  settings_write(list(notebooks = "nb"), settings_file = path, section = "directories")
+  expect_identical(yaml::read_yaml(path)$default$directories$notebooks, "nb")
+})
+
+test_that("settings_write(section =) merges a split file under its section key", {
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "settings.yml")
+  dir.create(file.path(dir, "settings"))
+  yaml::write_yaml(list(default = list(connections = "settings/connections.yml")), path)
+  split <- file.path(dir, "settings", "connections.yml")
+  yaml::write_yaml(list(connections = list(db = list(driver = "sqlite"))), split)
+
+  settings_write(list(other = list(driver = "postgres")), settings_file = path, section = "connections")
+  settings_write(list(connections = list(third = list(driver = "mysql"))), settings_file = path, section = "connections")
+  written <- yaml::read_yaml(split)
+  expect_identical(names(written), "connections")
+  expect_setequal(names(written$connections), c("db", "other", "third"))
+
+  # An older split file without the wrapper gets one
+  yaml::write_yaml(list(db = list(driver = "sqlite")), split)
+  settings_write(list(other = list(driver = "postgres")), settings_file = path, section = "connections")
+  expect_setequal(names(yaml::read_yaml(split)$connections), c("db", "other"))
+})

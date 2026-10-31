@@ -217,6 +217,11 @@ data_read <- function(path, delim = NULL, keep_attributes = FALSE, ...) {
     }
   }
 
+  # data_add() used to record .por files as spss and .xpt files as sas
+  ext <- tolower(tools::file_ext(spec$path))
+  if (identical(spec$type, "spss") && ext == "por") spec$type <- "spss_por"
+  if (identical(spec$type, "sas") && ext == "xpt") spec$type <- "sas_xpt"
+
   # Load data
   data <- tryCatch(
     switch(spec$type,
@@ -588,7 +593,7 @@ data_info <- function(path) {
       type = type_info$type,
       delimiter = type_info$delimiter,
       locked = FALSE,
-      private = basename(dirname(path)) == "private"
+      private = .data_path_is_private(path, config_dir)
     )
   }
 
@@ -619,13 +624,9 @@ data_info <- function(path) {
 
   # Handle dot notation lookup
   get_dot_notation_spec <- function(parts, config) {
-    current <- config$data
-    config_spec <- current
-    for (part in parts) {
-      if (is.null(config_spec[[part]])) {
-        return(NULL)
-      }
-      config_spec <- config_spec[[part]]
+    config_spec <- .data_catalog_lookup(config$data, parts)
+    if (is.null(config_spec)) {
+      return(NULL)
     }
 
     if (is.character(config_spec) && length(config_spec) == 1) {
@@ -650,6 +651,51 @@ data_info <- function(path) {
   }
 
   get_spec_by_path_type(path, config)
+}
+
+# Find a catalog entry by the parts of its dot-notation name. data_list()
+# shows nested (inputs: raw: survey:), mixed (inputs: raw.survey:), and flat
+# (inputs.raw.survey:) keys alike; nested keys are tried first. Returns the
+# keys that lead to the entry, or NULL.
+#' @keywords internal
+.data_catalog_find <- function(node, parts) {
+  is_entry <- function(x) (is.character(x) && length(x) == 1) || (is.list(x) && !is.null(x$path))
+  if (length(parts) == 0) {
+    return(if (is_entry(node)) character() else NULL)
+  }
+  if (!is.list(node)) {
+    return(NULL)
+  }
+  for (j in seq_along(parts)) {
+    key <- paste(parts[seq_len(j)], collapse = ".")
+    child <- node[[key]]
+    if (!is.null(child)) {
+      rest <- .data_catalog_find(child, parts[-seq_len(j)])
+      if (!is.null(rest)) return(c(key, rest))
+    }
+  }
+  NULL
+}
+
+# A file is private when any folder between the project root and the file
+# is named private (inputs/private/raw/x.csv included)
+#' @keywords internal
+.data_path_is_private <- function(path, root) {
+  path <- gsub("\\\\", "/", path)
+  root <- sub("/+$", "", gsub("\\\\", "/", root))
+  if (!startsWith(path, paste0(root, "/"))) {
+    # Outside the project, only the file's own folder counts: on macOS every
+    # temporary path starts with /private
+    return(basename(dirname(path)) == "private")
+  }
+  rel <- substring(path, nchar(root) + 2)
+  "private" %in% strsplit(dirname(rel), "/", fixed = TRUE)[[1]]
+}
+
+#' @keywords internal
+.data_catalog_lookup <- function(node, parts) {
+  keys <- .data_catalog_find(node, parts)
+  if (is.null(keys)) NULL else node[[keys]]
 }
 
 #' Get data specification (DEPRECATED)

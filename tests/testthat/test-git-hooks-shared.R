@@ -91,3 +91,33 @@ test_that("ai_sync_context() is deprecated", {
   withr::local_dir(dir)
   expect_warning(try(ai_sync_context(verbose = FALSE), silent = TRUE), "deprecated")
 })
+
+test_that("the hook explains when no runtime has framework installed", {
+  skip_on_os("windows")
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  system2("git", c("init", "-q"), stdout = FALSE, stderr = FALSE)
+  file.create("demo.Rproj", "pyproject.toml")
+
+  # Rscript and python3 exist, but neither has the framework package
+  bin <- file.path(dir, "bin")
+  dir.create(bin)
+  for (tool in c("Rscript", "python3")) {
+    writeLines(c("#!/bin/sh", "echo \"$0 ran: $*\" >> \"$HOOK_LOG\"", "exit 1"), file.path(bin, tool))
+    Sys.chmod(file.path(bin, tool), "0755")
+  }
+  log <- file.path(dir, "calls.log")
+  git_dir <- dirname(Sys.which("git"))
+  withr::local_envvar(PATH = paste(bin, git_dir, "/usr/bin", "/bin", sep = ":"), HOOK_LOG = log)
+
+  hook <- system.file("hooks", "pre-commit", package = "framework")
+  out <- suppressWarnings(system2("sh", hook, stdout = TRUE, stderr = TRUE))
+  expect_identical(attr(out, "status"), 1L)
+  expect_match(paste(out, collapse = "\n"), "found neither R with framework 2.0 or later nor Python with framework-py")
+
+  # Each runtime was only probed, never asked to run the hook
+  calls <- readLines(log)
+  expect_length(calls, 2)
+  expect_match(calls[1], "Rscript ran: -e ok <- requireNamespace")
+  expect_match(calls[2], "python3 ran: -c import framework")
+})

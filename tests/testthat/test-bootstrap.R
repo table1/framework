@@ -86,3 +86,9 @@ test_that("bootstrap() installs enabled hooks in a git checkout", {
   expect_true("Installed git hooks" %in% result$done)
   expect_true(.is_framework_hook(file.path(dir, ".git", "hooks", "pre-commit")))
 })
+
+test_that("bootstrap() does not make folders out of file entries", {
+  dir <- local_cloned_project(list(directories = list(presentation = "presentation.qmd")))
+  suppressMessages(bootstrap(dir, interactive = FALSE, packages = FALSE))
+  expect_false(dir.exists(file.path(dir, "presentation.qmd")))
+})

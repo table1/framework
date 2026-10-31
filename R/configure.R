@@ -490,7 +490,7 @@ configure_packages <- function(package = NULL, auto_attach = TRUE, version = NUL
 #' - `notebooks` - Where make_notebook() creates files
 #' - `scripts` - Where make_script() creates files
 #' - `functions` - Where scaffold() looks for custom functions
-#' - `inputs_raw` - Source data (gitignored)
+#' - `inputs_raw` - Source data, as received
 #' - `inputs_intermediate` - Cleaned-but-input datasets
 #' - `inputs_final` - Curated analytic datasets
 #' - `inputs_reference` - External documentation/codebooks
