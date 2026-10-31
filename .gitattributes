@@ -2,6 +2,7 @@
 # and check them by SHA-256. Keep their bytes the same on every platform.
 inst/hooks/pre-commit -text
 inst/schema/*.json -text
+inst/schema/*.md -text
 inst/templates/init.sql -text
 inst/conformance/** -text
 tests/integration/** -text

@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://framework.pub/schema/docs-reference.v1.json",
+  "title": "Framework docs reference",
+  "description": "The generated function or command reference for one product's docs site (docs/site/reference.json). Text fields hold CommonMark with GFM tables.",
+  "type": "object",
+  "required": ["schema", "product", "version", "categories", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "docs-reference.v1" },
+    "product": { "enum": ["r", "py", "cli"] },
+    "version": { "type": "string", "minLength": 1, "description": "The release this reference was built from, such as 2.0.0 or 0.1.0.dev1." },
+    "categories": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/category" }
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+      "description": "URL-safe and unique within the product: /reference/{id}."
+    },
+    "markdown": { "type": "string" },
+    "category": {
+      "type": "object",
+      "required": ["id", "title", "position"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "description": "One line, shown under the title in the Reference dropdown." },
+        "position": { "type": "integer" },
+        "common": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Entry names listed first, under a Common heading."
+        }
+      }
+    },
+    "titled": {
+      "type": "object",
+      "required": ["title", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "content": { "$ref": "#/$defs/markdown" }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "required": ["id", "name", "kind", "category", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "description": "As users write it: data_read, AuditResult, or \"project bootstrap\"." },
+        "kind": { "enum": ["function", "class", "command"] },
+        "category": { "type": "string", "description": "A category id." },
+        "title": { "type": "string", "description": "A short heading. Defaults to name." },
+        "summary": { "type": "string", "minLength": 1, "description": "One line, used in lists and search results." },
+        "usage": { "type": "string", "description": "The signature or command line, shown as code." },
+        "description": { "$ref": "#/$defs/markdown", "description": "A paragraph or two (roxygen @description, a docstring's opening paragraphs)." },
+        "details": { "$ref": "#/$defs/markdown", "description": "The long body (roxygen @details)." },
+        "parameters": {
+          "type": "array",
+          "description": "Arguments, flags, or a class's fields, in signature order.",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "description": "x, *, --path, or -p, --path." },
+              "type": { "type": "string" },
+              "default": { "type": "string", "description": "As code, such as NULL, None, or \".\"." },
+              "required": { "type": "boolean" },
+              "env": { "type": "string", "description": "An environment variable that sets it (commands)." },
+              "description": { "$ref": "#/$defs/markdown" }
+            }
+          }
+        },
+        "returns": { "$ref": "#/$defs/markdown" },
+        "note": { "$ref": "#/$defs/markdown" },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string", "minLength": 1 },
+              "content": { "$ref": "#/$defs/markdown" },
+              "subsections": { "type": "array", "items": { "$ref": "#/$defs/titled" } }
+            }
+          }
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string" },
+              "code": { "type": "string", "minLength": 1 },
+              "runnable": { "type": "boolean", "default": true, "description": "False for R's \\dontrun and for examples that need a server or credentials." }
+            }
+          }
+        },
+        "see_also": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string", "minLength": 1, "description": "An entry name in this product, or a link target such as py:ref:data_read." },
+              {
+                "type": "object",
+                "required": ["title", "url"],
+                "additionalProperties": false,
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "url": { "type": "string", "pattern": "^https://" }
+                }
+              }
+            ]
+          }
+        },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "lifecycle": { "enum": ["stable", "deprecated", "experimental"], "default": "stable" },
+        "replaced_by": { "type": "string", "description": "The entry name to use instead, for deprecated entries." },
+        "since": { "type": "string", "description": "The version that added it." }
+      }
+    }
+  }
+}
