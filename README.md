@@ -115,15 +115,15 @@ data:
 ```
 
 ```r
-df <- data_load("inputs.raw.survey")
+df <- data_read("inputs.raw.survey")
 ```
 
 **Direct path:**
 
 ```r
-df <- data_load("inputs/raw/my_file.csv")       # CSV
-df <- data_load("inputs/raw/stata_file.dta")    # Stata
-df <- data_load("inputs/raw/spss_file.sav")     # SPSS
+df <- data_read("inputs/raw/my_file.csv")       # CSV
+df <- data_read("inputs/raw/stata_file.dta")    # Stata
+df <- data_read("inputs/raw/spss_file.sav")     # SPSS
 ```
 
 Every read is logged with a SHA-256 hash for integrity tracking.
@@ -131,9 +131,9 @@ Every read is logged with a SHA-256 hash for integrity tracking.
 ### 4. Cache Expensive Operations
 
 ```r
-model <- get_or_cache("model_v1", {
-  expensive_model_fit(df)
-}, expire_after = 1440)  # 24 hours
+model <- cache_remember("model_v1", {
+  fit_model(df)
+}, expire_after = "1 day")
 ```
 
 ### 5. Save Results
@@ -151,8 +151,9 @@ data_save(final_df, "final.analysis_ready", type = "csv")
 **Save analysis outputs:**
 
 ```r
-result_save("regression_model", model, type = "model")
-result_save("report", file = "report.html", type = "notebook", blind = TRUE)
+save_model(model, "regression_model")          # outputs/models/
+save_table(summary_df, "summary")               # outputs/tables/
+save_notebook("notebooks/report.qmd")           # rendered HTML
 ```
 
 ### 6. Query Databases
@@ -169,7 +170,7 @@ connections:
 ```
 
 ```r
-df <- query_get("SELECT * FROM users WHERE active = true", "db")
+df <- db_query("SELECT * FROM users WHERE active = true", "db")
 ```
 
 ## Enhanced Data Viewing
@@ -231,19 +232,19 @@ Supported: Claude Code (CLAUDE.md), GitHub Copilot, AGENTS.md
 | Function | Purpose |
 |----------|---------|
 | `scaffold()` | Initialize session (load packages, functions, config) |
-| `data_load()` | Load data from path or config |
+| `data_read()` | Load data from path or config |
 | `data_save()` | Save data with integrity tracking |
 | `view_detail()` | Browser-based data viewer with search/export |
-| `query_get()` | Execute SQL query, return data |
-| `query_execute()` | Execute SQL command |
-| `get_or_cache()` | Lazy evaluation with caching |
-| `result_save()` | Save analysis output |
-| `result_get()` | Retrieve saved result |
+| `db_query()` | Execute SQL query, return data |
+| `db_execute()` | Execute SQL command |
+| `cache_remember()` | Lazy evaluation with caching |
+| `save_table()`, `save_figure()`, `save_model()` | Save analysis outputs |
+| `package_add()` | Record a package in settings and install it |
 | `scratch_capture()` | Quick debug/temp file save |
 | `renv_enable()` | Enable renv for reproducibility |
 | `packages_snapshot()` | Save package versions to renv.lock |
 | `packages_restore()` | Restore packages from renv.lock |
-| `security_audit()` | Scan for data leaks and security issues |
+| `git_security_audit()` | Scan for data leaks and security issues |
 
 ## Data Integrity & Security
 
@@ -251,7 +252,7 @@ Supported: Claude Code (CLAUDE.md), GitHub Copilot, AGENTS.md
 - **Locked data**: Flag files as read-only, errors on modification
 - **Password-based encryption**: Ansible Vault-style encryption for sensitive data
 - **Gitignore by default**: Private directories auto-ignored
-- **Security audits**: `security_audit()` detects data leaks
+- **Security audits**: `git_security_audit()` detects data leaks
 
 ### Encryption
 
@@ -260,7 +261,7 @@ Supported: Claude Code (CLAUDE.md), GitHub Copilot, AGENTS.md
 data_save(sensitive_df, "private.data", encrypted = TRUE)
 
 # Load (auto-detects encryption)
-data <- data_load("private.data")
+data <- data_read("private.data")
 ```
 
 Password from `ENCRYPTION_PASSWORD` env var or interactive prompt.
@@ -268,8 +269,8 @@ Password from `ENCRYPTION_PASSWORD` env var or interactive prompt.
 ### Security Auditing
 
 ```r
-audit <- security_audit()              # Full audit
-audit <- security_audit(auto_fix = TRUE)  # Auto-fix .gitignore issues
+audit <- git_security_audit()                     # Full audit
+audit <- git_security_audit(auto_fix = TRUE)      # Auto-fix .gitignore issues
 ```
 
 ## Reproducibility with renv

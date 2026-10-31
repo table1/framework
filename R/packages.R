@@ -546,6 +546,124 @@ renv_update <- function(packages = NULL) {
   invisible(TRUE)
 }
 
+#' Add a package to the project
+#'
+#' Records a package in the project's settings (in `settings/packages.yml`
+#' when the project uses split settings files, otherwise in `settings.yml`)
+#' and installs it if it isn't installed yet. Recording the package is what
+#' makes it reproducible: [scaffold()] and [packages_install()] install
+#' everything listed, and auto-attached packages are loaded by [scaffold()].
+#'
+#' Adding a package that is already listed replaces its entry, so this is
+#' also how to pin a version or turn auto-attach on or off.
+#'
+#' @param package Package specification: `"janitor"`, a pinned CRAN version
+#'   (`"dplyr@1.1.0"`), a GitHub repository (`"tidyverse/dplyr@main"`), or a
+#'   Bioconductor package (`"bioc::DESeq2"`).
+#' @param auto_attach Logical. Whether [scaffold()] loads the package. Default
+#'   FALSE.
+#' @param install Logical. Install the package now if it isn't installed (or
+#'   the installed version doesn't match a pin). Default TRUE.
+#'
+#' @return Invisibly, the package entry that was recorded.
+#' @export
+#'
+#' @seealso [packages_list()], [packages_install()]
+#'
+#' @examples
+#' \donttest{
+#' if (FALSE) {
+#' package_add("janitor")
+#' package_add("forcats", auto_attach = TRUE)
+#' package_add("tidyverse/dplyr@main")
+#' package_add("dplyr@1.1.0")
+#' }
+#' }
+package_add <- function(package, auto_attach = FALSE, install = TRUE) {
+  checkmate::assert_string(package, min.chars = 1)
+  checkmate::assert_flag(auto_attach)
+  checkmate::assert_flag(install)
+
+  settings_file <- .get_settings_file()
+  if (is.null(settings_file)) {
+    stop("No settings.yml found. Run package_add() inside a Framework project.", call. = FALSE)
+  }
+
+  spec <- .normalize_package_spec(package)
+  entry <- list(name = spec$name, source = spec$source)
+  if (!is.null(spec$version)) entry$version <- spec$version
+  if (!is.null(spec$repo)) entry$repo <- spec$repo
+  if (!is.null(spec$ref)) entry$ref <- spec$ref
+  entry$auto_attach <- auto_attach
+
+  .packages_edit(settings_file, function(packages) {
+    names_listed <- vapply(packages, function(p) {
+      tryCatch(.normalize_package_spec(p)$name %||% "", error = function(e) "")
+    }, character(1))
+    hit <- which(names_listed == entry$name)
+    if (length(hit) > 0) {
+      packages[[hit[1]]] <- entry
+      message("Updated ", entry$name, " in the project's packages")
+    } else {
+      packages <- c(packages, list(entry))
+      message("Added ", entry$name, " to the project's packages")
+    }
+    packages
+  })
+
+  if (install) {
+    .install_package(entry)
+  }
+
+  invisible(entry)
+}
+
+# Apply `edit` to the project's package list and write it back where it lives:
+# a split file (settings/packages.yml) or the packages section of the main
+# settings file. Handles both the default_packages structure and the older
+# flat list.
+#' @keywords internal
+.packages_edit <- function(settings_file, edit) {
+  env <- Sys.getenv("R_CONFIG_ACTIVE", Sys.getenv("R_CONFIG_NAME", "default"))
+  main <- .safe_read_yaml(settings_file)
+  section <- if (!is.null(main[[env]])) main[[env]]$packages else main$packages
+
+  edit_node <- function(node) {
+    node <- node %||% list(default_packages = list())
+    # A flat list of names reads back from YAML as a character vector
+    if (is.character(node)) node <- as.list(node)
+    if (is.list(node) && !is.null(names(node)) && any(names(node) %in% c("default_packages", "use_renv"))) {
+      node$default_packages <- edit(node$default_packages %||% list())
+    } else {
+      node <- edit(node)
+    }
+    node
+  }
+
+  if (is.character(section) && length(section) == 1 && grepl("\\.ya?ml$", section)) {
+    split_file <- file.path(dirname(settings_file), section)
+    if (!file.exists(split_file)) {
+      stop("Split file '", section, "' does not exist", call. = FALSE)
+    }
+    split <- .safe_read_yaml(split_file) %||% list()
+    if ("packages" %in% names(split)) {
+      split$packages <- edit_node(split$packages)
+    } else {
+      split <- edit_node(split)
+    }
+    yaml::write_yaml(split, split_file)
+    return(invisible(split_file))
+  }
+
+  if (!is.null(main[[env]])) {
+    main[[env]]$packages <- edit_node(section)
+  } else {
+    main$packages <- edit_node(section)
+  }
+  yaml::write_yaml(main, settings_file)
+  invisible(settings_file)
+}
+
 #' Install packages from configuration
 #'
 #' Installs all packages defined in the configuration that are not already installed.

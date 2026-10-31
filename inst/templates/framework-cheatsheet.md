@@ -8,10 +8,10 @@ Quick reference for the most commonly used Framework functions.
 
 ### Project Setup
 ```r
-init()                           # Create new Framework project (interactive)
-init("MyProject", type="project")  # Create project structure
-init("MyProject", type="course")   # Create course structure
-init("MyProject", type="presentation")  # Create presentation
+new()                            # Create new Framework project (interactive)
+new("my-project", "~/projects/my-project", type = "project")  # Standard project
+new_course("stats-101", "~/projects/stats-101")               # Course
+new_presentation("talk", "~/projects/talk")                   # Presentation
 scaffold()                       # Load project environment (use in notebooks)
 standardize_wd()                 # Normalize working directory for notebooks
 ```
@@ -52,7 +52,7 @@ data_save(df, "outputs_private.secret", encrypted=TRUE)  # Encrypted save
 
 ### Data Cache
 ```r
-get_or_cache("key", expr)        # Cache expensive computation
+cache_remember("key", expr)      # Cache expensive computation
 cache_get("key")                 # Retrieve from cache
 cache("key", value)              # Store in cache
 cache_forget("key")              # Delete cached item
@@ -85,27 +85,17 @@ db_list()                        # List configured connections
 ### Database Introspection
 ```r
 conn <- db_connect("db")
-.list_tables(conn)               # List tables in database
-.list_columns(conn, "users")     # List columns in table
-.has_column(conn, "users", "id") # Check if column exists
+DBI::dbListTables(conn)          # List tables in database
+DBI::dbListFields(conn, "users") # List columns in table
 ```
 
 ---
 
 ## Configuration
 
-### The config Object (After scaffold())
-After running `scaffold()`, a `config` object is created in your global environment:
+### Reading Settings
+`settings()` reads the project's settings with dot notation:
 
-```r
-config("notebooks")                 # Smart lookup (checks directories section)
-config("directories.notebooks")     # Explicit nested value with dot notation
-config("connections.db.host")       # Access deep nested values
-config("seed")                      # Get random seed
-config("missing", default = "x")    # Provide fallback for missing keys
-```
-
-### Settings Helper (Alternative)
 ```r
 settings()                          # View entire settings (pretty-printed in console)
 settings("directories")             # Get all directories
@@ -167,6 +157,9 @@ renv_enabled()                   # Check if renv is enabled
 
 ### Package Operations
 ```r
+package_add("janitor")           # Record in settings and install
+package_add("forcats", auto_attach = TRUE)  # Loaded by scaffold()
+package_add("dplyr@1.1.0")       # Pin a version
 packages_install()               # Install all configured packages
 packages_list()                  # List configured packages
 packages_snapshot()              # Save package versions (renv)
@@ -179,12 +172,11 @@ packages_update()                # Update packages (renv)
 
 ## Results Management
 
-### Saving & Loading Results
+### Saving Outputs
 ```r
-result_save(obj, "my_model", type="model")           # Save result
-result_save(obj, "blind", type="model", blind=TRUE)  # Save blinded
-result_get("my_model")                               # Load result
-result_list()                                        # List all results
+save_table(df, "summary")                            # outputs/tables/
+save_figure(plot, "trend")                           # outputs/figures/
+save_model(model, "my_model")                        # outputs/models/ (rds)
 ```
 
 ---
@@ -201,14 +193,6 @@ scratch_clean()                  # Clean scratch directory
 ### Date/Time
 ```r
 now()                            # Current timestamp (formatted)
-```
-
-### Framework Database
-```r
-list_metadata()                  # List metadata entries
-framework_view()                 # View framework database
-use_framework_view()             # Enable auto-view on updates
-restore_framework_view()         # Restore view preferences
 ```
 
 ---
@@ -258,8 +242,8 @@ publish_data("outputs/model.rds", "models/v2.rds") # Existing file
 
 ### Utilities
 ```r
-s3_test()                         # Test S3 connection
-s3_test("backup_s3")              # Test specific connection
+storage_test()                    # Test S3 connection
+storage_test("backup_s3")         # Test specific connection
 publish_list()                    # List published files
 publish_list("reports/")          # List with prefix filter
 ```
@@ -267,12 +251,6 @@ publish_list("reports/")          # List with prefix filter
 ---
 
 ## Advanced Features
-
-### Initialization Control
-```r
-is_initialized()                 # Check if project is initialized
-remove_init()                    # Remove initialization marker
-```
 
 ### Output Capture
 ```r
@@ -296,7 +274,6 @@ capture_output(expr)             # Capture console output
 | `cache_list()` | List cached items |
 | `cache_remember()` | Cache expensive computation |
 | `capture_output()` | Capture console output |
-| `config()` | Access configuration with dot notation (after scaffold) |
 | `data_add()` | Add data to catalog |
 | `data_info()` | Get data specification |
 | `data_read()` | Load from data catalog or file path |
@@ -332,6 +309,7 @@ capture_output(expr)             # Capture console output
 | `new_project()` | Create standard project |
 | `new_project_sensitive()` | Create project for sensitive data |
 | `now()` | Current timestamp |
+| `package_add()` | Record a package in settings and install it |
 | `packages_install()` | Install configured packages |
 | `packages_list()` | List configured packages |
 | `packages_restore()` | Restore package versions (renv) |

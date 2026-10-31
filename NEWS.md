@@ -1,3 +1,17 @@
+# framework 1.1.2
+
+* New `package_add()` records a package in the project's settings and
+  installs it. The AI skills and AGENTS.md shipped with 1.1.0 and 1.1.1
+  already told agents to use it, so agents went looking for a function that
+  didn't exist and edited `settings.yml` by hand instead
+* The AI skills, the generated AGENTS.md reference, the cheatsheet, and the
+  README named functions this version doesn't have (`result_save()`,
+  `cache_fetch()`, `get_or_cache()`, `query_get()`, `init()`, `s3_test()`,
+  and others). They now use the current ones: `save_table()`,
+  `save_figure()`, `save_model()`, `cache_remember()`, `db_query()`,
+  `new()`, and `storage_test()`. A test checks that every function they
+  name is exported
+
 # framework 1.1.1
 
 * Fixed (security): projects created with `new()`, `new_project()`, and the
