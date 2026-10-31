@@ -13,6 +13,8 @@ Framework manages your project's R package dependencies through `settings.yml`. 
 
 In your `settings.yml`, or through **Packages** in `framework::gui()`, you can curate the defaults. The GUI lets you search CRAN with autocomplete, and you can switch the source dropdown to GitHub or Bioconductor when you need development builds.
 
+![Default package configuration UI with source selector and auto-attach toggles](images/packages-defaults.png)
+
 In your `settings.yml`:
 
 ```yaml

@@ -42,6 +42,8 @@ format:
     toc: true
 ```
 
+![Quarto Settings GUI](images/quarto-settings-gui.png)
+
 ## Quarto Configuration
 
 Framework generates `_quarto.yml` files with sensible defaults. These files are **yours to customize**. Framework only creates them once and won't overwrite your changes.

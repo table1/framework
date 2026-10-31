@@ -57,6 +57,11 @@ test_that("the guides follow the docs-site format", {
         problem(m$id, "links to missing guide ", t)
       }
       if (grepl("\\]\\(/", line)) problem(m$id, "site-absolute link: ", line)
+      for (img in regmatches(line, gregexpr("!\\[[^]]*\\]\\([^)]+\\)", line))[[1]]) {
+        if (grepl("^!\\[\\]", img)) problem(m$id, "image without alt text: ", img)
+        target <- sub("^!\\[[^]]*\\]\\(([^)]+)\\)$", "\\1", img)
+        if (!file.exists(file.path(site_dir(), target))) problem(m$id, "missing image ", target)
+      }
     }
     if (!is.null(fence)) problem(m$id, "unclosed code fence")
   }

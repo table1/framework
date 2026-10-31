@@ -19,6 +19,8 @@ This opens the web interface where you can set **global defaults for new project
 
 When using the GUI, you can always access the global settings by clicking **New Project Defaults** in the left sidebar.
 
+![Framework Setup GUI](images/setup-gui.png)
+
 ## Settings Sections
 
 - **Basics**: projects directory, editor support, notebook format, author info

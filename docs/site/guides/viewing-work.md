@@ -21,6 +21,8 @@ For data frames, you get a searchable, sortable, filterable table:
 view(mtcars)
 ```
 
+![Data frame viewer](images/view-dataframe.png)
+
 Features:
 - Search across all columns
 - Filter individual columns
@@ -98,6 +100,8 @@ The Framework GUI provides visual access to your work. Run `setup()` and navigat
 - **Inputs**: Browse files in your input directories
 - **Outputs**: Browse saved output files
 - **Results**: View tracked results from `framework.db`
+
+![Input directory browser with tabs for Raw, Intermediate, Final, and Reference inputs](images/view-inputs-tabs.png)
 
 ---
 

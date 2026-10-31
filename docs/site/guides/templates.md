@@ -17,6 +17,8 @@ The easiest way to edit templates is through the GUI. Run `setup()` and click **
 framework::setup()
 ```
 
+![Templates GUI](images/templates-gui.png)
+
 The GUI provides a code editor for each template type with syntax highlighting and a **Reset to default** button if you want to start over.
 
 ## Available Variables

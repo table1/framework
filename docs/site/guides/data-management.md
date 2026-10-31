@@ -36,9 +36,13 @@ The GUI makes catalog maintenance fast. In `framework::gui()` under **Data**, Fr
 - Guess the file type
 - Stage the change so you can review and save
 
+![Scanning inputs for uncataloged files in framework::gui()](images/data-catalog-input-scan.png)
+
 You can also view existing entries, copy their paths (relative or full), or copy the `data_read()` command directly.
 
 Once an entry is saved, it appears with dedicated copy buttons for the relative path, absolute path, and a ready-to-run `data_read()` helper so you can drop the same reference into scripts, notebooks, or tests without hunting for file names.
+
+![Copy helpers for catalog entries](images/data-catalog-copy-tools.png)
 
 ## Supported Formats
 

@@ -23,6 +23,8 @@ Configure which assistants receive context files in the GUI under **AI Assistant
 framework::setup()
 ```
 
+![AI Assistants GUI](images/ai-assistants-gui.png)
+
 ## Canonical Context File
 
 The canonical file is your source of truth. Choose one format as primary—Framework mirrors its content to other assistant files when sync hooks run.

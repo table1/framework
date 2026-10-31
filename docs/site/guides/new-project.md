@@ -17,6 +17,8 @@ Click **+ New Project** in the GUI sidebar, or run:
 framework::gui()
 ```
 
+![New Project GUI](images/new-project-gui.png)
+
 ### Using the Command Line
 
 ```r

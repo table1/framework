@@ -20,6 +20,8 @@ Framework generates `.gitignore` files based on project type. Each project type 
 
 Customize templates under **Project Defaults** in the GUI, where each project type has its own `.gitignore Patterns` section:
 
+![.gitignore Template Editor](images/gitignore-template-gui.png)
+
 Templates use pattern-based rules that work regardless of your directory structure customization.
 
 ## Commit Identity, Hooks & Settings
@@ -29,6 +31,8 @@ Configure git settings through the GUI by running `setup()` and clicking **Git &
 ```r
 framework::setup()
 ```
+
+![Git & Hooks GUI](images/git-hooks-gui.png)
 
 ### Commit Identity
 
