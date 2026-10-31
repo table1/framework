@@ -148,8 +148,12 @@
   and `scaffold.ggplot_theme` are optional. R's `spec_check()` still accepts
   only what R can build
 * `publish()`, `publish_notebook()`, `publish_dir()`, and `publish_data()`
-  refuse a source inside a folder named `private` in the project, which
-  holds restricted data. `allow_private = TRUE` publishes it anyway
+  warn when the source's absolute path contains "private" in any letter
+  case, apart from the `/private/` that macOS puts in front of `/tmp`,
+  `/var`, and `/etc`. An interactive session asks before publishing, with No as the
+  default. A non-interactive session stops unless `include_private = TRUE`.
+  Publishing is always an explicit call, and nothing is uploaded
+  automatically
 * S3 uploads retry without the `public-read` ACL when the bucket has ACLs
   disabled (the AWS default for new buckets), leaving access to the bucket
   policy. They used to fail

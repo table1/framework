@@ -301,7 +301,7 @@
     "  - settings sync: your Framework settings document (cloud_sync())\n",
     "  - project registration: project name and type (new())\n",
     "  - integrity ledger: file digests, sizes, and this machine's hostname\n",
-    "    (data_save(); opt out any time with FW_LEDGER=off)\n",
+    "    (ledger_push(), or each data_save() if you set FW_LEDGER=live)\n",
     "  - publishing: documents you explicitly publish()\n",
     "Your data files themselves are never uploaded unless you publish them.\n",
     "Details: ", url, "/privacy\n"

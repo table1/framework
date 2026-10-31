@@ -11,7 +11,7 @@ publish(
   overwrite = TRUE,
   self_contained = TRUE,
   slug = NULL,
-  allow_private = FALSE
+  include_private = FALSE
 )
 }
 \arguments{
@@ -37,9 +37,10 @@ readable URL on with the name derived from \code{dest} or the file name, and
 name and leaves the document's setting as it is (new documents start
 private). Ignored, with a warning, for S3.}
 
-\item{allow_private}{Logical. Publish even when the source is inside a
-folder named \code{private} in the project. Default FALSE: private folders
-hold restricted data and are refused.}
+\item{include_private}{Logical. Skip the private-path check. When the
+source's absolute path contains "private" in any case, Framework warns
+and, in an interactive session, asks before publishing (default No).
+In a non-interactive session it stops unless \code{include_private = TRUE}.}
 }
 \value{
 Character. The public URL(s) of uploaded file(s).

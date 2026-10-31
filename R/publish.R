@@ -4,30 +4,35 @@
 #' @name publish
 NULL
 
-# Refuse to publish from a folder named `private` inside the project.
-# Folders above the project root don't count (macOS temp paths start with
-# /private). Outside a project, nothing is refused.
+# Uploads are the user's choice, so private paths warn rather than refuse.
+# Any source whose absolute path contains "private", in any case, counts.
+# A leading /private/ is skipped: macOS resolves /tmp, /var, and /etc there,
+# so tempdir() would always match. Interactive sessions ask, defaulting to
+# No, and scripts stop unless include_private = TRUE. framework-py and fw
+# apply the same rule.
 #' @keywords internal
-.fw_assert_not_private <- function(source, allow_private = FALSE) {
-  if (isTRUE(allow_private)) {
+.fw_confirm_private <- function(source, include_private = FALSE) {
+  path <- normalizePath(source, winslash = "/", mustWork = FALSE)
+  checked <- sub("^/private/", "/", path)
+  if (isTRUE(include_private) || !grepl("private", checked, ignore.case = TRUE)) {
     return(invisible(TRUE))
   }
-  root <- tryCatch(.find_project_root(getwd()), error = function(e) NULL)
-  if (is.null(root)) {
-    return(invisible(TRUE))
+  warning(
+    "'", path, "' has \"private\" in its path, so it may hold restricted data.",
+    call. = FALSE, immediate. = TRUE
+  )
+  if (rlang::is_interactive()) {
+    answer <- utils::askYesNo("Publish it anyway?", default = FALSE)
+    if (isTRUE(answer)) {
+      return(invisible(TRUE))
+    }
+    stop("Cancelled: nothing was published.", call. = FALSE)
   }
-  relative <- .fw_project_relative_path(normalizePath(source, winslash = "/", mustWork = FALSE))
-  if (grepl("^(/|[A-Za-z]:)", relative)) {
-    return(invisible(TRUE))
-  }
-  if ("private" %in% strsplit(relative, "/", fixed = TRUE)[[1]]) {
-    stop(
-      "Refusing to publish '", relative, "': it is inside a private folder, which holds ",
-      "restricted data. Pass allow_private = TRUE if you really mean to publish it.",
-      call. = FALSE
-    )
-  }
-  invisible(TRUE)
+  stop(
+    "Not publishing '", path, "' from a non-interactive session. ",
+    "Pass include_private = TRUE to publish it.",
+    call. = FALSE
+  )
 }
 
 # `slug` is a non-empty string, a flag, or NULL.
@@ -105,9 +110,10 @@ NULL
 #' @param overwrite Logical. Whether to overwrite existing files. Default TRUE.
 #' @param self_contained Logical. When publishing to Framework Cloud, whether
 #'   to bundle an HTML file with its resources. Ignored for S3. Default TRUE.
-#' @param allow_private Logical. Publish even when the source is inside a
-#'   folder named `private` in the project. Default FALSE: private folders
-#'   hold restricted data and are refused.
+#' @param include_private Logical. Skip the private-path check. When the
+#'   source's absolute path contains "private" in any case, Framework warns
+#'   and, in an interactive session, asks before publishing (default No).
+#'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @param slug Framework Cloud only. A string names the document and turns on
 #'   its readable URL, for example `slug = "main-results"`. `TRUE` turns the
 #'   readable URL on with the name derived from `dest` or the file name, and
@@ -139,19 +145,19 @@ NULL
 #' }
 #' }
 publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
-                    self_contained = TRUE, slug = NULL, allow_private = FALSE) {
+                    self_contained = TRUE, slug = NULL, include_private = FALSE) {
   checkmate::assert_string(source, min.chars = 1)
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(overwrite)
   checkmate::assert_flag(self_contained)
   .fw_assert_slug(slug)
-  checkmate::assert_flag(allow_private)
+  checkmate::assert_flag(include_private)
 
   if (!file.exists(source) && !dir.exists(source)) {
     stop(sprintf("Source not found: %s", source), call. = FALSE)
   }
-  .fw_assert_not_private(source, allow_private)
+  .fw_confirm_private(source, include_private)
 
   if (identical(.fw_publish_target(connection), "cloud")) {
     return(.fw_cloud_publish(source, dest = dest, self_contained = self_contained, slug = slug))
@@ -201,9 +207,10 @@ publish <- function(source, dest = NULL, connection = NULL, overwrite = TRUE,
 #' @param self_contained Logical. Whether to embed all resources. Default TRUE.
 #'   Ignored if `static_hosting: false` (always renders self-contained).
 #' @param format Character. Output format. Default "html".
-#' @param allow_private Logical. Publish even when the source is inside a
-#'   folder named `private` in the project. Default FALSE: private folders
-#'   hold restricted data and are refused.
+#' @param include_private Logical. Skip the private-path check. When the
+#'   source's absolute path contains "private" in any case, Framework warns
+#'   and, in an interactive session, asks before publishing (default No).
+#'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @param slug Framework Cloud only: name the document and turn on its
 #'   readable URL. See [publish()].
 #' @param ... Additional arguments passed to quarto render.
@@ -231,7 +238,7 @@ publish_notebook <- function(file,
                              self_contained = TRUE,
                              format = "html",
                              slug = NULL,
-                             allow_private = FALSE,
+                             include_private = FALSE,
                              ...) {
   checkmate::assert_file_exists(file, extension = c("qmd", "Qmd", "QMD"))
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
@@ -239,8 +246,8 @@ publish_notebook <- function(file,
   checkmate::assert_flag(self_contained)
   checkmate::assert_string(format, min.chars = 1)
   .fw_assert_slug(slug)
-  checkmate::assert_flag(allow_private)
-  .fw_assert_not_private(file, allow_private)
+  checkmate::assert_flag(include_private)
+  .fw_confirm_private(file, include_private)
 
   # Check quarto is available
   quarto_path <- Sys.which("quarto")
@@ -355,9 +362,10 @@ publish_notebook <- function(file,
 #'   "csv", "rds", "parquet", or "json". Default "csv".
 #' @param connection Character or NULL. S3 connection name, or NULL for default.
 #' @param compress Logical. Whether to gzip compress. Default FALSE.
-#' @param allow_private Logical. Publish even when the source is inside a
-#'   folder named `private` in the project. Default FALSE: private folders
-#'   hold restricted data and are refused.
+#' @param include_private Logical. Skip the private-path check. When the
+#'   source's absolute path contains "private" in any case, Framework warns
+#'   and, in an interactive session, asks before publishing (default No).
+#'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @return Character. Public URL of the published data.
 #'
 #' @export
@@ -380,13 +388,13 @@ publish_data <- function(data,
                          format = "csv",
                          connection = NULL,
                          compress = FALSE,
-                         allow_private = FALSE) {
+                         include_private = FALSE) {
   checkmate::assert_string(dest, min.chars = 1)
   checkmate::assert_choice(format, c("csv", "rds", "parquet", "json"))
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_flag(compress)
-  checkmate::assert_flag(allow_private)
-  if (is.character(data)) .fw_assert_not_private(data, allow_private)
+  checkmate::assert_flag(include_private)
+  if (is.character(data)) .fw_confirm_private(data, include_private)
 
   # Resolve S3 connection
   s3_config <- .resolve_s3_connection(connection)
@@ -448,9 +456,10 @@ publish_data <- function(data,
 #' @param connection Character or NULL. S3 connection name, or NULL for default.
 #' @param pattern Character or NULL. Optional regex pattern to filter files.
 #' @param recursive Logical. Whether to include subdirectories. Default TRUE.
-#' @param allow_private Logical. Publish even when the source is inside a
-#'   folder named `private` in the project. Default FALSE: private folders
-#'   hold restricted data and are refused.
+#' @param include_private Logical. Skip the private-path check. When the
+#'   source's absolute path contains "private" in any case, Framework warns
+#'   and, in an interactive session, asks before publishing (default No).
+#'   In a non-interactive session it stops unless `include_private = TRUE`.
 #' @return Character vector. Public URLs of uploaded files.
 #'
 #' @export
@@ -473,10 +482,10 @@ publish_dir <- function(dir,
                         connection = NULL,
                         pattern = NULL,
                         recursive = TRUE,
-                        allow_private = FALSE) {
+                        include_private = FALSE) {
   checkmate::assert_directory_exists(dir)
-  checkmate::assert_flag(allow_private)
-  .fw_assert_not_private(dir, allow_private)
+  checkmate::assert_flag(include_private)
+  .fw_confirm_private(dir, include_private)
   checkmate::assert_string(dest, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(connection, min.chars = 1, null.ok = TRUE)
   checkmate::assert_string(pattern, null.ok = TRUE)

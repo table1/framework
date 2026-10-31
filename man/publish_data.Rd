@@ -10,7 +10,7 @@ publish_data(
   format = "csv",
   connection = NULL,
   compress = FALSE,
-  allow_private = FALSE
+  include_private = FALSE
 )
 }
 \arguments{
@@ -25,9 +25,10 @@ publish_data(
 
 \item{compress}{Logical. Whether to gzip compress. Default FALSE.}
 
-\item{allow_private}{Logical. Publish even when the source is inside a
-folder named \code{private} in the project. Default FALSE: private folders
-hold restricted data and are refused.}
+\item{include_private}{Logical. Skip the private-path check. When the
+source's absolute path contains "private" in any case, Framework warns
+and, in an interactive session, asks before publishing (default No).
+In a non-interactive session it stops unless \code{include_private = TRUE}.}
 }
 \value{
 Character. Public URL of the published data.

@@ -71,5 +71,6 @@ publish("outputs/charts/", dest = "reports/charts/") # Upload a directory
 ```
 
 Never publish files from private/sensitive directories. The publish functions
-refuse any source inside a `private` folder; never pass `allow_private = TRUE`
-on your own. See the `framework-sensitive-data` skill if this project has one.
+warn about any source with "private" in its path and ask the user to confirm.
+In a script they stop. Never pass `include_private = TRUE` or answer the
+prompt on the user's behalf. See the `framework-sensitive-data` skill if this project has one.

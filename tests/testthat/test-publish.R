@@ -435,17 +435,40 @@ test_that("uploads retry without the ACL when the bucket has ACLs disabled", {
   expect_null(calls[[2]]$`x-amz-acl`)
 })
 
-test_that("publishing refuses sources inside a private folder unless allowed", {
+test_that("publishing warns about private paths and stops in scripts", {
   dir <- withr::local_tempdir()
   withr::local_dir(dir)
   yaml::write_yaml(list(default = list(project_type = "project")), "settings.yml")
-  dir.create("outputs/private", recursive = TRUE)
-  dir.create("outputs/public", recursive = TRUE)
-  writeLines("<p>secret</p>", "outputs/private/report.html")
-  writeLines("<p>ok</p>", "outputs/public/report.html")
+  dir.create("outputs/Private", recursive = TRUE)
+  writeLines("<p>secret</p>", "outputs/Private/report.html")
+  confirm <- framework:::.fw_confirm_private
 
-  expect_error(publish("outputs/private/report.html"), "private folder")
-  expect_error(publish_dir("outputs/private"), "private folder")
-  expect_silent(framework:::.fw_assert_not_private("outputs/public/report.html"))
-  expect_silent(framework:::.fw_assert_not_private("outputs/private/report.html", allow_private = TRUE))
+  withr::local_options(rlang_interactive = FALSE)
+  expect_warning(
+    expect_error(publish("outputs/Private/report.html"), "include_private = TRUE"),
+    "private"
+  )
+  expect_warning(expect_error(publish_dir("outputs/Private"), "non-interactive"), "private")
+  expect_silent(confirm("outputs/Private/report.html", include_private = TRUE))
+  expect_silent(confirm("/srv/project/outputs/public/report.html"))
+  # Anywhere in the absolute path, in any case
+  expect_warning(expect_error(confirm("/home/PRIVATE-studies/report.html")), "private")
+  expect_warning(expect_error(confirm("/srv/my_private_notes.html")), "private")
+  # macOS puts /tmp, /var, and /etc under /private; a folder the user named
+  # private still counts
+  expect_silent(confirm("/private/var/folders/xy/T/Rtmp1/report.html"))
+  expect_silent(confirm(file.path(tempdir(), "report.html")))
+  expect_warning(expect_error(confirm(file.path(tempdir(), "private", "x.html"))), "private")
+  expect_warning(expect_error(confirm("/private/var/folders/proj/Private/out.html")), "private")
+  expect_warning(expect_error(confirm("~/proj/Private/out.html")), "private")
+
+  # Interactive sessions ask, and only an explicit yes publishes
+  withr::local_options(rlang_interactive = TRUE)
+  answer <- NA
+  testthat::local_mocked_bindings(askYesNo = function(...) answer, .package = "utils")
+  expect_warning(expect_error(confirm("/srv/private/x.html"), "Cancelled"), "private")
+  answer <- FALSE
+  expect_warning(expect_error(confirm("/srv/private/x.html"), "Cancelled"), "private")
+  answer <- TRUE
+  expect_warning(expect_true(confirm("/srv/private/x.html")), "private")
 })
